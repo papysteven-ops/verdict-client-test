@@ -110,7 +110,9 @@ function ensureStyle(){
   '.cmp12-vera{display:flex;gap:10px;align-items:flex-start;margin:10px 0 0;padding:11px 12px;border-radius:12px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.3);font-size:13px;line-height:1.5}'+
   '.cmp12-vera i{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#60a5fa;color:#06121f;font:900 13px var(--mono);font-style:normal}'+
   '.cmp12-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}'+
-  '@keyframes cmp12In{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}'+
+  '.cmp12-grid>.cmp12-lab{position:sticky;left:0;z-index:2;background:var(--cmp12-sheet,#fff)}'+
+'@media(max-width:640px){#mCompare .sheet{width:100vw;max-width:100vw!important;border-radius:18px 18px 0 0}.cmp12-grid{grid-template-columns:118px repeat(var(--n),118px);gap:5px}.cmp12-grid>div{padding:8px 8px}.cmp12-lab{font-size:11.5px}.cmp12-lab small{font-size:10px}.cmp12-val{font-size:13px}.cmp12-col b{font-size:13px}.cmp12-lead{font-size:12.5px}#mCompare h3{font-size:17px}}'+
+'@keyframes cmp12In{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}'+
   '@media(prefers-reduced-motion:reduce){.cmp12-col{animation:none}.cmp12-bar i{transition:none}}';
   doc.head.appendChild(st);
 }
@@ -151,6 +153,8 @@ function open(){
   m.addEventListener('click',function(e){if(e.target===m)close();});
   doc.body.appendChild(m);
   try{root.a11yDialogPrepare&&root.a11yDialogPrepare(m);}catch(e){}
+  /* La colonne collante des libellés reprend la couleur de fond réelle de la feuille (thème clair ou sombre). */
+  try{var sheet=m.querySelector('.sheet'),bg=root.getComputedStyle(sheet).backgroundColor;if(bg&&bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent')m.style.setProperty('--cmp12-sheet',bg);}catch(e){}
   /* Animation d'ouverture : les colonnes entrent en décalé, puis les barres se tracent jusqu'à leur valeur. */
   root.requestAnimationFrame(function(){root.setTimeout(function(){m.querySelectorAll('.cmp12-bar i').forEach(function(b){b.style.width=b.getAttribute('data-w')+'%';});},120+snaps.length*80);});
   return true;
