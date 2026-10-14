@@ -9061,6 +9061,9 @@ function rappels(){
 function focusGuide(el){
   if(!el)return;
   el.scrollIntoView({behavior:'smooth',block:'center'});
+  /* C33 : go() replace la page en haut juste après ; si la cible n'est plus à l'écran une fois la vue posée, on la recentre. */
+  var _fgReplacer=function(){try{var r=el.getBoundingClientRect();if(r.top<0||r.bottom>window.innerHeight)el.scrollIntoView({behavior:'auto',block:'center'});}catch(e){}};
+  setTimeout(_fgReplacer,360);setTimeout(_fgReplacer,900);
   try{ el.focus({preventScroll:true}); }catch(e){ try{el.focus();}catch(_){} }
   el.classList.remove('gpulse'); void el.offsetWidth; el.classList.add('gpulse');
   setTimeout(function(){ el.classList.remove('gpulse'); },2200);
@@ -23100,7 +23103,7 @@ function runIntroInterne(mode,done,profile){
         /* La bienvenue peut être préparée derrière le splash. La langue, elle,
            n'est publiée qu'après son retrait : aucun flou ni double écran. */
         var _lang=_prepTot?_langTot:verdictIntroPreparerSousSplash(mode);
-        sp.style.transition='opacity '+T.fade+'ms ease';
+        sp.style.transition='opacity '+T.fade+'ms ease';sp.classList.add('sp-libere');
         sp.style.opacity='0';
         setTimeout(function(){
           clearTimeout(VERDICT_INTRO_PROGRESS_TIMER);VERDICT_INTRO_PROGRESS_TIMER=null;
@@ -23367,7 +23370,7 @@ function radarSVG(R){
   me.forEach(function(t,i){ var p=pt(i,t);
     svg+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.4" fill="'+mz.h+'"/>'; });
   svg+='</svg>';
-  return svg+'<div class="rleg"><span><i style="background:'+mz.h+'"></i>Vous</span><span><i style="background:#5f6873"></i>Repère Verdict</span><span><i style="background:rgba(34,197,94,.7)"></i>Zone cible</span></div>';
+  return svg+'<div class="rleg"><span><i style="background:'+mz.h+'"></i>Vous</span><span><i style="background:#5f6873"></i>Repère</span><span><i style="background:rgba(34,197,94,.7)"></i>Zone cible</span></div>';
 }
 function drawBench(R,el){
   var bv=benchVals(R), d=R.d, sc=R.score, z=zone(sc);
