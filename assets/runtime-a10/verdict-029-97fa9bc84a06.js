@@ -23580,3 +23580,14 @@ function drawBench(R,el){
   };
   for(var k in A)TR[k]=A[k];
 })();
+/* C31 (retour iPhone du 14/10) : « premier appui sur le score sans effet ». Non reproduit à la souris ;
+   filet tactile : un appui bref sur #scBox sans click dans les 420 ms ouvre la fiche quand même. */
+(function(){
+  function bind(){var box=document.getElementById('scBox');if(!box||box.__c31)return;box.__c31=true;var t=0,x=0,y=0,clicked=false;
+    box.addEventListener('touchstart',function(e){if(!e.touches||e.touches.length!==1)return;t=Date.now();x=e.touches[0].clientX;y=e.touches[0].clientY;},{passive:true});
+    box.addEventListener('click',function(){clicked=true;},true);
+    box.addEventListener('touchend',function(e){if(!t||!e.changedTouches||!e.changedTouches.length)return;var dx=e.changedTouches[0].clientX-x,dy=e.changedTouches[0].clientY-y,dt=Date.now()-t;t=0;
+      if(dt>600||Math.abs(dx)>12||Math.abs(dy)>12||box.disabled)return;clicked=false;
+      setTimeout(function(){if(clicked||typeof window.scoreSheet!=='function')return;try{window.scoreSheet();}catch(_){}},420);},{passive:true});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
