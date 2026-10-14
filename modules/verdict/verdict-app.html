@@ -601,12 +601,11 @@ table.tt input:focus{border-color:var(--green);outline:none}
 /* Onde d'arrivée : c'est elle qui relie l'anneau au trait. Elle est encore
    à l'écran quand le trait entre — la lecture ne se coupe jamais en deux. */
 @keyframes spOndeFin{
-  0%{opacity:.9;transform:translate(-50%,-50%) scale(.95);border-width:3px}
-  50%{opacity:.45;border-width:2px}
-  78%{opacity:.24;border-width:1.5px}
-  100%{opacity:0;transform:translate(-50%,-50%) scale(3.1);border-width:1px}}
+  0%{opacity:.7;transform:translate(-50%,-50%) scale(.95);border-width:3px}
+  45%{opacity:.26;border-width:2px}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.7);border-width:1px}}
 #sp-onde2{position:fixed;z-index:2;border-radius:50%;pointer-events:none;opacity:0;border:3px solid #fff}
-#sp-onde2.on{animation:spOndeFin 1.5s cubic-bezier(.16,.6,.22,1)}
+#sp-onde2.on{animation:spOndeFin .9s cubic-bezier(.16,.6,.22,1)}
 @media(prefers-reduced-motion:reduce){#sp-onde2{display:none}}
 
 /* Bandeau de démonstration : le client ne doit jamais confondre un modèle
