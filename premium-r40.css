@@ -1,0 +1,272 @@
+/* =====================================================================
+   VERDICT® · Couche premium R40 · 22 septembre 2026
+   Une seule feuille pour les quatre surfaces du Client :
+     html.p40-shell  lanceur (Pilotage · Carte · Inventaire)
+     html.p40-app    module Verdict (Pilotage et Carte, les 21 écrans)
+     html.p40-inv    module Inventaire
+     html.p40-share  accueil Inventaire gratuit
+   Tout est rangé sous html.p40 : sans cette classe, le rendu R38 reste
+   exactement le même. Interrupteur : ?premium=off (mémorisé sur
+   l'appareil) · ?premium=on pour revenir.
+   Grammaire des 7 maquettes premium du 22/09/2026 :
+   une couleur = un sens.
+     vert / jaune / orange / rouge = résultat face au repère
+     bleu = sélection et données · gris = lecture pas encore fiable
+     ivoire = le geste (boutons principaux)
+   Aucune règle ne modifie un texte, un calcul ou une traduction.
+   L'Audit garde volontairement son dossier clair (V10.4.3).
+   ===================================================================== */
+@media screen{
+
+/* ---------- 1. Jetons ------------------------------------------------ */
+html.p40{
+  --p40-bg:#0A0B0E;--p40-card:#14171C;--p40-card2:#1B1F26;--p40-card3:#242931;
+  --p40-ca:#171B21;--p40-cb:#111418;
+  --p40-line:rgba(255,255,255,.085);--p40-line2:rgba(255,255,255,.16);
+  --p40-txt:#F3F4F6;--p40-mut:#A4ABB6;--p40-mut2:#8B93A0;
+  --p40-vert:#22c55e;--p40-jaune:#eab308;--p40-orange:#f97316;--p40-rouge:#ef4444;
+  --p40-vert-rgb:34,197,94;--p40-jaune-rgb:234,179,8;--p40-orange-rgb:249,115,22;--p40-rouge-rgb:239,68,68;
+  --p40-info:#7DA2F5;--p40-info-rgb:125,162,245;--p40-violet:#a78bfa;--p40-violet-rgb:139,92,246;
+  --p40-neutre:#8A93A0;--p40-neutre-rgb:138,147,160;
+  --p40-ivoire:#F2F3F5;--p40-encre:#0B0D10;
+  --p40-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --p40-ease:cubic-bezier(.33,0,.2,1);
+  --p40-ombre:inset 0 1px 0 rgba(255,255,255,.045),0 24px 44px -32px rgba(0,0,0,.95);
+  /* jetons d'origine réalignés sur les maquettes */
+  --bg:#0A0B0E;--card:#14171C;--card2:#1B1F26;--line:rgba(255,255,255,.1);
+  --txt:#F3F4F6;--mut:#A4ABB6;--mut2:#8B93A0;--mono:var(--p40-font);
+  --chr-accent:#A4ABB6!important;--chr-rule:rgba(255,255,255,.09)!important;
+  background:#0A0B0E!important;color-scheme:dark;
+}
+html.p40 [data-p40="vert"]{--p40-c:var(--p40-vert);--p40-rgb:var(--p40-vert-rgb)}
+html.p40 [data-p40="jaune"]{--p40-c:var(--p40-jaune);--p40-rgb:var(--p40-jaune-rgb)}
+html.p40 [data-p40="orange"]{--p40-c:var(--p40-orange);--p40-rgb:var(--p40-orange-rgb)}
+html.p40 [data-p40="rouge"]{--p40-c:var(--p40-rouge);--p40-rgb:var(--p40-rouge-rgb)}
+html.p40 [data-p40="info"]{--p40-c:var(--p40-info);--p40-rgb:var(--p40-info-rgb)}
+html.p40 [data-p40="violet"]{--p40-c:var(--p40-violet);--p40-rgb:var(--p40-violet-rgb)}
+
+/* ---------- 2. Typographie : une seule famille, chiffres alignés ----- */
+html.p40 body{font-family:var(--p40-font)!important;background:#0A0B0E!important;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-variant-numeric:tabular-nums}
+html.p40 body *:not(pre):not(code):not(kbd):not(samp){font-family:inherit!important}
+html.p40 :focus-visible{outline:2px solid var(--p40-info)!important;outline-offset:2px}
+
+/* ---------- 3. Module Verdict : en-tête de page ---------------------- */
+html.p40-app .view>h1{font-size:30px;line-height:1.1;font-weight:800;letter-spacing:-.022em}
+html.p40-app .view>p.sub{font-size:15px;line-height:1.45;color:var(--p40-mut)}
+html.p40-app .chr-view-kicker{color:var(--p40-mut)!important;font-size:12px!important;font-weight:700!important;letter-spacing:.08em!important}
+html.p40-app .chr-view-kicker::before{background:rgba(255,255,255,.22)!important;width:14px!important}
+html.p40-app .chr-view-primary{margin:6px 0 16px!important;padding:16px 18px 14px!important;
+  border:1px solid var(--p40-line)!important;border-radius:22px!important;
+  background:linear-gradient(180deg,var(--p40-ca),var(--p40-cb))!important;box-shadow:var(--p40-ombre)!important}
+html.p40-app .chr-view-primary::before{display:none!important}
+html.p40-app .chr-primary-conclusion{padding-left:0!important}
+html.p40-app .chr-primary-conclusion strong{font-size:18px!important;line-height:1.3!important;font-weight:750!important;letter-spacing:-.012em!important;color:var(--p40-txt)!important}
+html.p40-app .chr-primary-label,html.p40-app .chr-signature-kicker,html.p40-app .v36-pm-kicker,
+html.p40-app .view:not(#v-audit) .au-tag,html.p40-app .view:not(#v-audit) .au-k,html.p40-app .plus-eyebrow,
+html.p40-app .v25-kicker,html.p40-app .vp-kicker{color:var(--p40-mut)!important;letter-spacing:.08em!important;font-weight:700!important}
+html.p40-app .chr-primary-proof b{color:var(--p40-txt)}
+html.p40-app h2.sec{display:flex;align-items:center;gap:10px;font-size:12px!important;font-weight:700!important;
+  letter-spacing:.08em!important;color:var(--p40-mut)!important;margin:26px 2px 10px!important}
+html.p40-app h2.sec::after{order:1;background:var(--p40-line)!important}
+html.p40-app .v36-home-title,html.p40-app .v36-home-section>h2{font-size:24px;font-weight:800;letter-spacing:-.02em}
+
+/* ---------- 4. Cartes, tuiles, lignes -------------------------------- */
+html.p40-app .view:not(#v-audit) .card,html.p40-app .view:not(#v-audit) .au-card,
+html.p40-app .view:not(#v-audit) .plus-map-card,html.p40-app .view:not(#v-audit) .v45-admin-card,
+html.p40-app .view:not(#v-audit) .help-card{border-radius:22px;
+  background:linear-gradient(180deg,var(--p40-ca),var(--p40-cb));box-shadow:var(--p40-ombre)}
+html.p40-app .view:not(#v-audit) .card .card{border-radius:16px;box-shadow:none;background:rgba(255,255,255,.025)}
+html.p40-app .view:not(#v-audit) .card h3{font-size:16px;font-weight:750;letter-spacing:-.01em}
+html.p40-app .view:not(#v-audit) .card h3 .r{font-size:12px!important;color:var(--p40-mut2)!important;font-weight:600!important}
+html.p40-app .view:not(#v-audit) .kpis{gap:10px}
+html.p40-app .view:not(#v-audit) .kpi{border-radius:16px;background:linear-gradient(180deg,#191D24,#13161B);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+html.p40-app .view:not(#v-audit) .kpi .k{font-size:12.5px!important;letter-spacing:0!important;text-transform:none!important;color:var(--p40-mut)!important;line-height:1.3}
+html.p40-app .view:not(#v-audit) .kpi .v{font-size:clamp(19px,5.4vw,23px)!important;font-weight:750!important;letter-spacing:-.02em!important}
+html.p40-app .view:not(#v-audit) .kpi .d{color:var(--p40-mut2)}
+html.p40-app .view:not(#v-audit) .item{border-radius:16px}
+html.p40-app .view:not(#v-audit) .ind{gap:12px!important;padding:12px 0!important;border-bottom-color:var(--p40-line)!important}
+html.p40-app .view:not(#v-audit) .ind .n b{font-size:15px!important;font-weight:650!important;letter-spacing:-.01em}
+html.p40-app .view:not(#v-audit) .ind .n span{font-size:12.5px!important;color:var(--p40-mut2)!important}
+html.p40-app .view:not(#v-audit) .ind .v{font-size:14px!important;font-weight:650!important}
+html.p40-app .view:not(#v-audit) .ind .s{font-size:16px!important;font-weight:800!important}
+html.p40-app .view:not(#v-audit) .note{color:var(--p40-mut2);line-height:1.55}
+html.p40-app .view:not(#v-audit) .warn{border-radius:14px}
+html.p40-app .view:not(#v-audit) .pill{font-size:12.5px;font-weight:700;border-radius:999px;padding:4px 10px;background:rgba(255,255,255,.05);border-color:var(--p40-line)}
+html.p40-app .view:not(#v-audit) .chipd{font-size:11.5px!important;font-weight:700!important;border-radius:999px!important;padding:3px 9px!important;letter-spacing:0!important}
+html.p40-app .v36-pm-answer{font-size:26px!important;line-height:1.15!important;font-weight:800!important;letter-spacing:-.022em!important;text-wrap:balance}
+html.p40-app .chr-period-state{letter-spacing:-.02em}
+html.p40-app .plus-audit-hero{background:linear-gradient(180deg,var(--p40-ca),var(--p40-cb))!important;border-color:var(--p40-line2)!important}
+
+/* ---------- 5. Couleur du module = son propre résultat ---------------- */
+/* Posé par premium-r40.js à partir du bord d'état que l'app affiche déjà. */
+html.p40-app .p40-lise{border-radius:18px;
+  border-left-width:1px!important;border-color:var(--p40-line)!important;
+  box-shadow:inset 3px 0 0 var(--p40-c),var(--p40-ombre)!important;
+  background-image:radial-gradient(120% 85% at 0% 0%,rgba(var(--p40-rgb),.14),transparent 62%),linear-gradient(180deg,var(--p40-ca),var(--p40-cb))!important}
+html.p40-app .card.p40-lise{border-radius:22px}
+html.p40-app .p40-lise .chr-period-state{text-shadow:0 0 28px rgba(var(--p40-rgb),.32)}
+html.p40-app h2.sec .p40-lvl{order:2;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px 0 8px;
+  border-radius:999px;font-size:12px;font-weight:700;letter-spacing:0;text-transform:none;white-space:nowrap;flex:none;
+  color:var(--p40-c);background:rgba(var(--p40-rgb),.12);border:1px solid rgba(var(--p40-rgb),.34)}
+html.p40-app h2.sec .p40-lvl::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--p40-c);box-shadow:0 0 8px rgba(var(--p40-rgb),.9)}
+
+/* ---------- 6. Pistes à zones + curseur (12 notes /100) --------------- */
+html.p40-app .bario.p40-track{position:relative;overflow:visible!important;width:72px!important;height:6px!important;border-radius:999px!important;
+  background:linear-gradient(90deg,rgba(var(--p40-rouge-rgb),.30) 0 30%,rgba(var(--p40-orange-rgb),.30) 30% 60%,rgba(var(--p40-jaune-rgb),.30) 60% 75%,rgba(var(--p40-vert-rgb),.30) 75% 100%)!important}
+html.p40-app .bario.p40-track>i{display:none!important}
+html.p40-app .bario.p40-track::after{content:"";position:absolute;top:50%;left:var(--p40-x,0%);width:12px;height:12px;margin:-6px 0 0 -6px;
+  border-radius:50%;background:var(--p40-k,#fff);box-shadow:0 0 0 2px #101318,0 0 10px var(--p40-kg,rgba(255,255,255,.35));
+  transition:left .7s var(--p40-ease) var(--p40-d,0ms)}
+html.p40-app .btrk{height:6px!important;border-radius:999px!important;background:rgba(255,255,255,.07)!important}
+html.p40-app .btrk>*{border-radius:999px!important}
+html.p40-app .brow>span:first-child{font-size:12.5px;color:var(--p40-mut)}
+
+/* ---------- 7. Onglets en segments ----------------------------------- */
+html.p40-app .chips{gap:4px!important;padding:4px!important;margin-bottom:12px;
+  background:rgba(20,23,28,.96)!important;border:1px solid var(--p40-line)!important;border-radius:16px!important;
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+html.p40-app .chips button{min-height:40px;padding:0 14px!important;border:0!important;border-radius:12px!important;
+  background:transparent!important;color:var(--p40-mut)!important;font-size:14px!important;font-weight:600!important;box-shadow:none!important}
+html.p40-app .chips button.on{background:var(--p40-card3)!important;color:var(--p40-txt)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.07)!important}
+html.p40-app .vp-tabs{background:var(--p40-card)!important;border:1px solid var(--p40-line)!important;border-radius:16px!important}
+html.p40-app .vp-tabs button{border-radius:12px!important;color:var(--p40-mut)!important}
+html.p40-app .vp-tabs button.on,html.p40-app .vp-tabs button[aria-selected="true"]{background:var(--p40-card3)!important;color:var(--p40-txt)!important}
+
+/* ---------- 8. Boutons : un seul geste, ivoire ------------------------ */
+html.p40-app .view:not(#v-audit) .btn,html.p40-app .modal .btn{border-radius:14px;font-weight:700;letter-spacing:-.005em}
+html.p40-app .view:not(#v-audit) .btn:not(.sec):not(.ghost):not(.btn2):not(.danger),
+html.p40-app .modal .btn:not(.sec):not(.ghost):not(.btn2):not(.danger){background:var(--p40-ivoire);color:var(--p40-encre);border:0;
+  box-shadow:0 10px 24px -14px rgba(255,255,255,.32)}
+html.p40-app .view:not(#v-audit) .btn.sec,html.p40-app .view:not(#v-audit) .btn2,html.p40-app .view:not(#v-audit) .btn-secondary,
+html.p40-app .modal .btn.sec,html.p40-app .modal .btn2{background:rgba(255,255,255,.04);color:var(--p40-txt);border:1px solid var(--p40-line2);box-shadow:none}
+html.p40-app .view:not(#v-audit) .btn.ghost,html.p40-app .modal .btn.ghost{background:transparent;color:var(--p40-mut);border:1px solid var(--p40-line);box-shadow:none}
+html.p40 .p40-cta{background:var(--p40-ivoire)!important;background-image:none!important;color:var(--p40-encre)!important;
+  border-color:transparent!important;box-shadow:0 10px 24px -14px rgba(255,255,255,.32)!important;text-shadow:none!important}
+html.p40 .p40-cta *{color:inherit!important}
+
+/* ---------- 9. Champs ------------------------------------------------ */
+html.p40-app .view:not(#v-audit) input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]),
+html.p40-app .view:not(#v-audit) select,html.p40-app .view:not(#v-audit) textarea,
+html.p40-app .modal input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]),
+html.p40-app .modal select,html.p40-app .modal textarea{background-color:#0F1216;border-color:var(--p40-line2);border-radius:14px;color:var(--p40-txt)}
+html.p40-app .view:not(#v-audit) input:focus,html.p40-app .view:not(#v-audit) select:focus,html.p40-app .view:not(#v-audit) textarea:focus,
+html.p40-app .modal input:focus,html.p40-app .modal select:focus,html.p40-app .modal textarea:focus{
+  border-color:rgba(var(--p40-info-rgb),.85)!important;box-shadow:0 0 0 3px rgba(var(--p40-info-rgb),.18)!important;outline:none}
+html.p40-app .view:not(#v-audit) input.bad,html.p40-app .modal input.bad{border-color:var(--p40-rouge)!important;background-color:rgba(239,68,68,.06)!important}
+
+/* ---------- 10. En-tête, bandeau démo, barre du bas ------------------ */
+html.p40-app .stickytop{background:rgba(10,11,14,.86)!important;-webkit-backdrop-filter:saturate(160%) blur(18px)!important;
+  backdrop-filter:saturate(160%) blur(18px)!important;border-bottom:1px solid var(--p40-line)!important}
+html.p40-app .top .brand{letter-spacing:-.02em}
+html.p40-app .topsub .kp{color:var(--p40-mut)!important}
+html.p40-app #modeBar{background:rgba(13,19,33,.95)!important;color:#D6E3FF!important;border-bottom:1px solid rgba(var(--p40-info-rgb),.35)!important;
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+html.p40-app #modeBar button{background:rgba(var(--p40-info-rgb),.12)!important;border:1px solid rgba(var(--p40-info-rgb),.34)!important;color:#E3ECFF!important;border-radius:10px!important}
+html.p40.premium-fixed-dock body nav.premium-adaptive-dock{background:rgba(20,23,28,.86)!important;border:1px solid var(--p40-line2)!important;
+  -webkit-backdrop-filter:saturate(160%) blur(18px)!important;backdrop-filter:saturate(160%) blur(18px)!important;
+  box-shadow:0 18px 40px -18px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05)!important}
+html.p40.premium-fixed-dock body nav.premium-adaptive-dock>button,html.p40 nav.premium-adaptive-dock>button{color:var(--p40-mut)!important}
+html.p40.premium-fixed-dock body nav.premium-adaptive-dock>button.on,html.p40.premium-fixed-dock body nav.premium-adaptive-dock>button.active,
+html.p40 nav.premium-adaptive-dock>button.on,html.p40 nav.premium-adaptive-dock>button.active{background:rgba(255,255,255,.09)!important;color:var(--p40-txt)!important}
+html.p40 nav.premium-adaptive-dock>button.on svg,html.p40 nav.premium-adaptive-dock>button.active svg{color:var(--p40-txt)!important}
+html.p40 #toast,html.p40 .toast{background:rgba(22,26,32,.96)!important;border-radius:14px!important;color:var(--p40-txt)!important;box-shadow:0 18px 40px -16px rgba(0,0,0,.8)!important}
+html.p40-app .modal .sheet{background:linear-gradient(180deg,#181C22,#111418)!important;border:1px solid var(--p40-line2)!important;border-radius:22px!important}
+
+/* ---------- 11. Lanceur ---------------------------------------------- */
+html.p40-shell{--shell-bg:#0A0B0E!important;--shell-line:rgba(255,255,255,.085)!important;--shell-muted:#A4ABB6!important}
+html.p40-shell .app-shell-header{background:rgba(10,11,14,.86)!important;-webkit-backdrop-filter:saturate(160%) blur(18px)!important;
+  backdrop-filter:saturate(160%) blur(18px)!important;border-bottom:1px solid var(--p40-line)!important}
+html.p40-shell .module-tabs{background:var(--p40-card)!important;border:1px solid var(--p40-line)!important;border-radius:16px!important}
+html.p40-shell .module-tabs button{color:var(--p40-mut)!important;font-weight:650!important;border-radius:12px!important}
+html.p40-shell .module-tabs button[aria-selected="true"]{background:var(--p40-card3)!important;color:var(--p40-txt)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.07)!important}
+html.p40-shell .app-shell-context{background:var(--p40-card)!important;border-color:var(--p40-line)!important;color:#D5D9DF!important}
+html.p40-shell .context-dot{background:var(--p40-info)!important;box-shadow:0 0 8px rgba(var(--p40-info-rgb),.7)!important}
+html.p40-shell .shell-actions button{background:var(--p40-card)!important;border-color:var(--p40-line)!important;border-radius:14px!important}
+html.p40-shell .shell-actions button.has-notifications{border-color:rgba(239,68,68,.55)!important}
+html.p40-shell #unified-workspace,html.p40-shell .module-loading{background:#0A0B0E!important}
+/* R58 : tant que le module est à sa porte d'entrée (langue, choix, ouverture, démo ou libre), la coque ne mène nulle part */
+/* R69 : à la porte d'entrée (langue, choix, ouverture animée, démo ou libre), la coque disparaît entièrement : l'écran est au module, animation centrée plein écran, fond noir. Elle revient avec tout, une fois le choix fait. */
+html.p40-shell.p40-gate .app-shell-header{display:none!important}
+html.p40-shell.p40-gate body{background:#0A0B0E!important}
+html.p40-shell .notification-sheet{background:linear-gradient(180deg,#181C22,#111418)!important;border:1px solid var(--p40-line2)!important;border-radius:22px!important}
+
+/* ---------- 12. Module Inventaire ------------------------------------ */
+html.p40-inv .top{background:rgba(10,11,14,.86)!important;-webkit-backdrop-filter:saturate(160%) blur(18px);backdrop-filter:saturate(160%) blur(18px);border-bottom:1px solid var(--p40-line)!important}
+html.p40-inv .greet{background:radial-gradient(120% 85% at 0% 0%,rgba(var(--p40-info-rgb),.12),transparent 62%),linear-gradient(180deg,var(--p40-ca),var(--p40-cb))!important;
+  border:1px solid var(--p40-line)!important;border-radius:22px!important;box-shadow:inset 3px 0 0 var(--p40-info),var(--p40-ombre)!important}
+html.p40-inv .item{border-radius:16px}
+html.p40-inv .seg,html.p40-inv .lvlseg{background:var(--p40-card)!important;border:1px solid var(--p40-line)!important;border-radius:16px!important}
+html.p40-inv .seg button,html.p40-inv .lvlseg button{border-radius:12px!important}
+html.p40-inv .seg button.on,html.p40-inv .lvlseg button.on{background:var(--p40-card3)!important;color:var(--p40-txt)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.07)!important}
+html.p40-inv .btn{border-radius:14px}
+html.p40-inv .btn.ghost{background:transparent;color:var(--p40-mut);border-color:var(--p40-line2)}
+html.p40-inv input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]),
+html.p40-inv select,html.p40-inv textarea{background-color:#0F1216;border-color:var(--p40-line2);border-radius:12px;color:var(--p40-txt)}
+html.p40-inv input:focus,html.p40-inv select:focus,html.p40-inv textarea:focus{border-color:rgba(var(--p40-info-rgb),.85)!important;box-shadow:0 0 0 3px rgba(var(--p40-info-rgb),.18)!important;outline:none}
+
+/* ---------- 13. Accueil Inventaire gratuit --------------------------- */
+html.p40-share .card{border-radius:22px;background:linear-gradient(180deg,var(--p40-ca),var(--p40-cb));border-color:var(--p40-line);box-shadow:var(--p40-ombre)}
+html.p40-share .button{border-radius:14px}
+html.p40-share .head{background:rgba(10,11,14,.86);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-bottom:1px solid var(--p40-line)}
+
+
+/* ---------- 15. Écrans premium R41 (cadres isolés) ---------------- */
+html.p40-app .p41-cadre{margin:0 0 14px}
+html.p40-app .p41-ecran{display:block;width:100%;border:0;background:transparent;height:420px;transition:height .25s ease}
+html.p40-app .p41-detail{display:block;width:100%;min-height:44px;margin:6px 0 0;border:1px solid var(--p40-line);border-radius:12px;background:transparent;color:var(--p40-mut);font-size:13.5px;font-weight:600;cursor:pointer}
+html.p40-app .sv.p41-on > :not(.p41-cadre):not(.decision-premium-focus),html.p40-app #v-pil.p41-on > :not(.p41-cadre):not(.decision-premium-focus){display:none!important}
+/* R77 : la fiche du parcours guidé (#demoInline) reste visible au-dessus de la lecture premium */
+html.p40-app #v-pil.on.p41-on{display:flex;flex-direction:column}html.p40-app #v-pil.p41-on > .decision-premium-focus{order:0}html.p40-app #v-pil.p41-on > .p41-cadre{order:1}
+html.p40-app .sv.p41-on{padding-bottom:8px}
+html.p40-app #v-data > #diagPourquoi{display:none!important}
+html.p40-app .p41-cadre[data-legacy="1"] .p41-ecran{display:none}
+/* R48 : overflow-x:hidden sur html/body cassait toute barre collante (sticky) ; clip garde la protection horizontale sans casser le collant */
+html.p40-app,html.p40-app body{overflow-x:clip!important}
+html.p40-app #v-data .chips,html.p40-app #v-carte .chips,html.p40-app #v-priorities .chips{position:sticky!important;top:var(--p40-chips,0px)!important;z-index:80!important}
+/* R57 : en-tete du module non collant, il defile avec la page */
+html.p40-app .stickytop{position:static!important;top:auto!important}
+/* R51 : dans Performances, le graphique du développeur (vp-chart-card) reste affiché sous la lecture premium ; le reste de l'ancien écran se replie */
+html.p40-app #d-carnet.p41-on > .vp-shell{display:block!important}
+html.p40-app #d-carnet.p41-on > .vp-shell > :not(.vp-chart-card){display:none!important}
+html.p40-app #d-carnet.p41-on > .vp-shell > .vp-chart-card > .vp-days{display:none!important}
+html.p40-app .p41-cadre[data-for="carnet"] .p41-cap,html.p40-app .p41-cadre[data-for="carnet"] .p41-detail{display:none}
+html.p40-app .p41-cadre[data-for="carnet"]{margin-top:12px}
+html.p40-app .p41-cadre[data-for="carnet"][hidden]{display:none}
+html.p40-app #d-carnet.p41-on > .vp-shell{margin-top:-6px}
+/* R63 : la saisie du jour est dans la lecture premium de l'Accueil ; l'ancien accueil reste sous « Détail complet » */
+/* R68 : l'écran de bienvenue (Comment souhaitez-vous commencer) se cale au centre, comme l'écran de langue ; s'il dépasse, il défile à l'intérieur en partant du haut */
+html.p40-app #refSh.on{display:flex!important;flex-direction:column;align-items:center;justify-content:center;padding:14px 12px!important;box-sizing:border-box}
+html.p40-app #refSh.on > #refP{margin:0 auto;width:100%;max-width:520px;max-height:100%;min-height:0;flex:0 1 auto;overflow:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box}
+/* R73 : Carte — lecture premium en tête ; l'ancien en-tête se replie, les onglets (Analyse, Ingrédients…) et leurs panneaux restent : c'est l'outil de travail du chef */
+html.p40-app #v-carte > .chr-view-kicker,html.p40-app #v-carte > h1,html.p40-app #v-carte > p.sub,html.p40-app #v-carte > .chr-view-primary{display:none!important}
+/* R77 : la lecture premium Carte vit en tête du panneau Analyse (cible du guide) ; les deux anciens en-têtes de l'analyse se replient */
+html.p40-app #c-plats > .chr-menu-signature,html.p40-app #c-plats > .score-hero:not(.card-score-hero){display:none!important}
+html.p40-app #point5-menu > .p41-cadre{margin-bottom:14px}
+/* R78 : Priorités — lecture premium en tête, sous la barre À faire · Alertes · Simuler · Équipe ; l'ancien en-tête se replie, la liste détaillée reste dessous */
+html.p40-app #v-priorities > .chr-view-kicker,html.p40-app #v-priorities > h1,html.p40-app #v-priorities > p.sub,html.p40-app #v-priorities > .chr-view-primary{display:none!important}
+html.p40-app #v-priorities > .p41-cadre{margin:12px 0 14px}
+html.p40-app #v-priorities,html.p40-app #v-carte{padding-top:12px!important}/* l'espace réservé à l'ancienne barre fixe n'a plus lieu d'être */
+/* R84 : petite croix dans la ligne du libellé du bandeau de démonstration ; le bandeau défile avec la page (on remonte pour le revoir) et disparaît une fois fermé */
+html.p40-app #modeBar .mb-label{display:flex!important;align-items:center;gap:8px;min-width:0}
+html.p40-app #modeBar .p40-mb-x{flex:none!important;margin-left:auto!important;width:24px!important;height:24px!important;min-width:0!important;min-height:0!important;padding:0!important;border-radius:5px!important;border:1px solid rgba(255,255,255,.18)!important;background:rgba(255,255,255,.06)!important;color:#fff!important;font:700 12px/1 -apple-system,BlinkMacSystemFont,sans-serif!important;line-height:22px!important;text-align:center!important;display:block!important;cursor:pointer;opacity:.85;box-shadow:none!important}
+html.p40-app body.modebar #modeBar{position:static!important;top:auto!important}
+html.p40-app.p40-mb-fermee #modeBar{display:none!important}
+html.p40-app.p40-mb-fermee body.modebar .stickytop{top:0}
+/* R84 : le mot VERDICT en tête du module fait doublon avec le logo de la coque ; l'indice, l'état et Vera restent */
+html.p40-shell-child .stickytop .brand,html.p40-app[data-p40-coque="1"] .stickytop .brand{visibility:hidden;width:0;padding:0;margin:0;overflow:hidden}
+/* R86 : dans Performances, les étiquettes chiffrées gardent un halo sombre pour rester lisibles quand elles croisent le tracé */
+html.p40-app #d-carnet svg text{paint-order:stroke;stroke:#0A0B0E;stroke-width:3.5px;stroke-linejoin:round}
+/* R55 : à l'ouverture, l'écran de choix (démonstration ou exploration libre) cache tout et bloque tout */
+html.p40-app #mDemoIntent.modal.on{background:#0A0B0E!important}
+html.p40-app body:has(#mDemoIntent.modal.on){overflow:hidden!important}
+/* R67 : la lecture premium est la seule lecture du client ; « Détail complet » n'existe plus (?premium=off reste pour le développeur) */
+html.p40-app .p41-cap,html.p40-app .p41-detail{display:none!important}
+html.p40-app .p41-cap{margin:8px 4px 0;font-size:12.5px;line-height:1.4;color:var(--p40-mut2)}
+html.p40-app .p41-detail{-webkit-tap-highlight-color:transparent;touch-action:manipulation;position:relative;z-index:2}
+} /* fin @media screen */
+
+/* ---------- 14. Mouvement : une séquence à l'ouverture, jamais en boucle */
+@media (prefers-reduced-motion:reduce){
+  html.p40 .bario.p40-track::after{transition:none!important}
+}

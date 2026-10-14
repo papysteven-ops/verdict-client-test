@@ -1,0 +1,16 @@
+
+(function(root){'use strict';
+var IDS=['matin','midi','aprem','soir'],LABELS={matin:'Petit déjeuner',midi:'Déjeuner',aprem:'Après-midi',soir:'Dîner',jour:'Journée'};
+function amount(v){var s=String(v==null?'':v).replace(/\s/g,'').replace(',','.');if(!/^\d+(?:\.\d{1,2})?$/.test(s))throw Error('Saisis un montant positif ou zéro, avec deux décimales au maximum.');var n=Math.round(Number(s)*100);if(!Number.isSafeInteger(n)||n>1e12)throw Error('Montant invalide.');return n;}
+function create(date,mode,services){if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||isNaN(Date.parse(date))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)throw Error('Date invalide.');var required=mode==='services'?(services||IDS).filter(function(id,i,a){return IDS.indexOf(id)>=0&&a.indexOf(id)===i;}):['jour'];if(!required.length)throw Error('Choisis au moins un service.');return {date:date,mode:mode==='services'?'services':'total',required:required,entries:{},status:'open',revision:0};}
+function summary(day){var ids=day.required,known=ids.filter(function(id){return Object.prototype.hasOwnProperty.call(day.entries,id);}),cents=known.reduce(function(n,id){return n+day.entries[id].cents;},0),tickets=known.length&&known.every(function(id){return day.entries[id].tickets!==null;})?known.reduce(function(n,id){return n+day.entries[id].tickets;},0):null;return {total:cents/100,tickets:tickets,known:known,missing:ids.filter(function(id){return known.indexOf(id)<0;}),complete:known.length===ids.length};}
+function apply(day,action,now){if(action.revision!==day.revision)throw Error('La journée a changé. Actualise avant de réessayer.');var next=JSON.parse(JSON.stringify(day));
+ if(action.type==='mode'){if(summary(day).known.length)throw Error('Le mode reste fixe après la première saisie pour éviter de compter deux fois les ventes.');next=create(day.date,action.mode,action.services);}
+ else if(action.type==='entry'){if(day.required.indexOf(action.id)<0)throw Error('Service non prévu.');var tk=action.tickets;if(tk==null||String(tk).trim()==='')tk=null;else if(!/^\d+$/.test(String(tk))||!Number.isSafeInteger(Number(tk)))throw Error('Le nombre de tickets doit être entier.');else tk=Number(tk);next.entries[action.id]={cents:amount(action.amount),tickets:tk,updatedAt:now};if(action.closeDay){if(next.mode!=='total')throw Error('Clôture explicite requise pour les services.');next.status='closed';}}
+ else if(action.type==='close'){if(!summary(day).complete)throw Error('Renseigne chaque service, avec 0 € si aucune vente, avant de clôturer.');next.status='closed';}
+ else throw Error('Action inconnue.');
+ next.revision=day.revision+1;next.updatedAt=now;return next;
+}
+var api={create:create,apply:apply,summary:summary,amount:amount,labels:LABELS,ids:IDS};if(typeof module==='object'&&module.exports)module.exports=api;root.VerdictDayLedger=api;
+})(typeof window!=='undefined'?window:globalThis);
+

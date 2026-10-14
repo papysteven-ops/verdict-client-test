@@ -1,0 +1,1 @@
+if(window.VERDICT_WORKSPACE_CONNECTED===true&&window.VERDICT_OPEN_ACCESS!==true)document.documentElement.classList.add('workspace-access-pending');

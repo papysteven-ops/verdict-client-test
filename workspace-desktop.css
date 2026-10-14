@@ -1,0 +1,115 @@
+/* Verdict desktop and tablet workspace. Mobile presentation remains unchanged. */
+.workspace-theme-button {display:none}
+@media (min-width: 768px) {
+  html:not(.vd-workspace-dark) {
+    color-scheme: light;
+    --shell-bg: #f3f5f7; --shell-text: #17212b; --shell-muted: #536272;
+    --shell-line: #dbe2e8;
+    --p40-bg: #f3f5f7; --p40-card: #fff; --p40-card2: #f7f9fa;
+    --p40-card3: #eaf0f4; --p40-ca: #fff; --p40-cb: #fff;
+    --p40-line: #dfe5e9; --p40-line2: #cbd5dc;
+    --p40-txt: #17212b; --p40-mut: #526171; --p40-mut2: #657485;
+    --p40-ombre: 0 8px 26px -18px rgba(20,35,50,.26);
+  }
+  html:not(.vd-workspace-dark),html:not(.vd-workspace-dark) body,
+  html:not(.vd-workspace-dark) #unified-workspace,
+  html:not(.vd-workspace-dark) .module-panel,
+  html:not(.vd-workspace-dark) .module-panel iframe { background:#f3f5f7!important;color:#17212b }
+  html:not(.vd-workspace-dark) .app-shell-header {
+    background:#fff!important;border-color:#dfe5e9!important;box-shadow:none!important;
+    backdrop-filter:none!important;
+  }
+  html.p40-shell:not(.vd-workspace-dark) .app-shell-header,
+  html.p40-shell:not(.vd-workspace-dark) .app-shell-brand {background:#fff!important;color:#17212b!important}
+  html.p40-shell:not(.vd-workspace-dark) .app-shell-brand small,
+  html.p40-shell:not(.vd-workspace-dark) .app-shell-context {color:#344354!important}
+  html.p40-shell:not(.vd-workspace-dark) .network-state {color:#166534!important}
+  html.p40-shell:not(.vd-workspace-dark) .network-state.weak {color:#a45100!important}
+  html.p40-shell:not(.vd-workspace-dark) .network-state.offline {color:#b4232f!important}
+  html.p40-shell:not(.vd-workspace-dark) .network-state.checking {color:#526171!important}
+  html:not(.vd-workspace-dark) .module-tabs {background:#f3f5f7!important;border-color:#dfe5e9!important}
+  html:not(.vd-workspace-dark) .module-tabs button {color:#526171!important}
+  html:not(.vd-workspace-dark) .module-tabs button[aria-selected="true"] {
+    background:#fff!important;color:#17212b!important;box-shadow:0 1px 5px rgba(20,35,50,.11)!important;
+    border-left:3px solid #15803d!important;
+  }
+  html:not(.vd-workspace-dark) .app-shell-context,
+  html:not(.vd-workspace-dark) .shell-actions button,
+  html:not(.vd-workspace-dark) .workspace-theme-button {background:#f7f9fa!important;color:#17212b!important;border-color:#dbe2e8!important}
+  .workspace-theme-button {display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 12px;border:1px solid #42505e;border-radius:11px;background:#1b222b;color:#e6ecf1;cursor:pointer;font-weight:700}
+  .workspace-theme-button:focus-visible {outline:2px solid #2563eb;outline-offset:2px}
+  .app-shell-context {position:relative;max-width:100%;height:auto;min-height:36px;padding:8px 12px 8px 26px;flex-direction:column;align-items:flex-start;gap:5px}
+  .app-shell-context .context-dot {position:absolute;left:12px;top:13px}
+  .app-shell-context #unified-context {min-width:0;white-space:normal;line-height:1.25}
+  .app-shell-context .network-state {white-space:nowrap}
+  .app-shell-brand img {filter:none!important}
+  .network-state {min-width:0}
+  .module-loading {background:#f3f5f7!important;color:#526171!important}
+  .notification-sheet {background:#fff!important;color:#17212b!important;border-color:#dbe2e8!important}
+}
+@media (min-width: 768px) and (max-width: 1099px) {
+  body:not(.shell-startup-locked) {grid-template-rows:78px minmax(0,1fr)}
+  .app-shell-header {grid-template-columns:auto minmax(180px,1fr) auto;gap:8px;padding:8px 18px}
+  .app-shell-brand span small {display:none}
+  .module-tabs {position:absolute;top:81px;left:18px;right:18px;width:auto;z-index:10;box-shadow:0 5px 16px rgba(20,35,50,.08)}
+  #unified-workspace {padding-top:66px}
+  .module-panel {top:66px}
+}
+@media (min-width: 1100px) {
+  body:not(.shell-startup-locked) {grid-template-rows:minmax(0,1fr);grid-template-columns:220px minmax(0,1fr)}
+  .app-shell-header {grid-row:1;grid-column:1;align-self:stretch;min-height:0;height:100%;width:220px;
+    padding:26px 14px 20px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:22px;
+    border-right:1px solid #dbe2e8;border-bottom:0!important}
+  .app-shell-brand {padding:0 7px 8px}.app-shell-brand span small {white-space:normal}
+  .app-shell-context {order:1;flex:none}
+  .app-shell-context {transform:translateY(-26px)}
+  .module-tabs {order:2;display:flex;flex-direction:column;gap:5px;padding:6px;width:100%;border-radius:14px}
+  .module-tabs button {min-width:0!important;min-height:46px;justify-content:flex-start!important;padding:9px 12px!important}
+  .shell-actions {order:3;margin-top:auto;justify-content:space-between}
+  .app-shell-context {align-content:start}
+  #unified-workspace {grid-row:1;grid-column:2;height:100%;min-height:0}
+  .manager-alert {top:16px}
+}
+@media (min-width:768px) {
+  html.vd-workspace-dark {--shell-bg:#0a0b0e;--shell-text:#f3f4f6;--shell-muted:#a4abb6}
+  html.vd-workspace-dark .workspace-theme-button {display:inline-flex;align-items:center}
+  html.vd-workspace-dark .app-shell-context {background:#171c22!important}
+}
+@media (max-width:767px) {
+  .workspace-theme-button {display:inline-grid;place-items:center;width:36px;min-width:36px;height:44px;padding:0;border:1px solid #42505e;border-radius:12px;background:#1b222b;color:#f3f4f6;font-size:23px;line-height:1;cursor:pointer}
+  .workspace-theme-button:focus-visible {outline:2px solid #2563eb;outline-offset:2px}
+  .shell-actions {gap:5px!important}
+  html.vd-workspace-light {color-scheme:light;--shell-bg:#f3f5f7;--shell-text:#17212b;--shell-muted:#526171;
+    --p40-bg:#f3f5f7;--p40-card:#fff;--p40-card2:#f7f9fa;--p40-card3:#eaf0f4;
+    --p40-line:#dfe5e9;--p40-line2:#cbd5dc;--p40-txt:#17212b;--p40-mut:#526171}
+  html.vd-workspace-light,html.vd-workspace-light body,
+  html.vd-workspace-light #unified-workspace,html.vd-workspace-light .module-panel,
+  html.vd-workspace-light .module-panel iframe {background:#f3f5f7!important;color:#17212b!important}
+  html.vd-workspace-light.p40-shell .app-shell-header {background:#fff!important;border-color:#dfe5e9!important;backdrop-filter:none!important;box-shadow:none!important}
+  html.vd-workspace-light.p40-shell .module-tabs {background:#f3f5f7!important;border-color:#dfe5e9!important}
+  html.vd-workspace-light.p40-shell .module-tabs button {color:#526171!important}
+  html.vd-workspace-light.p40-shell .module-tabs button[aria-selected=true] {background:#fff!important;color:#17212b!important;box-shadow:inset 3px 0 #15803d!important}
+  html.vd-workspace-light.p40-shell .app-shell-context,
+  html.vd-workspace-light.p40-shell .shell-actions button {background:#f7f9fa!important;color:#17212b!important;border-color:#dbe2e8!important}
+  html.vd-workspace-light .notification-sheet {background:#fff!important;color:#17212b!important;border-color:#dbe2e8!important}
+}
+/* The calculator is a separate working surface, not a fourth module tab. */
+
+/* R297: entry/replay overlays own the whole viewport while navigation is hidden. */
+html.p40-shell.p40-gate body,
+html body.shell-startup-locked{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)!important}
+html.p40-shell.p40-gate #unified-workspace,
+html body.shell-startup-locked #unified-workspace{grid-column:1/-1!important;grid-row:1!important;width:100%;padding-top:0!important}
+html.p40-shell.p40-gate .module-panel,
+html body.shell-startup-locked .module-panel{top:0!important}
+
+/* R309: prevent later premium dark rules from covering light shell controls. */
+html.p40-shell.vd-workspace-light .app-shell-context,
+html.p40-shell.vd-workspace-light .module-tabs,
+html.p40-shell.vd-workspace-light .shell-actions button {background:#f1f5f9!important;color:#17212b!important;border-color:#94a3b8!important;}
+html.p40-shell.vd-workspace-light .module-tabs button {color:#334155!important;}
+html.p40-shell.vd-workspace-light .module-tabs button[aria-selected="true"] {background:#dbeafe!important;color:#123b70!important;border-left:3px solid #1d4ed8!important;box-shadow:inset 0 0 0 1px #1d4ed8!important;}
+html.p40-shell.vd-workspace-light .shell-actions button svg {color:#17212b!important;stroke:currentColor!important;}
+html.p40-shell.vd-workspace-dark .shell-actions button {background:#182331!important;color:#f1f5f9!important;border-color:#64748b!important;}
+html.p40-shell.vd-workspace-dark .shell-actions button svg {color:#f1f5f9!important;stroke:currentColor!important;}
+html.p40-shell .shell-actions button:focus-visible {outline:3px solid #2563eb!important;outline-offset:3px;}

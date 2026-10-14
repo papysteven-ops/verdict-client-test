@@ -1,0 +1,8 @@
+(function(root){'use strict';
+ function registry(data){if(!data||!Array.isArray(data.rows))throw Error('CLASSIFICATION_SOURCE_MISSING');
+  function proposal(code,version){if(version!=='NAF_REV2_2008')return {status:'version_unknown',current:{code:code,version:version},candidates:[],selected:null};var raw=String(code||''),match=/^(\d{2})\.?([0-9]{2})([A-Za-z])$/.exec(raw);if(!match)return {status:'code_invalid',current:{code:raw,version:version},candidates:[],selected:null};var normalized=match[1]+'.'+match[2]+match[3].toUpperCase();var rows=data.rows.filter(function(row){return row[0]===normalized;});return {status:rows.length?'confirmation_required':'unknown',current:{code:raw,normalizedCode:normalized,version:version},source:data.source,candidates:rows.map(function(row){return {code:row[3],label:row[4],scope:row[2],type:row[5],version:'NAF_2025'};}),selected:null};}
+  function prepare(current,selected,confirmed,at){var p=proposal(current.code,current.version);if(confirmed!==true||!p.candidates.some(function(c){return c.code===selected;}))throw Error('CLASSIFICATION_EXPLICIT_CONFIRMATION_REQUIRED');return {current:{...current},prepared:{code:selected,version:'NAF_2025',source:data.source,confirmedAt:at,status:'activity_candidate_not_official_ape'},history:(current.history||[]).concat([{code:current.code,version:current.version,at:at}])};}
+  return {proposal:proposal,prepare:prepare,source:data.source};
+ }
+ root.VerdictClassification={registry:registry};if(typeof module==='object'&&module.exports)module.exports=root.VerdictClassification;
+})(typeof globalThis!=='undefined'?globalThis:this);

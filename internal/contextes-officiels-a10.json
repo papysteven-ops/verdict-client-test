@@ -1,0 +1,65 @@
+[
+  {
+    "dataset": "DS_BPE",
+    "retrievedAt": "2026-10-13",
+    "sample": true,
+    "latestPublicationClaimed": false,
+    "contextOnly": true,
+    "observations": [
+      {
+        "attributes": {
+          "OBS_STATUS": "A",
+          "UNIT_MULT": "0"
+        },
+        "dimensions": {
+          "GEO": "2026-FRANCE-F",
+          "BPE_MEASURE": "FACILITIES",
+          "FACILITY_SDOM": "A5",
+          "FACILITY_TYPE": "A504",
+          "TIME_PERIOD": "2025",
+          "UNIT_MEASURE": "NR",
+          "FACILITY_DOM": "A"
+        },
+        "measures": {
+          "OBS_VALUE_NIVEAU": {
+            "value": 231989.0
+          }
+        }
+      }
+    ]
+  },
+  {
+    "dataset": "DS_IPC_PRINC",
+    "retrievedAt": "2026-10-13",
+    "sample": true,
+    "latestPublicationClaimed": false,
+    "contextOnly": true,
+    "observations": [
+      {
+        "attributes": {
+          "OBS_STATUS": "A",
+          "DECIMALS": "2",
+          "CONF_STATUS": "F"
+        },
+        "dimensions": {
+          "GEO": "2025-FRANCE-F",
+          "SEASONAL_ADJUST": "N",
+          "BASE_PER": "2025",
+          "PRODUCT_GROUP": "_Z",
+          "COICOP_2018": "00",
+          "IDX_TYPE": "CPI",
+          "TPH_CPI": "_T",
+          "FREQ": "M",
+          "TIME_PERIOD": "2026-08",
+          "UNIT_MEASURE": "IX",
+          "IND_TYPE": "IX"
+        },
+        "measures": {
+          "OBS_VALUE_INDICE_DE_PRIX": {
+            "value": 103.35
+          }
+        }
+      }
+    ]
+  }
+]

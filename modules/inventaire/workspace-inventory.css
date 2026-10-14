@@ -1,0 +1,121 @@
+@media (min-width:768px) {
+  html:not(.vd-workspace-dark) {color-scheme:light;--bg:#f3f5f7;--card:#fff;--card2:#f7f9fa;--line:#dfe5e9;--txt:#17212b;--mut:#526171;
+    --p40-bg:#f3f5f7;--p40-card:#fff;--p40-card2:#f7f9fa;--p40-card3:#eaf0f4;--p40-ca:#fff;--p40-cb:#fff;--p40-line:#dfe5e9;--p40-line2:#cbd5dc;--p40-txt:#17212b;--p40-mut:#526171;--p40-ombre:0 8px 26px -18px rgba(20,35,50,.25)}
+  html:not(.vd-workspace-dark),html:not(.vd-workspace-dark) body {background:#f3f5f7!important;color:#17212b!important}
+  html:not(.vd-workspace-dark) .top,html:not(.vd-workspace-dark) nav,
+  html:not(.vd-workspace-dark) .seg,html:not(.vd-workspace-dark) .lvlseg {background:#fff!important;color:#17212b!important;border-color:#dfe5e9!important}
+  html:not(.vd-workspace-dark) .card,html:not(.vd-workspace-dark) .item,
+  html:not(.vd-workspace-dark) .greet,html:not(.vd-workspace-dark) .ord-card-grid .card {background:#fff!important;color:#17212b!important;border-color:#dfe5e9!important;box-shadow:0 8px 26px -18px rgba(20,35,50,.25)!important}
+  html:not(.vd-workspace-dark) input,html:not(.vd-workspace-dark) select,
+  html:not(.vd-workspace-dark) textarea {background:#fff!important;color:#17212b!important;border-color:#cbd5dc!important}
+  html:not(.vd-workspace-dark) .ord-need-form,html:not(.vd-workspace-dark) .ord-match,
+  html:not(.vd-workspace-dark) .ord-deadline {background:#f7f9fa!important;color:#17212b!important;border-color:#dfe5e9!important}
+  html:not(.vd-workspace-dark) .ord-count-owner,
+  html:not(.vd-workspace-dark) .ord-owner-summary {background:#fff!important;color:#17212b!important;border-color:#d7dee5!important;border-left-color:#c08a00!important}
+  .view,.wrap {max-width:1500px!important;width:100%!important;padding-inline:clamp(24px,3vw,54px)!important}
+  .seg,.lvl {max-width:1400px!important}
+  nav {max-width:1500px;margin-inline:auto!important}
+  #countList .item {display:grid;grid-template-columns:minmax(210px,1.5fr) minmax(160px,1fr) minmax(160px,1fr);gap:12px;align-items:center;padding:14px 18px;margin-bottom:8px}
+  #countList .step {max-width:none!important}
+}
+/* Supplier cards retain their original dark text palette when the card turns white. */
+html.vd-workspace-light .ord-card-grid .ord-source,
+html.vd-workspace-light .ord-card-grid .ord-zone.cuisine,
+html.vd-workspace-light .ord-card-grid .ord-note:not(.danger) {color:#245782!important}
+html.vd-workspace-light .ord-card-grid .ord-risk,
+html.vd-workspace-light .ord-card-grid .ord-check-head span {color:#875008!important}
+html.vd-workspace-light .ord-card-grid .ord-note.danger {color:#9b2834!important}
+html.vd-workspace-light .ord-open-need-actions button {color:#245782!important}
+html.vd-workspace-light .ord-open-need-actions button:not(.edit) {color:#9b2834!important}
+@media (min-width:1100px) {
+  .ord-card-grid {grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .view {padding-top:24px!important}
+}
+@media (max-width:767px) {
+  html.vd-workspace-light {color-scheme:light;--bg:#f3f5f7;--card:#fff;--card2:#f7f9fa;
+    --line:#dfe5e9;--txt:#17212b;--mut:#526171;
+    --p40-bg:#f3f5f7;--p40-card:#fff;--p40-card2:#f7f9fa;--p40-card3:#eaf0f4;
+    --p40-ca:#fff;--p40-cb:#fff;--p40-line:#dfe5e9;--p40-line2:#cbd5dc;
+    --p40-txt:#17212b;--p40-mut:#526171}
+  html.vd-workspace-light,html.vd-workspace-light body,
+  html.vd-workspace-light .view {background:#f3f5f7!important;color:#17212b!important}
+  html.vd-workspace-light .top,html.vd-workspace-light nav,
+  html.vd-workspace-light .seg,html.vd-workspace-light .lvlseg,
+  html.vd-workspace-light .card,html.vd-workspace-light .item,
+  html.vd-workspace-light .greet {background:#fff!important;color:#17212b!important;border-color:#dfe5e9!important}
+  html.vd-workspace-light #pinv {background:#fff!important;background-image:none!important;color:#17212b!important;border-color:#dfe5e9!important}
+  html.vd-workspace-light #pinv .pinv-q,html.vd-workspace-light #pinv .pinv-b {color:#17212b!important}
+  html.vd-workspace-light #pinv .pinv-b {background:#f7f9fa!important;border-color:#dfe5e9!important}
+  html.vd-workspace-light #pinv .pinv-s,html.vd-workspace-light #pinv .pinv-b small {color:#435365!important}
+  html.vd-workspace-light .ord-count-owner,
+  html.vd-workspace-light .ord-owner-summary {background:#fff!important;color:#17212b!important;border-color:#d7dee5!important;border-left-color:#c08a00!important}
+  html.vd-workspace-light input,html.vd-workspace-light select,
+  html.vd-workspace-light textarea {background:#fff!important;color:#17212b!important;border-color:#cbd5dc!important}
+}
+/* A zero-rupture control is inactive, but its status must remain legible. */
+#pinv .pinv-b[disabled] {opacity:.82!important}
+#pinv .pinv-b.pinv-r[disabled] b {color:#f87171!important}
+html.vd-workspace-light #pinv .pinv-b.pinv-r[disabled] b {color:#b4232f!important}
+
+/* Desktop light: surfaces and their text must switch theme together. */
+@media (min-width:768px) {
+  html:not(.vd-workspace-dark) .ord-intro,
+  html:not(.vd-workspace-dark) .ord-need,
+  html:not(.vd-workspace-dark) .v451-inv-plus {
+    background:#fff!important;color:#17212b!important;border-color:#cbd5dc!important;
+  }
+  html:not(.vd-workspace-dark) .ord-intro p,
+  html:not(.vd-workspace-dark) .ord-need .sub {color:#435365!important}
+  html:not(.vd-workspace-dark) .kpi {
+    background:#fff!important;color:#17212b!important;border:1px solid #cbd5dc!important;
+  }
+  html:not(.vd-workspace-dark) .kpi .k,
+  html:not(.vd-workspace-dark) .kpi .d {color:#435365!important}
+  html:not(.vd-workspace-dark) .kpi .v {color:#173d76!important}
+  html:not(.vd-workspace-dark) .v451-inv-card {
+    background:#fff!important;color:#17212b!important;border-color:#cbd5dc!important;
+  }
+  html:not(.vd-workspace-dark) .v451-inv-card b {color:#17212b!important}
+  html:not(.vd-workspace-dark) .v451-inv-card small {color:#435365!important}
+  html:not(.vd-workspace-dark) .v451-inv-sheet {background:#fff!important;border-color:#cbd5df!important;color:#17212b!important}
+  html:not(.vd-workspace-dark) .v451-inv-sheet h2 {color:#17212b!important}
+  html:not(.vd-workspace-dark) .v451-inv-sheet p {color:#435365!important}
+  html:not(.vd-workspace-dark) .v451-inv-sheet .v451-inv-plus-k {color:#245782!important}
+  html:not(.vd-workspace-dark) .v451-inv-state {background:#eef5fc!important;border-color:#b9d5ed!important;color:#17212b!important}
+  html:not(.vd-workspace-dark) .v451-inv-state b {color:#17212b!important}
+  html:not(.vd-workspace-dark) .v451-inv-state small {color:#435365!important}
+  html:not(.vd-workspace-dark) .v451-inv-sheet button {background:#f3f6f9!important;border-color:#b9c8d6!important;color:#17212b!important}
+  html.vd-workspace-dark .v451-inv-sheet h2 {color:#eef2f7!important}
+}
+
+/* R298: the inventory summary follows the light theme on every screen size. */
+html.vd-workspace-light #pinv {background:#fff!important;background-image:none!important;color:#17212b!important;border:1px solid var(--zc,#cbd5dc)!important;border-left:4px solid var(--zc,#cbd5dc)!important;box-shadow:0 6px 20px rgba(var(--zc-rgb,138,147,160),.12)!important}
+html.vd-workspace-light #pinv .pinv-q,html.vd-workspace-light #pinv .pinv-v,html.vd-workspace-light #pinv .pinv-b {color:#17212b!important}
+html.vd-workspace-light #pinv .pinv-k,html.vd-workspace-light #pinv .pinv-s,html.vd-workspace-light #pinv .pinv-b small,html.vd-workspace-light #pinv .pinv-i .m {color:#435365!important}
+html.vd-workspace-light #pinv .pinv-b {background:rgba(var(--zc-rgb,138,147,160),.08)!important;border-color:var(--zc,#cbd5dc)!important}
+html.vd-workspace-light #pinv .pinv-b b {color:#17212b!important}
+html.vd-workspace-light #pinv .pinv-b.pinv-r {border-color:#ef4444!important;background:#ef444412!important}
+html.vd-workspace-light #pinv .pinv-b[disabled] {background:#f3f5f7!important;border-color:#cbd5dc!important;opacity:1!important}
+html.vd-workspace-light #pinv .pinv-b[disabled] b {color:#526171!important}
+html.vd-workspace-light .tag.t-cmd {color:#17212b!important;border:1px solid #eab308!important;background:#eab30820!important}
+html.vd-workspace-light .ord-count-owner,html.vd-workspace-light .ord-owner-summary {border-left-color:#eab308!important}
+
+/* R299: secondary text and order status contrasts across every inventory view. */
+html.vd-workspace-light,html.vd-workspace-light body {--mut:#435365!important;--mut2:#435365!important;--p40-mut:#435365!important}
+html.vd-workspace-light #today,html.vd-workspace-light .lvl,html.vd-workspace-light .lvl button,html.vd-workspace-light .ord-ref,html.vd-workspace-light .sp {color:#435365!important}
+html.vd-workspace-light nav .ic,html.vd-workspace-light .ord-status-chevron,html.vd-workspace-light .ord-status.received,html.vd-workspace-light .q {color:#17212b!important}
+html.vd-workspace-light .ord-space-summary span {background:#f2f5f7!important;color:#435365!important;border-color:#cbd5dc!important}
+html.vd-workspace-light .vc {--vc-text:#17212b;--vc-muted:#435365;color:#17212b!important;background:#fff!important}
+html.vd-workspace-light .vc :is(h3,h4,p,span,label,summary) {color:#17212b!important}
+html.vd-workspace-light .vc .vc-panel {background:#f3f5f7!important;border-color:#cbd5dc!important}
+html.vd-workspace-dark #pinv .pinv-b small {color:#b7c0cd!important}
+html.vd-workspace-light #pinv .pinv-b.pinv-r[disabled] b {color:#526171!important}
+html.vd-workspace-light :is(b,strong,p,span,button,a)[style*="color:#22c55e"] {--signal:#22c55e;color:#17212b!important;border-bottom:2px solid var(--signal)}
+html.vd-workspace-light :is(b,strong,p,span,button,a)[style*="color:#eab308"],html.vd-workspace-light :is(b,strong,p,span,button,a)[style*="color:#f59e0b"],html.vd-workspace-light :is(b,strong,p,span,button,a)[style*="color:#f2c749"] {--signal:#eab308;color:#17212b!important;border-bottom:2px solid var(--signal)}
+html.vd-workspace-light :is(b,strong,p,span,button,a)[style*="color:#f97316"] {--signal:#f97316;color:#17212b!important;border-bottom:2px solid var(--signal)}
+html.vd-workspace-light :is(b,strong,p,span,button,a)[style*="color:#ef4444"] {--signal:#ef4444;color:#17212b!important;border-bottom:2px solid var(--signal)}
+html.vd-workspace-light :is(b,strong,p,span,button,a)[style*="color:#60a5fa"],html.vd-workspace-light :is(b,strong,p,span,button,a)[style*="color:#93c5fd"] {color:#245782!important}
+
+html.vd-workspace-light .brand i {color:#17212b!important}
+html.vd-workspace-light .bridge b,html.vd-workspace-light .bridge a {color:#17212b!important;text-decoration-color:#22c55e!important;border-bottom:2px solid #22c55e}
+html.vd-workspace-light .ord-owner-summary strong {color:#17212b!important;border-bottom:3px solid #eab308}

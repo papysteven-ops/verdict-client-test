@@ -1,0 +1,193 @@
+/* This sheet is inserted in each premium frame, after its own styles. */
+/* Keep calendar numerals sharp against both filled and empty cells. */
+.jr span {text-shadow:none!important}
+html.vd-workspace-light .jr.avenir {color:#435365!important}
+html.vd-workspace-light .jr.auj.averifier {color:#245da8!important}
+/* Premium Structure cards are rendered in an isolated frame. */
+html.vd-workspace-light #stCard .q {color:#17212b!important}
+html.vd-workspace-light .q {color:#17212b!important}
+html.vd-workspace-light #stCard .kick-t {color:#526171!important}
+/* The responsive SVG is reduced on phones: its original 7–10 px labels
+   became tiny, and the dark outline made them appear blurred. */
+.vp-chart-scroll svg .vp-y-axis {font-size:13px!important;font-weight:700!important}
+.vp-chart-scroll svg .vp-axis {font-size:13px!important;font-weight:700!important}
+.vp-chart-scroll svg .vp-target-label {font-size:11px!important;font-weight:800!important;letter-spacing:0!important}
+.vp-chart-scroll svg .vp-last-value,
+.vp-chart-scroll svg .vp-gap-label {font-size:12px!important;paint-order:normal!important;stroke:none!important;text-shadow:none!important}
+.vp-chart-scroll svg .vp-rest-mark text {font-size:11px!important;stroke:none!important;text-shadow:none!important}
+html.vd-workspace-light .vp-chart-scroll svg .vp-last-value {fill:#17212b!important}
+html.vd-workspace-light .vp-chart-scroll svg .vp-gap-label {fill:#a41e2d!important}
+html.vd-workspace-light .vp-chart-scroll svg .vp-rest-mark text {fill:#435365!important}
+html.vd-workspace-light .vp-chart-scroll svg .vp-rest-mark rect {fill:#e9eef2!important;stroke:#aab8c5!important}
+/* The cumulative curve stays available on the overview and in Performances. */
+@media (max-width:359px) {
+  #modMois .mod-h {flex-wrap:wrap;gap:8px}
+  #modMois #mChip {max-width:100%;white-space:normal}
+}
+@media (min-width:768px) {
+  html:not(.vd-workspace-dark) {color-scheme:light;
+    --bg:#f3f5f7;--fond:#f3f5f7;--card:#fff;--card-a:#fff;--card-b:#fff;
+    --card2:#f7f9fa;--card3:#eaf0f4;--carte:#fff;
+    --line:#dfe5e9;--bord:#dfe5e9;--txt:#17212b;--mut:#526171;
+    --mut2:#526171;--dim:#526171;--encre:#fff;--ivoire:#17212b;
+    --vert:#22c55e;--jaune:#eab308;--orange:#f97316;--rouge:#ef4444;
+    --zone:#657485;--zone-rgb:101,116,133;
+  }
+  html:not(.vd-workspace-dark),html:not(.vd-workspace-dark) body {background:#f3f5f7!important;color:#17212b!important}
+  html:not(.vd-workspace-dark) .mod,html:not(.vd-workspace-dark) .detail,
+  html:not(.vd-workspace-dark) .bac,html:not(.vd-workspace-dark) .tuile,
+  html:not(.vd-workspace-dark) .courbe,html:not(.vd-workspace-dark) .identite,
+  html:not(.vd-workspace-dark) .card {background-color:#fff!important;color:#17212b!important;border-color:#dfe5e9!important;box-shadow:0 12px 28px -24px rgba(20,35,50,.28)!important}
+  html:not(.vd-workspace-dark) .haut {display:none!important}
+  html:not(.vd-workspace-dark) .kicker,
+  html:not(.vd-workspace-dark) .sous,
+  html:not(.vd-workspace-dark) .legende,
+  html:not(.vd-workspace-dark) .note,
+  html:not(.vd-workspace-dark) .tuile small {color:#435365!important}
+  html:not(.vd-workspace-dark) .btn.prim {background:#17212b!important;color:#fff!important}
+  html:not(.vd-workspace-dark) .btn.ghost {color:#17212b!important;border-color:#b9c7d1!important}
+  html:not(.vd-workspace-dark) .mod[data-etat="info"] .btn.prim {background:#17212b!important;color:#fff!important}
+  html:not(.vd-workspace-dark) .mod input {background:#fff!important;color:#17212b!important;border:1px solid #8798a8!important}
+  html:not(.vd-workspace-dark) .mod input::placeholder {color:#526171!important;opacity:1}
+  html:not(.vd-workspace-dark) #modJour .jaxe {background:linear-gradient(90deg,rgba(255,255,255,0),#fff 34%)!important}
+  html:not(.vd-workspace-dark) #modJour svg text.ax {fill:#526171!important}
+  html:not(.vd-workspace-dark) #modJour .jscroll svg .gl {stroke:#dbe4ea!important}
+  html:not(.vd-workspace-dark) #modJour .jscroll svg .gl.obj {stroke:#ac7500!important;stroke-width:1.6!important;stroke-dasharray:7 5!important}
+  html:not(.vd-workspace-dark) #modJour svg text.jmin {fill:#805600!important;font-weight:800!important}
+  html:not(.vd-workspace-dark) #modJour .jdet {color:#334155!important}
+  html:not(.vd-workspace-dark) #modCash13 div[style*="color:#9aa6b2"] {color:#435365!important}
+  html:not(.vd-workspace-dark) button:not([data-etat]),html:not(.vd-workspace-dark) .seg {border-color:#dbe2e8}
+  html:not(.vd-workspace-dark) input,html:not(.vd-workspace-dark) select {background:#fff!important;color:#17212b!important;border-color:#cbd5dc!important}
+  main,.cadre {max-width:1500px!important}
+  main {padding:24px clamp(24px,3vw,54px) 40px!important}
+  .question,.verdict {letter-spacing:-.025em}
+  .courbe {overflow:visible}
+}
+@media (min-width:768px) and (max-width:899px) {
+  main.cadre {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  main.cadre > .identite,main.cadre > h2,main.cadre > #modSaisie,
+  main.cadre > #modJour,main.cadre > #modMois,main.cadre > #modAnnee,main.cadre > #modCash13,
+  main.cadre > #modAction,main.cadre > #calendrier,main.cadre > #detail,main.cadre > .bac {grid-column:1/-1}
+  main.cadre > .mod {min-width:0;margin:0}
+}
+/* The viewport inside the two app frames is narrower than the browser window. */
+@media (min-width:900px) {
+  main.cadre {display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px;align-items:start}
+  main.cadre > .mod {grid-column:span 6;min-width:0;margin:0}
+  main.cadre > .identite,main.cadre > h2,main.cadre > #modSaisie {grid-column:span 12}
+  main.cadre > #modJour {grid-column:span 8;margin:0}
+  main.cadre > #modRupture {grid-column:span 4;margin:0}
+  main.cadre > #modMois,main.cadre > #calendrier {grid-column:span 12;margin:0}
+  main.cadre > #modAnnee,main.cadre > #modCash13 {grid-column:span 12;margin:0}
+  main.cadre > #modArgent,main.cadre > #modTreso {grid-column:span 6;margin:0}
+  main.cadre > #modAction {grid-column:span 12;margin:0}
+  main.cadre > #detail,main.cadre > .bac {grid-column:span 12;margin:0}
+  /* Performances' premium day view uses wrapper elements around its cards.
+     They must span the grid; otherwise the entire day is squeezed into one 70px track. */
+  main.cadre > #vueJours,main.cadre > #vueAutre,main.cadre > .pli {grid-column:1/-1;min-width:0}
+  main.cadre > .mod:not([id]) {grid-column:span 6}
+  main.cadre > h2 {margin:6px 0 -5px;min-width:0}
+  .impact {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  #modMois {display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:28px;align-items:start}
+  #modMois > :not(.courbe) {grid-column:1;min-width:0}
+  #modMois > .courbe {grid-column:2;grid-row:1 / span 9;min-width:0;margin:0;align-self:stretch}
+  #modMois > .courbe svg {width:100%;height:auto}
+  #calendrier {display:grid;grid-template-columns:minmax(320px,5fr) minmax(0,7fr);gap:0 28px}
+  #calendrier > :not(.detail) {grid-column:1;min-width:0}
+  #calendrier > .detail {grid-column:2;grid-row:1 / span 8;min-width:0;margin:0}
+  /* Annual comparison: keep the month detail beside the chart on desktop. */
+  #modAnnee .vy-year-curve {display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:20px;align-items:start}
+  #modAnnee .vy-year-curve > .kicker {grid-column:1/-1}
+  #modAnnee .vy-year-curve > svg {grid-column:1;width:100%;height:auto;align-self:start}
+  #modAnnee .vy-year-curve > .legende {grid-column:1;grid-row:3}
+  #modAnnee .vy-year-curve > #vyDetail {grid-column:2;grid-row:2 / span 2;min-width:0}
+  #modAnnee #vyDetail .tuiles {gap:6px}
+  #modAnnee #vyDetail .tuile {padding:8px 10px;min-height:0}
+  #modAnnee #vyDetail .tuile small {font-size:12px;line-height:1.2}
+  #modAnnee #vyDetail .tuile b {font-size:15px;line-height:1.25}
+  /* Premium frames share this sheet. Their SVGs must not grow with a wide PC viewport. */
+  #pmChart .cv {width:min(100%,620px);height:auto;margin:0 auto}
+  #radar svg {width:min(100%,560px);height:auto;margin:0 auto}
+}
+@media (max-width:767px) {
+  html.vd-workspace-light {color-scheme:light;--bg:#f3f5f7;--fond:#f3f5f7;--card:#fff;--card-a:#fff;--card-b:#fff;
+    --card2:#f7f9fa;--card3:#eaf0f4;--carte:#fff;--line:#dfe5e9;--bord:#dfe5e9;
+    --txt:#17212b;--mut:#526171;--mut2:#526171;--dim:#526171;--ivoire:#17212b;
+    --vert:#22c55e;--jaune:#eab308;--orange:#f97316;--rouge:#ef4444}
+  html.vd-workspace-light,html.vd-workspace-light body {background:#f3f5f7!important;color:#17212b!important}
+  html.vd-workspace-light .mod,html.vd-workspace-light .detail,html.vd-workspace-light .bac,
+  html.vd-workspace-light .tuile,html.vd-workspace-light .courbe,html.vd-workspace-light .identite,
+  html.vd-workspace-light .card {background-color:#fff!important;color:#17212b!important;border-color:#dfe5e9!important}
+  html.vd-workspace-light .sous,html.vd-workspace-light .kicker,html.vd-workspace-light .legende,
+  html.vd-workspace-light .note {color:#435365!important}
+  html.vd-workspace-light .courbe .gl {stroke:#dbe4ea!important}
+  html.vd-workspace-light .courbe .gl.obj {stroke:#ac7500!important;stroke-width:1.6!important;stroke-dasharray:7 5!important}
+  html.vd-workspace-light .courbe svg text.ax {fill:#526171!important}
+  html.vd-workspace-light #modJour .jaxe {background:linear-gradient(90deg,rgba(255,255,255,0),#fff 34%)!important}
+  html.vd-workspace-light #modJour .jdet {color:#334155!important}
+  html.vd-workspace-light .mod input {background:#fff!important;color:#17212b!important;border-color:#8798a8!important}
+  html.vd-workspace-light .btn.prim {background:#17212b!important;color:#fff!important}
+  html.vd-workspace-light .btn.ghost {color:#17212b!important;border-color:#b9c7d1!important}
+}
+@media (prefers-reduced-motion:reduce) {*,*::before,*::after {animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* A visible current-day cue, without motion for people who request reduced motion. */
+@media (prefers-reduced-motion:no-preference) {
+  .jr.auj.averifier {animation:jrIn .45s ease both,verdictTodayPulse 1.55s ease-in-out .5s infinite!important}
+  @keyframes verdictTodayPulse {
+    0%,100% {box-shadow:0 0 0 2px #4779cf,0 0 0 5px rgba(71,121,207,.28)}
+    50% {box-shadow:0 0 0 3px #245da8,0 0 0 11px rgba(71,121,207,0)}
+  }
+  .dp-c {animation:verdictGaugePulse 1.8s ease-in-out infinite}
+  @keyframes verdictGaugePulse {
+    0%,100% {filter:drop-shadow(0 0 2px currentColor)}
+    50% {filter:drop-shadow(0 0 8px currentColor)}
+  }
+}
+
+/* The Point mort frame has its own dark defaults. Pair every light surface with readable text. */
+html.vd-workspace-light .objchoisi {background:#eef4ff!important;border-color:#a7c5ef!important;color:#263f60!important}
+html.vd-workspace-light .objchoisi b {color:#17212b!important}
+html.vd-workspace-light .objchoisi small {color:#435365!important}
+html.vd-workspace-light .cta {background:#17212b!important;color:#fff!important;box-shadow:0 8px 20px rgba(20,35,50,.17)!important}
+html.vd-workspace-light .cv .pm-min-line {stroke:#788899!important;stroke-width:1.35!important}
+html.vd-workspace-light .cv .pm-min-label {fill:#405266!important;font-weight:700!important}
+html.vd-workspace-light .cv .pm-today-line {stroke:#96a5b3!important;stroke-width:1.15!important}
+html.vd-workspace-light .cv .pm-today-label {fill:#526171!important}
+html.vd-workspace-light .bar {background:#e4eaf0!important}
+/* Context below every Structure reading must stay legible on the pale canvas. */
+html.vd-workspace-light .refmois {color:#435365!important}
+html.vd-workspace-light .mod .info {color:#245da8!important}
+html.vd-workspace-light .courbe svg .vp-last-value {fill:#17212b!important;stroke:none!important;paint-order:normal!important;text-shadow:none!important}
+html.vd-workspace-light .courbe svg .vp-target-label {fill:#805600!important}
+html.vd-workspace-light .courbe svg .vp-point {stroke:#fff!important}
+
+/* R296: month selection stays legible in both themes, without duplicate focus rails. */
+.vy-hit,.vy-hit:focus,.vy-hit:focus-visible{outline:none!important;box-shadow:none!important;filter:none!important}
+.vy-hit[aria-pressed="true"],.vy-hit:focus-visible{stroke:#fff!important;stroke-width:1.5!important}
+.vy-current-month{fill:#fff!important;font-weight:700!important;opacity:1!important;filter:none!important}
+html.vd-workspace-light .vy-hit[aria-pressed="true"],html.vd-workspace-light .vy-hit:focus-visible{stroke:#17212b!important;fill:rgba(23,33,43,.025)!important}
+html.vd-workspace-light .vy-current-month{fill:#17212b!important}
+
+/* R298: one semantic palette; contrasting ink is separate from signal color. */
+html.vd-workspace-light,html.vd-workspace-dark {--vert:#22c55e;--jaune:#eab308;--orange:#f97316;--rouge:#ef4444}
+html.vd-workspace-light .card[data-zone] {border-color:var(--zone)!important;border-top-width:3px;box-shadow:0 6px 20px rgba(var(--zone-rgb),.12)!important}
+html.vd-workspace-light .hero {color:#17212b!important;text-shadow:none!important;border-left:5px solid var(--zone);padding-left:12px}
+html.vd-workspace-light .pill,html.vd-workspace-light .chip {color:#17212b!important;border-color:var(--zone)!important;background:rgba(var(--zone-rgb),.14)!important}
+html.vd-workspace-light .rn,html.vd-workspace-light .chip b {color:#17212b!important;background:rgba(var(--zone-rgb),.24);border-bottom:3px solid var(--zone);border-radius:5px;padding:2px 5px;text-shadow:none}
+html.vd-workspace-light .track {height:6px;background:linear-gradient(90deg,#ef4444 0 30%,#f97316 30% 60%,#eab308 60% 75%,#22c55e 75% 100%)!important;box-shadow:0 0 0 1px #17212b20}
+html.vd-workspace-light .knob {width:14px;height:14px;border:2px solid #17212b;box-shadow:0 0 0 3px #fff,0 0 9px rgba(var(--zone-rgb),.45)!important}
+html.vd-workspace-light .cv text {fill:#17212b!important;text-shadow:none!important;filter:none!important}
+html.vd-workspace-light .cv .trace {filter:none;stroke-width:3}
+html.vd-workspace-light .cv .est {stroke-opacity:1}
+html.vd-workspace-light .card::before {height:2px;background:var(--zone)}
+html.vd-workspace-dark .knob,html.vd-workspace-dark .pill i {box-shadow:0 0 0 2px var(--card-b),0 0 10px rgba(var(--zone-rgb),.6)}
+#pmCushion {margin-bottom:12px;font-size:13px;line-height:1.5}
+@media(prefers-reduced-motion:no-preference){html.vd-workspace-dark .knob{animation:verdictSignalGlow 2.6s ease-in-out infinite}@keyframes verdictSignalGlow{50%{box-shadow:0 0 0 2px var(--card-b),0 0 13px rgba(var(--zone-rgb),.8)}}}
+
+html.vd-workspace-dark .track {height:5px;background:linear-gradient(90deg,#ef444488 0 30%,#f9731688 30% 60%,#eab30888 60% 75%,#22c55e88 75% 100%)!important}
+
+/* R299: contrast audit. Signal hue is never used as the only readable text. */
+html.vd-workspace-dark {--dim:#a4b0c2!important}
+html.vd-workspace-dark .rn {color:#f4f6f8!important;border-bottom:2px solid var(--zone);padding:2px 4px;border-radius:4px;background:rgba(var(--zone-rgb),.08)}
+html.vd-workspace-light .grand,html.vd-workspace-light .verdict-grand {color:#17212b!important;border-left:4px solid var(--v,#22c55e);padding-left:10px;text-shadow:none!important}
+html.vd-workspace-light .tuile b[style*="color"],html.vd-workspace-light #tMin {color:#17212b!important;border-bottom:3px solid var(--v,#22c55e);width:fit-content}

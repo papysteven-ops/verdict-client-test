@@ -1,0 +1,1 @@
+/* coque en un seul fichier : la coque injecte les paramètres ici ; base synthétique pour les URL relatives */self.__vdq="";self.__vdBase=location.href;

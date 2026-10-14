@@ -1,0 +1,2 @@
+.client-mfa{margin:22px 0;padding:20px;border:1px solid rgba(255,255,255,.14);border-radius:18px;background:rgba(255,255,255,.035)}
+.client-mfa h2{margin:.25rem 0 .5rem}.client-mfa button,.client-mfa input{min-height:44px}.client-mfa-qr{display:block;width:min(240px,100%);height:auto;margin:16px auto;border-radius:12px;background:#fff}.client-mfa code{overflow-wrap:anywhere}.client-mfa-backup{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;border-radius:12px;background:#050607;color:#fff;line-height:1.6}.client-mfa [hidden]{display:none!important}
