@@ -18,6 +18,7 @@ var TXT={
       veraOne:'Il faut au moins deux dossiers calculables pour comparer.',need2:'Ajoutez un second établissement pour comparer.',
       better_low:'plus bas = mieux',better_high:'plus haut = mieux',neutral:'selon le concept',ofSales:'de CA',above:'au-dessus de la médiane',below:'sous la médiane',good:'mieux',bad:'moins bien',
       sub:{score:'la synthèse Verdict® sur 100',caNet:'ce qui reste sur le CA une fois toutes les charges payées, avant impôt',caNetM:'la même lecture, mois par mois',ticket:'dépense moyenne par commande',cmd:'la fréquentation',mat:'part du CA partie en matières premières',ms:'part du CA partie en salaires chargés',prime:'matière + équipe : le couple à surveiller',pm:'part du CA nécessaire pour payer toutes les charges ; sous 100 %, on gagne'},
+      levels:['CRITIQUE','FRAGILE','CORRECTE','SAINE'],rep:{caNet:'repères : résultat < 0 % du CA critique · 0-5 % fragile · 5-10 % correcte · ≥ 10 % saine',caNetM:'mêmes repères que la ligne annuelle',mat:'repères CHR : < 28 % saine · 28-32 % correcte · 32-35 % fragile · > 35 % critique',ms:'repères CHR : ≤ 35 % saine · 35-40 % correcte · 40-45 % fragile · > 45 % critique',prime:'repères CHR : ≤ 60 % saine · 60-65 % correcte · 65-70 % fragile · > 70 % critique',pm:'repères : < 80 % saine · 80-90 % correcte · 90-100 % fragile · > 100 % critique (on perd de l\u2019argent)'},
       why:{score:'le score le plus haut',caNet:'garde la plus grande part de son CA',caNetM:'garde la plus grande part de son CA',cmd:'le plus de commandes par jour',mat:'la matière la plus basse',ms:'l\u2019équipe la plus légère',prime:'matière + équipe les plus bas',pm:'le point mort le plus bas'}},
   en:{open:'Compare',title:'Compare my establishments',kicker:'Side by side',lead:'The same benchmarks for every file, computed by the Verdict® engine. The best value of each row is marked; the gap is given against the group median.',
       close:'Close',ind:'Indicator',median:'median',best:'best',na:'—',incomplete:'Incomplete data',complete:'Complete',
@@ -28,6 +29,7 @@ var TXT={
       veraOne:'At least two computable files are needed to compare.',need2:'Add a second establishment to compare.',
       better_low:'lower is better',better_high:'higher is better',neutral:'depends on the concept',ofSales:'of sales',above:'above the median',below:'below the median',good:'better',bad:'worse',
       sub:{score:'the Verdict® summary out of 100',caNet:'what is left of sales once every cost is paid, before tax',caNetM:'the same reading, month by month',ticket:'average spend per order',cmd:'footfall',mat:'share of sales spent on raw materials',ms:'share of sales spent on loaded wages',prime:'food + labour: the pair to watch',pm:'share of sales needed to pay every cost; below 100 % you earn'},
+      levels:['CRITICAL','FRAGILE','FAIR','HEALTHY'],rep:{caNet:'benchmarks: result < 0 % of sales critical · 0-5 % fragile · 5-10 % fair · ≥ 10 % healthy',caNetM:'same benchmarks as the yearly line',mat:'industry benchmarks: < 28 % healthy · 28-32 % fair · 32-35 % fragile · > 35 % critical',ms:'industry benchmarks: ≤ 35 % healthy · 35-40 % fair · 40-45 % fragile · > 45 % critical',prime:'industry benchmarks: ≤ 60 % healthy · 60-65 % fair · 65-70 % fragile · > 70 % critical',pm:'benchmarks: < 80 % healthy · 80-90 % fair · 90-100 % fragile · > 100 % critical (money is lost)'},
       why:{score:'the highest score',caNet:'keeps the largest share of its sales',caNetM:'keeps the largest share of its sales',cmd:'the most orders per day',mat:'the lowest food cost',ms:'the lightest labour cost',prime:'lowest food + labour',pm:'the lowest break-even'}}
 };
 function L(){var l=String(root.LOCALE||doc.documentElement.lang||'fr').slice(0,2);return TXT[l]||TXT.fr;}
@@ -56,6 +58,12 @@ function snapshot(id){
     k:{score:calc?Math.round(R.score):null,res:calc?num(x.res):null,resM:calc?num(x.resM):null,ca:calc?ca:null,caM:calc?ca/mois:null,ticket:calc?num(x.panierHT):null,cmd:calc?num(x.cmdj):null,
        mat:mat,ms:ms,prime:(mat!=null&&ms!=null)?mat+ms:null,marge:calc?num(v.rn):null,pm:calc?num(v.pm):null}};
 }
+/* Couleurs Verdict® : la palette de zone() de l'application (critique, fragile, correcte, saine) ; repli sur les mêmes teintes. */
+var PALETTE_FALLBACK=['#ef4444','#f97316','#eab308','#22c55e'];
+function palette(){try{if(typeof root.zone==='function'){var z=[root.zone(10),root.zone(45),root.zone(65),root.zone(90)];if(z.every(function(x){return x&&x.h;}))return z.map(function(x){return x.h;});}}catch(e){}return PALETTE_FALLBACK;}
+function lvlHigh(v,a,b,c){return v<a?0:v<b?1:v<c?2:3;}   /* plus haut = mieux : seuils croissants */
+function lvlLow(v,a,b,c){return v>c?0:v>b?1:v>a?2:3;}    /* plus bas = mieux : seuils croissants */
+var LEVEL={score:function(v){return v<35?0:v<55?1:v<75?2:3;},caNet:function(v){return lvlHigh(v,0,5,10);},caNetM:function(v){return lvlHigh(v,0,5,10);},mat:function(v){return lvlLow(v,28,32,35);},ms:function(v){return lvlLow(v,35,40,45);},prime:function(v){return lvlLow(v,60,65,70);},pm:function(v){return lvlLow(v,80,90,100);}};
 var ROWS=[
   {key:'score',fmt:function(n){return n==null?L().na:fNum(n,0)+'/100';},better:'high',bar:function(n){return n;},max:100},
   {key:'caNet',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.ca)+' '+L().ofSales+' \u2192 '+fEur(s.k.res)+' '+L().netWord;},note:function(v,s){return '= '+fPct(v)+' '+L().ofCa;},better:'high',hint:'better_net',bar:function(n){return Math.max(0,n);},max:30,unit:'pt'},
@@ -105,6 +113,8 @@ function ensureStyle(){
   '.cmp12-val{font-family:var(--mono);font-size:14px;font-weight:800;display:flex;flex-direction:column;gap:5px}'+
   '.cmp12-val.best{border-color:rgba(34,197,94,.6)!important;background:rgba(34,197,94,.08)!important}'+
   '.cmp12-why{font:700 10.5px/1.3 var(--mono);color:#16a34a;letter-spacing:.02em}'+
+'.cmp12-lvl{font:800 9.5px/1 var(--mono);letter-spacing:.14em}'+
+'.cmp12-val.critique{border-color:rgba(239,68,68,.75)!important;background:rgba(239,68,68,.09)!important;box-shadow:0 0 0 1px rgba(239,68,68,.25) inset}'+
   '.cmp12-val em{font-style:normal;font:600 10.5px/1.2 var(--mono);opacity:.72}'+
   '.cmp12-val.na{opacity:.6;font-weight:600}'+
   '.cmp12-bar{height:6px;border-radius:99px;background:rgba(127,127,127,.18);overflow:hidden}.cmp12-bar i{display:block;height:100%;width:0;border-radius:99px;background:#60a5fa;transition:width .6s cubic-bezier(.2,.7,.2,1)}'+
@@ -135,14 +145,16 @@ function open(){
     });
     ROWS.forEach(function(r){
       var vals=snaps.map(function(s){return r.get?r.get(s):s.k[r.key];}),med=median(vals),best=bestIndex(r,snaps);
-      h+='<div class="cmp12-lab">'+esc(T[r.key])+(T.sub&&T.sub[r.key]?'<small>'+esc(T.sub[r.key])+'</small>':'')+'<small>'+esc(r.hint?T[r.hint]:(r.better==='low'?T.better_low:r.better==='high'?T.better_high:T.neutral))+(med!=null&&!r.noDelta?' · '+esc(T.median)+' '+esc(r.get?fPct(med):r.fmt(med)):'')+'</small></div>';
+      h+='<div class="cmp12-lab">'+esc(T[r.key])+(T.sub&&T.sub[r.key]?'<small>'+esc(T.sub[r.key])+'</small>':'')+(T.rep&&T.rep[r.key]?'<small>'+esc(T.rep[r.key])+'</small>':'')+'<small>'+esc(r.hint?T[r.hint]:(r.better==='low'?T.better_low:r.better==='high'?T.better_high:T.neutral))+(med!=null&&!r.noDelta?' · '+esc(T.median)+' '+esc(r.get?fPct(med):r.fmt(med)):'')+'</small></div>';
       snaps.forEach(function(s,i){
         var v=r.get?r.get(s):s.k[r.key];
         if(v==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(T.na)+'</div>';return;}
         var delta=(med!=null&&r.key!=='score'&&!r.noDelta)?v-med:null,dTxt='';
         if(delta!=null&&Math.abs(delta)>0.0001){var amount=r.key==='ticket'?fEur2(Math.abs(delta)):r.key==='cmd'?fNum(Math.abs(delta),1):fPct(Math.abs(delta)).replace('\u00a0%','\u00a0pt');var good=r.better==='neutral'?null:(r.better==='high'?delta>0:delta<0);dTxt=amount+' '+(delta>0?T.above:T.below)+(good==null?'':' \u00b7 '+(good?T.good:T.bad));}
-        var bar=r.bar?'<div class="cmp12-bar"><i data-w="'+Math.max(0,Math.min(100,r.bar(v)/r.max*100)).toFixed(1)+'"></i></div>':'';
-        h+='<div class="cmp12-val cmp12-col'+(i===best?' best':'')+'" style="--i:'+i+'" data-best="'+esc(T.best)+'">'+esc(r.fmt(v,s))+(r.note?'<em>'+esc(r.note(v,s))+'</em>':'')+(dTxt?'<em>'+esc(dTxt)+'</em>':'')+(i===best?'<small class="cmp12-why">\u2605 '+esc(T.best)+(T.why&&T.why[r.key]?' \u00b7 '+esc(T.why[r.key]):'')+'</small>':'')+bar+'</div>';
+        var lvl=LEVEL[r.key]?LEVEL[r.key](v):null,col=lvl==null?null:palette()[lvl];
+        var bar=r.bar?'<div class="cmp12-bar"><i data-w="'+Math.max(0,Math.min(100,r.bar(v)/r.max*100)).toFixed(1)+'"'+(col?' style="background:'+col+'"':'')+'></i></div>':'';
+        var badge=lvl==null?'':'<small class="cmp12-lvl" style="color:'+col+'">'+esc(T.levels[lvl])+'</small>';
+        h+='<div class="cmp12-val cmp12-col'+(i===best?' best':'')+(lvl===0?' critique':'')+'" style="--i:'+i+'" data-best="'+esc(T.best)+'"><span'+(col?' style="color:'+col+'"':'')+'>'+esc(r.fmt(v,s))+'</span>'+badge+(r.note?'<em>'+esc(r.note(v,s))+'</em>':'')+(dTxt?'<em>'+esc(dTxt)+'</em>':'')+(i===best?'<small class="cmp12-why">\u2605 '+esc(T.best)+(T.why&&T.why[r.key]?' \u00b7 '+esc(T.why[r.key]):'')+'</small>':'')+bar+'</div>';
       });
     });
     h+='</div></div>';
