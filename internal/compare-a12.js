@@ -13,7 +13,7 @@ var TXT={
       close:'Fermer',ind:'Indicateur',median:'médiane',best:'meilleur',na:'—',incomplete:'Données incomplètes',complete:'Compléter',
       indicative:'Lecture indicative : les dossiers ne sont pas tous des exercices clos comparables (voir la nature sous chaque colonne). Aucun vainqueur n’est proclamé.',
       conclusive:'Dossiers comparables : exercices clos, mêmes bases.',
-      score:'Score Verdict®',res:'Résultat net potentiel (avant impôt, par an)',resM:'Résultat net potentiel par mois',ofCa:'du CA',ca:'CA HT annuel',caM:'CA HT mensuel',ticket:'Ticket moyen HT',cmd:'Commandes / jour',mat:'Ratio matière',ms:'Masse salariale chargée',prime:'Prime cost (matière + équipe)',marge:'Marge avant impôt',pm:'Point mort (part du CA)',
+      score:'Score Verdict®',caNet:'CA HT annuel → résultat net potentiel (avant impôt)',caNetM:'Par mois : CA HT → résultat net',ofCa:'du CA',netWord:'net',better_net:'meilleur = plus grande part du CA qui reste',ticket:'Ticket moyen HT',cmd:'Commandes / jour',mat:'Ratio matière',ms:'Masse salariale chargée',prime:'Prime cost (matière + équipe)',marge:'Marge avant impôt',pm:'Point mort (part du CA)',
       vera:'Vera',veraSpread:'C’est {m} qui sépare le plus vos dossiers : {best} à {vb}, {worst} à {vw}. Levier à regarder en premier dans {worst}.',
       veraOne:'Il faut au moins deux dossiers calculables pour comparer.',need2:'Ajoutez un second établissement pour comparer.',
       better_low:'plus bas = mieux',better_high:'plus haut = mieux',neutral:'selon le concept'},
@@ -21,7 +21,7 @@ var TXT={
       close:'Close',ind:'Indicator',median:'median',best:'best',na:'—',incomplete:'Incomplete data',complete:'Complete',
       indicative:'Indicative reading: not all files are comparable closed years (see the nature under each column). No winner is declared.',
       conclusive:'Comparable files: closed years, same bases.',
-      score:'Verdict® score',res:'Potential net result (before tax, per year)',resM:'Potential net result per month',ofCa:'of sales',ca:'Annual net sales',caM:'Monthly net sales',ticket:'Average ticket (net)',cmd:'Orders / day',mat:'Food cost ratio',ms:'Loaded labour cost',prime:'Prime cost (food + labour)',marge:'Margin before tax',pm:'Break-even (share of sales)',
+      score:'Verdict® score',caNet:'Annual net sales → potential net result (before tax)',caNetM:'Per month: net sales → net result',ofCa:'of sales',netWord:'net',better_net:'best = largest share of sales kept',ticket:'Average ticket (net)',cmd:'Orders / day',mat:'Food cost ratio',ms:'Loaded labour cost',prime:'Prime cost (food + labour)',marge:'Margin before tax',pm:'Break-even (share of sales)',
       vera:'Vera',veraSpread:'{m} separates your files the most: {best} at {vb}, {worst} at {vw}. First lever to look at in {worst}.',
       veraOne:'At least two computable files are needed to compare.',need2:'Add a second establishment to compare.',
       better_low:'lower is better',better_high:'higher is better',neutral:'depends on the concept'}
@@ -54,20 +54,17 @@ function snapshot(id){
 }
 var ROWS=[
   {key:'score',fmt:function(n){return n==null?L().na:fNum(n,0)+'/100';},better:'high',bar:function(n){return n;},max:100},
-  {key:'res',fmt:fEur,better:'high',note:function(v,s){return s.k.ca?'= '+fPct(v/s.k.ca*100)+' '+L().ofCa:'';}},
-  {key:'resM',fmt:fEur,better:'high'},
-  {key:'ca',fmt:fEur,better:'high'},
-  {key:'caM',fmt:fEur,better:'high'},
+  {key:'caNet',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.ca)+' \u2192 '+fEur(s.k.res)+' '+L().netWord;},note:function(v,s){return '= '+fPct(v)+' '+L().ofCa;},better:'high',hint:'better_net',bar:function(n){return Math.max(0,n);},max:30,unit:'pt'},
+  {key:'caNetM',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.caM)+' \u2192 '+fEur(s.k.resM)+' '+L().netWord;},better:'high',hint:'better_net',noDelta:true},
   {key:'ticket',fmt:fEur2,better:'neutral'},
   {key:'cmd',fmt:function(n){return fNum(n,1);},better:'high'},
   {key:'mat',fmt:fPct,better:'low',bar:function(n){return n;},max:60,driver:true},
   {key:'ms',fmt:fPct,better:'low',bar:function(n){return n;},max:60,driver:true},
   {key:'prime',fmt:fPct,better:'low',bar:function(n){return n;},max:100,driver:true},
-  {key:'marge',fmt:fPct,better:'high',bar:function(n){return Math.max(0,n);},max:30},
   {key:'pm',fmt:fPct,better:'low',bar:function(n){return Math.min(n,200);},max:200}
 ];
 function bestIndex(row,snaps){
-  var vals=snaps.map(function(s){return s.k[row.key];}),best=-1;
+  var vals=snaps.map(function(s){return row.get?row.get(s):s.k[row.key];}),best=-1;
   if(row.better==='neutral')return -1;
   vals.forEach(function(v,i){if(v==null)return;if(best<0)best=i;else if(row.better==='high'?v>vals[best]:v<vals[best])best=i;});
   return vals.filter(function(v){return v!=null;}).length>=2?best:-1;
@@ -133,15 +130,15 @@ function open(){
       h+='<div class="cmp12-head cmp12-col'+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+i+'"><b style="color:'+(s.zone?s.zone.h:'inherit')+'">'+esc(s.name)+'</b><span>'+esc([s.kind,s.nature.label,s.nature.period].filter(Boolean).join(' · '))+'</span>'+(s.calculated?'':'<span>'+esc(T.incomplete)+'</span>')+'</div>';
     });
     ROWS.forEach(function(r){
-      var vals=snaps.map(function(s){return s.k[r.key];}),med=median(vals),best=bestIndex(r,snaps);
-      h+='<div class="cmp12-lab">'+esc(T[r.key])+'<small>'+esc(r.better==='low'?T.better_low:r.better==='high'?T.better_high:T.neutral)+(med!=null?' · '+esc(T.median)+' '+esc(r.fmt(med)):'')+'</small></div>';
+      var vals=snaps.map(function(s){return r.get?r.get(s):s.k[r.key];}),med=median(vals),best=bestIndex(r,snaps);
+      h+='<div class="cmp12-lab">'+esc(T[r.key])+'<small>'+esc(r.hint?T[r.hint]:(r.better==='low'?T.better_low:r.better==='high'?T.better_high:T.neutral))+(med!=null&&!r.noDelta?' · '+esc(T.median)+' '+esc(r.get?fPct(med):r.fmt(med)):'')+'</small></div>';
       snaps.forEach(function(s,i){
-        var v=s.k[r.key];
+        var v=r.get?r.get(s):s.k[r.key];
         if(v==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(T.na)+'</div>';return;}
-        var delta=(med!=null&&r.key!=='score')?v-med:null,dTxt='';
+        var delta=(med!=null&&r.key!=='score'&&!r.noDelta)?v-med:null,dTxt='';
         if(delta!=null&&Math.abs(delta)>0.0001){var sign=delta>0?'+':'−';dTxt=r.key==='ca'||r.key==='caM'||r.key==='ticket'||r.key==='res'||r.key==='resM'?sign+(r.key==='ticket'?fEur2(Math.abs(delta)):fEur(Math.abs(delta))):sign+(r.key==='cmd'?fNum(Math.abs(delta),1):fPct(Math.abs(delta)).replace(' %',' pt'));}
         var bar=r.bar?'<div class="cmp12-bar"><i data-w="'+Math.max(0,Math.min(100,r.bar(v)/r.max*100)).toFixed(1)+'"></i></div>':'';
-        h+='<div class="cmp12-val cmp12-col'+(i===best?' best':'')+'" style="--i:'+i+'" data-best="'+esc(T.best)+'">'+esc(r.fmt(v))+(r.note?'<em>'+esc(r.note(v,s))+'</em>':'')+(dTxt?'<em>'+esc(dTxt)+' / '+esc(T.median)+'</em>':'')+bar+'</div>';
+        h+='<div class="cmp12-val cmp12-col'+(i===best?' best':'')+'" style="--i:'+i+'" data-best="'+esc(T.best)+'">'+esc(r.fmt(v,s))+(r.note?'<em>'+esc(r.note(v,s))+'</em>':'')+(dTxt?'<em>'+esc(dTxt)+' / '+esc(T.median)+'</em>':'')+bar+'</div>';
       });
     });
     h+='</div></div>';
