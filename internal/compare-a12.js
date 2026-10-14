@@ -16,7 +16,9 @@ var TXT={
       score:'Score Verdict®',caNet:'CA HT annuel → résultat net potentiel (avant impôt)',caNetM:'Par mois : CA HT → résultat net',ofCa:'du CA',netWord:'net',better_net:'meilleur = plus grande part du CA qui reste',ticket:'Ticket moyen HT',cmd:'Commandes / jour',mat:'Ratio matière',ms:'Masse salariale chargée',prime:'Prime cost (matière + équipe)',marge:'Marge avant impôt',pm:'Point mort (part du CA)',
       vera:'Vera',veraSpread:'C’est {m} qui sépare le plus vos dossiers : {best} à {vb}, {worst} à {vw}. Levier à regarder en premier dans {worst}.',
       veraOne:'Il faut au moins deux dossiers calculables pour comparer.',need2:'Ajoutez un second établissement pour comparer.',
-      better_low:'plus bas = mieux',better_high:'plus haut = mieux',neutral:'selon le concept'},
+      better_low:'plus bas = mieux',better_high:'plus haut = mieux',neutral:'selon le concept',ofSales:'de CA',above:'au-dessus de la médiane',below:'sous la médiane',good:'mieux',bad:'moins bien',
+      sub:{score:'la synthèse Verdict® sur 100',caNet:'ce qui reste sur le CA une fois toutes les charges payées, avant impôt',caNetM:'la même lecture, mois par mois',ticket:'dépense moyenne par commande',cmd:'la fréquentation',mat:'part du CA partie en matières premières',ms:'part du CA partie en salaires chargés',prime:'matière + équipe : le couple à surveiller',pm:'part du CA nécessaire pour payer toutes les charges ; sous 100 %, on gagne'},
+      why:{score:'le score le plus haut',caNet:'garde la plus grande part de son CA',caNetM:'garde la plus grande part de son CA',cmd:'le plus de commandes par jour',mat:'la matière la plus basse',ms:'l\u2019équipe la plus légère',prime:'matière + équipe les plus bas',pm:'le point mort le plus bas'}},
   en:{open:'Compare',title:'Compare my establishments',kicker:'Side by side',lead:'The same benchmarks for every file, computed by the Verdict® engine. The best value of each row is marked; the gap is given against the group median.',
       close:'Close',ind:'Indicator',median:'median',best:'best',na:'—',incomplete:'Incomplete data',complete:'Complete',
       indicative:'Indicative reading: not all files are comparable closed years (see the nature under each column). No winner is declared.',
@@ -24,7 +26,9 @@ var TXT={
       score:'Verdict® score',caNet:'Annual net sales → potential net result (before tax)',caNetM:'Per month: net sales → net result',ofCa:'of sales',netWord:'net',better_net:'best = largest share of sales kept',ticket:'Average ticket (net)',cmd:'Orders / day',mat:'Food cost ratio',ms:'Loaded labour cost',prime:'Prime cost (food + labour)',marge:'Margin before tax',pm:'Break-even (share of sales)',
       vera:'Vera',veraSpread:'{m} separates your files the most: {best} at {vb}, {worst} at {vw}. First lever to look at in {worst}.',
       veraOne:'At least two computable files are needed to compare.',need2:'Add a second establishment to compare.',
-      better_low:'lower is better',better_high:'higher is better',neutral:'depends on the concept'}
+      better_low:'lower is better',better_high:'higher is better',neutral:'depends on the concept',ofSales:'of sales',above:'above the median',below:'below the median',good:'better',bad:'worse',
+      sub:{score:'the Verdict® summary out of 100',caNet:'what is left of sales once every cost is paid, before tax',caNetM:'the same reading, month by month',ticket:'average spend per order',cmd:'footfall',mat:'share of sales spent on raw materials',ms:'share of sales spent on loaded wages',prime:'food + labour: the pair to watch',pm:'share of sales needed to pay every cost; below 100 % you earn'},
+      why:{score:'the highest score',caNet:'keeps the largest share of its sales',caNetM:'keeps the largest share of its sales',cmd:'the most orders per day',mat:'the lowest food cost',ms:'the lightest labour cost',prime:'lowest food + labour',pm:'the lowest break-even'}}
 };
 function L(){var l=String(root.LOCALE||doc.documentElement.lang||'fr').slice(0,2);return TXT[l]||TXT.fr;}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -54,8 +58,8 @@ function snapshot(id){
 }
 var ROWS=[
   {key:'score',fmt:function(n){return n==null?L().na:fNum(n,0)+'/100';},better:'high',bar:function(n){return n;},max:100},
-  {key:'caNet',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.ca)+' \u2192 '+fEur(s.k.res)+' '+L().netWord;},note:function(v,s){return '= '+fPct(v)+' '+L().ofCa;},better:'high',hint:'better_net',bar:function(n){return Math.max(0,n);},max:30,unit:'pt'},
-  {key:'caNetM',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.caM)+' \u2192 '+fEur(s.k.resM)+' '+L().netWord;},better:'high',hint:'better_net',noDelta:true},
+  {key:'caNet',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.ca)+' '+L().ofSales+' \u2192 '+fEur(s.k.res)+' '+L().netWord;},note:function(v,s){return '= '+fPct(v)+' '+L().ofCa;},better:'high',hint:'better_net',bar:function(n){return Math.max(0,n);},max:30,unit:'pt'},
+  {key:'caNetM',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.caM)+' '+L().ofSales+' \u2192 '+fEur(s.k.resM)+' '+L().netWord;},note:function(v,s){return '= '+fPct(v)+' '+L().ofCa;},better:'high',hint:'better_net',noDelta:true},
   {key:'ticket',fmt:fEur2,better:'neutral'},
   {key:'cmd',fmt:function(n){return fNum(n,1);},better:'high'},
   {key:'mat',fmt:fPct,better:'low',bar:function(n){return n;},max:60,driver:true},
@@ -100,7 +104,7 @@ function ensureStyle(){
   '.cmp12-lab{font-size:12.5px;color:inherit}.cmp12-lab small{display:block;opacity:.72;font-size:10.5px;margin-top:2px}'+
   '.cmp12-val{font-family:var(--mono);font-size:14px;font-weight:800;display:flex;flex-direction:column;gap:5px}'+
   '.cmp12-val.best{border-color:rgba(34,197,94,.6)!important;background:rgba(34,197,94,.08)!important}'+
-  '.cmp12-val.best:after{content:"\\2605 "attr(data-best);font:700 10px/1 var(--mono);color:#22c55e;letter-spacing:.06em}'+
+  '.cmp12-why{font:700 10.5px/1.3 var(--mono);color:#16a34a;letter-spacing:.02em}'+
   '.cmp12-val em{font-style:normal;font:600 10.5px/1.2 var(--mono);opacity:.72}'+
   '.cmp12-val.na{opacity:.6;font-weight:600}'+
   '.cmp12-bar{height:6px;border-radius:99px;background:rgba(127,127,127,.18);overflow:hidden}.cmp12-bar i{display:block;height:100%;width:0;border-radius:99px;background:#60a5fa;transition:width .6s cubic-bezier(.2,.7,.2,1)}'+
@@ -131,14 +135,14 @@ function open(){
     });
     ROWS.forEach(function(r){
       var vals=snaps.map(function(s){return r.get?r.get(s):s.k[r.key];}),med=median(vals),best=bestIndex(r,snaps);
-      h+='<div class="cmp12-lab">'+esc(T[r.key])+'<small>'+esc(r.hint?T[r.hint]:(r.better==='low'?T.better_low:r.better==='high'?T.better_high:T.neutral))+(med!=null&&!r.noDelta?' · '+esc(T.median)+' '+esc(r.get?fPct(med):r.fmt(med)):'')+'</small></div>';
+      h+='<div class="cmp12-lab">'+esc(T[r.key])+(T.sub&&T.sub[r.key]?'<small>'+esc(T.sub[r.key])+'</small>':'')+'<small>'+esc(r.hint?T[r.hint]:(r.better==='low'?T.better_low:r.better==='high'?T.better_high:T.neutral))+(med!=null&&!r.noDelta?' · '+esc(T.median)+' '+esc(r.get?fPct(med):r.fmt(med)):'')+'</small></div>';
       snaps.forEach(function(s,i){
         var v=r.get?r.get(s):s.k[r.key];
         if(v==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(T.na)+'</div>';return;}
         var delta=(med!=null&&r.key!=='score'&&!r.noDelta)?v-med:null,dTxt='';
-        if(delta!=null&&Math.abs(delta)>0.0001){var sign=delta>0?'+':'−';dTxt=r.key==='ca'||r.key==='caM'||r.key==='ticket'||r.key==='res'||r.key==='resM'?sign+(r.key==='ticket'?fEur2(Math.abs(delta)):fEur(Math.abs(delta))):sign+(r.key==='cmd'?fNum(Math.abs(delta),1):fPct(Math.abs(delta)).replace(' %',' pt'));}
+        if(delta!=null&&Math.abs(delta)>0.0001){var amount=r.key==='ticket'?fEur2(Math.abs(delta)):r.key==='cmd'?fNum(Math.abs(delta),1):fPct(Math.abs(delta)).replace('\u00a0%','\u00a0pt');var good=r.better==='neutral'?null:(r.better==='high'?delta>0:delta<0);dTxt=amount+' '+(delta>0?T.above:T.below)+(good==null?'':' \u00b7 '+(good?T.good:T.bad));}
         var bar=r.bar?'<div class="cmp12-bar"><i data-w="'+Math.max(0,Math.min(100,r.bar(v)/r.max*100)).toFixed(1)+'"></i></div>':'';
-        h+='<div class="cmp12-val cmp12-col'+(i===best?' best':'')+'" style="--i:'+i+'" data-best="'+esc(T.best)+'">'+esc(r.fmt(v,s))+(r.note?'<em>'+esc(r.note(v,s))+'</em>':'')+(dTxt?'<em>'+esc(dTxt)+' / '+esc(T.median)+'</em>':'')+bar+'</div>';
+        h+='<div class="cmp12-val cmp12-col'+(i===best?' best':'')+'" style="--i:'+i+'" data-best="'+esc(T.best)+'">'+esc(r.fmt(v,s))+(r.note?'<em>'+esc(r.note(v,s))+'</em>':'')+(dTxt?'<em>'+esc(dTxt)+'</em>':'')+(i===best?'<small class="cmp12-why">\u2605 '+esc(T.best)+(T.why&&T.why[r.key]?' \u00b7 '+esc(T.why[r.key]):'')+'</small>':'')+bar+'</div>';
       });
     });
     h+='</div></div>';
