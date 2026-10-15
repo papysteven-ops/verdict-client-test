@@ -1,0 +1,71 @@
+/* C51 — « Nouvelle version disponible » : plus jamais besoin de supprimer et réinstaller l'appli.
+   - L'appli vérifie s'il existe une nouvelle version à l'ouverture, au retour au premier plan et toutes les
+     5 minutes (Mac, iPhone, iPad, appli du Dock ou de l'écran d'accueil).
+   - Appli classique (Client, appli Mac locale) : la nouvelle version s'installe en arrière-plan ; dès qu'elle est
+     prête, un bandeau propose « Mettre à jour » (enregistrement des saisies, puis rechargement).
+   - Espace chiffré (Perso, Pilote en ligne) : la version publiée est comparée à celle ouverte.
+   Rien n'est envoyé : seules les pages de l'appli sont relues. */
+(function () {
+  'use strict';
+  if (window.top !== window || window.__verdictMaj) return; window.__verdictMaj = true;
+  var doc = document, PERIODE = 5 * 60 * 1000, ready = false, base = null, timer = 0;
+  var coffre = doc.querySelector('script[data-coffre]');
+  var coffreUrl = coffre ? new URL('coffre.json', new URL(coffre.src, location.href)).href : '';
+
+  function css() {
+    if (doc.getElementById('maj18-css')) return;
+    var s = doc.createElement('style'); s.id = 'maj18-css';
+    s.textContent = '#maj18{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:2147483000;display:flex;align-items:center;gap:12px;width:min(520px,calc(100% - 24px));padding:12px 12px 12px 16px;border-radius:16px;background:#0f172a;color:#fff;box-shadow:0 14px 40px rgba(0,0,0,.35);font:600 14px/1.35 -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;animation:maj18In .35s ease}' +
+      '@keyframes maj18In{from{opacity:0;transform:translate(-50%,-12px)}to{opacity:1;transform:translate(-50%,0)}}' +
+      '#maj18 span{flex:1}#maj18 b{display:block;font-size:15px}#maj18 small{opacity:.75;font-weight:500}' +
+      '#maj18 button{min-height:42px;padding:0 16px;border:0;border-radius:12px;background:#22c55e;color:#04150b;font:800 14px/1 inherit;cursor:pointer;white-space:nowrap}' +
+      '#maj18 button.maj18-later{background:transparent;color:#cbd5e1;padding:0 8px;font-weight:600}';
+    doc.head.appendChild(s);
+  }
+  function banner() {
+    if (doc.getElementById('maj18')) return;
+    css();
+    var b = doc.createElement('div'); b.id = 'maj18'; b.setAttribute('role', 'status');
+    b.innerHTML = '<span><b>Nouvelle version de Verdict</b><small>Vos saisies sont enregistrées avant la mise à jour.</small></span><button type="button" class="maj18-go">Mettre à jour</button><button type="button" class="maj18-later" aria-label="Plus tard">Plus tard</button>';
+    doc.body.appendChild(b);
+    b.querySelector('.maj18-go').onclick = apply;
+    b.querySelector('.maj18-later').onclick = function () { b.remove(); clearTimeout(timer); timer = setTimeout(check, 30 * 60 * 1000); };
+  }
+  function apply() {
+    var btn = doc.querySelector('#maj18 .maj18-go'); if (btn) { btn.disabled = true; btn.textContent = 'Mise à jour…'; }
+    var guard = window.VerdictUpdateGuard && window.VerdictUpdateGuard.prepare ? window.VerdictUpdateGuard.prepare() : Promise.resolve({ ok: true });
+    Promise.resolve(guard).catch(function () { return { ok: true }; }).then(function () { location.reload(); });
+  }
+
+  /* Espace chiffré : la version publiée (coffre.json) a-t-elle changé depuis l'ouverture ? */
+  function checkCoffre() {
+    return fetch(coffreUrl + '?maj=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (m) {
+      if (!m || !m.version) return;
+      if (base === null) { base = m.version; return; }
+      if (m.version !== base) banner();
+    }).catch(function () {});
+  }
+  /* Appli classique : on demande au service worker de vérifier ; la nouvelle version prête prend la main. */
+  function checkWorker() {
+    if (!('serviceWorker' in navigator)) return Promise.resolve();
+    return navigator.serviceWorker.getRegistration().then(function (reg) {
+      if (!reg) return;
+      if (reg.waiting) banner();
+      return reg.update().catch(function () {});
+    }).catch(function () {});
+  }
+  function check() {
+    clearTimeout(timer);
+    if (!doc.hidden && navigator.onLine !== false) (coffreUrl ? checkCoffre() : checkWorker());
+    timer = setTimeout(check, PERIODE);
+  }
+  if (!coffreUrl && 'serviceWorker' in navigator) {
+    var had = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (had) banner(); had = true; });
+  }
+  doc.addEventListener('visibilitychange', function () { if (!doc.hidden) check(); });
+  window.addEventListener('focus', function () { check(); });
+  window.addEventListener('online', function () { check(); });
+  setTimeout(function () { ready = true; check(); }, 4000);
+  window.VerdictMaj = { check: check, banner: banner };
+})();

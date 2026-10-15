@@ -31,13 +31,15 @@
   var pendingWorkerUpdate=null,workerReloadRequested=false;
   var persistQueued=false,persistHandle=0,persistUsesIdle=false;
   var startupVisualFallbackTimer=null;
+  window.__verdictResumed=(function(){try{var s=sessionStorage.getItem('verdict:shell-session');sessionStorage.setItem('verdict:shell-session','1');return !!s;}catch(e){return true;}})();
   var state={
     /* V45 : la langue reste obligatoire, puis les trois métiers deviennent
        immédiatement accessibles dans une seule coque.
        Consolidation 14/10/2026 : le module demandé dans l'adresse, sinon le dernier module enregistré,
        est repris au démarrage (un rechargement ne ramène plus Inventaire vers Pilotage). */
-    module:params.get('module')==='inventory'?'inventory':(params.get('module')||params.get('profile'))?'verdict':(stored.module==='inventory'?'inventory':'verdict'),
-    profile:cleanProfile(params.get('profile')||stored.profile),
+    /* C51 : chaque nouvelle ouverture démarre sur Pilotage › Accueil ; un rechargement pendant l'utilisation reprend l'écran en cours. */
+    module:params.get('module')==='inventory'?'inventory':(params.get('module')||params.get('profile'))?'verdict':(window.__verdictResumed&&stored.module==='inventory'?'inventory':'verdict'),
+    profile:cleanProfile(params.get('profile')||(window.__verdictResumed?stored.profile:'pilotage')),
     renderedProfile:'',
     pendingProfile:null,
     pendingModuleSwitch:null,

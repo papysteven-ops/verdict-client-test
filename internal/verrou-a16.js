@@ -134,6 +134,7 @@
     css(); var el = root(); S.entry = '';
     el.innerHTML = (close ? '<button type="button" class="vr-close" data-close aria-label="Fermer">×</button>' : '') + '<div class="vr-box">' + html + '</div>';
     el.hidden = false; shield(true); dots();
+    hookFrames(); el.tabIndex = -1; try { if (doc.activeElement && doc.activeElement.blur) doc.activeElement.blur(); el.focus({ preventScroll: true }); } catch (x) {}
     var c = el.querySelector('[data-close]'); if (c) c.onclick = function () { hide(); };
   }
   function hide() { var el = root(); el.hidden = true; el.innerHTML = ''; S.mode = ''; shield(false); }
@@ -292,7 +293,22 @@
     if (recent(b)) { e.preventDefault(); e.stopImmediatePropagation(); return; }
     if (b.hasAttribute('data-k')) press(b.getAttribute('data-k'));
   }, true);
-  doc.addEventListener('keydown', function (e) { if (root().hidden) return; if (/^\d$/.test(e.key)) { press(e.key); e.preventDefault(); } else if (e.key === 'Backspace') { press('del'); e.preventDefault(); } }, true);
+  /* Clavier d'ordinateur : la touche physique compte, pas le caractère. Sur un clavier français (AZERTY), la rangée
+     du haut donne « & é " ' ( » sans Maj : Digit1…Digit0 et le pavé numérique valent quand même 1…0. */
+  function onKey(e) {
+    var el = doc.getElementById('vr16'); if (!el || el.hidden) return;
+    var m = /^(?:Digit|Numpad)(\d)$/.exec(e.code || ''), k = m ? m[1] : (/^\d$/.test(e.key) ? e.key : '');
+    if (k) { press(k); e.preventDefault(); e.stopPropagation(); }
+    else if (e.key === 'Backspace' || e.key === 'Delete') { press('del'); e.preventDefault(); e.stopPropagation(); }
+  }
+  doc.addEventListener('keydown', onKey, true);
+  /* Si le curseur est resté dans Pilotage, Carte ou Inventaire (cadres intégrés), les touches y arrivent : on les écoute
+     aussi là, et le verrou reprend le focus dès qu'il s'affiche. */
+  function hookFrames() {
+    [].forEach.call(doc.querySelectorAll('iframe'), function (f) {
+      try { var d = f.contentDocument; if (d && !d.__vr16) { d.__vr16 = true; d.addEventListener('keydown', onKey, true); } } catch (x) {}
+    });
+  }
 
   /* ───────── Verrouillage ───────── */
   function lock(autoBio) { if (!C || !C.hash) return screenCreate(1); S.locked = true; screenUnlock(autoBio); }
@@ -320,7 +336,8 @@
   function start() {
     css();
     if (!C || !C.hash) screenCreate(1); else screenUnlock(true);
-    lockButton(); new MutationObserver(lockButton).observe(doc.body, { childList: true, subtree: true });
+    lockButton(); hookFrames(); [].forEach.call(doc.querySelectorAll("iframe"), function (f) { f.addEventListener("load", function () { setTimeout(hookFrames, 0); }); });
+    new MutationObserver(lockButton).observe(doc.body, { childList: true, subtree: true });
   }
   if (doc.body) start(); else doc.addEventListener('DOMContentLoaded', start);
 
