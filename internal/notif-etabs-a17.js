@@ -59,7 +59,8 @@
       '.ne17-set{margin:0 18px 10px;padding:12px 14px;border:1px solid rgba(148,163,184,.3);border-radius:16px}' +
       '.ne17-set h3{margin:0 0 4px;font-size:15px}.ne17-set p{margin:0 0 8px;font-size:12.5px;opacity:.75}' +
       '.ne17-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid rgba(148,163,184,.18);font-size:14px}' +
-      '.ne17-row select{min-height:36px;border-radius:10px;font:600 13px/1 inherit;padding:0 6px}';
+      '.ne17-row select{min-height:36px;border-radius:10px;font:600 13px/1 inherit;padding:0 6px}' +
+      '.ne17-all{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 6px}.ne17-all span{font-size:12.5px;opacity:.75}.ne17-back{border-color:#22c55e!important}';
     doc.head.appendChild(s);
   }
   var busy = false;
@@ -89,7 +90,13 @@
       var sheet = doc.getElementById('notification-sheet'), tools = sheet && sheet.querySelector('.notification-tools');
       var bar = doc.getElementById('ne17-bar');
       if (!bar && tools) { bar = doc.createElement('div'); bar.id = 'ne17-bar'; bar.className = 'ne17-bar'; tools.parentNode.insertBefore(bar, tools.nextSibling); }
-      if (bar) {
+      /* C53 : les réglages sont un écran à part — la liste se cache, un bouton « Retour » ramène aux notifications. */
+      list.classList.toggle('ne17-hidden', UI.settings);
+      var emptyEl = doc.getElementById('notification-empty'); if (emptyEl) emptyEl.classList.toggle('ne17-hidden', UI.settings);
+      if (bar && UI.settings) {
+        var back = '<button type="button" class="ne17-chip ne17-back" data-settings aria-pressed="false">← Retour aux notifications</button>';
+        if (bar.innerHTML !== back) bar.innerHTML = back;
+      } else if (bar) {
         var chips = '<button type="button" class="ne17-chip" data-f="all" aria-pressed="' + (UI.filter === 'all') + '">Tous<b>' + visibleUnread + '</b></button>' +
           (order.length > 1 ? order.map(function (k) { var g = groups[k]; return '<button type="button" class="ne17-chip" data-f="' + esc(k) + '" aria-pressed="' + (UI.filter === k) + '">' + (k === cur ? '● ' : '') + esc(g.site.name) + '<b>' + g.unread + '</b></button>'; }).join('') : '') +
           '<button type="button" class="ne17-chip" data-settings aria-pressed="' + UI.settings + '">⚙ Réglages</button>';
@@ -115,6 +122,7 @@
     var list = etabs(), p = prefs(), seen = {};
     (center() ? center().getItems() : []).forEach(function (it) { var s = siteOf(it); if (!list.some(function (e) { return e.key === s.key; }) && !seen[s.key]) { seen[s.key] = 1; list.push(s); } });
     var html = '<h3>Notifications par établissement</h3><p>« Urgences seulement » laisse passer les ruptures et les alertes d’accès. Rien n’est effacé : réactivez un établissement pour revoir ses notifications.</p>' +
+      '<div class="ne17-all"><span>Pour tous :</span>' + LEVELS.map(function (l) { return '<button type="button" class="ne17-chip" data-all="' + l[0] + '">' + l[1] + '</button>'; }).join('') + '</div>' +
       list.map(function (e) { return '<label class="ne17-row"><span>' + esc(e.name) + (e.demo ? ' <small style="opacity:.6">démonstration</small>' : '') + '</span><select data-site="' + esc(e.key) + '">' + LEVELS.map(function (l) { return '<option value="' + l[0] + '"' + ((p[e.key] || 'all') === l[0] ? ' selected' : '') + '>' + l[1] + '</option>'; }).join('') + '</select></label>'; }).join('');
     if (box.getAttribute('data-html') !== html) { box.innerHTML = html; box.setAttribute('data-html', html); }
   }
@@ -126,7 +134,14 @@
   });
   doc.addEventListener('click', function (e) {
     var chip = e.target.closest && e.target.closest('#ne17-bar .ne17-chip');
-    if (chip) { if (chip.hasAttribute('data-settings')) UI.settings = !UI.settings; else UI.filter = chip.getAttribute('data-f'); decorate(); return; }
+    if (chip) { if (chip.hasAttribute('data-settings')) UI.settings = !UI.settings; else UI.filter = chip.getAttribute('data-f'); decorate(); var top = doc.getElementById('notification-sheet'); if (top) top.scrollTop = 0; return; }
+    /* Tout régler d'un coup (beaucoup d'établissements), puis choisir ceux à garder un par un. */
+    var bulk = e.target.closest && e.target.closest('#ne17-set [data-all]');
+    if (bulk) {
+      var v = bulk.getAttribute('data-all'), p = {};
+      if (v !== 'all') [].forEach.call(doc.querySelectorAll('#ne17-set select[data-site]'), function (s) { p[s.getAttribute('data-site')] = v; });
+      savePrefs(p); decorate(); return;
+    }
     /* Ouvrir une notification : d'abord SON établissement (capture, avant l'ouverture du module). */
     var card = e.target.closest && e.target.closest('#notification-list .notification-item'); if (!card) return;
     if (e.target.closest('.notification-delete,.notification-secondary,summary,details')) return;

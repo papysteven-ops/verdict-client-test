@@ -10,6 +10,8 @@
 (function () {
   'use strict';
   if (window.__verdictVerrou) return; window.__verdictVerrou = true;
+  /* Page affichée dans une autre page Verdict déjà verrouillée (atelier dans le Pilote) : un seul verrou, celui du haut. */
+  try { if (window.top !== window && window.top.__verdictVerrou) return; } catch (e) {}
   var doc = document, KEY = 'verdict:verrou:v1', ITER = 310000, LEN = 6;
   var DELAIS = [[0, 'Immédiatement'], [60, 'Après 1 minute'], [300, 'Après 5 minutes'], [900, 'Après 15 minutes']];
   var PALIERS = [0, 0, 0, 0, 0, 60, 300, 900, 3600];
@@ -327,7 +329,7 @@
 
   /* Bouton 🔒 dans l'en-tête (à côté des notifications). */
   function lockButton() {
-    var host = doc.querySelector('.shell-actions'); if (!host || host.querySelector('.vr16-lockbtn')) return;
+    var host = doc.querySelector('.shell-actions') || doc.querySelector('.topbar'); if (!host || host.querySelector('.vr16-lockbtn')) return;
     var ref = host.querySelector('button'), b = doc.createElement('button');
     b.type = 'button'; b.className = 'vr16-lockbtn ' + (ref ? ref.className.replace(/\bnotification-button\b/, '') : ''); b.setAttribute('aria-label', 'Sécurité et verrouillage');
     b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
