@@ -131,6 +131,7 @@
   function msg(t) { var m = root().querySelector('.vr-msg'); if (m) m.textContent = t || ''; }
   function shake() { var d = root().querySelector('.vr-dots'); if (!d) return; d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); try { navigator.vibrate && navigator.vibrate([40, 40, 40]); } catch (e) {} }
   function show(html, close) {
+    if (window.__vrlog) window.__vrlog('show ' + S.mode);
     css(); var el = root(); S.entry = '';
     el.innerHTML = (close ? '<button type="button" class="vr-close" data-close aria-label="Fermer">×</button>' : '') + '<div class="vr-box">' + html + '</div>';
     el.hidden = false; shield(true); dots();
@@ -277,6 +278,12 @@
   /* Un appui = un chiffre : la touche réagit dès que le doigt (ou la souris) se pose ; le clic qui suit ce même
      appui est ignoré. Les autres boutons réagissent au doigt levé. Le clic seul (clavier, Entrée) reste accepté. */
   var TAP = '#vr16 button, #vr16 input[type=checkbox]';
+  /* VRDEBUG — diagnostic temporaire, visible seulement avec ?vrdebug=1 dans l'adresse. */
+  if (/vrdebug=1/.test(location.search)) {
+    var DL = []; window.__vrlog = function (t) { DL.push((Date.now() % 100000) + ' ' + t); DL = DL.slice(-14); var p = doc.getElementById('vrdbg'); if (!p) { p = doc.createElement('pre'); p.id = 'vrdbg'; p.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;margin:0;max-height:38vh;overflow:auto;background:rgba(0,0,0,.85);color:#0f0;font:11px/1.25 monospace;padding:6px;pointer-events:none'; doc.documentElement.appendChild(p); } p.textContent = DL.join('\n'); };
+    ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'click', 'pointercancel', 'touchcancel'].forEach(function (t) { doc.addEventListener(t, function (e) { var b = e.target.closest && e.target.closest('#vr16 [data-k]'); window.__vrlog(t + ' ' + (e.pointerType || '') + ' k=' + (b ? b.getAttribute('data-k') : '-') + ' trusted=' + e.isTrusted + ' entry=' + S.entry.length); }, true); });
+    window.addEventListener('pagehide', function () { window.__vrlog('pagehide'); }); doc.addEventListener('visibilitychange', function () { window.__vrlog('visibility ' + doc.visibilityState); });
+  }
   function recent(b) { return b.__vrAt && Date.now() - b.__vrAt < 1000; }
   doc.addEventListener('pointerdown', function (e) {
     var b = e.target.closest && e.target.closest('#vr16 [data-k]'); if (!b || b.disabled) return;
