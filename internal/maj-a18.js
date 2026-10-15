@@ -106,6 +106,14 @@
     if (!doc.hidden && navigator.onLine !== false) (coffreUrl ? checkCoffre() : checkWorker());
     timer = setTimeout(check, PERIODE);
   }
+  /* C64 : la nouvelle version demande si cette fenêtre sait se mettre à jour ; oui → alerte habituelle (jamais de
+     rechargement imposé pendant une saisie). Sans réponse (ancienne version), elle prendrait la main d'elle-même. */
+  if (!coffreUrl && 'serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.addEventListener('message', function (e) { if (e.data && e.data.type === 'verdict-maj-presence' && e.source) try { e.source.postMessage({ type: 'verdict-maj-present' }); } catch (x) {} });
+      navigator.serviceWorker.startMessages();
+    } catch (e) {}
+  }
   if (!coffreUrl && 'serviceWorker' in navigator) {
     var had = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('controllerchange', function () { if (applying) return location.reload(); if (had) banner(); had = true; });
