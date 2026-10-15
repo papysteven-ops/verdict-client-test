@@ -272,7 +272,20 @@
       else if (S.mode === 'verify-change') checkCode(code).then(function (ok) { if (ok) screenCreate(1); else { S.entry = ''; dots(); shake(); msg('Code incorrect.'); } });
     }, 120);
   }
-  doc.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('#vr16 [data-k]'); if (b) press(b.getAttribute('data-k')); }, true);
+  /* Sur iPhone, l'appli neutralise certains « clics » issus du toucher : le verrou réagit donc au doigt levé
+     (pointerup), et ignore le clic natif qui pourrait suivre, pour ne jamais compter une touche deux fois. */
+  var TAP = '#vr16 button, #vr16 input[type=checkbox]';
+  doc.addEventListener('pointerup', function (e) {
+    var b = e.target.closest && e.target.closest(TAP); if (!b || b.disabled || e.pointerType === 'mouse') return;
+    S.tapAt = Date.now();
+    if (b.hasAttribute('data-k')) press(b.getAttribute('data-k')); else b.click();
+  }, true);
+  doc.addEventListener('click', function (e) {
+    if (!e.isTrusted) return;
+    var b = e.target.closest && e.target.closest(TAP); if (!b) return;
+    if (Date.now() - (S.tapAt || 0) < 700) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    if (b.hasAttribute('data-k')) press(b.getAttribute('data-k'));
+  }, true);
   doc.addEventListener('keydown', function (e) { if (root().hidden) return; if (/^\d$/.test(e.key)) { press(e.key); e.preventDefault(); } else if (e.key === 'Backspace') { press('del'); e.preventDefault(); } }, true);
 
   /* ───────── Verrouillage ───────── */
