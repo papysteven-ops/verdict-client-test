@@ -144,7 +144,9 @@
   }
   function etat() {
     return Promise.all([versionCourante(), versionPubliee()]).then(function (v) {
-      return { courante: v[0], publiee: v[1], aJour: !!(v[0] && v[1] && v[0] === v[1]), texte: 'Version ' + court(v[0]) + (v[1] ? (v[0] === v[1] ? ' · à jour' : ' · nouvelle version ' + court(v[1]) + ' disponible') : ' · hors ligne') };
+      /* Le service worker donne le nom complet (« verdict-v2-client-a10-… »), le fichier publié sa fin : on compare l'empreinte. */
+      var same = !!(v[0] && v[1] && court(v[0]) === court(v[1]));
+      return { courante: v[0], publiee: v[1], aJour: same, texte: 'Version ' + court(v[0]) + (v[1] ? (same ? ' · à jour' : ' · nouvelle version ' + court(v[1]) + ' disponible') : ' · hors ligne') };
     });
   }
   function reparer() {
