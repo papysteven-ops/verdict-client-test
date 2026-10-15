@@ -48,7 +48,7 @@
     var id = String(item.establishmentId || ''), nm = norm(item.establishmentName), list = etabs();
     for (var i = 0; i < list.length; i++) if (id && list[i].alias.indexOf(id) >= 0) return list[i];
     for (i = 0; i < list.length; i++) if (nm && norm(list[i].name) === nm) return list[i];
-    return { key: id || ('nom:' + nm) || 'autre', name: item.establishmentName || 'Sans établissement', alias: [id], demo: !!item.demo };
+    return { key: id || ('nom:' + nm) || 'autre', name: item.establishmentName || 'Verdict', systeme: !id && !nm, alias: [id], demo: !!item.demo };
   }
   function currentKey() {
     var c = shell() && shell().getContext && shell().getContext(); if (!c) return '';
@@ -93,7 +93,7 @@
         var e = byId[card.dataset.notificationId]; if (!e) return;
         var ok = shown(e.item, e.site) && (UI.filter === 'all' || UI.filter === e.site.key);
         card.classList.toggle('ne17-hidden', !ok);
-        if (!card.querySelector('.ne17-etab')) {
+        if (!card.querySelector('.ne17-etab') && !e.site.systeme) {
           var tag = doc.createElement('div'); tag.className = 'ne17-etab' + (e.site.key === cur ? ' cur' : '');
           tag.textContent = (e.site.key === cur ? '● ' : '🏢 ') + e.site.name + (e.site.key === cur ? ' · affiché' : '');
           card.insertBefore(tag, card.firstChild);

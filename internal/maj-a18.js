@@ -22,15 +22,34 @@
       '#maj18 button.maj18-later{background:transparent;color:#cbd5e1;padding:0 8px;font-weight:600}';
     doc.head.appendChild(s);
   }
+  /* C56 : toutes les fenêtres ouvertes de la même appli se tiennent au courant (un « Plus tard » ferme le bandeau partout). */
+  var canal = null; try { canal = new BroadcastChannel('verdict-maj'); canal.onmessage = function (e) { if (e.data === 'plus-tard') later(true); }; } catch (e) {}
+  var NOTIF_ID = 'maj:nouvelle-version', postponed = false;
+  function centre() { var s = window.VerdictUnifiedShell; return s && s.notifications; }
   function banner() {
-    if (doc.getElementById('maj18')) return;
+    if (doc.getElementById('maj18') || postponed) return;
     css();
     var b = doc.createElement('div'); b.id = 'maj18'; b.setAttribute('role', 'status');
     b.innerHTML = '<span><b>Nouvelle version de Verdict</b><small>Vos saisies sont enregistrées avant la mise à jour.</small></span><button type="button" class="maj18-go">Mettre à jour</button><button type="button" class="maj18-later" aria-label="Plus tard">Plus tard</button>';
     doc.body.appendChild(b);
     b.querySelector('.maj18-go').onclick = apply;
-    b.querySelector('.maj18-later').onclick = function () { b.remove(); clearTimeout(timer); timer = setTimeout(check, 30 * 60 * 1000); };
+    b.querySelector('.maj18-later').onclick = function () { later(false); };
   }
+  /* « Plus tard » : le bandeau se ferme (dans toutes les fenêtres) et la mise à jour attend dans les notifications. */
+  function later(fromOther) {
+    postponed = true; var b = doc.getElementById('maj18'); if (b) b.remove();
+    if (!fromOther && canal) try { canal.postMessage('plus-tard'); } catch (e) {}
+    var c = centre();
+    if (c && c.ingest) c.ingest({ id: NOTIF_ID, source: 'Verdict', module: 'verdict', level: 'info', title: 'Nouvelle version de Verdict disponible', detail: 'Mettez à jour quand vous voulez : vos saisies sont enregistrées avant.', actionLabel: 'Mettre à jour', proof: 'Une nouvelle version a été publiée et téléchargée sur cet appareil.', createdAt: new Date().toISOString(), forceUnread: true });
+  }
+  /* Ouvrir cette notification = mettre à jour (avant l'action habituelle du centre). */
+  doc.addEventListener('click', function (e) {
+    var card = e.target.closest && e.target.closest('#notification-list .notification-item[data-notification-id="' + NOTIF_ID + '"]');
+    if (!card || e.target.closest('.notification-delete,.notification-secondary,summary,details')) return;
+    e.preventDefault(); e.stopImmediatePropagation(); var c = centre(); if (c && c.remove) c.remove(NOTIF_ID); apply();
+  }, true);
+  /* Une ouverture charge toujours la dernière version : la notification d'une mise à jour déjà faite disparaît. */
+  setTimeout(function () { var c = centre(); if (c && c.getItems && c.getItems().some(function (i) { return i.id === NOTIF_ID; }) && !postponed) c.remove(NOTIF_ID); }, 1500);
   function apply() {
     var btn = doc.querySelector('#maj18 .maj18-go'); if (btn) { btn.disabled = true; btn.textContent = 'Mise à jour…'; }
     var guard = window.VerdictUpdateGuard && window.VerdictUpdateGuard.prepare ? window.VerdictUpdateGuard.prepare() : Promise.resolve({ ok: true });
