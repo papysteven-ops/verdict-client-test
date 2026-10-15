@@ -80,6 +80,28 @@
     '#decBody{display:flex!important;flex-direction:column}#decBody>#decRegistre,#decBody>#journalGains{order:20}' +
     '#decBody>#vsModule{display:none!important}' +
     '#decBody>.card:not(.dec-best):not(.dec-card):not(#decRegistre):not(#journalGains):has(~ #decBestCard){display:none!important}';
+  /* C79 — Plus de grand vide en haut de Simuler (réserve de 174 px prévue pour l'ancienne barre d'onglets). Et le
+     bouton « Utiliser comme point de départ » se voit tout de suite : vert, halo lumineux qui pulse, main qui tape,
+     et une phrase qui dit ce qui va se passer — un client qui ne connaît pas l'appli ne peut plus le manquer. */
+  css.textContent +=
+    '#v-dec{padding-top:18px!important}' +
+    '#decBestCard .vd-cta{position:relative;display:flex!important;align-items:center;justify-content:center;width:100%;min-height:58px;padding:0 54px!important;border:0!important;border-radius:16px!important;background:linear-gradient(180deg,#22c55e,#16a34a)!important;color:#ffffff!important;font-weight:800!important;font-size:17px!important;letter-spacing:.01em;cursor:pointer;animation:vdHalo 1.8s ease-out infinite;transition:transform .15s ease,filter .15s ease}' +
+    '#decBestCard .vd-cta:hover{filter:brightness(1.08);transform:translateY(-1px)}#decBestCard .vd-cta:active{transform:scale(.98)}' +
+    '#decBestCard .vd-cta::after{content:"\\1F446";position:absolute;right:16px;top:50%;margin-top:-13px;font-size:24px;line-height:26px;animation:vdTape 1.2s ease-in-out infinite}' +
+    '#decBestCard .vd-cta-hint{margin:10px 2px 2px;text-align:center;font-size:13.5px;font-weight:600;color:#16a34a}html.vd-workspace-dark #decBestCard .vd-cta-hint{color:#4ade80}' +
+    '@keyframes vdHalo{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6),0 0 16px rgba(34,197,94,.35)}70%{box-shadow:0 0 0 14px rgba(34,197,94,0),0 0 30px rgba(34,197,94,.55)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0),0 0 16px rgba(34,197,94,.35)}}' +
+    '@keyframes vdTape{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-6px) rotate(-8deg) scale(1.08)}}' +
+    '@media (prefers-reduced-motion:reduce){#decBestCard .vd-cta,#decBestCard .vd-cta::after{animation:none}#decBestCard .vd-cta{box-shadow:0 0 0 3px rgba(34,197,94,.45),0 0 22px rgba(34,197,94,.45)}}' +
+    '@media (min-width:900px){#decBestCard .vd-cta{min-height:62px;font-size:18px}}';
+  function marquerCTA() {
+    var c = doc.getElementById('decBestCard'); if (!c) return;
+    var b = [].filter.call(c.querySelectorAll('button'), function (x) { return /Utiliser comme point de d/.test(x.textContent); })[0];
+    if (!b || b.classList.contains('vd-cta')) return;
+    b.classList.add('vd-cta');
+    var h = doc.createElement('div'); h.className = 'vd-cta-hint'; h.textContent = 'Touchez ici : Verdict applique ces leviers et vous montre le résultat, étape par étape.';
+    b.parentNode.insertBefore(h, b.nextSibling);
+  }
+  try { var corps = doc.getElementById('v-dec'); if (corps) new MutationObserver(marquerCTA).observe(corps, { childList: true, subtree: true }); marquerCTA(); } catch (e) {}
   if (typeof w.mainNavView === 'function') { var nav0 = w.mainNavView; w.mainNavView = function (v) { if (v === 'dec') { titreSimuler(); return 'dec'; } return nav0.apply(this, arguments); }; }
   if (typeof w.actBarHTML === 'function') {
     var bar0 = w.actBarHTML;
