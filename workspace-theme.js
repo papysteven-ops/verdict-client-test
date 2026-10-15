@@ -7,14 +7,14 @@
   var button = document.createElement('button');
   button.className = 'workspace-theme-button';
   /* C67 — Comme sur mobile, partout : un petit carré avec une icône au lieu du texte « Mode sombre / Mode clair ».
-     Fond sombre dans les deux modes ; seul le symbole est en couleur : lune blanche éclatante (passer en sombre),
+     Même contour que les 3 autres boutons ; mode clair : lune blanche lumineuse sur fond noir ; mode sombre : soleil lumineux sur fond blanc : lune blanche éclatante (passer en sombre),
      soleil lumineux (passer en clair). Les 4 boutons du bas tiennent ainsi sur une ligne sur grand écran. */
   button.id = 'vd-theme-btn';
   var MOON = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="#ffffff" d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a.6.6 0 0 0-.8-.7A9.6 9.6 0 1 0 21.2 15.4a.6.6 0 0 0-.7-.8z"/></svg>';
   var SUN = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="#fcd34d"/><g stroke="#fcd34d" stroke-width="2.2" stroke-linecap="round"><path d="M12 1.8v2.6M12 19.6v2.6M1.8 12h2.6M19.6 12h2.6M4.8 4.8l1.8 1.8M17.4 17.4l1.8 1.8M4.8 19.2l1.8-1.8M17.4 6.6l1.8-1.8"/></g></svg>';
   try {
     var st = document.createElement('style'); st.id = 'vd-theme-btn-css';
-    st.textContent = '#vd-theme-btn{width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;min-height:40px!important;padding:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 40px!important;background:#141b22!important;border:1px solid #2b3644!important;border-radius:12px!important;color:#fff!important;font-size:0!important;line-height:0!important}' +
+    st.textContent = '#vd-theme-btn{width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;min-height:40px!important;padding:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 40px!important;background:#0b0d10!important;color:#fff!important;font-size:0!important;line-height:0!important}#vd-theme-btn.vd-sun{background:#ffffff!important}' +
       '#vd-theme-btn svg{display:block;filter:drop-shadow(0 0 4px rgba(255,255,255,.55))}#vd-theme-btn.vd-sun svg{filter:drop-shadow(0 0 6px rgba(252,211,77,.85))}' +
       '.shell-actions{flex-wrap:nowrap!important;gap:8px!important}.shell-actions>button{width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;padding:0!important;flex:0 0 40px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important}';
     (document.head || document.documentElement).appendChild(st);
