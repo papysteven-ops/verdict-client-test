@@ -93,6 +93,25 @@
     '@keyframes vdTape{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-6px) rotate(-8deg) scale(1.08)}}' +
     '@media (prefers-reduced-motion:reduce){#decBestCard .vd-cta,#decBestCard .vd-cta::after{animation:none}#decBestCard .vd-cta{box-shadow:0 0 0 3px rgba(34,197,94,.45),0 0 22px rgba(34,197,94,.45)}}' +
     '@media (min-width:900px){#decBestCard .vd-cta{min-height:62px;font-size:18px}}';
+  /* C81 — Après « Utiliser comme point de départ » : l'écran du score et la lecture guidée étaient pensés pour le
+     sombre ; en mode clair ils gardaient des voiles gris foncé et des textes éteints. Styles clairs dédiés (blanc,
+     gris très clair, vert clair), et « Indice de sérénité Verdict » ne déborde plus du cadran. */
+  css.textContent +=
+    '.dec-reveal-score span{max-width:104px;text-align:center;font-size:8.5px!important;letter-spacing:.07em!important;line-height:1.25!important}' +
+    'html.vd-workspace-light .dec-reveal-dial{background:conic-gradient(var(--dec-tone) var(--dec-progress),#e5e9ef 0)!important;filter:drop-shadow(0 10px 22px rgba(15,23,42,.14))!important}' +
+    'html.vd-workspace-light .dec-reveal-dial:before{background:radial-gradient(circle at 50% 30%,#ffffff,#f6f8fa 70%)!important;box-shadow:inset 0 0 0 1px #e3e8ee!important}' +
+    'html.vd-workspace-light .dec-reveal-score span{color:#64748b!important}html.vd-workspace-light .dec-reveal-score em{color:#64748b!important}' +
+    'html.vd-workspace-light .dec-reveal-score b{color:color-mix(in srgb,var(--dec-tone) 78%,#000)!important;text-shadow:none!important}' +
+    'html.vd-workspace-light .dec-reveal-pos{background:#f6f8fa!important;border:1px solid #e3e8ee!important}' +
+    'html.vd-workspace-light .dec-reveal-pos.after{background:color-mix(in srgb,var(--dec-tone) 9%,#ffffff)!important;border-color:color-mix(in srgb,var(--dec-tone) 45%,#ffffff)!important}' +
+    'html.vd-workspace-light .dec-reveal-pos>small,html.vd-workspace-light .dec-reveal-metric span{color:#64748b!important}html.vd-workspace-light .dec-reveal-metric b{color:#0f172a!important}' +
+    'html.vd-workspace-light .dec-reveal-pos.after .dec-reveal-metric b{color:color-mix(in srgb,var(--dec-tone) 78%,#000)!important}' +
+    'html.vd-workspace-light .dec-scene{background:radial-gradient(circle at 88% 5%,rgba(96,165,250,.10),transparent 34%),linear-gradient(160deg,#f0fdf4,#ffffff 55%)!important;border-color:#bbf7d0!important;color:#0f172a!important}' +
+    'html.vd-workspace-light .dec-scene-step{background:#ffffff!important;border:1px solid #e3e8ee!important;box-shadow:0 1px 2px rgba(15,23,42,.05),0 6px 16px rgba(15,23,42,.05)!important;color:#0f172a!important}' +
+    'html.vd-workspace-light .dec-scene-step small,html.vd-workspace-light .dec-scene-step .k,html.vd-workspace-light .dec-scene-step p{color:#64748b!important}' +
+    'html.vd-workspace-light .dec-scene-pos{background:#f6f8fa!important;border:1px solid #e3e8ee!important}html.vd-workspace-light .dec-scene-pos.after{background:#effaf3!important;border-color:#bbf7d0!important}' +
+    'html.vd-workspace-light .dec-scene-pos small,html.vd-workspace-light .dec-scene-row span{color:#64748b!important}html.vd-workspace-light .dec-scene-row b{color:#0f172a!important}html.vd-workspace-light .dec-scene-pos.after .dec-scene-row b{color:#15803d!important}' +
+    'html.vd-workspace-light .dec-scene-chip{background:#ecfdf3!important;border-color:#bbf7d0!important;color:#166534!important}';
   function marquerCTA() {
     var c = doc.getElementById('decBestCard'); if (!c) return;
     var b = [].filter.call(c.querySelectorAll('button'), function (x) { return /Utiliser comme point de d/.test(x.textContent); })[0];
