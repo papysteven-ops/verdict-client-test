@@ -352,6 +352,12 @@ if(window.VERDICT_MODELES_PROFONDS&&window.VERDICT_MODELES_PROFONDS.models){
  m.plats.forEach(function(p){p[3]=Math.round(p[3]*.65);if(p[1]==="Plat")p[2]=Math.round((p[2]+2)*100)/100;});
 })();
 var VERDICT_ENGINE_CONTRACT="verdict-engine-2026.09.01-p6";
+/* C40-calibrage-2025 — modèles fictifs recalés sur l'Observatoire UMIH / Ordre des experts-comptables (exercice 2025,
+   publié en août 2026) : résultat moyen 4,50 % du CA en restauration traditionnelle, 3,92 % en rapide, médiane bien plus basse,
+   au moins 25 % d'entreprises déficitaires. Seule la ligne « Autres charges fixes » (f10, par mois) change : charges souvent
+   oubliées (cotisations du dirigeant, intérêts, impôts et taxes). Recettes, prix et cartes intacts. La Brasserie reste à 6,9 %. */
+var VERDICT_CALIBRAGE_2025={source:'Observatoire UMIH / OEC 2025 (56.10A, 56.10C)',f10:{Pizzeria:6800,Kebab:4310.32,Boulangerie:5278.49,BarRestaurant:5379.49,SaisonnierMer:10697.16,Burger:1124.12,FoodTruck:1352.89,Asiatique:1351.62,Italien:2166.28,Traiteur:1928.8,CoffeeShop:2525.87}};
+(function(){Object.keys(VERDICT_CALIBRAGE_2025.f10).forEach(function(k){if(MODELES[k]&&MODELES[k].in)MODELES[k].in.f10=VERDICT_CALIBRAGE_2025.f10[k];});})();
 var MODELE_ORDER=["Brasserie","Traditionnel","Boulangerie","Pizzeria","Burger","FoodTruck","BarRestaurant","Kebab","Asiatique","Italien","Traiteur","CoffeeShop","Gastro","SaisonnierMer","DarkKitchen","Palace"];
 var MODELE_PRIORITY_WEIGHT={Brasserie:5,Traditionnel:5,Boulangerie:5,Pizzeria:5,Burger:5,
   BarRestaurant:4,Kebab:4,Asiatique:4,Italien:4,Traiteur:3,CoffeeShop:3,Gastro:3,
@@ -8348,7 +8354,7 @@ function p11LibellePoste(base){
 }
 function p11PhraseSituation(R){
   if(!R||!R.ready)return null;
-  var rnRepere=8,rn=R.v.rn,zoneRn=rn>=rnRepere?'conforme au repère':(rn>=0?'en retrait par rapport au repère':'en perte');
+  /* C40 : repère = moyenne nationale 2025 du type (Observatoire UMIH/OEC : 4,5 % traditionnel, 3,9 % rapide). */var rnRepere=(/dark|kebab|burger|food ?truck|snack|coffee|boulanger|rapide|emporter|livraison|fast/i.test(String((typeof DB!=='undefined'&&DB&&DB.etabType)||''))?3.9:4.5),rn=R.v.rn,zoneRn=rn>=rnRepere?'conforme au repère':(rn>=0?'en retrait par rapport au repère':'en perte');
   var D=null,top=null;try{D=DecisionEngine.PrioritiesEngine.decision(DB);top=D&&D.top;}catch(e){}
   var base='Marge avant impôt '+zoneRn+' ('+p11Pct(rn)+')';
   if(!top)return base+'.';

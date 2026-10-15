@@ -22,7 +22,7 @@ var LABELS_INVENTORY={spaces:'Produits et comptages',meta:'Zones',sites:'Sites',
   priceHistory:'Prix',purchaseOrders:'Commandes',needs:'Besoins',orderingSettings:'Réglages des commandes',suppliersBySite:'Fournisseurs',
   supplyIncidents:'Incidents fournisseurs',countAudit:'Produits et comptages',level:'Niveau d’activité',space:'Zone affichée',site:'Site affiché'};
 
-var DERIVED={operationsBySite:1,performancePlans:1,performanceYearPlans:1,performanceAccountingAnchors:1,performanceTrackingStartedAt:1,businessTimezone:1,veraUpdatedAt:1,_safety:1,generatedAt:1,fingerprint:1};
+var DERIVED={cpCostWatch:1,cpCostLog:1,cpDishHistory:1,cpMemoryDishes:1,operationsBySite:1,performancePlans:1,performanceYearPlans:1,performanceAccountingAnchors:1,performanceTrackingStartedAt:1,businessTimezone:1,veraUpdatedAt:1,_safety:1,generatedAt:1,fingerprint:1};
 var S={mode:'',editAt:0,base:null,baseFull:null,baseId:null,stale:true,touched:false,busy:0,bypass:0,gestureAt:0,commitClickAt:0,asking:null,barTimer:0};
 
 /* ───────── Adaptateurs : où sont les données, comment les remettre ───────── */
