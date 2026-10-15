@@ -242,7 +242,7 @@ function proposeMenu(o){
 }
 function applyMenu(plan,choices){
   var d=DB(),changed=0,ids=[];choices=choices||{};
-  plan.categories.forEach(function(c){c.decisions.forEach(function(dec){if(choices[dec.p.id]===false)return;
+  plan.categories.forEach(function(c){c.decisions.forEach(function(dec){if(choices[dec.p.id]===false){if(dec.action==='keep')ids.push(dec.p.id);return;}
     if(dec.action==='remove'||dec.action==='replace')ids.push(dec.p.id);
     if(dec.action==='price'){dec.p.ttc=dec.newPrice;changed++;}
     if(dec.action==='replace')addToMenu(dec.rep.p,dec.rep.price);
@@ -360,9 +360,11 @@ function showMenu(out,plan){
   var gain=plan.after-plan.before,mm=plan.months;
   out.innerHTML='<div class="vc-sum">Sur '+esc(monthName(mm[0]))+'–'+esc(monthName(mm[1]))+', d’après les ventes des années passées : contribution estimée <b>'+money(plan.before)+'</b> → <b>'+money(plan.after)+'</b> ('+(gain>=0?'+':'')+money(gain)+').'+(gain<-.005?' Carte plus courte : moins de plats à préparer et à acheter, en échange d’une contribution un peu plus basse.':Math.abs(gain)<=.005?' Votre carte est déjà bien construite pour cette période : Vera ne change rien.':'')+'</div>'+
     plan.categories.map(function(c){return '<div class="vc-card"><h3>'+esc(c.cat)+' <span class="vc-note">'+c.n+' → '+(c.n-c.decisions.filter(function(d){return d.action==='remove';}).length)+' plat(s)'+(c.corridor?' · prix '+money(c.corridor.min)+' à '+money(c.corridor.max):'')+'</span></h3>'+
-      c.decisions.map(function(dec){return '<label class="vc-row"><input type="checkbox" data-id="'+esc(dec.p.id)+'" '+(dec.action==='keep'?'disabled checked':'checked')+'><span><b>'+esc(dec.p.nom)+'<span class="vc-cls '+dec.cls+'">'+CLS[dec.cls]+'</span></b>'+esc(dec.text)+'</span></label>';}).join('')+'</div>';}).join('')+
-    '<p class="vc-note">Vedette : populaire et rentable · Locomotive : populaire, marge plus faible · Discret : rentable, peu vendu · À revoir : ni l’un ni l’autre (méthode Kasavana & Smith). Décochez ce que vous ne voulez pas appliquer. Un plat retiré reste dans la mémoire, avec son coût toujours à jour.</p>'+
+      c.decisions.map(function(dec){return '<label class="vc-row"><input type="checkbox" data-id="'+esc(dec.p.id)+'" checked><span><b>'+esc(dec.p.nom)+'<span class="vc-cls '+dec.cls+'">'+CLS[dec.cls]+'</span></b>'+esc(dec.text)+'</span></label>';}).join('')+'</div>';}).join('')+
+    '<p class="vc-note">Vedette : populaire et rentable · Locomotive : populaire, marge plus faible · Discret : rentable, peu vendu · À revoir : ni l’un ni l’autre (méthode Kasavana & Smith). Cochez précisément ce que vous voulez : décochez un plat pour le retirer de la carte, décochez un changement (prix, remplacement) pour ne pas l’appliquer. Un plat retiré reste dans la mémoire, avec son coût toujours à jour.</p>'+
     '<button class="vc-go" type="button" data-apply>Appliquer cette carte</button>';
+  /* C44 : chaque plat se choisit — un plat conservé mais décoché est retiré de la carte ; le bouton annonce le résultat. */
+  out.addEventListener('change',function(){var rm=0,pr=0;plan.categories.forEach(function(c){c.decisions.forEach(function(dec){var i=out.querySelector('input[data-id="'+dec.p.id+'"]');if(!i)return;if(i.checked){if(dec.action==='remove'||dec.action==='replace')rm++;if(dec.action==='price')pr++;}else if(dec.action==='keep')rm++;});});var b=out.querySelector('[data-apply]');if(b&&!b.disabled)b.textContent='Appliquer cette carte · '+rm+' retrait(s) · '+pr+' prix ajusté(s)';});
   out.querySelector('[data-apply]').addEventListener('click',function(){
     var choices={};[].forEach.call(out.querySelectorAll('input[data-id]'),function(i){choices[i.getAttribute('data-id')]=i.checked;});
     var r=applyMenu(plan,choices);out.querySelector('[data-apply]').textContent='Carte appliquée ✓ · '+r.removed+' retiré(s) · '+r.priced+' prix ajusté(s)';out.querySelector('[data-apply]').disabled=true;
