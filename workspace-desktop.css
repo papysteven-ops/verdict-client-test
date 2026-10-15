@@ -38,7 +38,7 @@
   html:not(.vd-workspace-dark) .workspace-theme-button {background:#f7f9fa!important;color:#17212b!important;border-color:#dbe2e8!important}
   .workspace-theme-button {display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 12px;border:1px solid #42505e;border-radius:11px;background:#1b222b;color:#e6ecf1;cursor:pointer;font-weight:700}
   .workspace-theme-button:focus-visible {outline:2px solid #2563eb;outline-offset:2px}
-  .app-shell-context {position:relative;max-width:100%;height:auto;min-height:36px;padding:8px 12px 8px 26px;flex-direction:column;align-items:flex-start;gap:5px}
+  .app-shell-context {position:relative;left:0;bottom:auto;max-width:100%;height:auto;min-height:36px;padding:8px 12px 8px 26px;flex-direction:column;align-items:flex-start;gap:5px;box-sizing:border-box}
   .app-shell-context .context-dot {position:absolute;left:12px;top:13px}
   .app-shell-context #unified-context {min-width:0;white-space:normal;line-height:1.25}
   .app-shell-context .network-state {white-space:nowrap}
@@ -52,17 +52,22 @@
   .app-shell-header {grid-template-columns:auto minmax(180px,1fr) auto;gap:8px;padding:8px 18px}
   .app-shell-brand span small {display:none}
   .module-tabs {position:absolute;top:81px;left:18px;right:18px;width:auto;z-index:10;box-shadow:0 5px 16px rgba(20,35,50,.08)}
+  /* C41-point : entre 768 et 1099 px le chip devient statique (règle du shell) ; le point bleu absolu s’échappait près du logo. */
+  .app-shell-context .context-dot {display:none}
+  .app-shell-context {padding-left:12px!important}
   #unified-workspace {padding-top:66px}
   .module-panel {top:66px}
 }
 @media (min-width: 1100px) {
   body:not(.shell-startup-locked) {grid-template-rows:minmax(0,1fr);grid-template-columns:220px minmax(0,1fr)}
   .app-shell-header {grid-row:1;grid-column:1;align-self:stretch;min-height:0;height:100%;width:220px;
-    padding:26px 14px 20px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:22px;
+    padding:22px 14px 18px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:14px;
     border-right:1px solid #dbe2e8;border-bottom:0!important}
-  .app-shell-brand {padding:0 7px 8px}.app-shell-brand span small {white-space:normal}
-  .app-shell-context {order:1;flex:none}
-  .app-shell-context {transform:translateY(-26px)}
+  /* C41-barre : colonne propre — logo centré, établissement et onglets sur la même largeur, sans décalage. */
+ .app-shell-brand {padding:0 0 6px;justify-content:center}.app-shell-brand span small {white-space:normal}
+  .app-shell-context {order:1;flex:none;position:relative;left:0;right:auto;bottom:auto;transform:none;width:100%;max-width:100%;margin:0;box-sizing:border-box;min-height:44px;padding:9px 12px 9px 28px;border-radius:14px;overflow:hidden}
+ .app-shell-context .context-dot {left:12px;top:15px}
+ .app-shell-context #unified-context {display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal!important;max-width:100%;font-size:12.5px;font-weight:700}
   .module-tabs {order:2;display:flex;flex-direction:column;gap:5px;padding:6px;width:100%;border-radius:14px}
   .module-tabs button {min-width:0!important;min-height:46px;justify-content:flex-start!important;padding:9px 12px!important}
   .shell-actions {order:3;margin-top:auto;justify-content:space-between}

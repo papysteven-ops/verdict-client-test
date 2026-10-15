@@ -100,7 +100,12 @@
   color:#5f6873;font-size:13px;font-weight:600;padding:8px 12px;border-radius:999px;border:1px solid #262c34}
 #welcome .wc{max-width:400px;margin:6vh auto 0}
 #welcome.anim .wc{animation:wIn .5s cubic-bezier(.2,.8,.3,1)}
-#welcome .wl{font-weight:900;font-size:15px;letter-spacing:-.02em;color:#fff;margin-bottom:34px;text-align:center}
+/* C41-accueil : le logo suit le thème (blanc sur blanc = illisible) ; icône choisie = validation animée ; champs requis. */
+#welcome .wl{font-weight:900;font-size:15px;letter-spacing:-.02em;color:inherit;margin-bottom:34px;text-align:center}
+#welcome.anim .wrow:nth-child(4){animation-delay:.46s}
+.emo button.pick{animation:emoPick 1s cubic-bezier(.2,.8,.3,1) both}
+@keyframes emoPick{0%{transform:scale(1)}18%{transform:scale(1.24);box-shadow:0 0 0 9px rgba(34,197,94,.22);background:rgba(34,197,94,.28)}45%{transform:scale(1.04)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(34,197,94,0);background:rgba(34,197,94,.1)}}
+#welcome label.f input.miss{border-color:#ef4444!important;box-shadow:0 0 0 3px rgba(239,68,68,.18)!important}
 #welcome .wl i{color:#22c55e;font-size:11px;vertical-align:super;font-style:normal}
 #welcome h2{font-size:29px;font-weight:900;letter-spacing:-.035em;line-height:1.15;margin-bottom:12px}
 #welcome p.w{color:#8b94a0;font-size:15px;line-height:1.55;margin-bottom:26px}
@@ -496,7 +501,6 @@ html,body{max-width:100%;overflow-x:hidden}
 <div id="splash"><div class="sl">VERDICT<i>&reg;</i><span class="ss">Inventaire</span></div></div>
 
 <div id="welcome">
-  <button class="skip" onclick="wSkip()">Passer</button>
   <div class="wc" id="w0">
     <div class="wl">VERDICT<i>&reg;</i></div>
     <h2>Votre inventaire,<br>enfin simple.</h2>
@@ -522,6 +526,7 @@ html,body{max-width:100%;overflow-x:hidden}
     <p class="w" id="w2s"></p>
     <div class="wrow"><div class="wi">&#127859;</div><div><b>Plusieurs &eacute;tablissements&nbsp;?</b><span>Le bouton <b>+</b> en haut en ajoute autant que vous le souhaitez &mdash; et vos commandes peuvent se grouper par fournisseur.</span></div></div>
     <div class="wrow"><div class="wi">&#128176;</div><div><b>Le prix d&rsquo;achat est facultatif</b><span>Ajoutez-le quand vous le souhaitez&nbsp;: l&rsquo;appli chiffre alors la valeur de votre stock.</span></div></div>
+    <div class="wrow"><div class="wi">&#128273;</div><div><b>Verdict Pro, c&rsquo;est pour le patron</b><span>Pilotage et Carte sont r&eacute;serv&eacute;s au propri&eacute;taire de l&rsquo;&eacute;tablissement. Un cuisinier ou un membre de l&rsquo;&eacute;quipe qui t&eacute;l&eacute;charge l&rsquo;appli garde l&rsquo;Inventaire, gratuit, mais n&rsquo;a pas acc&egrave;s aux chiffres, &agrave; la carte ni au score.</span></div></div>
     <button class="go" onclick="wDone()">Entrer</button>
   </div>
 </div>
@@ -695,7 +700,7 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
 </style>
 <script data-mono="./shared-inventory-r32.js" src="../../assets/runtime-a10/inventory-010-6ed511ceeed6.js"></script>
 <script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/inventory-011-2f1719a41987.js"></script>
-<script src="../../assets/runtime-a10/inventory-012-d63392f3eeb8.js"></script>
+<script src="../../assets/runtime-a10/inventory-012-01ddfe5f63d9.js"></script>
 <script data-mono="./supplier-ordering-v1.js" src="../../assets/runtime-a10/inventory-013-2f708f216e2f.js"></script>
 <script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-aa8c37adba3f.js"></script>
 <script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-c2eb98a00ba8.js"></script>
