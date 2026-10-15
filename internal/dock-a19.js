@@ -18,3 +18,4 @@
     'html.vd-workspace-dark.premium-fixed-dock body nav.premium-adaptive-dock>button.on{color:#22c55e!important}';
   (doc.head || doc.documentElement).appendChild(s);
 })();
+/* C61 : mise à jour en ligne vérifiée de bout en bout le 15/10 (publication d’essai). */
