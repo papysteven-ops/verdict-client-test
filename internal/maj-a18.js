@@ -83,10 +83,19 @@
     /* C61 : une installation déjà commencée à l'ouverture (avant ce script) est suivie elle aussi. */
     follow(reg.installing);
   }
+  /* C61 : pendant la démonstration, le shell n'enregistre pas le service worker : sans lui, aucune nouvelle version
+     ne pouvait être détectée. Il est enregistré ici (même fichier, même portée que le shell) après 15 s. */
+  var loadedAt = Date.now(), registering = false;
+  function selfRegister() {
+    var c = window.VERDICT_UNIFIED_CONFIG;
+    if (registering || !c || !c.serviceWorker || location.protocol === 'file:' || Date.now() - loadedAt < 15000) return;
+    registering = true;
+    return navigator.serviceWorker.register(c.serviceWorker, { scope: './', updateViaCache: 'none' }).then(watch, function () { registering = false; });
+  }
   function checkWorker() {
     if (!('serviceWorker' in navigator)) return Promise.resolve();
     return navigator.serviceWorker.getRegistration().then(function (reg) {
-      if (!reg) return;
+      if (!reg) return selfRegister();
       watch(reg);
       if (reg.waiting) banner();
       return reg.update().catch(function () {});
