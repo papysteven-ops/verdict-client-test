@@ -31,5 +31,22 @@
       try { return original(Object.assign({}, u, { shortcuts: libelles })); } finally { w.PLUS_START_ROUTES = avant; }
     };
   }
+  /* C71 — Ménage complet du Client : plus rien qui répète l'Accueil ni qui mène nulle part.
+     Plus : « Mon action n°1 » (même contenu que l'Accueil) et le parcours « Ce qui est nécessaire » (mêmes étapes que
+     l'Accueil) retirés ; « Accès Inventaire sécurisé » et « Choisir mes alertes » masqués tant que le portail d'équipe
+     n'est pas en ligne (ils n'affichaient qu'un message) — l'aperçu de démonstration reste. Boutons « ← Retour aux
+     modules » retirés partout (le bouton Plus de la barre du bas fait ce retour). Inventaire : « Achats et factures » et
+     « Fournisseurs » n'ouvraient qu'une fenêtre d'information : retirés. */
+  var sansPortail = typeof w.VERDICT_TEAM_PORTAL_URL === 'string' ? !w.VERDICT_TEAM_PORTAL_URL : true;
+  var demo = function () { try { return typeof w.getMode === 'function' && w.getMode() === 'demo'; } catch (e) { return false; } };
+  if (sansPortail) doc.documentElement.classList.add('vd-sans-portail');
+  css.textContent +=
+    '.btn-retour{display:none!important}' +
+    'html.vd-sans-portail #alertPreferencesButton{display:none!important}' +
+    '[data-v451-inv="invoices"],[data-v451-inv="suppliers"]{display:none!important}';
+  if (typeof w.plusStartPriorityHTML === 'function') w.plusStartPriorityHTML = function () { return ''; };
+  if (typeof w.parcoursHTML === 'function') w.parcoursHTML = function () { return ''; };
+  if (typeof w.plusAlertPreferencesHTML === 'function') { var alertes = w.plusAlertPreferencesHTML; w.plusAlertPreferencesHTML = function () { return sansPortail ? '' : alertes.apply(this, arguments); }; }
+  if (typeof w.plusInventoryAccessHTML === 'function') { var acces = w.plusInventoryAccessHTML; w.plusInventoryAccessHTML = function () { return sansPortail && !demo() ? '' : acces.apply(this, arguments); }; }
   if (Array.isArray(w.MODULES_AVEC_RETOUR)) ['audit', 'x', 'achats', 'stock'].forEach(function (v) { var i = w.MODULES_AVEC_RETOUR.indexOf(v); if (i >= 0) w.MODULES_AVEC_RETOUR.splice(i, 1); });
 })();
