@@ -185,12 +185,10 @@
   }
   function tryBio() {
     if (S.busy) return; S.busy = true;
-    bioVerify().then(function () { S.busy = false; success(); }, function () { S.busy = false; msg(COFFRE ? BIO + ' n’a pas abouti : réessayez ou utilisez votre mot de passe.' : S.mode === 'bio' ? BIO + ' n’a pas abouti : réessayez.' : 'Saisissez votre code.'); });
+    bioVerify().then(function () { S.busy = false; success(); }, function () { S.busy = false; msg(COFFRE ? BIO + ' n’a pas abouti : réessayez ou utilisez votre mot de passe.' : 'Saisissez votre code.'); });
   }
   function success() {
-    var viaCode = S.mode === 'unlock';
     C.fails = 0; C.until = 0; store(C); S.locked = false; S.hiddenAt = 0; hide();
-    if (viaCode && !C.bio && !C.bioPropose) { C.bioPropose = 1; store(C); screenBioOffer(); }
   }
   function checkCode(code) {
     S.busy = true;
@@ -207,44 +205,6 @@
       msg(wait ? '' : 'Code incorrect' + (rest > 0 && rest < 3 ? ' · encore ' + rest + ' essai' + (rest > 1 ? 's' : '') + ' avant attente' : '') + '.');
       tick();
     });
-  }
-  /* C59 — Déverrouillage selon l'appareil : Face ID ou Touch ID s'il existe (si le visage ou le doigt n'est pas
-     reconnu, l'appareil propose lui-même son code ou son mot de passe, comme pour ses propres applis) ; le code
-     Verdict à 6 chiffres n'est demandé que sur un appareil sans Face ID ni Touch ID. */
-  function screenSetup() {
-    bioAvailable().then(function (av) {
-      if (!av) return screenCreate(1);
-      S.mode = 'setup';
-      show('<div class="vr-logo">🛡️</div><h2>Protégez Verdict</h2><p>Verdict s’ouvrira avec ' + esc(BIO) + ', comme votre appareil. S’il ne vous reconnaît pas, votre appareil propose son propre code. Personne d’autre que vous ne pourra ouvrir vos chiffres.</p><div class="vr-msg" role="alert"></div>' +
-        '<button type="button" class="vr-btn" data-yes>Activer ' + esc(BIO) + '</button><button type="button" class="vr-link" data-code>Utiliser plutôt un code à 6 chiffres</button>');
-      var el = root();
-      el.querySelector('[data-code]').onclick = function () { C = C || {}; C.bioPropose = 1; screenCreate(1); };
-      el.querySelector('[data-yes]').onclick = function () {
-        C = C || {}; if (C.delai == null) C.delai = 60; C.v = 1;
-        bioEnroll().then(function () { C.fails = 0; C.until = 0; store(C); S.locked = false; hide(); toast(BIO + ' activé'); },
-          function () { C.bioPropose = 1; screenCreate(1); msg(BIO + ' n’a pas pu être activé ici : choisissez un code.'); });
-      };
-    });
-  }
-  function screenBio(autoBio) {
-    S.mode = 'bio'; S.locked = true;
-    show('<div class="vr-logo">🔒</div><h2>Verdict est verrouillé</h2><p>Utilisez ' + esc(BIO) + '.</p><div class="vr-msg" role="alert"></div>' +
-      '<button type="button" class="vr-btn" data-bio>Utiliser ' + esc(BIO) + '</button>' +
-      (C.hash ? '<button type="button" class="vr-btn sec" data-code>Utiliser mon code</button>' : '<button type="button" class="vr-link" data-aide>' + esc(BIO) + ' ne fonctionne pas ?</button>'));
-    var el = root();
-    el.querySelector('[data-bio]').onclick = function () { tryBio(); };
-    var c = el.querySelector('[data-code]'); if (c) c.onclick = function () { screenUnlock(false); };
-    var a = el.querySelector('[data-aide]'); if (a) a.onclick = screenAide;
-    if (autoBio && !waitLeft()) tryBio();
-  }
-  function screenAide() {
-    S.mode = 'aide';
-    show('<div class="vr-logo">❓</div><h2>' + esc(BIO) + ' ne fonctionne pas ?</h2><p>Si votre appareil ne vous reconnaît pas, il propose son propre code : utilisez-le. En dernier recours seulement, effacez les données Verdict de cet appareil.</p>' +
-      '<button type="button" class="vr-btn" data-bio>Réessayer ' + esc(BIO) + '</button><button type="button" class="vr-btn danger" data-wipe>Effacer les données de cet appareil</button><button type="button" class="vr-btn sec" data-back>Retour</button>');
-    var el = root();
-    el.querySelector('[data-bio]').onclick = function () { screenBio(true); };
-    el.querySelector('[data-wipe]').onclick = screenWipe;
-    el.querySelector('[data-back]').onclick = function () { screenBio(false); };
   }
   function screenCoffre(autoBio) {
     S.mode = 'coffre'; S.locked = true;
@@ -272,7 +232,7 @@
   function screenCreate(step) {
     S.mode = step === 2 ? 'create2' : 'create';
     show('<div class="vr-logo">🛡️</div><h2>' + (step === 2 ? 'Confirmez votre code' : 'Protégez Verdict') + '</h2><p>' +
-      (step === 2 ? 'Saisissez le même code une seconde fois.' : 'Choisissez un code personnel à 6 chiffres. Personne d’autre que vous ne pourra ouvrir vos chiffres.') + '</p>' + pad(false));
+      (step === 2 ? 'Saisissez le même code une seconde fois.' : 'Choisissez votre code personnel à 6 chiffres.' + (IP ? '' : ' Ensuite, ' + esc(BIO) + ' pourra ouvrir Verdict ; ce code restera le secours.') + ' Personne d’autre que vous ne pourra ouvrir vos chiffres.') + '</p>' + pad(false));
   }
   function weak(code) { return /^(\d)\1+$/.test(code) || '0123456789012345'.indexOf(code) >= 0 || '9876543210987654'.indexOf(code) >= 0; }
   function onCreate(code) {
@@ -291,7 +251,7 @@
   function screenBioOffer() {
     bioAvailable().then(function (av) {
       /* Pas de nouvelle proposition juste après un code choisi parce que Face ID / Touch ID venait d'être écarté. */
-      if (!av || (C && C.bio) || (C && C.bioPropose && /^create/.test(S.mode))) { hide(); return; }
+      if (!av || (C && C.bio)) { hide(); return; }
       S.mode = 'offer';
       show('<div class="vr-logo">🙂</div><h2>Activer ' + esc(BIO) + ' ?</h2><p>Ouvrez Verdict d’un regard. ' + (COFFRE ? 'Votre mot de passe reste le secours si le visage n’est pas reconnu ; sans ' + esc(BIO) + ', il sera demandé à chaque ouverture.' : 'Votre code reste le secours si le visage n’est pas reconnu.') + '</p><button type="button" class="vr-btn" data-yes>Activer ' + esc(BIO) + '</button><button type="button" class="vr-btn sec" data-no>Plus tard</button>');
       var el = root();
@@ -313,7 +273,7 @@
     S.mode = 'wipe';
     show('<div class="vr-logo">⚠️</div><h2>Tout effacer ?</h2><p>Vos établissements, cartes, inventaires et réglages Verdict seront supprimés de cet appareil. Cette action est définitive.</p><button type="button" class="vr-btn danger" data-ok>Oui, tout effacer</button><button type="button" class="vr-btn sec" data-back>Annuler</button>');
     var el = root();
-    el.querySelector('[data-back]').onclick = function () { lock(false); };
+    el.querySelector('[data-back]').onclick = function () { screenUnlock(false); };
     el.querySelector('[data-ok]').onclick = wipe;
   }
   /* N'efface que Verdict Client : les espaces chiffrés (Perso, Pilote) partagent l'adresse et restent intacts. */
@@ -333,16 +293,15 @@
       show('<div class="vr-logo">🔒</div><h2>Sécurité</h2><p>Verdict se verrouille à chaque ouverture et au retour après le délai choisi.</p><div class="vr-list">' +
         (av ? '<label>' + esc(BIO) + '<input type="checkbox" data-bio' + (C.bio ? ' checked' : '') + '></label>' : '<label>' + esc(BIO) + '<span style="color:#a3adb8">indisponible ici</span></label>') +
         '<label>Verrouillage auto<select data-delai>' + DELAIS.map(function (d) { return '<option value="' + d[0] + '"' + (+C.delai === d[0] ? ' selected' : '') + '>' + d[1] + '</option>'; }).join('') + '</select></label></div>' +
-        '<button type="button" class="vr-btn" data-lock>Verrouiller maintenant</button>' + (COFFRE ? '' : '<button type="button" class="vr-btn sec" data-code>' + (C.hash ? 'Changer mon code' : 'Créer un code de secours') + '</button>'), true);
+        '<button type="button" class="vr-btn" data-lock>Verrouiller maintenant</button>' + (COFFRE ? '' : '<button type="button" class="vr-btn sec" data-code>Changer mon code</button>'), true);
       var el = root();
       el.querySelector('[data-lock]').onclick = function () { lock(false); };
       el.querySelector('[data-delai]').onchange = function () { C.delai = +this.value; store(C); };
-      if (el.querySelector('[data-code]')) el.querySelector('[data-code]').onclick = function () { if (!C.hash) return screenCreate(1); S.mode = 'verify-change'; show('<div class="vr-logo">🔑</div><h2>Code actuel</h2><p>Saisissez votre code actuel.</p>' + pad(false), true); };
+      if (el.querySelector('[data-code]')) el.querySelector('[data-code]').onclick = function () { S.mode = 'verify-change'; show('<div class="vr-logo">🔑</div><h2>Code actuel</h2><p>Saisissez votre code actuel.</p>' + pad(false), true); };
       var bx = el.querySelector('[data-bio]');
       if (bx) bx.onchange = function () {
         var box = this;
         if (box.checked) bioEnroll().then(function () { toast(BIO + ' activé'); }, function () { box.checked = false; toast(BIO + ' non activé'); });
-        else if (!COFFRE && !C.hash) { box.checked = true; toast(BIO + ' est votre seule protection : créez d’abord un code de secours.'); }
         else { delete C.bio; store(C); toast(BIO + ' désactivé'); }
       };
     });
@@ -355,7 +314,7 @@
 
   /* ───────── Saisie (clavier tactile et clavier physique) ───────── */
   function press(k) {
-    if (S.busy || !S.mode || /offer|forgot|wipe|settings|coffre|setup|bio|aide/.test(S.mode)) return;
+    if (S.busy || !S.mode || /offer|forgot|wipe|settings|coffre/.test(S.mode)) return;
     if (k === 'bio') return tryBio();
     if (k === 'del') { S.entry = S.entry.slice(0, -1); dots(); return; }
     if (!/^\d$/.test(k) || S.entry.length >= LEN) return;
@@ -407,8 +366,10 @@
   }
 
   /* ───────── Verrouillage ───────── */
-  function configured() { return COFFRE || !!(C && (C.hash || C.bio)); }
-  function lock(autoBio) { if (COFFRE) { C = C || {}; return screenCoffre(autoBio); } if (C && C.bio) return screenBio(autoBio); if (!C || !C.hash) return screenSetup(); S.locked = true; screenUnlock(autoBio); }
+  function configured() { return COFFRE || !!(C && C.hash); }
+  function lock(autoBio) { if (COFFRE) { C = C || {}; return screenCoffre(autoBio); } /* C60 — logique des applis bancaires : un code Verdict à 6 chiffres est toujours la base (créé à la première
+     ouverture) ; Face ID / Touch ID est le raccourci, essayé d'abord ; s'il échoue, c'est ce code qui est demandé. */
+    if (!C || !C.hash) return screenCreate(1); S.locked = true; screenUnlock(autoBio); }
   function cover(on) {
     var c = doc.getElementById('vr16-cache');
     if (!c) { c = doc.createElement('div'); c.id = 'vr16-cache'; c.textContent = 'VERDICT'; c.hidden = true; doc.body.appendChild(c); }
@@ -435,6 +396,7 @@
     idb('get').then(function (raw) {
       var saved = null; try { saved = raw ? JSON.parse(raw) : null; } catch (e) {}
       if (saved && (saved.hash || saved.bio)) C = saved; else if (C && (C.hash || C.bio)) idb('put', JSON.stringify(C));
+      /* Face ID activé sans code (version du 15/10 à 20 h) : le code de base est créé à la prochaine ouverture. */
       cover(false);
       if (COFFRE) {
         C = C || {}; if (C.delai == null) C.delai = 60; store(C);
