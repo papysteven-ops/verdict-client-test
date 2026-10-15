@@ -33,7 +33,7 @@
     css();
     var b = doc.createElement('div'); b.id = 'maj18'; b.setAttribute('role', 'status');
     b.innerHTML = '<span><b>Nouvelle version de Verdict</b><small>Vos saisies sont enregistrées avant la mise à jour.</small></span><button type="button" class="maj18-go">Mettre à jour</button><button type="button" class="maj18-later" aria-label="Plus tard">Plus tard</button>';
-    doc.body.appendChild(b); contraste();
+    doc.body.appendChild(b); contraste(); ranger();
     b.querySelector('.maj18-go').onclick = apply;
     prevenir();
     b.querySelector('.maj18-later').onclick = function () { later(false); };
@@ -75,6 +75,11 @@
   function later(fromOther) {
     postponed = true; var b = doc.getElementById('maj18'); if (b) b.remove();
     if (!fromOther && canal) try { canal.postMessage('plus-tard'); } catch (e) {}
+    ranger();
+  }
+  /* C74 — Dès qu'une mise à jour existe, elle entre d'office dans le centre de notifications (cloche +1), sur
+     ordinateur, tablette et mobile, comme une rupture d'Inventaire ; elle y reste jusqu'à la mise à jour. */
+  function ranger() {
     var c = centre();
     if (c && c.ingest) c.ingest({ id: NOTIF_ID, source: 'Verdict', module: 'verdict', level: 'info', title: 'Nouvelle version de Verdict disponible', detail: 'Mettez à jour quand vous voulez : vos saisies sont enregistrées avant.', actionLabel: 'Mettre à jour', proof: 'Une nouvelle version a été publiée et téléchargée sur cet appareil.', createdAt: new Date().toISOString(), forceUnread: true });
   }
