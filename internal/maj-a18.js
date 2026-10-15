@@ -93,7 +93,7 @@
   setTimeout(function () { var c = centre(); if (c && c.getItems && c.getItems().some(function (i) { return i.id === NOTIF_ID; }) && !postponed) c.remove(NOTIF_ID); }, 1500);
   function apply() {
     /* C59 : la mise à jour est validée dans une appli déjà ouverte : le rechargement ne redemande ni code, ni mot de passe. */
-    try { sessionStorage.setItem('verdict:maj-sans-verrou', String(Date.now())); } catch (e) {}
+    try { sessionStorage.setItem('verdict:maj-sans-verrou', String(Date.now())); sessionStorage.setItem('verdict:maj-appliquee', String(Date.now())); } catch (e) {}
     var btn = doc.querySelector('#maj18 .maj18-go'); if (btn) { btn.disabled = true; btn.textContent = 'Mise à jour…'; }
     var guard = window.VerdictUpdateGuard && window.VerdictUpdateGuard.prepare ? window.VerdictUpdateGuard.prepare() : Promise.resolve({ ok: true });
     Promise.resolve(guard).catch(function () { return { ok: true }; }).then(function () {
@@ -166,7 +166,14 @@
   }
   if (!coffreUrl && 'serviceWorker' in navigator) {
     var had = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.addEventListener('controllerchange', function () { if (applying) return location.reload(); if (had) banner(); had = true; });
+    /* C78 : dans la minute qui suit « Mettre à jour », la nouvelle version peut prendre la main juste après le
+       rechargement : on recharge alors en silence (sans alerte fantôme, sans redemander le code). */
+    var justeMaj = false; try { justeMaj = Date.now() - (+sessionStorage.getItem('verdict:maj-appliquee') || 0) < 60000; } catch (e) {}
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (applying) return location.reload();
+      if (justeMaj) { justeMaj = false; try { sessionStorage.setItem('verdict:maj-sans-verrou', String(Date.now())); } catch (e) {} return location.reload(); }
+      if (had) banner(); had = true;
+    });
   }
   /* Une seule alerte : celle d'origine du shell (« Mise à jour prête », en bas) est masquée ; celle-ci fait la même bascule. */
   try { var hide = doc.createElement('style'); hide.textContent = '#verdict-update-alert{display:none!important}'; (doc.head || doc.documentElement).appendChild(hide); } catch (e) {}
