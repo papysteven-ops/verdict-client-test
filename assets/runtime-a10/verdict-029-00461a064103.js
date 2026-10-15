@@ -3178,7 +3178,8 @@ function etabTopFix(){
 function drawEtabs(){
   var bar=document.getElementById("etabBar"); if(!bar)return;
   var ids=etabList();
-  if(ids.length<2){ bar.classList.remove("on"); bar.innerHTML=""; return; }
+  /* C43 : la barre reste visible dès le premier établissement, sinon Comparer, ⚙, « + », masquer et dupliquer sont introuvables. */
+  if(!ids.length){ bar.classList.remove("on"); bar.innerHTML=""; return; }
   bar.classList.add("on");
   etabTopFix();
   bar.innerHTML=ids.map(function(id){
