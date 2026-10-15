@@ -6,8 +6,9 @@
    2. un chiffre d'affaires en plus entraîne ses coûts (matière, boissons, emballages, commissions, renfort d'équipe) ;
    3. la Carte entre dans le même calcul par ses propres prix (plafonnés, −3 % de ventes) et remplace alors le levier panier ;
    4. tout est rejoué par moteur() : aucun euro n'est additionné à côté, donc aucun double comptage.
-   Le montant central est mis en avant ; la lecture prudente (selon le niveau de contrôle) est affichée dessous ; au-delà de
-   la rentabilité haute du format, la part en plus est signalée comme non garantie. */
+   C90 (retour de Steven : « une seule base, une référence juste, c'est tout ») : un seul montant ; la proposition ne dépasse
+   ni la borne de chaque levier ni la rentabilité des meilleurs établissements du format ; un ancien scénario enregistré
+   avant ces bornes n'est plus restauré tel quel ; si le client pousse lui-même un curseur, une phrase simple le dit. */
 (function(w){
 'use strict';
 if(w.VerdictGainRealiste||typeof w.moteur!=='function'||typeof w.DEC_DEFS==='undefined'||typeof w.deriv!=='function')return;
@@ -157,18 +158,30 @@ function plan(){
   /* l'équipe n'est proposée qu'après une décision d'organisation mesurée (règle existante de Simuler) */
   var pr=payrollOk(),retenus=L.filter(function(x){return x.id!=='sal'||pr;}),attente=L.filter(function(x){return x.id==='sal'&&!pr;});
   var state={},bornes={panier:bornePanier};L.forEach(function(x){bornes[x.id]=x.v;});retenus.forEach(function(x){state[x.id]=x.v;});
-  var base=d.res,cumul={},prev=base,steps=[];
+  /* C90 — une seule référence : la proposition ne dépasse jamais la rentabilité des meilleurs établissements du format.
+     Les leviers sont pris dans l'ordre (ce qui dépend le plus du client d'abord) ; celui qui ferait dépasser ce niveau
+     est réduit au pas du curseur, les suivants ne sont pas proposés. */
+  var base=d.res,haut=fam.rn[2],plafonne=false;
+  if(v.rn<haut){
+    var st2={},ret2=[];
+    for(var i=0;i<retenus.length;i++){var x=retenus[i],t={};for(var q in st2)t[q]=st2[q];t[x.id]=x.v;
+      if(w.moteur(overAll(t)).v.rn<=haut+1e-9){st2=t;ret2.push(x);continue;}
+      plafonne=true;var dd=def(x.id),pas=dd?dd.step:1,sg=x.v<0?-1:1,best=0;
+      for(var kk=Math.floor(Math.abs(x.v)/pas+1e-9)-1;kk>=1;kk--){var val=Math.round(sg*kk*pas*100)/100;t[x.id]=val;if(w.moteur(overAll(t)).v.rn<=haut+1e-9){best=val;break;}}
+      if(best){st2[x.id]=best;var y={};for(var z in x)y[z]=x[z];y.v=best;y.why=x.why+' Réduit pour ne pas dépasser '+pc(haut,0)+' de rentabilité, le niveau des meilleurs établissements de votre format.';ret2.push(y);}
+      break;}
+    if(plafonne){state=st2;retenus=ret2;}
+  }
+  /* la seule référence affichée sur un curseur est la proposition elle-même */
+  var bornesLevier=bornes;if(plafonne){bornes={};for(var bi in bornesLevier)bornes[bi]=state[bi]||0;}
+  var cumul={},prev=base,steps=[];
   retenus.forEach(function(x){cumul[x.id]=x.v;var Mx=w.moteur(overAll(cumul)),g=Mx.d.res-prev;prev=Mx.d.res;x.gain=g;steps.push(x);});
-  var MC=w.moteur(overAll(state)),pst={};
-  retenus.forEach(function(x){var dd=def(x.id),st=dd?dd.step:1,val=x.v*CTRL[x.id];pst[x.id]=Math.round(val/st)*st;});
-  var MP=w.moteur(overAll(pst));
+  var MC=w.moteur(overAll(state));
   attente.forEach(function(x){var o={};o[x.id]=x.v;x.gain=w.moteur(overAll(o)).d.res-base;});
-  var central=MC.d.res-base,prudent=Math.min(central,MP.d.res-base),haut=fam.rn[2],horsGarantie=0;
-  if(MC.v.rn>haut)horsGarantie=Math.max(0,MC.d.res-haut/100*MC.d.ca);
-  var r={R:R,format:F,leviers:L,retenus:steps,attente:attente,state:state,bornes:bornes,carte:cp,carteFiable:cf,
+  var central=MC.d.res-base;
+  var r={R:R,format:F,leviers:L,retenus:steps,attente:attente,state:state,bornes:bornes,bornesLevier:bornesLevier,carte:cp,carteFiable:cf,
     central:{gain:central,mois:central/12,res:MC.d.res,rn:MC.v.rn,score:MC.score},
-    prudent:{gain:prudent,mois:prudent/12,res:MP.d.res,rn:MP.v.rn,score:MP.score,state:pst},
-    base:{res:base,rn:v.rn,score:R.score},plafond:{rn:haut,horsGarantie:horsGarantie}};
+    base:{res:base,rn:v.rn,score:R.score},plafond:{rn:haut,atteint:plafonne}};
   CACHE={k:k,v:r};return r;
 }
 
@@ -202,19 +215,75 @@ function installerSimuler(){
   };
   w.decPotentialState=function(P){var s={},src=(P&&P.state)||{};for(var k in src)s[k]=src[k];s.jour=0;return s;};
   w.decBest=decBest;
+  w.decScenarioPersist=persist;
+  if(typeof w.decScenarioEnsure==='function'&&!w.decScenarioEnsure.__c90){w.decScenarioEnsure=restaurer(w.decScenarioEnsure);w.decScenarioEnsure.__c90=true;}
+  var origRecap=w.decDrawRecap;
+  if(typeof origRecap==='function'&&!origRecap.__c90){w.decDrawRecap=function(){var r=origRecap.apply(this,arguments);try{noteRecap();}catch(e){}return r;};w.decDrawRecap.__c90=true;}
   var origRender=w.decRender;
   if(typeof origRender==='function'&&!origRender.__c88){w.decRender=function(id,v){var r=origRender.apply(this,arguments);try{noteLevier(id,v);}catch(e){}return r;};w.decRender.__c88=true;}
 }
+function depasse(id,v,P){
+  var b=num(P&&P.bornes[id]);v=num(v);
+  if(id==='panier'||id==='cmd'||id==='carte')return v>b+1e-9;
+  if(id==='sal'||id==='fc'||id==='fix'||id==='com'||id==='emb')return v<b-1e-9;
+  return false;
+}
+function horsBornes(state){var P=plan(),o=[];if(!P||!state)return o;for(var k in state)if(depasse(k,state[k],P))o.push(k);return o;}
+function phrase(id,P){
+  var R=P.R,d=R.d,v=R.v,F=P.format,fam=F.fam,fmt=F.fmt,t=F.type?'des établissements « '+F.type+' »':'de la restauration traditionnelle',b=P.bornes[id],dd=def(id),coupe=P.plafond.atteint&&num(P.bornesLevier[id])!==num(b),au=(b?'Verdict compte au plus '+dd.fmt(b):(coupe?'Verdict ne l’ajoute pas':'Verdict ne compte aucun gain ici'))+(coupe?' : avec vos autres leviers, vous atteignez déjà '+pc(P.plafond.rn,0)+' de rentabilité, le niveau des meilleurs établissements '+t.replace(/^des établissements /,'')+'.':'.');
+  var fin=' Au-delà, ce n’est plus réaliste.';if(!b&&P.plafond.atteint&&num(P.bornesLevier[id])!==0)fin='';
+  if(id==='cmd')return 'Vous servez '+String(Math.round(num(d.cmdj)*10)/10).replace('.',',')+' commandes par jour'+(fmt?' ; repère Verdict '+t+' : '+fmt.cl[1]:'')+'. '+au+fin;
+  if(id==='panier')return 'Votre panier moyen est de '+fr2(d.panierTTC)+' €'+(fmt?' ; repère Verdict '+t+' : '+fr2(fmt.tk[1])+' €':'')+'. '+au+fin;
+  if(id==='carte')return 'Verdict relève les prix d’au plus '+CARTE_CAP+' %, sans dépasser le plat le plus cher de la catégorie.'+fin;
+  if(id==='sal')return 'Votre équipe coûte '+pc(v.ms)+' du chiffre d’affaires ; repère Verdict '+t+' : '+pc(fam.ms[1],0)+'. '+au+fin;
+  if(id==='fc')return 'Votre food cost est de '+pc(v.fc)+' ; repère Verdict '+t+' : '+pc(fam.fc[1],0)+'. '+au+fin;
+  if(id==='fix')return 'Vos charges fixes pèsent '+pc(v.acf)+' du chiffre d’affaires ; repère Verdict '+t+' : '+pc(fam.acf[1],0)+'. '+au+fin;
+  if(id==='com')return 'Verdict compte au plus −10 % de commissions, en passant une partie des commandes en retrait.'+fin;
+  if(id==='emb')return 'Verdict compte au plus −10 % sur ces achats.'+fin;
+  return '';
+}
 function noteLevier(id,v){
   var box=document.getElementById('dr-'+id);if(!box)return;var n=document.getElementById('c88-note-'+id);
-  var P=plan(),b=P&&P.bornes[id],msg='',fmt=P&&P.format.type?'votre format ('+P.format.type+')':'votre format',ref=function(x){return ' (repère Verdict : '+def(id).fmt(x)+').';};v=num(v);
-  if(id==='jour'&&v)msg='Verdict compte '+Math.round(JOUR_DEMANDE*100)+' % d’une journée moyenne et le personnel nécessaire : une journée de plus ne remplit jamais comme les autres.';
-  else if(id==='panier'&&v>0&&P&&P.state.carte)msg='Votre carte est complète : Verdict compte déjà la hausse plat par plat (Prix de la carte). Un panier en plus s’y ajoute'+(v>(b||0)+1e-9?' et dépasse le réaliste pour '+fmt+ref(b||0):'.');
-  else if(v>0&&(id==='panier'||id==='cmd'||id==='carte')&&v>(b||0)+1e-9)msg=b?'Au-delà du réaliste pour '+fmt+ref(b):'Aucune hausse jugée réaliste ici pour '+fmt+'.';
-  else if(v<0&&(id==='sal'||id==='fc'||id==='fix'||id==='com'||id==='emb')&&v<(b||0)-1e-9)msg=b?'Au-delà du réaliste pour '+fmt+ref(b):'Déjà au niveau du repère de '+fmt+' : cette baisse n’est pas comptée comme réaliste.';
+  var P=plan(),msg='';v=num(v);
+  if(id==='jour'&&v)msg='Un jour de plus : Verdict compte '+Math.round(JOUR_DEMANDE*100)+' % d’une journée moyenne, avec l’équipe nécessaire.';
+  else if(P&&depasse(id,v,P))msg=phrase(id,P);
   if(!msg){if(n)n.remove();return;}
   if(!n){n=document.createElement('p');n.id='c88-note-'+id;n.className='note c88-note';box.appendChild(n);}
   n.textContent=msg;
+}
+/* Enregistrement : on garde la version et l'origine du scénario (proposition de Verdict ou curseurs du client). */
+var SCEN='C90';
+function persist(reason){
+  var D=w.DB;if(!D)return;w.DEC_SCENARIO_CONTEXT=D;var K=w.DEC_SCENARIO_DB_KEY;
+  if(!w.decNbActifs(w.DEC_STATE)){delete D[K];w.decDurableWrite('scenario',null);}
+  else{D[K]={version:1,realiste:SCEN,origin:horsBornes(w.DEC_STATE).length?'client':'verdict',state:w.decScenarioState(w.DEC_STATE),label:(w.DEC_SCENE_LAST&&w.DEC_SCENE_LAST.label)||w.decPremiumUI().calculated,updatedAt:new Date().toISOString()};
+    if(w.decDurableDemo())w.decDurableWrite('scenario',JSON.stringify(D[K]));}
+  try{w.save(reason||'decision-scenario');}catch(e){}
+}
+/* Restauration : un scénario d'avant C90 ou une proposition de Verdict qui dépasse désormais les bornes est remplacé
+   par la proposition réaliste du jour ; un scénario construit par le client reste le sien. */
+function restaurer(orig){
+  return function(){
+    var avant=w.DEC_SCENARIO_CONTEXT,r=orig.apply(this,arguments);
+    try{
+      if(!w.DB||avant===w.DB)return r;var saved=w.DB[w.DEC_SCENARIO_DB_KEY];
+      if(!saved&&w.decDurableDemo()){try{saved=JSON.parse(w.decDurableRead('scenario')||'null');}catch(e){saved=null;}}
+      if(!saved||!saved.state||!horsBornes(w.DEC_STATE).length)return r;
+      if(saved.realiste===SCEN&&saved.origin==='client')return r;
+      var P=plan();
+      if(P&&P.retenus.length){w.DEC_STATE=w.decPotentialState(P);w.DEC_SCENE_LAST=w.decSceneSnapshot(w.moteur(),w.decPremiumUI().calculated);}
+      else{w.DEC_STATE={};w.DEC_SCENE_LAST=null;}
+      w.DEC_BEST_PENDING=null;persist('decision-scenario-realiste');
+    }catch(e){}
+    return r;
+  };
+}
+/* Récapitulatif : une phrase si le client a dépassé le réaliste, avec la seule référence (la proposition de Verdict). */
+function noteRecap(){
+  var box=document.querySelector('#decTotal .dec-rec');if(!box)return;var n=document.getElementById('c90-recap'),P=plan(),h=P?horsBornes(w.DEC_STATE):[];
+  if(!h.length){if(n)n.remove();return;}
+  if(!n){n=document.createElement('p');n.id='c90-recap';n.className='note c88-note';var vd=document.getElementById('rc-vd');box.insertBefore(n,vd||null);}
+  n.textContent='Vous avez poussé '+(h.length>1?h.length+' curseurs':'un curseur')+' au-delà du réaliste : ce total n’est plus la proposition de Verdict, qui est de '+signe(P.central.gain)+' par an.';
 }
 
 /* ── Point de départ de Simuler ── */
@@ -229,17 +298,16 @@ function decBest(){
   if(!had){for(var k in P.state){target[k]=P.state[k];nb++;}}
   else{for(var j in cur)target[j]=cur[j];
     for(var id in P.state){var pv=P.state[id],cv=num(cur[id]);if((pv>0&&cv<pv)||(pv<0&&cv>pv)){target[id]=pv;nb++;}}}
-  if(!nb){w.DEC_BEST_PENDING=null;out.innerHTML='<p class="note">'+(had?'Vos curseurs atteignent déjà les leviers réalistes pour '+esc(P.format.type||'votre format')+'. Au-delà, Verdict ne compte plus le gain comme faisable.':esc(U.none))+'</p>';return;}
+  if(!nb){w.DEC_BEST_PENDING=null;out.innerHTML='<p class="note">'+(had?'Vos curseurs atteignent déjà la proposition réaliste de Verdict'+(P.format.type?' pour votre format ('+esc(P.format.type)+')':'')+'. Au-delà, ce n’est plus réaliste.':esc(U.none))+'</p>';return;}
   var Rb=w.moteur(overAll(cur)),Rt=w.moteur(overAll(target)),delta=Rt.d.res-Rb.d.res;
   w.DEC_BEST_PENDING={paquet:!had,starting:!had,state:target,nb:nb,score:Rt.score,res:Rt.d.res,delta:delta,rn:Rt.v.rn,pv:0,fv:0,sv:0};
   var h='<div class="c88-best">'+
     '<div style="font-size:13px;margin-bottom:8px">'+(had?U.added:U.calculated)+' : '+chips(had?diff(cur,target):target)+'</div>'+
     '<div class="c88-amount"><span>Gain réaliste</span><strong>'+signe(delta/12)+' <small>/ mois</small></strong><em>'+signe(delta)+' / an</em></div>'+
-    (!had?'<div class="autoline"><span class="k">Lecture prudente (selon ce qui dépend de vous)</span><b>'+signe(P.prudent.mois)+' / mois · '+signe(P.prudent.gain)+' / an</b></div>':'')+
     '<div class="autoline"><span class="k">'+U.result+'</span><b>'+eur(Rt.d.res)+'</b></div>'+
     '<div class="autoline"><span class="k">'+U.score+'</span><b>'+Rt.score+' /100 ('+(Rt.score-Rb.score>=0?'+':'')+(Rt.score-Rb.score)+')</b></div>'+
     '<div class="autoline"><span class="k">'+U.profit+'</span><b>'+pc(Rt.v.rn,1)+'</b></div>'+
-    (Rt.v.rn>P.plafond.rn?'<p class="note c88-warn">Au-delà de '+pc(P.plafond.rn,0)+' de rentabilité, vous dépasseriez les meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+' : la part au-delà ('+eur(Math.max(0,Rt.d.res-P.plafond.rn/100*Rt.d.ca))+' / an) n’est pas garantie.</p>':'')+
+    (!had&&P.plafond.atteint?'<p class="note">Verdict s’arrête à '+pc(P.plafond.rn,0)+' de rentabilité, le niveau des meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+'.</p>':'')+
     (P.attente.length&&!had?'<p class="note">'+P.attente.map(function(x){return 'Coût humain : jusqu’à '+signe(x.gain)+' / an possibles, proposés seulement après une décision d’organisation mesurée (onglet Équipe).';}).join(' ')+'</p>':'')+
     '<p class="note" style="margin:6px 0 0">Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+' ; un client de plus consomme de la matière et des commissions ; tout est recalculé ensemble par le moteur, sans double comptage.</p>'+
     '<div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--line)"><div style="font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:#93c5fd">'+U.proof+'</div><p class="note" style="margin:4px 0 0">'+U.proofD+'</p></div>'+
@@ -255,17 +323,14 @@ function lignes(P){
   }).join('');
 }
 function chapitreHTML(P){
-  var cf=P.carteFiable,c=P.central,p=P.prudent;
+  var cf=P.carteFiable,c=P.central;
   return '<div class="au-sc vu" id="auGainReel"><div class="au-tag">Le gain réaliste · structure + carte</div>'+
     '<h2 class="au-h">'+signe(c.mois)+' par mois, soit '+signe(c.gain)+' par an</h2>'+
     '<p class="au-p">Un seul calcul, rejoué dans le moteur avec vos chiffres. Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':' (repères généraux de la restauration traditionnelle)')+' (un tiers de l’écart au repère, comme vos priorités). Les étapes s’enchaînent : chaque montant est ce que le levier ajoute après les précédents, aucun euro n’est compté deux fois.</p>'+
     '<div class="au-card"><span class="au-k">Pas à pas</span>'+
       '<div class="au-ok"><span style="flex:1"><b>Résultat actuel</b></span><b>'+eur(P.base.res)+' · '+pc(P.base.rn)+'</b></div>'+lignes(P)+
       '<div class="au-ok"><span style="flex:1"><b>Résultat visé</b></span><b>'+eur(c.res)+' · '+pc(c.rn)+' · score '+c.score+'</b></div></div>'+
-    '<div class="au-card"><span class="au-k">Deux lectures</span>'+
-      '<div class="au-ok"><span style="flex:1"><b>Central</b><br><span style="color:var(--mut)">tous les leviers ci-dessus menés à bien</span></span><b>'+signe(c.mois)+' / mois<br><small>'+signe(c.gain)+' / an</small></b></div>'+
-      '<div class="au-ok"><span style="flex:1"><b>Prudent</b><br><span style="color:var(--mut)">leviers à contrôle élevé en entier, partiels à moitié, faibles au tiers</span></span><b>'+signe(p.mois)+' / mois<br><small>'+signe(p.gain)+' / an</small></b></div>'+
-      (P.plafond.horsGarantie>0?'<p class="note c88-warn">Le central dépasse '+pc(P.plafond.rn,0)+' de rentabilité, niveau des meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+' : '+eur(P.plafond.horsGarantie)+' / an au-delà ne sont pas garantis.</p>':'')+'</div>'+
+    (P.plafond.atteint?'<p class="note">Verdict s’arrête à '+pc(P.plafond.rn,0)+' de rentabilité : c’est le niveau des meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+'. Au-delà, ce ne serait plus réaliste.</p>':'')+
     '<div class="au-card"><span class="au-k">Ce qui n’est pas compté</span><p class="note" style="margin:0">'+
       [P.attente.length?'Le coût humain (jusqu’à '+signe(P.attente[0].gain)+' / an) : proposé seulement après une décision d’organisation mesurée.':'',
        'Les jours et horaires d’ouverture : leur faisabilité se décide dans Équipe.',
@@ -276,7 +341,7 @@ function chapitreHTML(P){
 function sceneDecision(P){
   var c=P.central,top=P.retenus.slice().sort(function(a,b){return b.gain-a.gain;}).slice(0,3);
   return '<div class="av31-k">5 · LE GAIN RÉALISTE</div><h2>'+(P.retenus.length?'Ce que votre établissement peut vraiment gagner':'Aucun levier réaliste à ajouter')+'</h2>'+
-    '<div class="av31-decision"><span>STRUCTURE'+(P.carteFiable?' + CARTE':'')+' · CENTRAL</span><strong>'+signe(c.mois)+' / mois</strong><p>soit '+signe(c.gain)+' par an · prudent '+signe(P.prudent.mois)+' / mois</p>'+
+    '<div class="av31-decision"><span>STRUCTURE'+(P.carteFiable?' + CARTE':'')+'</span><strong>'+signe(c.mois)+' / mois</strong><p>soit '+signe(c.gain)+' par an</p>'+
     (top.length?'<ul class="c88-top">'+top.map(function(x){var d=def(x.id);return '<li><span>'+esc(d?d.icon+' '+d.t:x.id)+'</span><b>'+signe(x.gain/12)+' / mois</b></li>';}).join('')+'</ul>':'')+'</div>'+
     '<div class="av31-final-actions"><button type="button" class="av31-primary" onclick="VerdictGainRealiste.ouvrirSimuler()">Ouvrir dans Simuler</button><button type="button" class="av31-secondary" onclick="VerdictGainRealiste.ouvrirDetail()">Pourquoi et comment</button></div>';
 }
@@ -305,7 +370,7 @@ css.textContent='.c88-best{background:rgba(0,0,0,.25);border-radius:12px;padding
   'html.vd-workspace-light #v-dec .c88-best{background:#f6f8fa!important}';
 (document.head||document.documentElement).appendChild(css);
 
-w.VerdictGainRealiste={version:'C88',plan:plan,cartePlan:cartePlan,carteFiable:carteFiable,overAll:overAll,
+w.VerdictGainRealiste={version:'C90',plan:plan,cartePlan:cartePlan,horsBornes:horsBornes,carteFiable:carteFiable,overAll:overAll,
   ouvrirSimuler:function(){var P=plan();if(!P)return;try{w.decDepuisPotentiel();}catch(e){w.DEC_STATE=w.decPotentialState(P);w.go('dec');}},
   ouvrirDetail:function(){var d=document.querySelector('[data-audit-full-report]');if(d)d.open=true;setTimeout(function(){var c=document.getElementById('auGainReel');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});},40);}};
 installerSimuler();installerAudit();
