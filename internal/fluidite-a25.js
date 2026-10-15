@@ -88,3 +88,61 @@
   doc.addEventListener('pointerup', fin, true);
   doc.addEventListener('pointercancel', function () { actif = null; }, true);
 })();
+
+/* C95 — Simuler, demandes de Steven (vidéo du 16/10) :
+   1. La barre du total clignotait en noir pendant le glissé (rendu brut, puis repeint par le thème clair) : elle a
+      désormais son propre style clair et sombre, jamais repeint ; « Score » y est nommé « Indice de sérénité ».
+   2. Le bandeau « Modifications non enregistrées » passait par-dessus la barre du total : dans Simuler, il se place
+      en haut de l'écran.
+   3. Boutons − et + de part et d'autre de chaque curseur, au pas du curseur, pour être précis (appui long = défile). */
+(function () {
+  'use strict';
+  var w = window, doc = document; if (doc.__vdSimC95) return; doc.__vdSimC95 = true;
+  var st = doc.createElement('style'); st.id = 'vd-sim-c95';
+  st.textContent =
+    'html.vd-workspace-light #decTotalBar{background:#ffffff!important;color:#0f172a!important;border:1px solid #e3e8ee!important;box-shadow:0 -2px 6px rgba(15,23,42,.04),0 14px 34px rgba(15,23,42,.14)!important}' +
+    'html.vd-workspace-light #decTotalBar .dt-k,html.vd-workspace-light #decTotalBar .dt-t,html.vd-workspace-light #decTotalBar .dt-line span{color:#64748b!important}' +
+    'html.vd-workspace-light #decTotalBar .dt-line b{color:#0f172a}html.vd-workspace-light #decTotalBar .dt-line{border-top-color:#e9edf2!important}' +
+    'html.vd-workspace-light #decTotalBar .dt-reset{color:#334155!important;border-color:#dbe2ea!important;background:#ffffff!important}' +
+    'html.vd-workspace-light #decTotalBar .dt-replay{background:#eff6ff!important;color:#1d4ed8!important;border-color:#bfdbfe!important}' +
+    'body:has(#decTotalBar.on) #sg13-bar{top:calc(env(safe-area-inset-top,0px) + 10px)!important;bottom:auto!important}' +
+    '.vd-pas{display:flex;align-items:center;gap:10px}.vd-pas>input[type=range]{flex:1;min-width:0}' +
+    '.vd-pas>button{flex:0 0 44px;width:44px;height:44px;border-radius:14px;border:1px solid var(--line,#dbe2ea);background:var(--card2,#f4f6f9);color:var(--txt,#0f172a);font:800 22px/1 -apple-system,system-ui,sans-serif;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}' +
+    '.vd-pas>button:active{transform:scale(.94)}' +
+    'html.vd-workspace-light .vd-pas>button{background:#f4f6f9!important;color:#0f172a!important;border-color:#dbe2ea!important}';
+  (doc.head || doc.documentElement).appendChild(st);
+  /* Libellé de la barre du total. */
+  if (typeof w.decDrawTotal === 'function') {
+    var dt = w.decDrawTotal;
+    w.decDrawTotal = function () {
+      var r = dt.apply(this, arguments);
+      try { var d = doc.getElementById('dt-detail'); if (d) [].forEach.call(d.querySelectorAll('span'), function (s) { var n = s.firstChild; if (n && n.nodeType === 3 && /^\s*Score\s*$/.test(n.nodeValue)) n.nodeValue = 'Indice de sérénité '; }); } catch (e) {}
+      return r;
+    };
+  }
+  /* Boutons − / +. */
+  function pas(el, sens) {
+    var min = el.min === '' ? -Infinity : +el.min, max = el.max === '' ? Infinity : +el.max, p = +el.step || 1;
+    var v = Math.round(((+el.value || 0) + sens * p) / p) * p; v = Math.max(min, Math.min(max, +v.toFixed(6)));
+    if (String(v) === el.value) return;
+    el.value = String(v); el.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  function equiper() {
+    [].forEach.call(doc.querySelectorAll('#v-dec input[type=range]:not([data-pas])'), function (el) {
+      el.setAttribute('data-pas', '1');
+      var box = doc.createElement('div'); box.className = 'vd-pas';
+      var moins = doc.createElement('button'), plus = doc.createElement('button');
+      moins.type = plus.type = 'button'; moins.textContent = '−'; plus.textContent = '+';
+      moins.setAttribute('aria-label', 'Diminuer'); plus.setAttribute('aria-label', 'Augmenter');
+      el.parentNode.insertBefore(box, el); box.appendChild(moins); box.appendChild(el); box.appendChild(plus);
+      [[moins, -1], [plus, 1]].forEach(function (b) {
+        var t1 = 0, t2 = 0;
+        function stop() { clearTimeout(t1); clearInterval(t2); if (t1 || t2) el.dispatchEvent(new Event('change', { bubbles: true })); t1 = t2 = 0; }
+        b[0].addEventListener('pointerdown', function (e) { e.preventDefault(); pas(el, b[1]); t1 = setTimeout(function () { t2 = setInterval(function () { pas(el, b[1]); }, 90); }, 420); });
+        ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (n) { b[0].addEventListener(n, stop); });
+        b[0].addEventListener('click', function (e) { if (e.detail === 0) pas(el, b[1]); }); /* clavier */
+      });
+    });
+  }
+  try { var v = doc.getElementById('v-dec'); if (v) new MutationObserver(equiper).observe(v, { childList: true, subtree: true }); equiper(); } catch (e) {}
+})();
