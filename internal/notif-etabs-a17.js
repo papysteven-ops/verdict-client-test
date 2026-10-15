@@ -16,8 +16,21 @@
   var LEVELS = [['all', 'Toutes'], ['urgent', 'Urgences seulement'], ['none', 'Aucune']];
   function shell() { return window.VerdictUnifiedShell || null; }
   function center() { var s = shell(); return s && s.notifications; }
-  function prefs() { try { return JSON.parse(localStorage.getItem(PREFS) || '{}') || {}; } catch (e) { return {}; } }
-  function savePrefs(p) { try { localStorage.setItem(PREFS, JSON.stringify(p)); } catch (e) {} }
+  /* C54 : réglages gardés aussi dans IndexedDB (le Perso et l'atelier vident localStorage à chaque ouverture). */
+  var PREF_CACHE = null;
+  function prefsDb(op, val) {
+    return new Promise(function (res) {
+      try {
+        var r = indexedDB.open('verdict-notif-etabs', 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore('p'); };
+        r.onerror = function () { res(null); };
+        r.onsuccess = function () { try { var s = r.result.transaction('p', op === 'get' ? 'readonly' : 'readwrite').objectStore('p'), q = op === 'get' ? s.get('prefs') : s.put(val, 'prefs'); q.onsuccess = function () { res(op === 'get' ? q.result || null : true); }; q.onerror = function () { res(null); }; } catch (e) { res(null); } };
+      } catch (e) { res(null); }
+    });
+  }
+  function prefs() { if (PREF_CACHE) return JSON.parse(JSON.stringify(PREF_CACHE)); try { return JSON.parse(localStorage.getItem(PREFS) || '{}') || {}; } catch (e) { return {}; } }
+  function savePrefs(p) { PREF_CACHE = p; try { localStorage.setItem(PREFS, JSON.stringify(p)); } catch (e) {} prefsDb('put', JSON.stringify(p)); }
+  prefsDb('get').then(function (raw) { try { if (raw) { PREF_CACHE = JSON.parse(raw); if (typeof decorate === 'function') decorate(); } } catch (e) {} });
   function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 

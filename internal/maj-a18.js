@@ -1,6 +1,6 @@
 /* C51 — « Nouvelle version disponible » : plus jamais besoin de supprimer et réinstaller l'appli.
    - L'appli vérifie s'il existe une nouvelle version à l'ouverture, au retour au premier plan et toutes les
-     5 minutes (Mac, iPhone, iPad, appli du Dock ou de l'écran d'accueil).
+     minutes (Mac, iPhone, iPad, appli du Dock ou de l'écran d'accueil).
    - Appli classique (Client, appli Mac locale) : la nouvelle version s'installe en arrière-plan ; dès qu'elle est
      prête, un bandeau propose « Mettre à jour » (enregistrement des saisies, puis rechargement).
    - Espace chiffré (Perso, Pilote en ligne) : la version publiée est comparée à celle ouverte.
@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.top !== window || window.__verdictMaj) return; window.__verdictMaj = true;
-  var doc = document, PERIODE = 5 * 60 * 1000, ready = false, base = null, timer = 0;
+  var doc = document, PERIODE = 60 * 1000, ready = false, base = null, timer = 0;
   var coffre = doc.querySelector('script[data-coffre]');
   var coffreUrl = coffre ? new URL('coffre.json', new URL(coffre.src, location.href)).href : '';
 

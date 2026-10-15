@@ -22,7 +22,23 @@
 
   /* ───────── Stockage ───────── */
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
-  function store(c) { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) {} }
+  function store(c) { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) {} idb('put', JSON.stringify(c)); }
+  /* C54 : stockage durable. Le Perso et l'atelier remplacent localStorage par une mémoire temporaire (vidée à chaque
+     ouverture) : la configuration du verrou vit donc aussi dans IndexedDB, que rien ne vide. */
+  function idb(op, val) {
+    return new Promise(function (res) {
+      try {
+        var r = indexedDB.open('verdict-verrou', 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore('c'); };
+        r.onerror = function () { res(null); };
+        r.onsuccess = function () {
+          try { var t = r.result.transaction('c', op === 'get' ? 'readonly' : 'readwrite'), s = t.objectStore('c'), q = op === 'get' ? s.get('cfg') : s.put(val, 'cfg');
+            q.onsuccess = function () { res(op === 'get' ? (q.result || null) : true); }; q.onerror = function () { res(null); }; } catch (e) { res(null); }
+        };
+      } catch (e) { res(null); }
+    });
+  }
+
   var C = load();
   function b64(buf) { var s = '', u = new Uint8Array(buf); for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); }
   function unb64(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
@@ -336,8 +352,13 @@
     b.onclick = screenSettings; host.insertBefore(b, host.firstChild);
   }
   function start() {
-    css();
-    if (!C || !C.hash) screenCreate(1); else screenUnlock(true);
+    css(); cover(true);
+    idb('get').then(function (raw) {
+      var saved = null; try { saved = raw ? JSON.parse(raw) : null; } catch (e) {}
+      if (saved && saved.hash) C = saved; else if (C && C.hash) idb('put', JSON.stringify(C));
+      cover(false);
+      if (!C || !C.hash) screenCreate(1); else screenUnlock(true);
+    });
     lockButton(); hookFrames(); [].forEach.call(doc.querySelectorAll("iframe"), function (f) { f.addEventListener("load", function () { setTimeout(hookFrames, 0); }); });
     new MutationObserver(lockButton).observe(doc.body, { childList: true, subtree: true });
   }
