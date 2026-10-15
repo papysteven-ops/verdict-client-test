@@ -73,6 +73,13 @@
     'html.vd-workspace-light #v-dec .dec-rec{background:#f6f8fa!important;border:1px solid #e3e8ee!important}' +
     'html.vd-workspace-light #v-dec [style*="rgba(0,0,0,0.25)"]{background:#f4f6f9!important;border:1px solid #e3e8ee!important}' +
     'html.vd-workspace-light #v-dec [style*="color:#8b94a0"]{color:#5b6573!important}';
+  /* C76 — Simuler commence au « Point de départ calculé » (demande de Steven) : rien au-dessus ; puis les curseurs et
+     le total ; le registre des décisions et le journal des gains (seulement ici) passent tout en bas. */
+  css.textContent +=
+    '#v-dec>.chr-view-kicker,#v-dec>.sub,#v-dec>.vg-overview,#v-dec>.chr-view-primary{display:none!important}' +
+    '#decBody{display:flex!important;flex-direction:column}#decBody>#decRegistre,#decBody>#journalGains{order:20}' +
+    '#decBody>#vsModule{display:none!important}' +
+    '#decBody>.card:not(.dec-best):not(.dec-card):not(#decRegistre):not(#journalGains):has(~ #decBestCard){display:none!important}';
   if (typeof w.mainNavView === 'function') { var nav0 = w.mainNavView; w.mainNavView = function (v) { if (v === 'dec') { titreSimuler(); return 'dec'; } return nav0.apply(this, arguments); }; }
   if (typeof w.actBarHTML === 'function') {
     var bar0 = w.actBarHTML;

@@ -19,3 +19,23 @@
   (doc.head || doc.documentElement).appendChild(s);
 })();
 /* C61 : mise à jour en ligne vérifiée de bout en bout le 15/10, y compris en démonstration (publication de contrôle). */
+
+/* C77 — Un seul appui suffit, même quand la barre du bas est repliée (en défilant). Avant : le doigt posé rouvrait
+   la barre, les boutons se déplaçaient sous le doigt et l'appui était perdu ; il fallait toucher deux fois.
+   Le bouton touché barre repliée est mémorisé et ouvert au lever du doigt (une seule fois). */
+(function () {
+  'use strict';
+  var doc = document; if (doc.__vdDockUnAppui) return; doc.__vdDockUnAppui = true;
+  var vise = null, t0 = 0, fait = false;
+  function bouton(e) { var b = e.target && e.target.closest && e.target.closest('nav.premium-adaptive-dock > button, nav[aria-label] > button'); return b && b.getAttribute('data-v') ? b : null; }
+  doc.addEventListener('pointerdown', function (e) {
+    vise = null; fait = false;
+    if (!doc.documentElement.classList.contains('premium-dock-hidden')) return;
+    var b = bouton(e); if (b) { vise = b; t0 = Date.now(); }
+  }, true);
+  doc.addEventListener('click', function (e) { var b = bouton(e); if (b && b === vise) fait = true; }, true);
+  doc.addEventListener('pointerup', function () {
+    var b = vise; if (!b) return;
+    setTimeout(function () { if (!fait && vise === b && Date.now() - t0 < 900) { fait = true; vise = null; b.click(); } else vise = null; }, 80);
+  }, true);
+})();
