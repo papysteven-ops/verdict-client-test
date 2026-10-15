@@ -86,9 +86,9 @@
   /* C61 : pendant la démonstration, le shell n'enregistre pas le service worker : sans lui, aucune nouvelle version
      ne pouvait être détectée. Il est enregistré ici (même fichier, même portée que le shell) après 15 s. */
   var loadedAt = Date.now(), registering = false;
-  function selfRegister() {
+  function selfRegister(now) {
     var c = window.VERDICT_UNIFIED_CONFIG;
-    if (registering || !c || !c.serviceWorker || location.protocol === 'file:' || Date.now() - loadedAt < 15000) return;
+    if (registering || !c || !c.serviceWorker || location.protocol === 'file:' || (!now && Date.now() - loadedAt < 15000)) return;
     registering = true;
     return navigator.serviceWorker.register(c.serviceWorker, { scope: './', updateViaCache: 'none' }).then(watch, function () { registering = false; });
   }
@@ -124,5 +124,45 @@
   window.addEventListener('focus', function () { check(); });
   window.addEventListener('online', function () { check(); });
   setTimeout(function () { ready = true; check(); }, 4000);
-  window.VerdictMaj = { check: check, banner: banner };
+  /* C65 — Version visible et recherche manuelle (écran Sécurité 🔒), comme dans les applis pro.
+     etat() : version qui tourne ici et version publiée ; verifier() : cherche, installe, et en dernier recours
+     répare (service worker et fichiers en cache seulement : codes, réglages et données ne sont pas touchés). */
+  function court(v) { var m = /([0-9a-f]{6,})$/.exec(v || ''); return m ? m[1].slice(0, 7) : (v || '?'); }
+  function versionCourante() {
+    if (coffreUrl) return Promise.resolve(base);
+    return new Promise(function (res) {
+      var c = navigator.serviceWorker && navigator.serviceWorker.controller; if (!c) return res(null);
+      var t = setTimeout(function () { res(null); }, 1500);
+      navigator.serviceWorker.addEventListener('message', function on(e) { if (e.data && e.data.type === 'verdict-version') { clearTimeout(t); navigator.serviceWorker.removeEventListener('message', on); res(e.data.version); } });
+      try { c.postMessage({ type: 'verdict-version' }); } catch (x) { res(null); }
+    });
+  }
+  function versionPubliee() {
+    if (coffreUrl) return fetch(coffreUrl + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (m) { return m.version; }, function () { return null; });
+    var sw = (window.VERDICT_UNIFIED_CONFIG && window.VERDICT_UNIFIED_CONFIG.serviceWorker) || './sw.js';
+    return fetch(sw + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) { var m = /const CACHE=CACHE_PREFIX\+'([^']+)'/.exec(t); return m ? m[1] : null; }, function () { return null; });
+  }
+  function etat() {
+    return Promise.all([versionCourante(), versionPubliee()]).then(function (v) {
+      return { courante: v[0], publiee: v[1], aJour: !!(v[0] && v[1] && v[0] === v[1]), texte: 'Version ' + court(v[0]) + (v[1] ? (v[0] === v[1] ? ' · à jour' : ' · nouvelle version ' + court(v[1]) + ' disponible') : ' · hors ligne') };
+    });
+  }
+  function reparer() {
+    var jobs = [];
+    try { jobs.push(navigator.serviceWorker.getRegistrations().then(function (a) { return Promise.all(a.map(function (r) { return r.unregister(); })); })); } catch (e) {}
+    try { jobs.push(caches.keys().then(function (k) { return Promise.all(k.filter(function (n) { return /^verdict-v2-/.test(n); }).map(function (n) { return caches.delete(n); })); })); } catch (e) {}
+    return Promise.all(jobs).catch(function () {}).then(function () { try { sessionStorage.setItem('verdict:maj-sans-verrou', String(Date.now())); } catch (e) {} location.reload(); });
+  }
+  function verifier() {
+    if (coffreUrl) return etat().then(function (e) { if (!e.aJour && e.publiee) apply(); return e; });
+    return navigator.serviceWorker.getRegistration().then(function (reg) {
+      if (!reg) return selfRegister(true);
+      watch(reg); if (reg.waiting) { apply(); return; }
+      return reg.update().catch(function () {});
+    }).then(function () { return new Promise(function (r) { setTimeout(r, 20000); }); }).then(etat).then(function (e) {
+      if (e.publiee && !e.aJour) return navigator.serviceWorker.getRegistration().then(function (reg) { if (reg && reg.waiting) apply(); else reparer(); }).then(function () { return e; });
+      return e;
+    });
+  }
+  window.VerdictMaj = { check: check, banner: banner, etat: etat, verifier: verifier };
 })();

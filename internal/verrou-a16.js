@@ -293,9 +293,14 @@
       show('<div class="vr-logo">🔒</div><h2>Sécurité</h2><p>Verdict se verrouille à chaque ouverture et au retour après le délai choisi.</p><div class="vr-list">' +
         (av ? '<label>' + esc(BIO) + '<input type="checkbox" data-bio' + (C.bio ? ' checked' : '') + '></label>' : '<label>' + esc(BIO) + '<span style="color:#a3adb8">indisponible ici</span></label>') +
         '<label>Verrouillage auto<select data-delai>' + DELAIS.map(function (d) { return '<option value="' + d[0] + '"' + (+C.delai === d[0] ? ' selected' : '') + '>' + d[1] + '</option>'; }).join('') + '</select></label></div>' +
+        '<div class="vr-version" style="margin:14px 0 4px;color:#a3adb8;font-size:13px">Version : vérification…</div><button type="button" class="vr-btn sec" data-maj>Rechercher une mise à jour</button>' +
         '<button type="button" class="vr-btn" data-lock>Verrouiller maintenant</button>' + (COFFRE ? '' : '<button type="button" class="vr-btn sec" data-code>Changer mon code</button>'), true);
       var el = root();
       el.querySelector('[data-lock]').onclick = function () { lock(false); };
+      /* C65 : version installée / publiée et recherche manuelle d'une mise à jour. */
+      var vz = el.querySelector('.vr-version'), mj = el.querySelector('[data-maj]'), M = window.VerdictMaj;
+      if (M && M.etat) M.etat().then(function (e) { vz.textContent = e.texte; }); else vz.textContent = '';
+      mj.onclick = function () { if (!M || !M.verifier) return; mj.disabled = true; mj.textContent = 'Recherche en cours…'; M.verifier().then(function (e) { mj.disabled = false; mj.textContent = 'Rechercher une mise à jour'; if (e && e.texte) vz.textContent = e.texte; }); };
       el.querySelector('[data-delai]').onchange = function () { C.delai = +this.value; store(C); };
       if (el.querySelector('[data-code]')) el.querySelector('[data-code]').onclick = function () { S.mode = 'verify-change'; show('<div class="vr-logo">🔑</div><h2>Code actuel</h2><p>Saisissez votre code actuel.</p>' + pad(false), true); };
       var bx = el.querySelector('[data-bio]');
