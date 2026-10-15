@@ -71,6 +71,31 @@
     return p.then(function () { return notifEtat(); }, function () { return notifEtat(); });
   }
   if ('serviceWorker' in navigator) try { navigator.serviceWorker.addEventListener('message', function (e) { if (e.data && e.data.type === 'verdict-maj-appliquer') apply(); }); } catch (e) {}
+  /* C83 — Pastille du nombre sur l'icône (écran d'accueil iPhone / iPad) : iOS ne l'affiche qu'après autorisation des
+     notifications (sur Mac, elle s'affiche sans). Dans l'appli installée sur iPhone/iPad, si l'autorisation n'a jamais
+     été demandée, Verdict la propose une fois (refusable, reproposée au plus tous les 7 jours) ; dès qu'elle est
+     donnée, le nombre de notifications non lues s'affiche sur l'icône, comme sur Mac. */
+  function poserPastille() { try { var n = +w.__vdBadgeCount || 0; if (navigator.setAppBadge) { if (n) navigator.setAppBadge(n); else if (navigator.clearAppBadge) navigator.clearAppBadge(); } } catch (e) {} }
+  var IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var installee = !!(navigator.standalone || (w.matchMedia && w.matchMedia('(display-mode: standalone)').matches));
+  function proposerPastille() {
+    if (!IOS || !installee || !('Notification' in w) || Notification.permission !== 'default' || doc.getElementById('pst83')) return;
+    var plusTard = +lire('verdict:pastille-plus-tard') || 0; if (Date.now() - plusTard < 7 * 864e5) return;
+    css();
+    var b = doc.createElement('div'); b.id = 'pst83'; b.setAttribute('role', 'dialog');
+    b.innerHTML = '<span><b>Le nombre sur l’icône Verdict</b><small>Comme sur Mac : vos notifications non lues s’affichent sur l’icône de l’écran d’accueil.</small></span><button type="button" class="maj18-go">Activer</button><button type="button" class="maj18-later">Plus tard</button>';
+    b.style.cssText = 'top:auto;bottom:calc(96px + env(safe-area-inset-bottom,0px))';
+    if (!doc.getElementById('pst83-css')) { var st = doc.createElement('style'); st.id = 'pst83-css'; st.textContent = (doc.getElementById('maj18-css') || { textContent: '' }).textContent.replace(/#maj18/g, '#pst83'); doc.head.appendChild(st); }
+    doc.body.appendChild(b); b.classList.toggle('maj18-clair', sombre());
+    b.querySelector('.maj18-later').onclick = function () { ecrire('verdict:pastille-plus-tard', String(Date.now())); b.remove(); };
+    b.querySelector('.maj18-go').onclick = function () {
+      Promise.resolve(Notification.requestPermission()).then(function (r) {
+        b.remove(); if (r === 'granted') { ecrire(NOTIF_PREF, 'oui'); poserPastille(); } else ecrire('verdict:pastille-plus-tard', String(Date.now()));
+      }, function () { b.remove(); });
+    };
+  }
+  setTimeout(proposerPastille, 6000);
+  doc.addEventListener('visibilitychange', function () { if (doc.hidden) poserPastille(); });
   /* « Plus tard » : le bandeau se ferme (dans toutes les fenêtres) et la mise à jour attend dans les notifications. */
   function later(fromOther) {
     postponed = true; var b = doc.getElementById('maj18'); if (b) b.remove();

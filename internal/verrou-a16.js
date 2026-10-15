@@ -292,7 +292,7 @@
     bioAvailable().then(function (av) {
       show('<div class="vr-logo">🔒</div><h2>Sécurité</h2><p>Verdict se verrouille à chaque ouverture et au retour après le délai choisi.</p><div class="vr-list">' +
         (av ? '<label>' + esc(BIO) + '<input type="checkbox" data-bio' + (C.bio ? ' checked' : '') + '></label>' : '<label>' + esc(BIO) + '<span style="color:#a3adb8">indisponible ici</span></label>') +
-        (window.VerdictMaj && window.VerdictMaj.notifications && window.VerdictMaj.notifications.etat() !== 'indisponible' ? '<label>Notifications de mise à jour<input type="checkbox" data-notif' + (window.VerdictMaj.notifications.etat() === 'active' ? ' checked' : '') + '></label>' : '<label>Notifications de mise à jour<span style="color:#a3adb8">indisponible ici</span></label>') +
+        (window.VerdictMaj && window.VerdictMaj.notifications && window.VerdictMaj.notifications.etat() !== 'indisponible' ? '<label>Notifications et nombre sur l’icône<input type="checkbox" data-notif' + (window.VerdictMaj.notifications.etat() === 'active' ? ' checked' : '') + '></label>' : '<label>Notifications et nombre sur l’icône<span style="color:#a3adb8">indisponible ici</span></label>') +
         '<label>Verrouillage auto<select data-delai>' + DELAIS.map(function (d) { return '<option value="' + d[0] + '"' + (+C.delai === d[0] ? ' selected' : '') + '>' + d[1] + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="vr-version" style="margin:14px 0 4px;color:#a3adb8;font-size:13px">Version : vérification…</div><button type="button" class="vr-btn sec" data-maj>Rechercher une mise à jour</button>' +
         '<button type="button" class="vr-btn" data-lock>Verrouiller maintenant</button>' + (COFFRE ? '' : '<button type="button" class="vr-btn sec" data-code>Changer mon code</button>'), true);
@@ -304,7 +304,7 @@
         var box = this; box.disabled = true;
         window.VerdictMaj.notifications.activer(box.checked).then(function (e) {
           box.disabled = false; box.checked = e === 'active';
-          toast(e === 'active' ? 'Vous serez prévenu à chaque nouvelle version.' : e === 'refusee' ? 'Notifications refusées : autorisez-les dans les réglages de l’appareil.' : 'Notifications de mise à jour désactivées.');
+          toast(e === 'active' ? 'Activé : nouvelles versions et nombre de notifications sur l’icône.' : e === 'refusee' ? 'Notifications refusées : autorisez-les dans les réglages de l’appareil.' : 'Notifications de mise à jour désactivées.');
         });
       };
       /* C65 : version installée / publiée et recherche manuelle d'une mise à jour. */

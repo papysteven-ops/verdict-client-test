@@ -125,6 +125,7 @@
       if (badge) { badge.textContent = visibleUnread > 99 ? '99+' : String(visibleUnread); badge.hidden = visibleUnread === 0; }
       if (btn) { btn.classList.toggle('has-notifications', visibleUnread > 0); btn.setAttribute('aria-label', visibleUnread ? 'Notifications : ' + visibleUnread + ' non lue' + (visibleUnread > 1 ? 's' : '') : 'Notifications : aucune en attente'); }
       if (sum) sum.textContent = visibleUnread ? visibleUnread + ' notification' + (visibleUnread > 1 ? 's' : '') + ' à traiter' + (order.length > 1 ? ' · ' + order.length + ' établissements' : '') : 'Tout est lu';
+      window.__vdBadgeCount = visibleUnread;
       try { if (navigator.setAppBadge) { if (visibleUnread) navigator.setAppBadge(visibleUnread); else if (navigator.clearAppBadge) navigator.clearAppBadge(); } } catch (e) {}
     } finally { busy = false; }
   }
