@@ -45,7 +45,7 @@
     try { var c = getComputedStyle(doc.body).backgroundColor.match(/\d+(\.\d+)?/g); if (c && (c.length < 4 || +c[3] > 0)) return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255 < 0.45; } catch (e) {}
     return !!(w.matchMedia && w.matchMedia('(prefers-color-scheme: dark)').matches);
   }
-  function contraste() { var b = doc.getElementById('maj18'); if (b) b.classList.toggle('maj18-clair', sombre()); }
+  function contraste() { var t = sombre(); ['maj18', 'pst83'].forEach(function (id) { var b = doc.getElementById(id); if (b) b.classList.toggle('maj18-clair', t); }); }
   try { new MutationObserver(contraste).observe(doc.documentElement, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
   /* C72 — Vraie notification du système (avec le son de l'appareil) quand une nouvelle version arrive, si le client l'a
      activée dans Sécurité 🔒. Une seule fois par version ; la toucher ouvre Verdict et lance la mise à jour.

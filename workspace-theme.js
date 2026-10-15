@@ -44,7 +44,7 @@
   var VDL_CAND='button,section,article,nav,header,aside,main,[role=tab],[role=tablist],div[id],[class*="card"],[class*="hero"],[class*="bar"],[class*="chip"],[class*="seg"],[class*="head"],[class*="dock"],[class*="greet"],[class*="metric"],[class*="service"],[class*="primary"],[class*="tabs"],[class*="sticky"],[class*="step"],[class*="prim"],[class*="panel"],[class*="box"],[class*="banner"],[class*="tile"],[class*="pill"],[class*="icon"],[class*="top"],[class*="sheet"],[role=dialog],dialog';
   var VDL_STYLES={surf:{'background':'#ffffff','background-image':'none','border-color':'#d5dde5','box-shadow':'0 1px 2px rgba(16,24,40,.06)'},
     btn:{'background':'#f3f5f7','background-image':'none','border-color':'#cfd8e1'},
-    sel:{'background':'#e8f6ee','background-image':'none','border-color':'#15803d','box-shadow':'inset 0 0 0 2px #15803d'},
+    sel:{'background':'#e8f6ee','background-image':'none','border-color':'#15803d','box-shadow':'inset 0 0 0 2px #15803d','color':'#14532d'},
     prim:{'background':'#15803d','background-image':'none','border-color':'#15803d','color':'#ffffff'},
     page:{'background-color':'#f3f5f7','background-image':'none'},
     ink:{'color':'#14202b'},soft:{'color':'#4f5f6e'}};
@@ -93,25 +93,29 @@
     if(e.__vdl&&e.__vdlVals){for(var pk in e.__vdlVals){if(e.style.getPropertyValue(pk)!==e.__vdlVals[pk]||e.style.getPropertyPriority(pk)!=='important'){vdlClear(e);e.__vdlVals=null;break;}}}
     var r=e.getBoundingClientRect();if(!r.width||!r.height)return;
     var kind=null;
-    if((!e.__vdl||e.__vdl==='txt')&&r.width*r.height>=300&&e.matches(VDL_CAND)){var L=vdlBgLum(win,e);
+    if((!e.__vdl||e.__vdl==='txt'||e.__vdl==='txtc')&&r.width*r.height>=300&&e.matches(VDL_CAND)){var L=vdlBgLum(win,e);
       if(L!==null&&L<0.1){var isBtn=e.tagName==='BUTTON'||e.getAttribute('role')==='tab'||e.getAttribute('role')==='button';
         var inSurf=false;for(var x=e.parentElement;x;x=x.parentElement){var k0=x.__vdlPending||x.__vdl;if(k0==='surf'||k0==='page'){inSurf=true;break;}}
         kind=isBtn?(vdlSelected(e)?'sel':(inSurf?'btn':'prim')):'surf';e.__vdlPending=kind;out.push([e,kind,kind==='surf'?vdlSemantic(win,e):null]);}}
     /* V2 : un texte foncé décidé pendant l’animation d’une feuille (fond encore transparent) est relu ; si son fond est
        maintenant sombre, la correction est retirée (titre « Protégez votre historique » illisible sinon). */
     if(e.__vdl==='txt'){if(vdlEffBg(win,e)<0.45)vdlClear(e);return;}
+    if(e.__vdl==='txtc'){if(vdlEffBg(win,e)>=0.45)vdlClear(e);return;}
     var k1=e.__vdlPending||e.__vdl;if(k1==='prim')return;
     var t=false;for(var n=e.firstChild;n;n=n.nextSibling){if(n.nodeType===3&&n.textContent.trim().length){t=true;break;}}if(!t)return;
     for(var y=e;y;y=y.parentElement){if((y.__vdlPending||y.__vdl)==='prim')return;}
     var cs=win.getComputedStyle(e);
     var fg=vdlRgb(cs.color);if(!fg)return;var lf=vdlLum(fg),lb=vdlEffBg(win,e);
-    if(lb<0.45||vdlCR(lf,lb)>=3)return;
+    if(vdlCR(lf,lb)>=3)return;
+    /* C86 : un texte foncé posé sur une surface restée sombre en mode clair (bandeau du haut, fenêtre de démonstration, score)
+       était illisible : il passe en clair, de la même teinte s'il est coloré. */
+    if(lb<0.45){var cl;if(vdlSat(fg)<0.25)cl='#eef2f7';else{var m0=fg.slice(0,3),q=0;for(var s0=0;s0<14&&vdlCR(vdlLum(m0),lb)<4.5;s0++){q=1-(1-q)*0.8;m0=fg.slice(0,3).map(function(v){return Math.round(v+(255-v)*q);});}cl='rgb('+m0.join(',')+')';}out.push([e,'txtc',cl]);return;}
     var col;
     if(vdlSat(fg)<0.25)col=lf>0.5?'#14202b':'#4f5f6e';
     else{var k=1,c=fg.slice(0,3);for(var s=0;s<14&&vdlCR(vdlLum(c),lb)<4.5;s++){k*=0.85;c=fg.slice(0,3).map(function(v){return Math.round(v*k);});}col='rgb('+c.join(',')+')';}
     out.push([e,'txt',col]);
   }
-  function vdlApply(out){out.forEach(function(d){var e=d[0];if(d[1]==='txt'){var keep=e.__vdlProps||[];e.style.setProperty('color',d[2],'important');e.__vdlProps=keep.concat(['color']);e.__vdlVals=e.__vdlVals||{};e.__vdlVals.color=e.style.getPropertyValue('color');if(!e.__vdl){e.__vdl='txt';e.setAttribute('data-vdl','txt');}}else{e.__vdlPending=null;vdlSet(e,d[1],d[2]);}});}
+  function vdlApply(out){out.forEach(function(d){var e=d[0];if(d[1]==='txt'||d[1]==='txtc'){var keep=e.__vdlProps||[];e.style.setProperty('color',d[2],'important');e.__vdlProps=keep.concat(['color']);e.__vdlVals=e.__vdlVals||{};e.__vdlVals.color=e.style.getPropertyValue('color');if(!e.__vdl){e.__vdl=d[1];e.setAttribute('data-vdl',d[1]);}}else{e.__vdlPending=null;vdlSet(e,d[1],d[2]);}});}
   function vdlQueue(doc,root,full){
     if(!doc.__vdlQ)doc.__vdlQ=[];
     if(full){doc.__vdlQ=[{full:true}];}
@@ -144,7 +148,7 @@
     try{new (doc.defaultView||window).MutationObserver(function(recs){
       if(!doc.documentElement.classList.contains('vd-workspace-light'))return;
       recs.forEach(function(m){if(m.type==='childList')m.addedNodes.forEach(function(n){if(n.nodeType===1)vdlQueue(doc,n,false);else if(n.nodeType===3&&n.parentElement)vdlQueue(doc,n.parentElement,false);});
-        else if(m.type==='attributes'&&m.target.nodeType===1&&m.target!==doc.documentElement){var t=m.target;if(t.__vdl&&t.__vdl!=='txt'&&m.attributeName==='class'){vdlClear(t);}vdlQueue(doc,t,false);}});
+        else if(m.type==='attributes'&&m.target.nodeType===1&&m.target!==doc.documentElement){var t=m.target;if(t.__vdl&&t.__vdl!=='txt'&&t.__vdl!=='txtc'&&m.attributeName==='class'){vdlClear(t);}vdlQueue(doc,t,false);}});
     }).observe(doc.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden','open','aria-pressed','aria-selected']});}catch(e){}
     /* V2 : fin d’animation ou de transition → relecture du bloc animé (feuilles qui glissent, fondus). */
     try{['animationend','transitionend'].forEach(function(t){doc.addEventListener(t,function(ev){if(ev.target&&ev.target.nodeType===1&&doc.documentElement.classList.contains('vd-workspace-light')&&ev.target.closest('.modal,.sheet,[role=dialog],#refSh'))vdlQueue(doc,ev.target.closest('.modal,.sheet,[role=dialog],#refSh')||ev.target,false);},true);});}catch(e){}
