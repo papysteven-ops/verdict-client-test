@@ -155,15 +155,31 @@
     try { jobs.push(caches.keys().then(function (k) { return Promise.all(k.filter(function (n) { return /^verdict-v2-/.test(n); }).map(function (n) { return caches.delete(n); })); })); } catch (e) {}
     return Promise.all(jobs).catch(function () {}).then(function () { try { sessionStorage.setItem('verdict:maj-sans-verrou', String(Date.now())); } catch (e) {} location.reload(); });
   }
-  function verifier() {
-    if (coffreUrl) return etat().then(function (e) { if (!e.aJour && e.publiee) apply(); return e; });
-    return navigator.serviceWorker.getRegistration().then(function (reg) {
-      if (!reg) return selfRegister(true);
-      watch(reg); if (reg.waiting) { apply(); return; }
-      return reg.update().catch(function () {});
-    }).then(function () { return new Promise(function (r) { setTimeout(r, 20000); }); }).then(etat).then(function (e) {
-      if (e.publiee && !e.aJour) return navigator.serviceWorker.getRegistration().then(function (reg) { if (reg && reg.waiting) apply(); else reparer(); }).then(function () { return e; });
-      return e;
+  /* C66 — Réponse immédiate, comme les applis pro : « Verdict est à jour » (avec l'heure), ou installation de la
+     nouvelle version (« Mise à jour en cours… ») puis rechargement sans redemander le code. */
+  function heure() { var d = new Date(); return ('0' + d.getHours()).slice(-2) + ' h ' + ('0' + d.getMinutes()).slice(-2); }
+  function attendreAttente(reg, ms) {
+    return new Promise(function (res) {
+      var fin = Date.now() + ms;
+      (function tour() { if (reg.waiting) return res(true); if (Date.now() > fin) return res(false); setTimeout(tour, 1000); })();
+    });
+  }
+  function verifier(onEtape) {
+    var etape = typeof onEtape === 'function' ? onEtape : function () {};
+    etape('Recherche en cours…');
+    return etat().then(function (e) {
+      if (!e.publiee) { e.texte = 'Hors ligne : vérification impossible pour le moment.'; return e; }
+      /* Sans service worker actif, la page vient d'être chargée depuis internet : c'est déjà la dernière version. */
+      var aJour = e.aJour || (!coffreUrl && !(navigator.serviceWorker && navigator.serviceWorker.controller));
+      if (aJour) { e.aJour = true; e.texte = 'Verdict est à jour · version ' + court(e.publiee) + ' · vérifié à ' + heure(); return e; }
+      etape('Mise à jour en cours…');
+      if (coffreUrl) { apply(); return e; }
+      return navigator.serviceWorker.getRegistration().then(function (reg) {
+        if (!reg) return reparer();
+        watch(reg);
+        if (reg.waiting) return apply();
+        return reg.update().catch(function () {}).then(function () { return attendreAttente(reg, 45000); }).then(function (pret) { if (pret) apply(); else reparer(); });
+      }).then(function () { e.texte = 'Mise à jour en cours…'; return e; });
     });
   }
   window.VerdictMaj = { check: check, banner: banner, etat: etat, verifier: verifier };

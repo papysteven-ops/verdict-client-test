@@ -300,7 +300,14 @@
       /* C65 : version installée / publiée et recherche manuelle d'une mise à jour. */
       var vz = el.querySelector('.vr-version'), mj = el.querySelector('[data-maj]'), M = window.VerdictMaj;
       if (M && M.etat) M.etat().then(function (e) { vz.textContent = e.texte; }); else vz.textContent = '';
-      mj.onclick = function () { if (!M || !M.verifier) return; mj.disabled = true; mj.textContent = 'Recherche en cours…'; M.verifier().then(function (e) { mj.disabled = false; mj.textContent = 'Rechercher une mise à jour'; if (e && e.texte) vz.textContent = e.texte; }); };
+      mj.onclick = function () {
+        if (!M || !M.verifier) return; mj.disabled = true;
+        M.verifier(function (t) { mj.textContent = t; }).then(function (e) {
+          if (e && e.aJour === false && /en cours/.test(e.texte || '')) return; /* rechargement imminent */
+          mj.disabled = false; mj.textContent = 'Rechercher une mise à jour';
+          if (e && e.texte) { vz.textContent = e.texte; vz.style.color = e.aJour ? '#22c55e' : '#a3adb8'; toast(e.aJour ? 'Verdict est à jour' : e.texte); }
+        }, function () { mj.disabled = false; mj.textContent = 'Rechercher une mise à jour'; toast('Vérification impossible, réessayez.'); });
+      };
       el.querySelector('[data-delai]').onchange = function () { C.delai = +this.value; store(C); };
       if (el.querySelector('[data-code]')) el.querySelector('[data-code]').onclick = function () { S.mode = 'verify-change'; show('<div class="vr-logo">🔑</div><h2>Code actuel</h2><p>Saisissez votre code actuel.</p>' + pad(false), true); };
       var bx = el.querySelector('[data-bio]');
@@ -313,7 +320,7 @@
   }
   function toast(t) {
     var n = doc.createElement('div'); n.textContent = t;
-    n.style.cssText = 'position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:2147483602;background:#111827;color:#fff;padding:12px 18px;border-radius:14px;font:600 14px/1.3 -apple-system,system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.35)';
+    n.style.cssText = 'position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:2147483647;background:#111827;color:#fff;padding:12px 18px;border-radius:14px;font:600 14px/1.3 -apple-system,system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.35)';
     doc.body.appendChild(n); setTimeout(function () { n.remove(); }, 2600);
   }
 
