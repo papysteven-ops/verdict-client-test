@@ -22,9 +22,23 @@
     };
   }
   ['drawDec', 'decBest', 'decResetAll', 'decDrawTotal'].forEach(function (n) { if (typeof w[n] === 'function') w[n] = avecMemoire(w[n]); });
+  /* C94 — Pendant le glissé, seuls le curseur, sa carte et la barre du total se mettent à jour. Le récapitulatif, la
+     fourchette et le recalage de la marge du bas (qui force un calcul de mise en page) sont refaits une seule fois,
+     180 ms après l'arrêt du doigt. */
+  var glisse = false, repos = 0, aRefaire = {};
+  ['decDrawRecap', 'decFourchetteInject', 'decPadFix'].forEach(function (n) {
+    var f = w[n]; if (typeof f !== 'function') return;
+    w[n] = function () { if (glisse) { aRefaire[n] = arguments; return; } return f.apply(this, arguments); };
+    w[n].__vdOrig = f;
+  });
+  var finGlisse = avecMemoire(function () {
+    glisse = false; var faire = aRefaire; aRefaire = {};
+    ['decDrawRecap', 'decFourchetteInject', 'decPadFix'].forEach(function (n) { if (faire[n] && w[n]) try { w[n].apply(w, faire[n]); } catch (e) {} });
+  });
   if (typeof w.decMove === 'function') {
     var bouger = avecMemoire(w.decMove), enAttente = null, image = 0;
     w.decMove = function (id, el) {
+      glisse = true; clearTimeout(repos); repos = setTimeout(finGlisse, 180);
       enAttente = [id, el];
       if (image) return;
       image = requestAnimationFrame(function () { image = 0; var p = enAttente; enAttente = null; if (p) bouger(p[0], p[1]); });
