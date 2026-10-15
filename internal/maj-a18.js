@@ -59,8 +59,13 @@
       /* Appli classique : on « réveille » la version téléchargée (elle attend), puis on recharge quand elle a pris la main. */
       if (coffreUrl || !('serviceWorker' in navigator)) return location.reload();
       navigator.serviceWorker.getRegistration().then(function (reg) {
-        if (reg && reg.waiting) { applying = true; reg.waiting.postMessage({ type: 'SKIP_WAITING' }); setTimeout(function () { location.reload(); }, 4000); }
-        else location.reload();
+        function bascule(r) { applying = true; r.waiting.postMessage({ type: 'SKIP_WAITING' }); setTimeout(function () { location.reload(); }, 4000); }
+        if (reg && reg.waiting) return bascule(reg);
+        /* C70 : la nouvelle version n'est pas encore téléchargée sur cet appareil (iPhone : téléchargement lent ou
+           interrompu) : on la télécharge maintenant, puis on bascule ; sinon réparation (jamais un simple rechargement
+           qui laisserait l'ancienne version). */
+        if (!reg) return reparer();
+        reg.update().catch(function () {}).then(function () { return attendreAttente(reg, 45000); }).then(function (pret) { if (pret) bascule(reg); else reparer(); });
       }, function () { location.reload(); });
     });
   }
@@ -98,7 +103,11 @@
       if (!reg) return selfRegister();
       watch(reg);
       if (reg.waiting) banner();
-      return reg.update().catch(function () {});
+      return reg.update().catch(function () {}).then(function () {
+        /* C70 : l'alerte ne dépend plus du téléchargement : une version publiée plus récente que celle qui tourne
+           suffit à proposer « Mettre à jour ». */
+        return etat().then(function (e) { if (e.publiee && e.courante && !e.aJour) banner(); });
+      });
     }).catch(function () {});
   }
   function check() {

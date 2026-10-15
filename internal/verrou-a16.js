@@ -299,12 +299,16 @@
       el.querySelector('[data-lock]').onclick = function () { lock(false); };
       /* C65 : version installée / publiée et recherche manuelle d'une mise à jour. */
       var vz = el.querySelector('.vr-version'), mj = el.querySelector('[data-maj]'), M = window.VerdictMaj;
-      if (M && M.etat) M.etat().then(function (e) { vz.textContent = e.texte; }); else vz.textContent = '';
+      /* C70 : une version plus récente existe → le bouton dit « Mettre à jour » (vert), pas « Rechercher ». */
+      if (M && M.etat) M.etat().then(function (e) {
+        vz.textContent = e.aJour || !e.publiee || !e.courante ? e.texte : 'Nouvelle version disponible (' + e.texte.replace(/^.*nouvelle version /, '').replace(/ disponible$/, '') + ')';
+        if (e.publiee && e.courante && !e.aJour) { mj.textContent = 'Mettre à jour'; mj.classList.remove('sec'); }
+      }); else vz.textContent = '';
       mj.onclick = function () {
         if (!M || !M.verifier) return; mj.disabled = true;
         M.verifier(function (t) { mj.textContent = t; }).then(function (e) {
           if (e && e.aJour === false && /en cours/.test(e.texte || '')) return; /* rechargement imminent */
-          mj.disabled = false; mj.textContent = 'Rechercher une mise à jour';
+          mj.disabled = false; mj.textContent = 'Rechercher une mise à jour'; mj.classList.add('sec');
           if (e && e.texte) { vz.textContent = e.texte; vz.style.color = e.aJour ? '#22c55e' : '#a3adb8'; toast(e.aJour ? 'Verdict est à jour' : e.texte); }
         }, function () { mj.disabled = false; mj.textContent = 'Rechercher une mise à jour'; toast('Vérification impossible, réessayez.'); });
       };
