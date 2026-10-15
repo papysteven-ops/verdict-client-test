@@ -78,10 +78,10 @@
   /* Dès que la nouvelle version a fini de se télécharger (état « installée »), l'alerte s'affiche, sans attendre. */
   function watch(reg) {
     if (!reg || watched === reg) return; watched = reg;
-    reg.addEventListener('updatefound', function () {
-      var w = reg.installing; if (!w) return;
-      w.addEventListener('statechange', function () { if (w.state === 'installed' && navigator.serviceWorker.controller) banner(); });
-    });
+    function follow(w) { if (w) w.addEventListener('statechange', function () { if (w.state === 'installed' && navigator.serviceWorker.controller) banner(); }); }
+    reg.addEventListener('updatefound', function () { follow(reg.installing); });
+    /* C61 : une installation déjà commencée à l'ouverture (avant ce script) est suivie elle aussi. */
+    follow(reg.installing);
   }
   function checkWorker() {
     if (!('serviceWorker' in navigator)) return Promise.resolve();
