@@ -51,6 +51,8 @@
   /* Une ouverture charge toujours la dernière version : la notification d'une mise à jour déjà faite disparaît. */
   setTimeout(function () { var c = centre(); if (c && c.getItems && c.getItems().some(function (i) { return i.id === NOTIF_ID; }) && !postponed) c.remove(NOTIF_ID); }, 1500);
   function apply() {
+    /* C59 : la mise à jour est validée dans une appli déjà ouverte : le rechargement ne redemande ni code, ni mot de passe. */
+    try { sessionStorage.setItem('verdict:maj-sans-verrou', String(Date.now())); } catch (e) {}
     var btn = doc.querySelector('#maj18 .maj18-go'); if (btn) { btn.disabled = true; btn.textContent = 'Mise à jour…'; }
     var guard = window.VerdictUpdateGuard && window.VerdictUpdateGuard.prepare ? window.VerdictUpdateGuard.prepare() : Promise.resolve({ ok: true });
     Promise.resolve(guard).catch(function () { return { ok: true }; }).then(function () {
