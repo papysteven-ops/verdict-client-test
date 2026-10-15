@@ -887,6 +887,15 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
     DB.sites[siteId]={name:String(context.name||'Mon établissement').slice(0,100),emo:'🏪',zones:[cuisine,bar],establishmentId:siteId,verdictStoreId:siteId,inventoryBridgeId:siteId};
     DB.siteList.push(siteId);DB.spaces[cuisine]=typeof newSpace==='function'?newSpace('cuisine',false):{products:[]};DB.spaces[bar]=typeof newSpace==='function'?newSpace('bar',false):{products:[]};
     DB.meta[cuisine]={name:'Cuisine',emo:'🍳',site:siteId,kind:'cuisine'};DB.meta[bar]={name:'Bar',emo:'🍸',site:siteId,kind:'bar'};DB.list.push(cuisine,bar);
+    /* C37 : établissement dupliqué depuis Verdict (même concept) — l'inventaire de la référence est repris : zones,
+       produits, unités, prix, fournisseurs, seuils ; jamais les stocks comptés ni l'historique. Demande déposée par
+       internal/etab-portfolio-a12.js sous verdict:inventory:duplicate-requests:v1, consommée une seule fois. */
+    try{var dupKey='verdict:inventory:duplicate-requests:v1',dupReq=JSON.parse(localStorage.getItem(dupKey)||'{}'),dupSrc=dupReq[siteId];
+      if(dupSrc){var srcSite=DB.sites[dupSrc]?dupSrc:(DB.siteList||[]).filter(function(k){var x=DB.sites[k]||{};return x.establishmentId===dupSrc||x.verdictStoreId===dupSrc||x.inventoryBridgeId===dupSrc;})[0];
+        if(srcSite&&DB.sites[srcSite]){var n=0;(DB.sites[srcSite].zones||[]).forEach(function(z){var kind=(DB.meta[z]&&DB.meta[z].kind)==='bar'?bar:cuisine;((DB.spaces[z]||{}).products||[]).forEach(function(p){var c=JSON.parse(JSON.stringify(p));c.id='dup_'+siteId.replace(/[^a-zA-Z0-9]/g,'').slice(-12)+'_'+(n++);c.stock=null;c.counted=false;delete c.qty;delete c.lastCount;delete c.countedAt;c.duplicatedFrom=p.id;DB.spaces[kind].products.push(c);});});
+          if(DB.suppliersBySite&&DB.suppliersBySite[srcSite])DB.suppliersBySite[siteId]=JSON.parse(JSON.stringify(DB.suppliersBySite[srcSite]));
+          DB.sites[siteId].duplicatedFrom=srcSite;}
+        delete dupReq[siteId];localStorage.setItem(dupKey,JSON.stringify(dupReq));}}catch(e){}
     try{if(typeof save==='function')save();}catch(e){}
     return siteId;
   }

@@ -3412,7 +3412,7 @@ function createEtab(modele){
   if(nom)d.etab=nom; else if(!modele)d.etab="Nouvel \u00e9tablissement";
   if(ville)d.etabVille=ville;
   closeNewEtab();
-  var id=addEtab(d,null,true); if(!id)return; save();
+  var id=addEtab(d,null,true); if(!id)return; save('create-establishment');
   fillInputs(); readInputs(); drawEtabs(); refreshAll();
   go("pil");
   replayIntro(DB.etab+" \u2014 ajout\u00e9");
