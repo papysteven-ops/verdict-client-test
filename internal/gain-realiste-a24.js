@@ -8,7 +8,8 @@
    4. tout est rejoué par moteur() : aucun euro n'est additionné à côté, donc aucun double comptage.
    C90 (retour de Steven : « une seule base, une référence juste, c'est tout ») : un seul montant ; la proposition ne dépasse
    ni la borne de chaque levier ni la rentabilité des meilleurs établissements du format ; un ancien scénario enregistré
-   avant ces bornes n'est plus restauré tel quel ; si le client pousse lui-même un curseur, une phrase simple le dit. */
+   avant ces bornes n'est plus restauré tel quel ; si le client pousse lui-même un curseur, une phrase simple le dit.
+   C91 : Priorités et Audit affichent pour chaque action le montant que Simuler calcule pour le même levier. */
 (function(w){
 'use strict';
 if(w.VerdictGainRealiste||typeof w.moteur!=='function'||typeof w.DEC_DEFS==='undefined'||typeof w.deriv!=='function')return;
@@ -124,7 +125,7 @@ function plan(){
   var d=R.d,v=R.v,ca=d.ca,F=format(),fam=F.fam,type=F.type,L=[],cf=carteFiable();
   function add(id,val,why,how){if(val&&isFinite(val))L.push({id:id,v:val,why:why,how:how,ctrl:ctrlLib(id)});}
   /* équipe : un tiers de l'écart au repère médian */
-  if(num(d.salM)>0&&v.ms>fam.ms[1]){var m=Math.round((v.ms-fam.ms[1])/100*ca/3/12/100)*100;
+  if(num(d.salM)>0&&v.ms>fam.ms[1]){var m=Math.floor((v.ms-fam.ms[1])/100*ca/3/12/50)*50;
     add('sal',-m,'Coût humain à '+pc(v.ms)+' du CA ; repère médian '+F.nom+' : '+pc(fam.ms[1],0)+'. Verdict retient un tiers de l’écart.',txt('p11StaffAction',type)||'Comparer ventes et heures, service par service.');}
   /* charges fixes : un tiers de l'écart, exprimé sur l'ensemble mais à chercher hors loyer */
   if(num(d.af)>0&&v.acf>fam.acf[1]){var sv=(v.acf-fam.acf[1])/100*ca/3,p=Math.floor(sv/d.af*100);
@@ -187,7 +188,7 @@ function plan(){
 
 /* ── Simuler : nouveaux pas, levier Carte, cumul et impacts individuels ── */
 function installerSimuler(){
-  var p=def('panier');if(p)p.step=0.1;var c=def('cmd');if(c){c.step=0.5;c.fmt=function(v){return (v>0?'+':v<0?'\u2212':'')+String(Math.abs(Math.round(v*10)/10)).replace('.',',')+' / jour';};}var x=def('fix');if(x)x.step=1;
+  var p=def('panier');if(p)p.step=0.1;var sl=def('sal');if(sl)sl.step=50;var c=def('cmd');if(c){c.step=0.5;c.fmt=function(v){return (v>0?'+':v<0?'\u2212':'')+String(Math.abs(Math.round(v*10)/10)).replace('.',',')+' / jour';};}var x=def('fix');if(x)x.step=1;
   if(!def('carte')){
     var at=w.DEC_DEFS.indexOf(def('panier'))+1;
     w.DEC_DEFS.splice(at,0,{id:'carte',t:'Prix de la carte',icon:'🍽️',step:1,min:0,max:CARTE_CAP,def:0,
@@ -215,6 +216,7 @@ function installerSimuler(){
   };
   w.decPotentialState=function(P){var s={},src=(P&&P.state)||{};for(var k in src)s[k]=src[k];s.jour=0;return s;};
   w.decBest=decBest;
+  if(typeof w.point11Decision==='function'&&!w.point11Decision.__c91){var p11=w.point11Decision;w.point11Decision=function(db){var r=p11.apply(this,arguments);try{aligner(r,db);}catch(e){}return r;};w.point11Decision.__c91=true;}
   w.decScenarioPersist=persist;
   if(typeof w.decScenarioEnsure==='function'&&!w.decScenarioEnsure.__c90){w.decScenarioEnsure=restaurer(w.decScenarioEnsure);w.decScenarioEnsure.__c90=true;}
   var origRecap=w.decDrawRecap;
@@ -284,6 +286,21 @@ function noteRecap(){
   if(!h.length){if(n)n.remove();return;}
   if(!n){n=document.createElement('p');n.id='c90-recap';n.className='note c88-note';var vd=document.getElementById('rc-vd');box.insertBefore(n,vd||null);}
   n.textContent='Vous avez poussé '+(h.length>1?h.length+' curseurs':'un curseur')+' au-delà du réaliste : ce total n’est plus la proposition de Verdict, qui est de '+signe(P.central.gain)+' par an.';
+}
+
+/* C91 — Priorités et Audit : le montant d'une action est celui que Simuler calcule pour le même levier, avec le même moteur
+   (une seule base). La règle reste la même (un tiers de l'écart au repère du format) ; seul le calcul passe par moteur(). */
+var ACTIONS={STAFF_COST_HIGH:['sal'],CHARGES_AUTRES_HIGH:['fix'],PANIER_LOW:['panier'],COMMANDES_LOW:['cmd'],VARIABLE_COST_HIGH:['fc','emb','com']};
+function aligner(res,db){
+  if(!res||!res.items||!res.items.length)return;var keep=w.DB,swap=db&&db!==w.DB;if(swap)w.DB=db;
+  try{
+    var P=plan();if(!P)return;var base=P.base.res,lv={};P.leviers.forEach(function(x){lv[x.id]=x.v;});if(P.bornesLevier.panier&&lv.panier==null)lv.panier=P.bornesLevier.panier;
+    res.items.forEach(function(it){var ids=ACTIONS[it.id],imp=it.impact;if(!ids||!imp||imp.kind!=='scenario_gain')return;
+      var st={},n=0;ids.forEach(function(id){if(lv[id]){st[id]=lv[id];n++;}});if(!n)return;
+      var g=Math.round(w.moteur(overAll(st)).d.res-base);if(!(g>0))return;
+      imp.annual=g;imp.amount=g;imp.monthly=Math.round(g/12);
+      if(imp.assumption&&imp.assumption.indexOf('Simuler')<0)imp.assumption+=' Montant rejoué par le moteur Verdict, identique au curseur de Simuler.';});
+  }finally{if(swap)w.DB=keep;}
 }
 
 /* ── Point de départ de Simuler ── */
@@ -370,7 +387,7 @@ css.textContent='.c88-best{background:rgba(0,0,0,.25);border-radius:12px;padding
   'html.vd-workspace-light #v-dec .c88-best{background:#f6f8fa!important}';
 (document.head||document.documentElement).appendChild(css);
 
-w.VerdictGainRealiste={version:'C90',plan:plan,cartePlan:cartePlan,horsBornes:horsBornes,carteFiable:carteFiable,overAll:overAll,
+w.VerdictGainRealiste={version:'C91',plan:plan,cartePlan:cartePlan,horsBornes:horsBornes,carteFiable:carteFiable,overAll:overAll,
   ouvrirSimuler:function(){var P=plan();if(!P)return;try{w.decDepuisPotentiel();}catch(e){w.DEC_STATE=w.decPotentialState(P);w.go('dec');}},
   ouvrirDetail:function(){var d=document.querySelector('[data-audit-full-report]');if(d)d.open=true;setTimeout(function(){var c=document.getElementById('auGainReel');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});},40);}};
 installerSimuler();installerAudit();

@@ -113,7 +113,8 @@ html.p40-shell.vd-workspace-light .app-shell-context,
 html.p40-shell.vd-workspace-light .module-tabs,
 html.p40-shell.vd-workspace-light .shell-actions button {background:#f1f5f9!important;color:#17212b!important;border-color:#94a3b8!important;}
 html.p40-shell.vd-workspace-light .module-tabs button {color:#334155!important;}
-html.p40-shell.vd-workspace-light .module-tabs button[aria-selected="true"] {background:#dbeafe!important;color:#123b70!important;border-left:3px solid #1d4ed8!important;box-shadow:inset 0 0 0 1px #1d4ed8!important;}
+/* C93 : même vert que toutes les sélections du mode clair (sous-onglets, chips), au lieu du bleu. */
+html.p40-shell.vd-workspace-light .module-tabs button[aria-selected="true"] {background:#e8f6ee!important;color:#14532d!important;border-left:3px solid #15803d!important;box-shadow:inset 0 0 0 1px #15803d!important;}
 html.p40-shell.vd-workspace-light .shell-actions button svg {color:#17212b!important;stroke:currentColor!important;}
 html.p40-shell.vd-workspace-dark .shell-actions button {background:#182331!important;color:#f1f5f9!important;border-color:#64748b!important;}
 html.p40-shell.vd-workspace-dark .shell-actions button svg {color:#f1f5f9!important;stroke:currentColor!important;}

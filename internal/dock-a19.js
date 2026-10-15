@@ -58,5 +58,7 @@
     [].forEach.call(nav.querySelectorAll(':scope > button > .ic, :scope > button > #bdg'), function (n) { n.animate = fausse; });
   }
   neutraliser();
-  try { new MutationObserver(neutraliser).observe(doc.documentElement, { childList: true, subtree: true }); } catch (e) {}
+  /* C92 : plus d'observation de toute la page (coûteuse pendant les curseurs) : une vérification à l'ouverture puis
+     quelques secondes après, le temps que la barre soit construite. */
+  [300, 1500, 4000].forEach(function (t) { setTimeout(neutraliser, t); });
 })();

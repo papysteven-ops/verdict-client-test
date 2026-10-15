@@ -50,7 +50,7 @@
     box.innerHTML =
       '<header class="vp-head"><span class="vp-kicker">Verdict</span><h1>Plus</h1><p>Réglages, données et outils de votre établissement.</p></header>' +
       '<form class="vp-search" role="search" onsubmit="return plusSearchSubmit(event)">' + svg('chercher', 'vp-search-ic') +
-      '<input id="plusSearchQ" type="search" autocomplete="off" enterkeyhint="search" placeholder="Demander à Vera : chiffre minimum, salaires…" aria-label="Demander à Vera"><button type="submit">Trouver</button></form>' +
+      '<input id="plusSearchQ" type="search" autocomplete="off" enterkeyhint="search" placeholder="Demander à Vera…" aria-label="Demander à Vera"><button type="submit">Trouver</button></form>' +
       groupes().map(function (gr) {
         return '<div class="vp-group"><h2>' + esc(gr.t) + '</h2><div class="vp-list">' + gr.l.map(function (r) {
           return '<button type="button" class="vp-row" data-vp="' + r[0] + '"><span class="vp-tile">' + svg(r[0]) + '</span><span class="vp-txt"><b>' + esc(r[1]) + '</b><small>' + esc(r[2]) + '</small></span><span class="vp-chev" aria-hidden="true">›</span></button>';

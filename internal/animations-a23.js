@@ -7,6 +7,9 @@
 (function () {
   'use strict';
   var doc = document; if (window.__vdAnimA23) return; window.__vdAnimA23 = 1;
+  /* C93 — Mode clair : le petit trait devant les surtitres (« STRUCTURE · EXERCICE ») était blanc translucide, donc
+     invisible sur fond clair : il laissait un vide qui décalait le surtitre par rapport au titre. Il devient gris. */
+  try { var fin = doc.createElement('style'); fin.id = 'finitions-a23'; fin.textContent = 'html.vd-workspace-light body .chr-view-kicker::before{background:rgba(20,32,43,.3)!important}'; (doc.head || doc.documentElement).appendChild(fin); } catch (e) {}
   var reduit = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   if (reduit || !('IntersectionObserver' in window)) return;
   var suivi = null;
