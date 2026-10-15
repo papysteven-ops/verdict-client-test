@@ -39,3 +39,24 @@
     setTimeout(function () { if (!fait && vise === b && Date.now() - t0 < 900) { fait = true; vise = null; b.click(); } else vise = null; }, 80);
   }, true);
 })();
+
+/* C80 — « Encore le bas, module flou » (Steven, captures iPhone) : pendant le repli, Safari iOS dessinait la barre
+   animée (agrandissement simulé + flou d'arrière-plan) comme une tache floue sans boutons. On supprime le flou pour
+   de bon (règle plus forte que celles d'origine) et l'animation de déformation : la barre se replie et revient par
+   une simple transition de largeur, toujours nette, boutons visibles. */
+(function () {
+  'use strict';
+  var doc = document; if (doc.getElementById('dock-a19-net')) return;
+  var s = doc.createElement('style'); s.id = 'dock-a19-net';
+  s.textContent = 'html body nav.premium-adaptive-dock.premium-adaptive-dock[class]{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;filter:none!important;will-change:auto!important;transition:width .22s cubic-bezier(.22,1,.36,1),height .22s cubic-bezier(.22,1,.36,1)!important}' +
+    'html body nav.premium-adaptive-dock.premium-adaptive-dock[class]>button,html body nav.premium-adaptive-dock.premium-adaptive-dock[class]>button>.ic{opacity:1!important;visibility:visible!important;filter:none!important}';
+  (doc.head || doc.documentElement).appendChild(s);
+  var fausse = function () { return { cancel: function () {}, finish: function () {}, finished: Promise.resolve(), addEventListener: function () {} }; };
+  function neutraliser() {
+    var nav = doc.querySelector('nav.premium-adaptive-dock'); if (!nav || nav.__vdNet) return; nav.__vdNet = true;
+    nav.animate = fausse;
+    [].forEach.call(nav.querySelectorAll(':scope > button > .ic, :scope > button > #bdg'), function (n) { n.animate = fausse; });
+  }
+  neutraliser();
+  try { new MutationObserver(neutraliser).observe(doc.documentElement, { childList: true, subtree: true }); } catch (e) {}
+})();
