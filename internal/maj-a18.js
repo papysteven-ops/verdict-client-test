@@ -53,7 +53,14 @@
   function apply() {
     var btn = doc.querySelector('#maj18 .maj18-go'); if (btn) { btn.disabled = true; btn.textContent = 'Mise à jour…'; }
     var guard = window.VerdictUpdateGuard && window.VerdictUpdateGuard.prepare ? window.VerdictUpdateGuard.prepare() : Promise.resolve({ ok: true });
-    Promise.resolve(guard).catch(function () { return { ok: true }; }).then(function () { location.reload(); });
+    Promise.resolve(guard).catch(function () { return { ok: true }; }).then(function () {
+      /* Appli classique : on « réveille » la version téléchargée (elle attend), puis on recharge quand elle a pris la main. */
+      if (coffreUrl || !('serviceWorker' in navigator)) return location.reload();
+      navigator.serviceWorker.getRegistration().then(function (reg) {
+        if (reg && reg.waiting) { applying = true; reg.waiting.postMessage({ type: 'SKIP_WAITING' }); setTimeout(function () { location.reload(); }, 4000); }
+        else location.reload();
+      }, function () { location.reload(); });
+    });
   }
 
   /* Espace chiffré : la version publiée (coffre.json) a-t-elle changé depuis l'ouverture ? */
@@ -65,10 +72,20 @@
     }).catch(function () {});
   }
   /* Appli classique : on demande au service worker de vérifier ; la nouvelle version prête prend la main. */
+  var applying = false, watched = null;
+  /* Dès que la nouvelle version a fini de se télécharger (état « installée »), l'alerte s'affiche, sans attendre. */
+  function watch(reg) {
+    if (!reg || watched === reg) return; watched = reg;
+    reg.addEventListener('updatefound', function () {
+      var w = reg.installing; if (!w) return;
+      w.addEventListener('statechange', function () { if (w.state === 'installed' && navigator.serviceWorker.controller) banner(); });
+    });
+  }
   function checkWorker() {
     if (!('serviceWorker' in navigator)) return Promise.resolve();
     return navigator.serviceWorker.getRegistration().then(function (reg) {
       if (!reg) return;
+      watch(reg);
       if (reg.waiting) banner();
       return reg.update().catch(function () {});
     }).catch(function () {});
@@ -80,8 +97,10 @@
   }
   if (!coffreUrl && 'serviceWorker' in navigator) {
     var had = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.addEventListener('controllerchange', function () { if (had) banner(); had = true; });
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (applying) return location.reload(); if (had) banner(); had = true; });
   }
+  /* Une seule alerte : celle d'origine du shell (« Mise à jour prête », en bas) est masquée ; celle-ci fait la même bascule. */
+  try { var hide = doc.createElement('style'); hide.textContent = '#verdict-update-alert{display:none!important}'; (doc.head || doc.documentElement).appendChild(hide); } catch (e) {}
   doc.addEventListener('visibilitychange', function () { if (!doc.hidden) check(); });
   window.addEventListener('focus', function () { check(); });
   window.addEventListener('online', function () { check(); });

@@ -99,8 +99,8 @@
     if (doc.getElementById('vr16-css')) return;
     var s = doc.createElement('style'); s.id = 'vr16-css';
     s.textContent =
-      '#vr16{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 80% at 50% 0,#14251b 0,#07090c 62%);color:#f5f7fa;font:500 16px/1.4 -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px));-webkit-user-select:none;user-select:none}' +
-      '#vr16[hidden]{display:none}#vr16 .vr-box{width:min(360px,100%);text-align:center}' +
+      '#vr16{position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 80% at 50% 0,#14251b 0,#07090c 62%);color:#f5f7fa;font:500 16px/1.4 -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px));-webkit-user-select:none;user-select:none}' +
+      '#vr16,#vr16 *{pointer-events:auto!important;visibility:visible!important}#vr16[hidden]{display:none}#vr16 .vr-box{width:min(360px,100%);text-align:center}' +
       '#vr16 .vr-logo{width:64px;height:64px;margin:0 auto 14px;display:grid;place-items:center;border-radius:20px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);font-size:28px}' +
       '#vr16 h2{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}#vr16 p{margin:0 auto 18px;max-width:300px;color:#a3adb8;font-size:14px}' +
       '#vr16 .vr-dots{display:flex;justify-content:center;gap:14px;margin:6px 0 10px}#vr16 .vr-dots i{width:14px;height:14px;border-radius:50%;border:2px solid #8b97a4;transition:background .15s,border-color .15s}#vr16 .vr-dots i.on{background:#22c55e;border-color:#22c55e}' +
@@ -123,7 +123,9 @@
   }
   function root() {
     var el = doc.getElementById('vr16');
-    if (!el) { el = doc.createElement('div'); el.id = 'vr16'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.hidden = true; doc.body.appendChild(el); }
+    if (!el) { el = doc.createElement('div'); el.id = 'vr16'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.hidden = true; doc.body.appendChild(el);
+      /* C57 : une fenêtre de l'appli (accueil, intro) peut rendre « inactif » tout le reste de la page : jamais le verrou. */
+      new MutationObserver(function () { if (el.hasAttribute('inert')) el.removeAttribute('inert'); if (el.getAttribute('aria-hidden') === 'true') el.removeAttribute('aria-hidden'); }).observe(el, { attributes: true, attributeFilter: ['inert', 'aria-hidden'] }); }
     return el;
   }
   /* Rend le reste de la page inactif (ni clic ni clavier) ; ne retire ensuite que ce que le verrou a posé. */
@@ -361,6 +363,13 @@
     });
     lockButton(); hookFrames(); [].forEach.call(doc.querySelectorAll("iframe"), function (f) { f.addEventListener("load", function () { setTimeout(hookFrames, 0); }); });
     new MutationObserver(lockButton).observe(doc.body, { childList: true, subtree: true });
+    /* C57 : tant que le verrou est affiché, il reste au premier plan : un écran ajouté ensuite (animation d’ouverture du
+       Perso, fenêtre d’accueil) est rendu inactif et passe dessous, sinon il capterait les appuis sur le clavier. */
+    new MutationObserver(function (list) {
+      var el = doc.getElementById("vr16"); if (!el || el.hidden) return;
+      list.forEach(function (m) { [].forEach.call(m.addedNodes, function (n) { if (n.nodeType === 1 && n.id !== "vr16" && n.id !== "vr16-cache" && n.id !== "maj18" && n.tagName !== "SCRIPT" && n.tagName !== "STYLE" && !n.hasAttribute("inert")) { n.setAttribute("inert", ""); n.setAttribute("data-vr16", ""); } }); });
+      if (doc.body.lastElementChild !== el) doc.body.appendChild(el);
+    }).observe(doc.body, { childList: true });
   }
   if (doc.body) start(); else doc.addEventListener('DOMContentLoaded', start);
 

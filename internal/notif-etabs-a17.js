@@ -84,6 +84,7 @@
       var items = c.getItems(), byId = {}, cur = currentKey(), groups = {}, order = [], visibleUnread = 0, masked = 0;
       items.forEach(function (it) {
         var site = siteOf(it); byId[it.id] = { item: it, site: site };
+        if (site.systeme) { if (!it.readAt) visibleUnread++; return; } /* messages de Verdict lui-même : comptés, mais pas un établissement */
         if (!groups[site.key]) { groups[site.key] = { site: site, unread: 0, total: 0 }; order.push(site.key); }
         if (shown(it, site)) { groups[site.key].total++; if (!it.readAt) { groups[site.key].unread++; visibleUnread++; } } else masked++;
       });
