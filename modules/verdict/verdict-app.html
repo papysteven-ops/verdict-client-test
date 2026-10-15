@@ -2858,6 +2858,8 @@ html.vd-workspace-light #v-carte.cp-active .cp-card {background:radial-gradient(
 <nav aria-label="Navigation principale">
   <button type="button" data-v="pil" class="on" aria-current="page" onclick="go('pil')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/></svg>Accueil</button>
   <button type="button" data-v="data" onclick="go('data')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18"/><path d="M6 20v-7"/><path d="M11 20V8"/><path d="M16 20v-4"/><path d="M21 20V5"/></svg>Rentabilit&eacute;</button>
+  <!-- C73 : « Simuler » a son module dans le dock, juste avant Audit (retiré des onglets de Structure). -->
+  <button type="button" data-v="dec" onclick="go('dec')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10"/><path d="M18 6h2"/><circle cx="16" cy="6" r="2"/><path d="M4 12h4"/><path d="M12 12h8"/><circle cx="10" cy="12" r="2"/><path d="M4 18h12"/><path d="M20 18h0"/><circle cx="18" cy="18" r="2"/></svg>Simuler</button>
   <!-- C44 : Audit dans le dock, juste après Structure ; Plus reste le dernier. -->
   <button type="button" data-v="audit" onclick="go('audit')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3.5h6"/><path d="m9 13 2 2 4-4"/></svg>Audit</button>
   <button type="button" data-v="carte" onclick="go('carte')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8.5 8.5h7"/><path d="M8.5 12h7"/><path d="M8.5 15.5h4"/></svg>Carte</button>
@@ -4199,7 +4201,7 @@ html[data-v45-profile="pilotage"] nav button[data-v="priorities"],
 html[data-v45-profile="carte"] nav button[data-v="pil"],
 html[data-v45-profile="carte"] nav button[data-v="data"],
 html[data-v45-profile="carte"] nav button[data-v="priorities"],
-html[data-v45-profile="carte"] nav button[data-v="audit"]{display:none!important}
+html[data-v45-profile="carte"] nav button[data-v="dec"], html[data-v45-profile="carte"] nav button[data-v="audit"]{display:none!important}
 
 .v45-home-essential{display:grid;gap:11px;margin:0 0 13px}
 .v45-decision-block{margin:0!important;padding:17px 18px!important;border-color:rgba(148,163,184,.22)!important;background:linear-gradient(145deg,rgba(255,255,255,.025),transparent),var(--card)!important}

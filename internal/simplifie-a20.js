@@ -48,5 +48,39 @@
   if (typeof w.parcoursHTML === 'function') w.parcoursHTML = function () { return ''; };
   if (typeof w.plusAlertPreferencesHTML === 'function') { var alertes = w.plusAlertPreferencesHTML; w.plusAlertPreferencesHTML = function () { return sansPortail ? '' : alertes.apply(this, arguments); }; }
   if (typeof w.plusInventoryAccessHTML === 'function') { var acces = w.plusInventoryAccessHTML; w.plusInventoryAccessHTML = function () { return sansPortail && !demo() ? '' : acces.apply(this, arguments); }; }
+  /* C73 — « Simuler » a son propre module dans la barre du bas, juste avant Audit : il s'allume sur l'écran Simuler et
+     n'est plus un onglet de Structure (une seule entrée). */
+  var SIMULER = { fr: 'Simuler', en: 'Simulate', es: 'Simular', it: 'Simula', de: 'Simulieren', nl: 'Simuleren', pt: 'Simular' };
+  try { if (w.I18N_DICT) Object.keys(SIMULER).forEach(function (l) { if (w.I18N_DICT[l]) w.I18N_DICT[l]['nav.dec'] = SIMULER[l]; }); } catch (e) {}
+  try { var packs = w.VERDICT_I18N_PACKS || {}; Object.keys(packs).forEach(function (l) { if (packs[l] && packs[l].dict && SIMULER[l]) packs[l].dict['nav.dec'] = SIMULER[l]; }); } catch (e) {}
+  /* Filet : si un libellé de traduction manque encore, le bouton garde « Simuler » (jamais une clé technique). */
+  function libelleSimuler() {
+    var b = doc.querySelector('nav button[data-v="dec"]'); if (!b) return;
+    var t = doc.createTreeWalker(b, NodeFilter.SHOW_TEXT), n;
+    while ((n = t.nextNode())) if (/nav\.dec/.test(n.nodeValue)) n.nodeValue = SIMULER[(doc.documentElement.lang || 'fr').slice(0, 2)] || 'Simuler';
+  }
+  try { var navEl = doc.querySelector('nav'); if (navEl) new MutationObserver(libelleSimuler).observe(navEl, { subtree: true, childList: true, characterData: true }); libelleSimuler(); } catch (e) {}
+  /* Titre de l'écran = nom du module. */
+  try { if (w.I18N_DICT) Object.keys(SIMULER).forEach(function (l) { if (w.I18N_DICT[l]) w.I18N_DICT[l]['v.dec.h'] = SIMULER[l]; }); } catch (e) {}
+  try { Object.keys(packs).forEach(function (l) { if (packs[l] && packs[l].dict && SIMULER[l]) packs[l].dict['v.dec.h'] = SIMULER[l]; }); } catch (e) {}
+  function titreSimuler() { var h = doc.querySelector('#v-dec h1'); if (h && !/Simul/.test(h.textContent)) h.textContent = (h.getAttribute('data-i18n-pre') || '') + (SIMULER[(doc.documentElement.lang || 'fr').slice(0, 2)] || 'Simuler'); }
+  titreSimuler();
+  /* Lisibilité en mode clair : les boîtes de simulation avaient des fonds pensés pour le sombre (voile noir à 25 %,
+     barre du total presque noire) ; on leur donne un vrai fond clair, et le texte se règle alors en foncé. */
+  css.textContent +=
+    'html.vd-workspace-light #v-dec .dec-col{background:#f6f8fa!important;border:1px solid #e3e8ee!important}' +
+    'html.vd-workspace-light #v-dec .dec-col.after{background:#effaf3!important;border:1px solid #cdeed8!important;border-left:4px solid #22c55e!important}' +
+    'html.vd-workspace-light #v-dec .dec-rec{background:#f6f8fa!important;border:1px solid #e3e8ee!important}' +
+    'html.vd-workspace-light #v-dec [style*="rgba(0,0,0,0.25)"]{background:#f4f6f9!important;border:1px solid #e3e8ee!important}' +
+    'html.vd-workspace-light #v-dec [style*="color:#8b94a0"]{color:#5b6573!important}';
+  if (typeof w.mainNavView === 'function') { var nav0 = w.mainNavView; w.mainNavView = function (v) { if (v === 'dec') { titreSimuler(); return 'dec'; } return nav0.apply(this, arguments); }; }
+  if (typeof w.actBarHTML === 'function') {
+    var bar0 = w.actBarHTML;
+    w.actBarHTML = function (cur) { var d = doc.createElement('div'); d.innerHTML = bar0.apply(this, arguments); [].forEach.call(d.querySelectorAll('button[onclick*="go(\'dec\')"]'), function (b) { b.remove(); }); return d.innerHTML; };
+  }
+  if (typeof w.actBarInject === 'function') {
+    var inj0 = w.actBarInject;
+    w.actBarInject = function (v) { if (v === 'dec') { var sec = doc.getElementById('v-dec'), old = sec && sec.querySelector('.actbar'); if (old) old.remove(); return; } return inj0.apply(this, arguments); };
+  }
   if (Array.isArray(w.MODULES_AVEC_RETOUR)) ['audit', 'x', 'achats', 'stock'].forEach(function (v) { var i = w.MODULES_AVEC_RETOUR.indexOf(v); if (i >= 0) w.MODULES_AVEC_RETOUR.splice(i, 1); });
 })();
