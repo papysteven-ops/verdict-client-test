@@ -95,7 +95,7 @@ EXT.pil=function(m){dayHydrate();var M=mois(m),c=M.c,d=new Date(c.year,c.month-1
     if(mrows.length){var sca=0,sob=0,allOb=true;mrows.forEach(function(r){sca+=Number(r.caJ);var o=cibleJour(String(r.date).slice(0,10));if(o>0)sob+=Number(o);else allOb=false;});
       moisPrec={nom:cap(MN[pm-1]),n:mrows.length,ca:Math.round(sca),obj:(allOb&&sob>0?Math.round(sob):null)};}
   }catch(e){prec=null;moisPrec=null;}}
-  var out={prec:prec,moisPrec:moisPrec,etab:(global.DB&&global.DB.etab)||"",meta:meta,score:sc,scoreEtat:zone100(sc),scoreLabel:scoreLabel(sc),
+  var out={prec:prec,moisPrec:moisPrec,etab:(global.DB&&global.DB.etab)||"",meta:(function(){var D=global.DB||{},p=[D.etabVille,D.etabQuartier].map(function(x){return String(x==null?"":x).trim();}).filter(Boolean).join(" · ");return p?"\ud83d\udccd "+p+" — "+meta:meta;})(),score:sc,scoreEtat:zone100(sc),scoreLabel:scoreLabel(sc),
     situationPhrase:(function(){try{return global.p11PhraseSituation(m);}catch(e){return null;}})(),
     momentKicker:(function(){try{return global.p11QuestionDuMoment(!!M.aujSaisi,new Date().getHours());}catch(e){return null;}})(),
     tickets:(function(){var j=global.joursMois()||{},out={};Object.keys(j).forEach(function(k){var r=j[k];out[k]=r&&!r.est&&r.tk!=null?Number(r.tk):null;});return out;})(),nbj:M.n,dow0:M.dow0,panier:M.panier,dernier:dern,fermes:M.fermes,ca:M.ca,obj:M.obj,moyenne:M.moyenne,maxca:M.maxca,auj:c.year+"-"+String(c.month).padStart(2,"0")+"-"+String(c.day).padStart(2,"0"),aujN:c.day,
@@ -512,7 +512,7 @@ function poser(k){
   if(k==="pil"){var t0=doc.getElementById("v36-today");if(t0){var nk=t0;while(nk&&nk!==host){nk.classList.add("p41-keep");nk=nk.parentElement;}}}
   if(host.offsetParent===null){VIS[k]=false;return;}
   var revient=(VIS[k]===false);VIS[k]=true;
-  var m;try{m=global.moteur();}catch(e){return;}if(!m||(!m.ready&&!(k==="carte"&&global.VerdictCartePages)))return;
+  var m;try{m=global.moteur();}catch(e){m=null;}if(!m||(!m.ready&&!(k==="carte"&&global.VerdictCartePages))){/* C38 : sans chiffres calculables (nouvel établissement, dossier dupliqué), la lecture premium de l'établissement PRÉCÉDENT ne doit jamais rester affichée : on la retire et l'écran d'origine du dossier actif reprend la main. */var stale=(k==="carte"?(doc.getElementById("c-premium")||doc.getElementById("point5-menu")||host):host).querySelector(":scope > .p41-cadre");if(stale&&stale.parentNode)stale.parentNode.removeChild(stale);host.classList.remove("p41-on");return;}
   var data;try{data=EXT[k](m);}catch(e){return;}
   var apres=(k==="carnet"),sig=JSON.stringify(data),legacy=false;host.removeAttribute("data-p41-legacy");
   /* Pendant le parcours guidé, Carte et Priorités montrent l'écran d'origine que le guide décrit et cible ; la lecture premium se retire (le guide redessine la Carte en boucle, et son ancrage passerait sous 2 000 px de lecture) */

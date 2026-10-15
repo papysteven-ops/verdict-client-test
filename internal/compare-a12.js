@@ -162,7 +162,7 @@ function ensureStyle(){
 '.cmp12-pick{flex:none;display:flex;align-items:center;gap:5px;font:600 11.5px inherit;cursor:pointer;opacity:.85}.cmp12-pick input{width:18px;height:18px;accent-color:#2563eb}'+
 '.cmp12-score{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:10px}.cmp12-score b{font:900 26px/1 var(--mono)}.cmp12-score b small{font-size:12px;opacity:.6;font-weight:700}.cmp12-score .cmp12-bar{height:8px}'+
 '.cmp12-line{margin:0;font-size:13px;line-height:1.45}.cmp12-chips{display:flex;flex-wrap:wrap;gap:6px}.cmp12-chip{display:inline-flex;align-items:baseline;gap:5px;padding:4px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 10%,transparent);font-size:11.5px}.cmp12-chip i{font-style:normal;opacity:.75}.cmp12-chip b{color:var(--c);font:800 12px var(--mono)}.cmp12-chip.crit{border-width:2px}'+
-'.cmp12-card .cmp12-why{margin:0}.cmp12-na{font-size:12.5px;opacity:.7}'+
+'.cmp12-place{opacity:.9!important;font-weight:600}.cmp12-card .cmp12-why{margin:0}.cmp12-na{font-size:12.5px;opacity:.7}'+
 '.cmp12-card footer{display:flex;justify-content:space-between;gap:8px;margin-top:2px}.cmp12-eye,.cmp12-open{padding:7px 11px;border-radius:10px;border:1px solid rgba(128,128,128,.3);background:transparent;color:inherit;font:600 12px inherit;cursor:pointer}.cmp12-open{border-color:#2563eb;color:#2563eb}'+
 '.cmp12-pods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px}.cmp12-pod{border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;border-radius:10px}.cmp12-pod:hover{background:rgba(34,197,94,.08)}'+
 '@media(max-width:640px){.cmp12-cards{grid-template-columns:1fr}.cmp12-pods{grid-template-columns:1fr}.cmp12-podium{padding:9px 10px}.cmp12-podium p{display:none}.cmp12-pod{padding:3px 0;font-size:13px}.cmp12-pod.first b{font-size:14.5px}.cmp12-medal{font-size:15px}}'+
@@ -177,6 +177,7 @@ function close(){var m=doc.getElementById('mCompare');if(!m)return;try{root.a11y
    filtres, recherche) ; le CÔTE À CÔTE ne compare que 2 à 4 établissements choisis dans le classement. */
 var UI={view:'rank',filter:'all',query:'',sel:[]};
 function isModel(s){var d=root.STORE&&root.STORE.etabs[s.id];return !!(d&&(d._multiSiteModel||d._testFiction||d.exempleCharge||(d._demo&&d._demo.fictional)));}
+function placeOfId(id){var d=root.STORE&&root.STORE.etabs[id]||{};return [d.etabVille,d.etabQuartier].map(function(x){return String(x==null?'':x).trim();}).filter(Boolean).join(' \u00b7 ');}
 function barHidden(id){var d=root.STORE&&root.STORE.etabs[id];return !!(d&&d._barHidden);}
 function cardHtml(s,RK,T,i){
   var o=RK[s.id],ix=o.index,lv=ix==null?null:LEVEL.score(ix),col=lv==null?'inherit':palette()[lv];
@@ -184,7 +185,7 @@ function cardHtml(s,RK,T,i){
   var chip=function(key,label){var r=ROWS.filter(function(x){return x.key===key;})[0],v=r?(r.get?r.get(s):s.k[key]):null;if(v==null)return '';var l=LEVEL[key]?LEVEL[key](v):null,c=l==null?'inherit':palette()[l];return '<span class="cmp12-chip'+(l===0?' crit':'')+'" style="--c:'+c+'"><i>'+esc(label)+'</i><b>'+esc(key==='caNet'?fPct(v):r.fmt(v,s))+'</b></span>';};
   var picked=UI.sel.indexOf(s.id)>=0,hiddenBar=barHidden(s.id);
   return '<article class="cmp12-card'+(lv===0?' crit':'')+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+Math.min(i,12)+'">'+
-    '<header><span class="cmp12-rk">'+(o.rank!=null?'#'+o.rank:'—')+'</span><div class="cmp12-id"><b>'+esc(s.name)+'</b><span>'+esc([s.kind,s.nature.label].filter(Boolean).join(' · '))+(hiddenBar?' · '+esc(T.barHiddenTag):'')+'</span></div>'+
+    '<header><span class="cmp12-rk">'+(o.rank!=null?'#'+o.rank:'—')+'</span><div class="cmp12-id"><b>'+esc(s.name)+'</b>'+(placeOfId(s.id)?'<span class="cmp12-place">\ud83d\udccd '+esc(placeOfId(s.id))+'</span>':'')+'<span>'+esc([s.kind,s.nature.label].filter(Boolean).join(' · '))+(hiddenBar?' · '+esc(T.barHiddenTag):'')+'</span></div>'+
     '<label class="cmp12-pick" title="'+esc(T.pickTitle)+'"><input type="checkbox"'+(picked?' checked':'')+' onchange="verdictCompareToggle(\''+esc(s.id)+'\')"><span>'+esc(T.pick)+'</span></label></header>'+
     (ix==null?'<div class="cmp12-na">'+esc(T.notCalc)+' · '+esc(T.incomplete)+'</div>':
       '<div class="cmp12-score"><b style="color:'+col+'">'+ix+'<small>/100</small></b><span class="cmp12-lvl" style="color:'+col+'">'+esc(T.levels[lv])+'</span><div class="cmp12-bar"><i data-w="'+ix+'" style="background:'+col+'"></i></div></div>'+
@@ -200,7 +201,7 @@ function filtered(){
   return DATA.snaps.filter(function(s){
     if(UI.filter==='real'&&isModel(s))return false;if(UI.filter==='model'&&!isModel(s))return false;
     if(UI.filter==='crit'){var o=DATA.RK[s.id];if(!(o.index!=null&&LEVEL.score(o.index)===0))return false;}
-    return !q||s.name.toLowerCase().indexOf(q)>=0;});
+    return !q||(s.name+' '+placeOfId(s.id)).toLowerCase().indexOf(q)>=0;});
 }
 function rankHtml(T){
   var list=filtered(),n=function(f){var keep=UI.filter;UI.filter=f;var c=filtered().length;UI.filter=keep;return c;};
@@ -214,7 +215,7 @@ function tableHtml(T){
   if(snaps.length<2)return '<div class="cmp12-state">'+esc(T.pickHint)+'</div>';
   h+='<div class="cmp12-wrap"><div class="cmp12-grid" style="--n:'+snaps.length+'">';
   h+='<div class="cmp12-head cmp12-lab"><small>'+esc(T.ind)+'</small></div>';
-  snaps.forEach(function(s,i){var rkInfo=RK[s.id];h+='<div class="cmp12-head cmp12-col'+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+i+'">'+(rkInfo.rank!=null?'<i class="cmp12-rank">#'+rkInfo.rank+'</i>':'')+'<b style="color:'+(s.zone?s.zone.h:'inherit')+'">'+esc(s.name)+'</b><span>'+esc([s.kind,s.nature.label,s.nature.period].filter(Boolean).join(' · '))+'</span>'+(s.calculated?'':'<span>'+esc(T.incomplete)+'</span>')+'</div>';});
+  snaps.forEach(function(s,i){var rkInfo=RK[s.id];h+='<div class="cmp12-head cmp12-col'+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+i+'">'+(rkInfo.rank!=null?'<i class="cmp12-rank">#'+rkInfo.rank+'</i>':'')+'<b style="color:'+(s.zone?s.zone.h:'inherit')+'">'+esc(s.name)+'</b>'+(placeOfId(s.id)?'<span class="cmp12-place">\ud83d\udccd '+esc(placeOfId(s.id))+'</span>':'')+'<span>'+esc([s.kind,s.nature.label,s.nature.period].filter(Boolean).join(' · '))+'</span>'+(s.calculated?'':'<span>'+esc(T.incomplete)+'</span>')+'</div>';});
   h+='<div class="cmp12-lab">'+esc(T.overall)+'<small>'+esc(T.overallSub)+'</small></div>';
   snaps.forEach(function(s,i){var o=RK[s.id];if(o.index==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(T.notCalc)+'</div>';return;}var lv=LEVEL.score(o.index),col=palette()[lv];h+='<div class="cmp12-val cmp12-col'+(lv===0?' critique':'')+'" style="--i:'+i+'"><span style="color:'+col+'">'+o.index+'/100</span><small class="cmp12-lvl" style="color:'+col+'">'+esc(T.levels[lv])+'</small><em>'+esc(T.rank)+' #'+o.rank+' '+esc(T.of)+' '+o.n+'</em><div class="cmp12-bar"><i data-w="'+o.index+'" style="background:'+col+'"></i></div></div>';});
   ROWS.forEach(function(r){
