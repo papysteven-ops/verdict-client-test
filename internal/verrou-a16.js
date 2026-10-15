@@ -274,16 +274,22 @@
   }
   /* Sur iPhone, l'appli neutralise certains « clics » issus du toucher : le verrou réagit donc au doigt levé
      (pointerup), et ignore le clic natif qui pourrait suivre, pour ne jamais compter une touche deux fois. */
+  /* Un appui = un chiffre : la touche réagit dès que le doigt (ou la souris) se pose ; le clic qui suit ce même
+     appui est ignoré. Les autres boutons réagissent au doigt levé. Le clic seul (clavier, Entrée) reste accepté. */
   var TAP = '#vr16 button, #vr16 input[type=checkbox]';
+  function recent(b) { return b.__vrAt && Date.now() - b.__vrAt < 1000; }
+  doc.addEventListener('pointerdown', function (e) {
+    var b = e.target.closest && e.target.closest('#vr16 [data-k]'); if (!b || b.disabled) return;
+    b.__vrAt = Date.now(); press(b.getAttribute('data-k'));
+  }, true);
   doc.addEventListener('pointerup', function (e) {
-    var b = e.target.closest && e.target.closest(TAP); if (!b || b.disabled || e.pointerType === 'mouse') return;
-    S.tapAt = Date.now();
-    if (b.hasAttribute('data-k')) press(b.getAttribute('data-k')); else b.click();
+    var b = e.target.closest && e.target.closest(TAP); if (!b || b.disabled || b.hasAttribute('data-k') || recent(b)) return;
+    b.__vrAt = Date.now(); b.click();
   }, true);
   doc.addEventListener('click', function (e) {
     if (!e.isTrusted) return;
     var b = e.target.closest && e.target.closest(TAP); if (!b) return;
-    if (Date.now() - (S.tapAt || 0) < 700) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    if (recent(b)) { e.preventDefault(); e.stopImmediatePropagation(); return; }
     if (b.hasAttribute('data-k')) press(b.getAttribute('data-k'));
   }, true);
   doc.addEventListener('keydown', function (e) { if (root().hidden) return; if (/^\d$/.test(e.key)) { press(e.key); e.preventDefault(); } else if (e.key === 'Backspace') { press('del'); e.preventDefault(); } }, true);
