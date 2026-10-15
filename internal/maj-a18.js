@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.top !== window || window.__verdictMaj) return; window.__verdictMaj = true;
-  var doc = document, PERIODE = 60 * 1000, ready = false, base = null, timer = 0;
+  var w = window, doc = document, PERIODE = 60 * 1000, ready = false, base = null, timer = 0;
   var coffre = doc.querySelector('script[data-coffre]');
   var coffreUrl = coffre ? new URL('coffre.json', new URL(coffre.src, location.href)).href : '';
 
@@ -19,7 +19,9 @@
       '@keyframes maj18In{from{opacity:0;transform:translate(-50%,-12px)}to{opacity:1;transform:translate(-50%,0)}}' +
       '#maj18 span{flex:1}#maj18 b{display:block;font-size:15px}#maj18 small{opacity:.75;font-weight:500}' +
       '#maj18 button{min-height:42px;padding:0 16px;border:0;border-radius:12px;background:#22c55e;color:#04150b;font:800 14px/1 inherit;cursor:pointer;white-space:nowrap}' +
-      '#maj18 button.maj18-later{background:transparent;color:#cbd5e1;padding:0 8px;font-weight:600}';
+      '#maj18 button.maj18-later{background:transparent;color:#cbd5e1;padding:0 8px;font-weight:600}' +
+      /* C72 : couleur opposée à l'écran pour sauter aux yeux — écran sombre → alerte blanche. */
+      '#maj18.maj18-clair{background:#ffffff;color:#0f172a;box-shadow:0 14px 40px rgba(0,0,0,.55);border:1px solid rgba(15,23,42,.12)}#maj18.maj18-clair small{opacity:.7}#maj18.maj18-clair button.maj18-later{color:#475569}';
     doc.head.appendChild(s);
   }
   /* C56 : toutes les fenêtres ouvertes de la même appli se tiennent au courant (un « Plus tard » ferme le bandeau partout). */
@@ -31,10 +33,44 @@
     css();
     var b = doc.createElement('div'); b.id = 'maj18'; b.setAttribute('role', 'status');
     b.innerHTML = '<span><b>Nouvelle version de Verdict</b><small>Vos saisies sont enregistrées avant la mise à jour.</small></span><button type="button" class="maj18-go">Mettre à jour</button><button type="button" class="maj18-later" aria-label="Plus tard">Plus tard</button>';
-    doc.body.appendChild(b);
+    doc.body.appendChild(b); contraste();
     b.querySelector('.maj18-go').onclick = apply;
+    prevenir();
     b.querySelector('.maj18-later').onclick = function () { later(false); };
   }
+  /* C72 — L'alerte prend la couleur opposée à l'écran (clair → alerte sombre, sombre → alerte blanche), y compris
+     quand on change de thème pendant qu'elle est affichée. */
+  function sombre() {
+    var h = doc.documentElement; if (h.classList.contains('vd-workspace-dark')) return true; if (h.classList.contains('vd-workspace-light')) return false;
+    try { var c = getComputedStyle(doc.body).backgroundColor.match(/\d+(\.\d+)?/g); if (c && (c.length < 4 || +c[3] > 0)) return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255 < 0.45; } catch (e) {}
+    return !!(w.matchMedia && w.matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+  function contraste() { var b = doc.getElementById('maj18'); if (b) b.classList.toggle('maj18-clair', sombre()); }
+  try { new MutationObserver(contraste).observe(doc.documentElement, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+  /* C72 — Vraie notification du système (avec le son de l'appareil) quand une nouvelle version arrive, si le client l'a
+     activée dans Sécurité 🔒. Une seule fois par version ; la toucher ouvre Verdict et lance la mise à jour.
+     Appli ouverte ou en arrière-plan ; appli fermée : il faudra le serveur Verdict (notifications push). */
+  var NOTIF_PREF = 'verdict:maj-notifications', NOTIF_FAITE = 'verdict:maj-notifiee';
+  function lire(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function ecrire(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function notifEtat() { if (!('Notification' in w)) return 'indisponible'; if (Notification.permission === 'denied') return 'refusee'; return Notification.permission === 'granted' && lire(NOTIF_PREF) !== 'non' ? 'active' : 'inactive'; }
+  function prevenir() {
+    if (notifEtat() !== 'active') return;
+    versionPubliee().then(function (v) {
+      v = v || 'nouvelle'; if (lire(NOTIF_FAITE) === v) return; ecrire(NOTIF_FAITE, v);
+      var titre = 'Nouvelle version de Verdict', opts = { body: 'Touchez pour mettre à jour. Vos saisies sont enregistrées avant.', tag: 'verdict-maj', renotify: true, icon: new URL('icon-192.png', (doc.querySelector('link[rel=manifest]') || {}).href || location.href).href };
+      var viaWorker = 'serviceWorker' in navigator ? navigator.serviceWorker.getRegistration().then(function (r) { if (!r) throw 0; return r.showNotification(titre, opts); }) : Promise.reject();
+      return viaWorker.catch(function () { var n = new Notification(titre, opts); n.onclick = function () { try { w.focus(); } catch (e) {} n.close(); apply(); }; });
+    }).catch(function () {});
+  }
+  function notifActiver(oui) {
+    if (!oui) { ecrire(NOTIF_PREF, 'non'); return Promise.resolve(notifEtat()); }
+    if (!('Notification' in w)) return Promise.resolve('indisponible');
+    ecrire(NOTIF_PREF, 'oui');
+    var p = Notification.permission === 'granted' ? Promise.resolve('granted') : Promise.resolve(Notification.requestPermission());
+    return p.then(function () { return notifEtat(); }, function () { return notifEtat(); });
+  }
+  if ('serviceWorker' in navigator) try { navigator.serviceWorker.addEventListener('message', function (e) { if (e.data && e.data.type === 'verdict-maj-appliquer') apply(); }); } catch (e) {}
   /* « Plus tard » : le bandeau se ferme (dans toutes les fenêtres) et la mise à jour attend dans les notifications. */
   function later(fromOther) {
     postponed = true; var b = doc.getElementById('maj18'); if (b) b.remove();
@@ -191,5 +227,5 @@
       }).then(function () { e.texte = 'Mise à jour en cours…'; return e; });
     });
   }
-  window.VerdictMaj = { check: check, banner: banner, etat: etat, verifier: verifier };
+  window.VerdictMaj = { check: check, banner: banner, etat: etat, verifier: verifier, notifications: { etat: notifEtat, activer: notifActiver } };
 })();

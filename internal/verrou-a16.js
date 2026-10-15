@@ -292,11 +292,21 @@
     bioAvailable().then(function (av) {
       show('<div class="vr-logo">🔒</div><h2>Sécurité</h2><p>Verdict se verrouille à chaque ouverture et au retour après le délai choisi.</p><div class="vr-list">' +
         (av ? '<label>' + esc(BIO) + '<input type="checkbox" data-bio' + (C.bio ? ' checked' : '') + '></label>' : '<label>' + esc(BIO) + '<span style="color:#a3adb8">indisponible ici</span></label>') +
+        (window.VerdictMaj && window.VerdictMaj.notifications && window.VerdictMaj.notifications.etat() !== 'indisponible' ? '<label>Notifications de mise à jour<input type="checkbox" data-notif' + (window.VerdictMaj.notifications.etat() === 'active' ? ' checked' : '') + '></label>' : '<label>Notifications de mise à jour<span style="color:#a3adb8">indisponible ici</span></label>') +
         '<label>Verrouillage auto<select data-delai>' + DELAIS.map(function (d) { return '<option value="' + d[0] + '"' + (+C.delai === d[0] ? ' selected' : '') + '>' + d[1] + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="vr-version" style="margin:14px 0 4px;color:#a3adb8;font-size:13px">Version : vérification…</div><button type="button" class="vr-btn sec" data-maj>Rechercher une mise à jour</button>' +
         '<button type="button" class="vr-btn" data-lock>Verrouiller maintenant</button>' + (COFFRE ? '' : '<button type="button" class="vr-btn sec" data-code>Changer mon code</button>'), true);
       var el = root();
       el.querySelector('[data-lock]').onclick = function () { lock(false); };
+      /* C72 : notifications de mise à jour (vraie notification du système, avec son). */
+      var nf = el.querySelector('[data-notif]');
+      if (nf) nf.onchange = function () {
+        var box = this; box.disabled = true;
+        window.VerdictMaj.notifications.activer(box.checked).then(function (e) {
+          box.disabled = false; box.checked = e === 'active';
+          toast(e === 'active' ? 'Vous serez prévenu à chaque nouvelle version.' : e === 'refusee' ? 'Notifications refusées : autorisez-les dans les réglages de l’appareil.' : 'Notifications de mise à jour désactivées.');
+        });
+      };
       /* C65 : version installée / publiée et recherche manuelle d'une mise à jour. */
       var vz = el.querySelector('.vr-version'), mj = el.querySelector('[data-maj]'), M = window.VerdictMaj;
       /* C70 : une version plus récente existe → le bouton dit « Mettre à jour » (vert), pas « Rechercher ». */
