@@ -20,6 +20,7 @@
     try { (w.DB && w.DB.histJour || []).forEach(function (r) { var d = new Date(String(r.date) + 'T00:00:00'), v = Number(r.caJ); if (d < fin && d >= debut && isFinite(v) && v >= 0) s[jourSem(String(r.date))].push(v); }); } catch (e) {}
     return s.map(function (a) { return a.length >= 2 ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : null; });
   }
+  var ouverts = {}; /* l'ouverture survit aux redessins du module */
   function bloc(input, date, aujourdHui) {
     if (!input || !Array.isArray(input.days) || !w.VerdictCHR) return '';
     var jour = input.days.filter(function (d) { return d.date === date; })[0]; if (!jour) return '';
@@ -34,14 +35,16 @@
     var ret = retard > 0
       ? 'Les jours précédents du mois sont en retard de <b>' + eur(retard) + '</b> sur leurs bases : ' + (aujourdHui ? 'ce retard se rattrape en entier aujourd’hui' : 'ce retard était à rattraper en entier ce jour-là') + '.'
       : (avance > 0 ? 'Les jours précédents ont <b>' + eur(avance) + '</b> d’avance : elle reste en réserve pour un jour plus faible, la base ' + (aujourdHui ? 'reste à faire.' : 'restait à faire.') : 'Aucun retard avant ce jour : la base suffit.');
-    return '<div class="vx39" data-vx39="' + date + '"><p class="vx39-t">Pourquoi ' + (aujourdHui ? 'ce montant aujourd’hui' : 'ce montant le ' + libJour(date)) + '\u00a0?</p><ol>' +
+    return '<details class="vx39" data-vx39="' + date + '"' + (ouverts[date] ? ' open' : '') + '><summary class="vx39-t"><span>Pourquoi ' + (aujourdHui ? 'ce montant aujourd’hui' : 'ce montant le ' + libJour(date)) + '\u00a0?</span><i aria-hidden="true">›</i></summary><div class="vx39-c"><ol>' +
       '<li><b>Votre structure ce mois-ci</b> : <b>' + eur(input.minimum) + '</b> de chiffre d’affaires pour couvrir vos charges, salaires et loyer, sur <b>' + input.days.length + ' jours ouverts</b> (jours de repos exclus).</li>' +
       '<li><b>La part de ce jour</b> : ' + part + '</li>' +
       '<li><b>Le retard</b> : ' + ret + '</li></ol>' +
-      '<p class="vx39-f">' + (retard > 0 ? 'Base ' + eur(base) + ' + retard ' + eur(retard) + ' = <b>' + eur(total) + '</b> ' + (aujourdHui ? 'à réaliser aujourd’hui' : 'à réaliser ce jour-là') : (aujourdHui ? 'À réaliser aujourd’hui' : 'À réaliser ce jour-là') + ' : <b>' + eur(total) + '</b>, la base du jour') + '</p></div>';
+      '<p class="vx39-f">' + (retard > 0 ? 'Base ' + eur(base) + ' + retard ' + eur(retard) + ' = <b>' + eur(total) + '</b> ' + (aujourdHui ? 'à réaliser aujourd’hui' : 'à réaliser ce jour-là') : (aujourdHui ? 'À réaliser aujourd’hui' : 'À réaliser ce jour-là') + ' : <b>' + eur(total) + '</b>, la base du jour') + '</p></div></details>';
   }
-  var CSS = '.vx39{margin:14px 0 4px;padding:14px 16px;border-radius:16px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.22);color:inherit;font-size:14.5px;line-height:1.5}' +
-    '.vx39-t{margin:0 0 8px!important;font-weight:800;font-size:15px}.vx39 ol{margin:0;padding-left:20px;display:grid;gap:7px}.vx39 li{padding-left:2px}' +
+  var CSS = '.vx39>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;min-height:44px}.vx39>summary::-webkit-details-marker{display:none}' +
+    '.vx39>summary i{font-style:normal;font-size:22px;line-height:1;opacity:.6;transition:transform .25s}.vx39[open]>summary i{transform:rotate(90deg)}.vx39:not([open]){padding-top:4px!important;padding-bottom:4px!important}.vx39-c{padding-top:4px}' +
+    '.vx39{margin:16px 0 0;padding:14px 16px;border-radius:16px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.22);color:inherit;font-size:14.5px;line-height:1.5}' +
+    '.vx39-t{margin:0!important;font-weight:800;font-size:15px}.vx39 ol{margin:0;padding-left:20px;display:grid;gap:7px}.vx39 li{padding-left:2px}' +
     '.vx39-f{margin:10px 0 0!important;padding-top:10px;border-top:1px dashed rgba(34,197,94,.35);font-variant-numeric:tabular-nums}.vx39-f b{color:#16a34a;font-size:16px}' +
     'html.vd-workspace-dark .vx39{background:rgba(34,197,94,.09);border-color:rgba(34,197,94,.28)}html.vd-workspace-dark .vx39-f b{color:#4ade80}';
 
@@ -49,12 +52,13 @@
     var d, cw; try { d = cadre.contentDocument; cw = cadre.contentWindow; } catch (e) { return; }
     if (!d || !d.body || !cw || !cw.VD) return;
     if (!d.getElementById('vx39-css')) { var s = d.createElement('style'); s.id = 'vx39-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
+    if (!d.__vx39t) { d.__vx39t = true; d.addEventListener('toggle', function (e) { var t = e.target; if (t && t.classList && t.classList.contains('vx39')) ouverts[t.getAttribute('data-vx39')] = t.open; }, true); }
     var input = cw.VD.chr && cw.VD.chr.input; if (!input) return;
     /* Saisie du jour : le prochain jour ouvert à faire. */
     var saisie = d.getElementById('modSaisie'), next = cw.VD.chr.next;
     if (saisie && next) {
       var ex = saisie.querySelector('.vx39');
-      if (!ex || ex.getAttribute('data-vx39') !== next) { if (ex) ex.remove(); var h = bloc(input, next, true); if (h) { var t = saisie.querySelector('.day-total'); var div = d.createElement('div'); div.innerHTML = h; (t && t.parentNode ? t.parentNode : saisie).insertBefore(div.firstChild, t ? t.nextSibling : null); } }
+      if (!ex || ex.getAttribute('data-vx39') !== next) { if (ex) ex.remove(); var h = bloc(input, next, true); if (h) saisie.insertAdjacentHTML('beforeend', h); }
     }
     /* Détail d'un jour touché dans le calendrier. */
     var det = d.getElementById('detail');
