@@ -2,7 +2,7 @@
    premium ; il y a énormément d'infos, il faut la rendre optimisée, cohérente, premium »).
    L'Accueil Pilotage faisait 14 modules à la suite (près de 15 écrans sur iPhone). Rien n'est retiré : tout est rangé.
    - Un sélecteur Jour · Mois · Année · Argent sous l'en-tête ; un seul chapitre affiché à la fois (retenu pendant la session).
-   - Dans chaque chapitre, l'essentiel est ouvert ; le secondaire est replié sous une ligne qui donne déjà le chiffre clé.
+   - Dans chaque chapitre, l’essentiel est ouvert ; le secondaire est dans un tiroir titré (C133 : déplié d’office dans Jour et Mois ; Argent replié sous son chiffre clé).
    - Ordinateur et tablette en largeur : l'essentiel à gauche, le complément à droite ; mobile : l'un sous l'autre.
    - Tout ce qui fait défiler vers un module (boutons, liens, calendrier) ouvre d'abord le bon chapitre et le bon tiroir.
    Les modules gardent leurs identifiants : les autres scripts (C123-C131, vx39) continuent de les trouver. */
@@ -12,8 +12,8 @@
   var CLE = 'verdict:accueil:chapitre:v1';
   /* p = essentiel (ouvert), s = complément (replié sous une ligne de résumé). */
   var CHAP = [
-    { k: 'jour', t: 'Jour', p: ['modSaisie'], s: ['modAction', 'modRupture', '~modReperesJour', '~modJour'] },
-    { k: 'mois', t: 'Mois', p: ['calendrier'], s: ['modMois', '~vdOffCard', '~modManqueCarte'] },
+    { k: 'jour', t: 'Jour', ouvert: true, p: ['modSaisie'], s: ['modAction', 'modRupture', '~modReperesJour', '~modJour'] },
+    { k: 'mois', t: 'Mois', ouvert: true, p: ['calendrier'], s: ['modMois', '~vdOffCard', '~modManqueCarte'] },
     { k: 'annee', t: 'Année', p: ['modAnnee'], s: [] },
     { k: 'argent', t: 'Argent', p: ['modArgent'], s: ['~modTreso', '~modCash13'] }
   ];
@@ -36,6 +36,7 @@
     '.vx40-t>summary i{grid-column:2;grid-row:1/span 2;font-style:normal;font-size:22px;line-height:1;opacity:.55;transition:transform .25s}' +
     '.vx40-t[open]>summary i{transform:rotate(90deg)}.vx40-t[open]>summary span{display:none}' +
     '.vx40-t>.mod,.vx40-t>section{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}' +
+    '.vx40-t>.mod,.vx40-t>section{padding-top:2px!important}.vx40-t>.mod>.mod-h:empty,.vx40-t>.mod>.mod-h:not(:has(>:not(.kicker))){display:none}' +
     '.vx40-t>.mod>.mod-h>.kicker:first-child,.vx40-t>#vdOffCard>#vdOffTitle{display:none}' +
     '.vx40-suite{display:flex;justify-content:flex-end;margin:4px 0 8px}.vx40-suite button{appearance:none;border:1px solid var(--line,rgba(148,163,184,.2));background:transparent;color:var(--txt,inherit);font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;cursor:pointer;min-height:44px}' +
     'main.cadre>.vx40-nav,main.cadre>.vx40-ch,main.cadre>.vx40-ch~*{grid-column:1/-1!important}@media (min-width:768px){main.cadre>.vx40-nav{margin:0}}' +
@@ -98,7 +99,7 @@
         if (plie) {
           var t = d.querySelector('.vx40-t[data-m="' + id + '"]');
           if (t && m.parentElement !== t) t.appendChild(m);
-          if (!t) { t = d.createElement('details'); t.className = 'vx40-t'; t.setAttribute('data-m', id); t.innerHTML = '<summary><b></b><span></span><i aria-hidden="true">›</i></summary>'; m.before(t); t.appendChild(m); t.addEventListener('toggle', function () { signaler(d); }); }
+          if (!t) { t = d.createElement('details'); t.className = 'vx40-t'; t.setAttribute('data-m', id); /* C133 : déplié d'office dans Jour et Mois (Steven, 17/10) ; le client peut replier. */ if (c.ouvert) t.open = true; t.innerHTML = '<summary><b></b><span></span><i aria-hidden="true">›</i></summary>'; m.before(t); t.appendChild(m); t.addEventListener('toggle', function () { signaler(d); }); }
           var tb = titre(m), rs = resume(m), sb = t.querySelector('summary>b'), sp = t.querySelector('summary>span');
           if (sb.textContent !== tb) sb.textContent = tb; if (sp.textContent !== rs) sp.textContent = rs;
           if (t.parentElement !== col) col.appendChild(t);
