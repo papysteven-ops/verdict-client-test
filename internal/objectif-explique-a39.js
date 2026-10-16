@@ -101,7 +101,7 @@
       if (lp && !deja) { var hp = position(cw.VD.chr); if (hp) lp.insertAdjacentHTML('afterend', '<p class="vx39-p">' + hp + '</p>'); } }
     if (saisie && next) {
       var ex = saisie.querySelector('.vx39');
-      if (!ex || ex.getAttribute('data-vx39') !== next) { if (ex) ex.remove(); var h = bloc(input, next, true); if (h) saisie.insertAdjacentHTML('beforeend', h); }
+      if (!ex || ex.getAttribute('data-vx39') !== next) { if (ex) ex.remove(); var h = bloc(input, next, !input.today || input.today === next) /* C131 : jour fermé aujourd'hui → titre du prochain jour ouvert */; if (h) saisie.insertAdjacentHTML('beforeend', h); }
     }
     /* Détail d'un jour touché dans le calendrier. */
     var det = d.getElementById('detail');
