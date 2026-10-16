@@ -104,9 +104,14 @@
   }
   /* C74 — Dès qu'une mise à jour existe, elle entre d'office dans le centre de notifications (cloche +1), sur
      ordinateur, tablette et mobile, comme une rupture d'Inventaire ; elle y reste jusqu'à la mise à jour. */
+  /* C111 — Client : le bandeau arrive souvent avant que le centre de notifications de la coquille soit prêt (verrou,
+     démarrage) ; l'entrée est alors réessayée jusqu'à 2 minutes, au lieu d'être perdue. */
+  var rangerEssais = 0;
   function ranger() {
     var c = centre();
-    if (c && c.ingest) c.ingest({ id: NOTIF_ID, source: 'Verdict', module: 'verdict', level: 'info', title: 'Nouvelle version de Verdict disponible', detail: 'Mettez à jour quand vous voulez : vos saisies sont enregistrées avant.', actionLabel: 'Mettre à jour', proof: 'Une nouvelle version a été publiée et téléchargée sur cet appareil.', createdAt: new Date().toISOString(), forceUnread: true });
+    if (!c || !c.ingest) { if (rangerEssais++ < 240) setTimeout(ranger, 500); return; }
+    rangerEssais = 0;
+    c.ingest({ id: NOTIF_ID, source: 'Verdict', module: 'verdict', level: 'info', title: 'Nouvelle version de Verdict disponible', detail: 'Mettez à jour quand vous voulez : vos saisies sont enregistrées avant.', actionLabel: 'Mettre à jour', proof: 'Une nouvelle version a été publiée et téléchargée sur cet appareil.', createdAt: new Date().toISOString(), forceUnread: true });
   }
   /* Ouvrir cette notification = mettre à jour (avant l'action habituelle du centre). */
   doc.addEventListener('click', function (e) {

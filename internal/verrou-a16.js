@@ -258,6 +258,10 @@
     bioAvailable().then(function (av) {
       /* Pas de nouvelle proposition juste après un code choisi parce que Face ID / Touch ID venait d'être écarté. */
       if (!av || (C && C.bio)) { hide(); return; }
+      /* C111 — Proposé une seule fois par appareil : « il me demande si je veux activer Touch ID alors que c'est déjà
+         fait » (Steven, 16/10, Pilote). Un refus vaut réponse ; le réglage reste disponible dans Sécurité. */
+      if (C && C.bioPropose) { hide(); return; }
+      C = C || {}; C.bioPropose = Date.now(); store(C);
       S.mode = 'offer';
       show('<div class="vr-logo">🙂</div><h2>Activer ' + esc(BIO) + ' ?</h2><p>Ouvrez Verdict d’un regard. ' + (COFFRE ? 'Votre mot de passe reste le secours si le visage n’est pas reconnu ; sans ' + esc(BIO) + ', il sera demandé à chaque ouverture.' : 'Votre code reste le secours si le visage n’est pas reconnu.') + '</p><button type="button" class="vr-btn" data-yes>Activer ' + esc(BIO) + '</button><button type="button" class="vr-btn sec" data-no>Plus tard</button>');
       var el = root();
