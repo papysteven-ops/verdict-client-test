@@ -166,7 +166,13 @@
     hookFrames(); el.tabIndex = -1; try { if (doc.activeElement && doc.activeElement.blur) doc.activeElement.blur(); el.focus({ preventScroll: true }); } catch (x) {}
     var c = el.querySelector('[data-close]'); if (c) c.onclick = function () { hide(); };
   }
-  function hide() { var el = root(); el.hidden = true; el.innerHTML = ''; S.mode = ''; shield(false); }
+  function hide() { var el = root(); el.hidden = true; el.innerHTML = ''; S.mode = ''; shield(false); annoncerOuvert(); }
+  /* C103 : l'appli (dans son cadre) attend ce signal pour lancer l'anneau du score : il n'est plus joué derrière le verrou. */
+  function annoncerOuvert() {
+    if (S.locked) return;
+    try { [].forEach.call(doc.querySelectorAll('iframe'), function (f) { try { f.contentWindow.postMessage({ type: 'verdict-verrou-ouvert' }, location.origin); } catch (e) {} }); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent('verdict:verrou-ouvert')); } catch (e) {}
+  }
 
   /* ───────── Écrans ───────── */
   function waitLeft() { return Math.max(0, Math.ceil(((C && C.until) || 0) - Date.now() / 1000)); }
@@ -427,10 +433,10 @@
       if (COFFRE) {
         C = C || {}; if (C.delai == null) C.delai = 60; store(C);
         /* Mot de passe tout juste saisi : l'appli s'ouvre (pas de seconde serrure) ; Face ID est proposé une fois. */
-        if (FRAIS) { S.locked = false; screenBioOffer(); } else if (MAJ) S.locked = false; else screenCoffre(true);
+        if (FRAIS) { S.locked = false; annoncerOuvert(); screenBioOffer(); } else if (MAJ) { S.locked = false; annoncerOuvert(); } else screenCoffre(true);
         return;
       }
-      if (MAJ && configured()) { S.locked = false; return; }
+      if (MAJ && configured()) { S.locked = false; annoncerOuvert(); return; }
       lock(true);
     });
     lockButton(); hookFrames(); [].forEach.call(doc.querySelectorAll("iframe"), function (f) { f.addEventListener("load", function () { setTimeout(hookFrames, 0); }); });

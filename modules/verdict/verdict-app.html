@@ -3033,7 +3033,7 @@ html.vd-workspace-light #v-carte.cp-active .cp-card {background:radial-gradient(
 <script data-mono="./dish-labor-v1.js" src="../../assets/runtime-a10/verdict-026-99d1632f83e6.js"></script>
 <script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/verdict-027-2ee1f78e3256.js"></script>
 <script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/verdict-028-43f5b3784647.js"></script>
-<script src="../../assets/runtime-a10/verdict-029-edfd9427866a.js"></script>
+<script src="../../assets/runtime-a10/verdict-029-c60685bd5bb7.js"></script>
 <script src="../../assets/runtime-a10/verdict-030-1ef3c766b73c.js"></script>
 <style>
 .gpulse{animation:gpk 1.6s ease 2;border-radius:12px}
@@ -3871,6 +3871,10 @@ label.f input,label.f select,.daily-guided-row .btn2{min-height:44px!important}
     try{if(typeof save==='function')save();}catch(e){}
     return siteId;
   }
+  function contexteDejaApplique(context){
+    try{if(!context||typeof context!=='object'||!lastAppliedContextSignature)return false;var siteId=safeSiteId(context.siteId);if(!siteId)return false;
+      return lastAppliedContextSignature===JSON.stringify({siteId:siteId,name:String(context.name||''),accountScope:String(context.accountScope||''),demo:bool(context.demo)});}catch(e){return false;}
+  }
   function applyContext(context){
     if(!context||typeof context!=='object')return false;
     var siteId=safeSiteId(context.siteId);if(!siteId)return false;
@@ -3896,18 +3900,24 @@ label.f input,label.f select,.daily-guided-row .btn2{min-height:44px!important}
     if(bool(context.demo)!==currentDemo)return false;
     var id=findVerdictId(siteId,context.name);if(!id)return false;
     try{
+      var changeEtab=(STORE.actif!==id),linkChanged=false;/* C103 */
       if(STORE.actif!==id&&typeof setActif==='function')setActif(id);
       if(DB&&!bool(context.demo)){
         var previous=DB.inventoryLink&&typeof DB.inventoryLink==='object'?DB.inventoryLink:{};
-        var linkChanged=String(previous.siteId||'')!==siteId||String(previous.siteName||'')!==String(context.name||previous.siteName||'');
+        linkChanged=String(previous.siteId||'')!==siteId||String(previous.siteName||'')!==String(context.name||previous.siteName||'');
         DB.inventoryLink=Object.assign({},previous,{siteId:siteId,siteName:String(context.name||previous.siteName||'').slice(0,100)});
         if(linkChanged&&typeof save==='function')save();
       }
-      if(typeof fillInputs==='function')fillInputs();
-      if(typeof readInputs==='function')readInputs();
+      /* C103 : même établissement, même lien : aucun rendu complet (il coûtait 0,7 à 1 s pendant l'anneau). */
+      if(changeEtab||linkChanged){
+        if(typeof fillInputs==='function')fillInputs();
+        if(typeof readInputs==='function')readInputs();
+      }
       if(typeof drawEtabs==='function')drawEtabs();
-      if(typeof verdictInvalidateViews==='function')verdictInvalidateViews();
-      if(typeof refreshAll==='function')refreshAll();
+      if(changeEtab||linkChanged){
+        if(typeof verdictInvalidateViews==='function')verdictInvalidateViews();
+        if(typeof refreshAll==='function')refreshAll();
+      }
       lastAppliedContextSignature=applySignature;pendingContext=null;publish(true);return true;
     }catch(e){return false;}
   }
@@ -4101,8 +4111,9 @@ label.f input,label.f select,.daily-guided-row .btn2{min-height:44px!important}
   names.forEach(wrap);
   window.addEventListener('message',function(event){
     if(event.source!==parent||(location.origin!=="null"&&location.protocol!=='file:')&&(location.origin!=="null"&&event.origin!==location.origin)||!event.data||typeof event.data!=='object')return;
-    if(event.data.type==='verdict-unified-apply-context')applyContext(event.data.context);
-    if(event.data.type==='verdict-unified-shell-ready'){applyContext(event.data.context);publish(true);publishStartup(true);}
+    /* C103 : la coquille envoie son contexte deux fois au lancement ; un contexte déjà appliqué ne relance plus un rendu complet. */
+    if(event.data.type==='verdict-unified-apply-context'){if(!contexteDejaApplique(event.data.context))applyContext(event.data.context);}
+    if(event.data.type==='verdict-unified-shell-ready'){if(!contexteDejaApplique(event.data.context))applyContext(event.data.context);publish(true);publishStartup(true);}
     if(event.data.type==='verdict-unified-demo-resume')resumeUnifiedDemo(event.data);
     if(event.data.type==='verdict-unified-module-visible'&&module==='verdict')flushPendingDemoResume();
     if(event.data.type==='verdict-unified-apply-operations'&&module==='verdict'){
@@ -4139,9 +4150,9 @@ label.f input,label.f select,.daily-guided-row .btn2{min-height:44px!important}
 
 </script>
 <script data-mono="./premium-viewport-v1.js" src="../../assets/runtime-a10/verdict-039-813a40955b00.js"></script>
-<script data-mono="../../daily-home-v25.js" src="../../assets/runtime-a10/verdict-040-6ae94c85f56a.js"></script>
-<script data-mono="./performance-integrated-v1.js" src="../../assets/runtime-a10/verdict-041-79b8d7ccca3f.js"></script>
-<script data-mono="../../daily-validation-v1.js" src="../../assets/runtime-a10/verdict-042-d6df6ba8ccc8.js"></script>
+<script data-mono="../../daily-home-v25.js" src="../../assets/runtime-a10/verdict-040-9c95f8ebf46c.js"></script>
+<script data-mono="./performance-integrated-v1.js" src="../../assets/runtime-a10/verdict-041-1b6e7db9b386.js"></script>
+<script data-mono="../../daily-validation-v1.js" src="../../assets/runtime-a10/verdict-042-9489224c5241.js"></script>
 <script data-mono="../../interaction-polish-v26.js" src="../../assets/runtime-a10/verdict-043-7d9e3a9c6fe2.js"></script>
 <style  data-mono="./verdict-v44.css">
 /* Verdict V44 — import FEC prioritaire, mouvement utile et navigation ciblée. */
@@ -4579,7 +4590,7 @@ html.p40-app .p41-detail{-webkit-tap-highlight-color:transparent;touch-action:ma
 </style>
 <script id="svc-js" data-mono="../../services-r56.js" src="../../assets/runtime-a10/verdict-051-19a38ecf9461.js"></script>
 <script id="p41-js" data-mono="../../premium-r41-ecrans.js" src="../../assets/runtime-a10/verdict-052-fe2ab822ef23.js"></script>
-<script id="p40-js" data-mono="../../premium-r40.js" src="../../assets/runtime-a10/verdict-053-fc805dcdfde2.js"></script>
+<script id="p40-js" data-mono="../../premium-r40.js" src="../../assets/runtime-a10/verdict-053-111298f555e1.js"></script>
 <script data-mono="../../carte-atelier-v1.js" src="../../assets/runtime-a10/verdict-054-2510938db652.js"></script>
 <script data-mono="../../carte-pages-v1.js" src="../../assets/runtime-a10/verdict-055-5bbda8dd78f0.js"></script><style  data-mono="../../control-ecarts-v1.css">
 .vc{margin:22px 0;color:var(--text,#edf0f3);font-size:16px;line-height:1.5}.vc h3{font-size:24px;margin:5px 0 12px}.vc p{color:var(--muted,#adb5bf)}.vc-eyebrow{font-size:13px;font-weight:800;letter-spacing:.08em}.vc-panel{border:1px solid #394048;border-radius:24px;background:linear-gradient(135deg,#1c252a,#101418 72%);padding:20px;margin:16px 0;overflow:hidden}.vc-panel summary{cursor:pointer;font-weight:750;font-size:18px;min-height:44px;align-content:center}.vc form{margin-top:16px}.vc label{display:block;margin:12px 0}.vc label>span{display:block;font-size:14px;margin-bottom:6px;color:#c3cbd2}.vc input:not([type=checkbox]){display:block;width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #485360;border-radius:12px;background:#090d10;color:#fff;font-size:16px;min-height:46px}.vc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.vc-grid strong{display:block;font-size:24px;margin-top:6px}.vc fieldset{border:1px solid #42494f;border-radius:16px;min-width:0;margin:14px 0}.vc button{border:1px solid #55745f;border-radius:14px;background:linear-gradient(135deg,#233c31,#17251f);color:#edf8f0;padding:13px 17px;font-size:16px;font-weight:700;min-height:46px;cursor:pointer;white-space:normal}.vc button:hover{border-color:#36ca77;box-shadow:0 0 18px #22c55e20}.vc button:focus-visible,.vc input:focus-visible{outline:3px solid #99b9ed;outline-offset:3px}.vc-confirm{display:flex!important;gap:12px;align-items:flex-start;font-size:14px}.vc-confirm input{margin-top:5px;min-width:20px;height:20px}.vc-result{border-left:4px solid #eab308;background:#eab30809;border-radius:16px;padding:16px;margin:16px 0}.vc-result>strong{display:block;font-size:30px;margin-top:12px}.vc-badge{display:inline-block;font-size:14px;border:1px solid #67737f;border-radius:18px;padding:5px 10px;color:#cad2da}.vc-badge[data-tone=green]{color:#3ade84;border-color:#268a51;background:#22c55e15}.vc-badge[data-tone=yellow]{color:#f6d858;border-color:#ab8526;background:#eab30815}.vc-priorities button{display:block;width:100%;text-align:left;margin:12px 0;border-left:4px solid #ef4444}.vc-priorities strong,.vc-priorities span{display:block}.vc [data-vc-error]{color:#ff9c91}.vc details[open]{animation:vc-reveal .22s ease-out}@keyframes vc-reveal{from{opacity:.6;transform:translateY(5px)}to{opacity:1;transform:none}}@media(max-width:380px){.vc-grid{grid-template-columns:1fr}.vc-panel{padding:16px}.vc h3{font-size:22px}}@media(prefers-reduced-motion:reduce){.vc details[open]{animation:none}}
@@ -4609,4 +4620,6 @@ html.p40-app #v-pil.on.p41-on > #vc-main{display:block!important;order:2;scroll-
 <script src="../../internal/accueil-premium-a29.js"></script>
 <script src="../../internal/animations-a23.js"></script>
 <script src="../../internal/gain-realiste-a24.js"></script>
+<script src="../../internal/vitesse-a30.js"></script>
+<script src="../../internal/langues-complements.js"></script>
 </body></html>

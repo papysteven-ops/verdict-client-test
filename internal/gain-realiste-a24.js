@@ -24,7 +24,9 @@ function num(x){x=Number(x);return isFinite(x)?x:0;}
 function inp(k){return num(w.DB&&w.DB.in?w.DB.in[k]:0);}
 function eur(x){return typeof w.eur==='function'?w.eur(x):Math.round(x).toLocaleString('fr-FR')+' €';}
 function pc(x,d){return typeof w.pc==='function'?w.pc(x,d==null?1:d):(Math.round(x*10)/10).toString().replace('.',',')+' %';}
-function fr2(x){return Number(x).toFixed(2).replace('.',',');}
+/* Prix au format de la langue choisie (virgule en français, point en anglais) — langues-complements. */
+function tag(){try{return typeof w.localeTag==='function'?w.localeTag():'fr-FR';}catch(e){return 'fr-FR';}}
+function fr2(x){return Number(x).toLocaleString(tag(),{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:false});}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function signe(x){return (x>=0?'+':'−')+eur(Math.abs(x));}
 function ctrlLib(id){var c=CTRL[id];return c>=1?'élevé':(c>=.5?'partiel':'faible');}
@@ -116,7 +118,7 @@ function overAll(state){
 
 /* ── Le plan réaliste de l'établissement ── */
 var CACHE={k:null,v:null};
-function cle(){try{return JSON.stringify([w.DB.in,w.DB.etabType,w.DB.plats,w.DB.carteRef,w.DB.reg,w.DB.controlTargets,(w.DB.decisions||[]).length]);}catch(e){return String(Math.random());}}
+function cle(){try{return JSON.stringify([w.LOCALE,w.DB.in,w.DB.etabType,w.DB.plats,w.DB.carteRef,w.DB.reg,w.DB.controlTargets,(w.DB.decisions||[]).length]);}catch(e){return String(Math.random());}}
 function payrollOk(){try{return typeof w.decPayrollRecommendationAllowed==='function'&&w.decPayrollRecommendationAllowed();}catch(e){return false;}}
 function txt(f,a){try{return typeof w[f]==='function'?w[f](a):'';}catch(e){return '';}}
 function plan(){
@@ -154,7 +156,7 @@ function plan(){
   /* commandes */
   var c=num(d.cmdj);
   if(c>0){var cl=F.fmt&&F.fmt.cl,pc2=!cl?.02:(c<cl[1]?.04:.02),vc=Math.floor(c*pc2*2)/2;
-    add('cmd',vc,c.toLocaleString('fr-FR',{maximumFractionDigits:1})+' commandes par jour'+(cl?' ; repère médian '+F.nom+' : '+cl[1]:'')+'. Contrôle faible : la fréquentation ne se décrète pas.',txt('p11VolumeAction',type)||'Travailler les services creux.');}
+    add('cmd',vc,c.toLocaleString(tag(),{maximumFractionDigits:1})+' commandes par jour'+(cl?' ; repère médian '+F.nom+' : '+cl[1]:'')+'. Contrôle faible : la fréquentation ne se décrète pas.',txt('p11VolumeAction',type)||'Travailler les services creux.');}
   L.sort(function(a,b){return ORDER.indexOf(a.id)-ORDER.indexOf(b.id);});
   /* l'équipe n'est proposée qu'après une décision d'organisation mesurée (règle existante de Simuler) */
   var pr=payrollOk(),retenus=L.filter(function(x){return x.id!=='sal'||pr;}),attente=L.filter(function(x){return x.id==='sal'&&!pr;});
@@ -391,5 +393,5 @@ w.VerdictGainRealiste={version:'C91',plan:plan,cartePlan:cartePlan,horsBornes:ho
   ouvrirSimuler:function(){var P=plan();if(!P)return;try{w.decDepuisPotentiel();}catch(e){w.DEC_STATE=w.decPotentialState(P);w.go('dec');}},
   ouvrirDetail:function(){var d=document.querySelector('[data-audit-full-report]');if(d)d.open=true;setTimeout(function(){var c=document.getElementById('auGainReel');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});},40);}};
 installerSimuler();installerAudit();
-w.addEventListener('load',function(){setTimeout(function(){installerAudit();patchAudit();},30);},{once:true});
+w.addEventListener('load',function(){setTimeout(function(){installerAudit();if(w.VIEW==='audit')patchAudit();/* C103 : l'Audit caché n'est plus préparé au lancement ; drawAudit s'en charge à l'ouverture */},30);},{once:true});
 })(window);

@@ -21189,7 +21189,7 @@ function replayIntro(msg,done,profile){
 /* ═══ Ouverture : progression neutre, jamais confondue avec le score ═══ */
 function spZone(n){ return scoreZone(n); }
 var SP_CIRC=2*Math.PI*86, SP_COULEUR="#22c55e";
-var SP_ZONE_PREC=null,SP_RING_GEOM=null;
+var SP_ZONE_PREC=null,SP_RING_GEOM=null,SP_ZONE_FIXE=null;
 function spGeomRing(force){
   var rg=document.getElementById('sp-ring');if(!rg)return null;
   if(!SP_RING_GEOM||force){
@@ -21244,7 +21244,7 @@ function spPeindreScore(n){
       ring=document.getElementById('sp-ring'),b=document.getElementById('sp-num'),zs=document.getElementById('sp-zones');
   if(!a)return;
   n=Math.max(0,Math.min(100,Number(n)||0));
-  var z=spZone(n),rounded=Math.round(n),zc=z.c,zoneChanged=SP_ZONE_PREC!==zc;SP_COULEUR=z.h;
+  var z=SP_ZONE_FIXE||spZone(n),rounded=Math.round(n),zc=z.c,zoneChanged=SP_ZONE_PREC!==zc;SP_COULEUR=z.h;
   if(ring&&ring.getAttribute('data-progress')!==String(rounded))ring.setAttribute('data-progress',String(rounded));
   if(b&&b.textContent!==String(rounded))b.textContent=String(rounded);
   a.style.strokeDashoffset=SP_CIRC*(1-n/100);
@@ -21307,11 +21307,13 @@ function spFrameSolide(fn){
   setTimeout(function(){fn((typeof performance!=='undefined'&&performance.now)?performance.now():Date.now());},16);
 }
 function spAnim(de,vers,duree,fin,parZone,peindre){
-  var t0=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
+  var t0=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now(),tPrec=null;
   function pas(t){
     /* Si le filet de démarrage a retiré le splash, aucune ancienne frame ne
        doit relancer la séquence en arrière-plan. */
     if(!document.getElementById('splash'))return;
+    /* C103 : après un gel du navigateur, l'anneau reprend où il en était au lieu de sauter à la fin. */
+    if(tPrec!==null&&t-tPrec>34)t0+=(t-tPrec)-16.7;tPrec=t;
     var k=Math.min(1,(t-t0)/duree), v;
     if(parZone&&de===0&&vers===100){ v=spParZone(k); }
     else {
@@ -21453,7 +21455,7 @@ function spBalayage(scoreReel,rythme,suite){
   var _rv=ring.querySelector('.rv');
   if(_rv)_rv.style.display='';
   spPlacer();
-  SP_ZONE_PREC=null;
+  SP_ZONE_PREC=null;SP_ZONE_FIXE=null;
   spPeindre(0);
   spHalo('sp-ring',0.74,0);
   var sc=document.getElementById('sp-scene'); if(sc)requestAnimationFrame(function(){ sc.classList.add('ouvert'); });
@@ -21483,7 +21485,7 @@ function spBalayageScore(scoreReel,rythme,suite){
   if(!ring||!Number.isFinite(n)){spBalayage(scoreReel,rythme,suite);return;}
   n=Math.max(0,Math.min(100,Math.round(n)));
   var cfg=spRythme(rythme),ctx=document.getElementById('sp-demo-context');
-  spPlacer();SP_ZONE_PREC=null;spPeindreScore(0);spHalo('sp-ring',0.74,0);
+  spPlacer();SP_ZONE_PREC=null;SP_ZONE_FIXE=(rythme==='daily')?spZone(n):null;/* C103 : au quotidien, la couleur finale dès la première image */spPeindreScore(0);spHalo('sp-ring',0.74,0);
   var sc=document.getElementById('sp-scene');if(sc)requestAnimationFrame(function(){sc.classList.add('ouvert');});
   ring.style.opacity='1';
   if(rythme==='daily'){
@@ -23053,7 +23055,8 @@ function runIntroInterne(mode,done,profile){
     var s=document.getElementById('splash'),ring=document.getElementById('sp-ring');
     if(!s||s!==sp)return;
     var valeur=ring?parseInt(ring.getAttribute('data-progress'),10):NaN;
-    if(!Number.isFinite(valeur)||valeur<=_introDepart+1)verdictIntroDebloquer(mode,done,'score-fige');
+    /* C103 : plus de coupure sèche ; si l'anneau n'a pas bougé, on le repeint et la séquence continue (le filet de 11 s reste). */
+    if(!Number.isFinite(valeur)||valeur<=_introDepart+1){try{spPeindreScore(_scoreReel||0);}catch(e){}}
   },1800);
   (_demoScoreInIntro?spBalayageScore:spBalayage)(_scoreReel,_introRythme,function(){
   clearTimeout(VERDICT_INTRO_PROGRESS_TIMER);VERDICT_INTRO_PROGRESS_TIMER=null;
@@ -23128,6 +23131,17 @@ function runIntroInterne(mode,done,profile){
 /* Le lecteur ChatGPT Sites masque la page jusqu'à l'événement load. La
    séquence neutre ne part qu'après le chargement complet, deux images rendues
    et la courte dissipation du cache du lecteur. */
+function verdictIntroVerrouParent(){try{return !!(window.parent&&window.parent!==window&&window.parent.VerdictVerrou&&window.parent.VerdictVerrou.state().locked);}catch(e){return false;}}
+function verdictIntroQuandLibre(fn){
+  var lance=false;function partir(){if(lance)return;lance=true;try{fn();}catch(e){}}
+  function apresVerrou(){
+    if(!verdictIntroVerrouParent())return partir();
+    var filet=setTimeout(partir,20000),sonde=setInterval(function(){if(!verdictIntroVerrouParent()){clearInterval(sonde);clearTimeout(filet);requestAnimationFrame(function(){setTimeout(partir,0);});}},250);
+    window.addEventListener('message',function h(ev){if(ev.source!==window.parent||!ev.data||ev.data.type!=='verdict-verrou-ouvert')return;window.removeEventListener('message',h);clearTimeout(filet);clearInterval(sonde);requestAnimationFrame(function(){setTimeout(partir,0);});});
+  }
+  function apresImages(){if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){requestAnimationFrame(function(){setTimeout(apresVerrou,0);});});else setTimeout(apresVerrou,32);}
+  if(document.readyState!=='loading')apresImages();else document.addEventListener('DOMContentLoaded',apresImages,{once:true});
+}
 function verdictIntroLancerQuandAffiche(){
   if(window.__verdictIntroLaunchQueued)return;
   window.__verdictIntroLaunchQueued=true;
@@ -23146,7 +23160,9 @@ function verdictIntroLancerQuandAffiche(){
      de sa séquence de quatre secondes. */
   if(verdictIntroDejaVue()||!verdictIntroV45Demo(VERDICT_STARTUP_STATE&&VERDICT_STARTUP_STATE.profile)){
     window.__verdictIntroLaunchStarted=true;
-    runIntro('startup',null,VERDICT_STARTUP_STATE&&VERDICT_STARTUP_STATE.profile);
+    /* C103 : l'anneau ne part plus au milieu du chargement ni derrière le verrou : il attend la page chargée, deux
+       images peintes, le fil libre et, dans la coquille, l'ouverture du verrou (le rendu lourd se fait pendant ce temps). */
+    verdictIntroQuandLibre(function(){try{if(typeof window.verdictIntroArmerSecours==='function')window.verdictIntroArmerSecours();}catch(e){}runIntro('startup',null,VERDICT_STARTUP_STATE&&VERDICT_STARTUP_STATE.profile);});
     return;
   }
   function attendreVisibilite(){
@@ -23202,7 +23218,8 @@ if(VERDICT_INVENTORY_REQUESTED_SITE==='demo-brasserie'&&typeof invDemoIsole==='f
   setTimeout(function(){try{if(typeof demoTourActif==='function'&&demoTourActif())return;
     /* Consolidation 14/10/2026 (C24) : ne pas ramener vers Pilotage quand l'adresse demande la Carte (rechargement, lien direct). */
     var wanted='';try{wanted=new URLSearchParams(location.search+(self.__vdq||'')).get('profile')||'';}catch(e){}
-    if(wanted!=='carte')go('pil');refreshAll();}catch(e){}},4200);
+    /* C103 : si l'Accueil est déjà affiché, rien à refaire (ce rappel redessinait tout l'Accueil à 4,2 s). */
+    if(wanted!=='carte'&&VIEW!=='pil'){go('pil');refreshAll();}}catch(e){}},4200);
 }
 setTimeout(function(){ try{ refPremierLancement(); }catch(e){} },2600);
 /* i18n : coquille de l'interface */

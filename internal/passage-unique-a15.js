@@ -9,14 +9,17 @@ var doc=root.document;if(!doc||root.VerdictPassageUnique)return;
 
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function num(v){var n=typeof v==='number'?v:parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(',','.'));return isFinite(n)?n:null;}
-function money(v){v=num(v);return v==null?'—':v.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
-function int(v){v=num(v);return v==null?'—':Math.round(v).toLocaleString('fr-FR');}
+function money(v){v=num(v);return v==null?'—':v.toLocaleString(tag(),{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function int(v){v=num(v);return v==null?'—':Math.round(v).toLocaleString(tag());}
 function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
 function DB(){return root.DB||null;}
 function today(){var t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');}
 function addMonth(per,n){var y=+per.slice(0,4),m=+per.slice(5,7)-1+n;y+=Math.floor(m/12);m=((m%12)+12)%12;return y+'-'+String(m+1).padStart(2,'0');}
 var MONTHS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-function monthLabel(per){return MONTHS[+per.slice(5,7)-1]+' '+per.slice(0,4);}
+/* Nombres et mois au format de la langue choisie — langues-complements (16/10). */
+function tag(){try{return typeof root.localeTag==='function'?root.localeTag():(root.LOCALE_TAG||'fr-FR');}catch(e){return 'fr-FR';}}
+function moisLocal(i){try{if(root.LOCALE&&root.LOCALE!=='fr')return new Intl.DateTimeFormat(tag(),{month:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2020,i,15)));}catch(e){}return MONTHS[i];}
+function monthLabel(per){return moisLocal(+per.slice(5,7)-1)+' '+per.slice(0,4);}
 
 /* ───────── Lecture du CSV de caisse (mêmes lecteurs que l'import existant) ───────── */
 function csvRow(line,sep){if(typeof root.point5CsvRow==='function')return root.point5CsvRow(line,sep);return line.split(sep).map(function(x){return x.trim().replace(/^"|"$/g,'');});}

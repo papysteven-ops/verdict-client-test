@@ -14,9 +14,9 @@ var doc=root.document;if(!doc||root.VerdictVeraCarte)return;
 /* ───────── Outils ───────── */
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function num(v){var n=typeof v==='number'?v:parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(',','.'));return isFinite(n)?n:null;}
-function money(v){v=num(v);return v==null?'—':v.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
-function pct(v,d){v=num(v);return v==null?'—':v.toLocaleString('fr-FR',{maximumFractionDigits:d==null?1:d})+' %';}
-function int(v){v=num(v);return v==null?'—':Math.round(v).toLocaleString('fr-FR');}
+function money(v){v=num(v);return v==null?'—':v.toLocaleString(tag(),{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function pct(v,d){v=num(v);return v==null?'—':v.toLocaleString(tag(),{maximumFractionDigits:d==null?1:d})+' %';}
+function int(v){v=num(v);return v==null?'—':Math.round(v).toLocaleString(tag());}
 function DB(){return root.DB||null;}
 function hash(s){s=String(s);var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 function rng(seed){var x=hash(seed)||1;return function(){x^=x<<13;x>>>=0;x^=x>>17;x^=x<<5;x>>>=0;return (x%100000)/100000;};}
@@ -39,7 +39,10 @@ function addMonth(per,n){var y=yearOf(per),m=monthOf(per)-1+n;y+=Math.floor(m/12
 function currentPeriod(){var d=DB();var p=d&&d.carteRef&&d.carteRef.periode;return /^\d{4}-\d{2}$/.test(p||'')?p:today();}
 function active(p){return p&&!p.cpArchived;}
 var MONTHS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-function monthName(m){return MONTHS[(m-1+12)%12];}
+/* Nombres et mois au format de la langue choisie — langues-complements (16/10). */
+function tag(){try{return typeof root.localeTag==='function'?root.localeTag():(root.LOCALE_TAG||'fr-FR');}catch(e){return 'fr-FR';}}
+function moisLocal(i){try{if(root.LOCALE&&root.LOCALE!=='fr')return new Intl.DateTimeFormat(tag(),{month:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2020,i,15)));}catch(e){}return MONTHS[i];}
+function monthName(m){return moisLocal((m-1+12)%12);}
 
 /* ───────── Saison et « météo de saison » : normales mensuelles françaises (°C), sans appel réseau ───────── */
 var TEMP=[5,6,9,12,15,19,21,21,17,13,8,5];

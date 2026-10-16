@@ -185,8 +185,11 @@
       try{gestes(doc.body);}catch(e){}
     }
   }
+  var passesIntro=0,attenteIntro=false;
   function planifier(){
     if(minut!==null)return;
+    /* C103 : pendant l'écran d'ouverture, une seule passe (pour préparer l'Accueil) ; les suivantes attendent la fin de l'anneau. */
+    if(doc.getElementById('splash')){if(passesIntro>=1){if(!attenteIntro){attenteIntro=true;global.addEventListener('verdict:intro-complete',function(){attenteIntro=false;global.setTimeout(planifier,120);},{once:true});}return;}passesIntro++;}
     /* pendant le parcours guidé, l'app redessine certaines vues plus de dix fois par seconde : la couche ne se recalcule qu'une fois toutes les deux secondes */
     var tour=false;try{tour=(typeof global.demoTourActif==='function'&&global.demoTourActif())||(doc.body&&doc.body.classList.contains('demo-tour-active'));}catch(e){}
     var attente=tour?Math.max(400,2000-(Date.now()-dernier)):Math.max(90,250-(Date.now()-dernier));
@@ -216,10 +219,11 @@
       for(var i=0;i<recs.length;i++){
         var r=recs[i],t=r.target;
         if(r.type==='attributes'){
-          if(t.classList&&(t.classList.contains('view')||t.classList.contains('sv')||t.classList.contains('modal')||t.id==='refSh'||t.id==='splash'||t.id==='mDemoIntent')){planifier();return;}
+          if(t.classList&&(t.classList.contains('view')||t.classList.contains('sv')||t.classList.contains('modal')||t.id==='refSh'||t.id==='mDemoIntent')){planifier();return;}
           continue;
         }
         if(horsChamp(t))continue;
+        if(t&&t.closest&&t.closest('#splash,#verdictIntroHandoff'))continue;/* C103 : l'écran d'ouverture ne relance pas la couche */
         for(var j=0;j<r.addedNodes.length;j++){
           var n=r.addedNodes[j];
           if(n.nodeType===1&&!(n.classList&&n.classList.contains('p40-own'))){planifier();return;}
@@ -230,8 +234,7 @@
   }
   planifier();
   global.addEventListener('load',planifier);
-  global.setTimeout(planifier,900);
-  global.setTimeout(planifier,2600);
+  /* C103 : plus de relances à 900 et 2600 ms (la couche se recalculait 6 à 8 fois au lancement). */
 })(window);
 /* R199 point 47 (WCAG 3.1.1) : la langue du document hote suit celle du module affiche. Sans effet hors coque (pas de frame-verdict). */
 ;(function(){try{

@@ -193,7 +193,9 @@
     var cartes = box.querySelectorAll('.rc-card');
     grandEcran(box, cartes);
     if (!('IntersectionObserver' in w) || REDUIT) { [].forEach.call(cartes, jouer); return; }
-    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { jouer(e.target); io.unobserve(e.target); } }); }, { threshold: 0.45, rootMargin: '0px 0px -8% 0px' });
+    /* C103 : la première image se joue dès qu'elle est un peu visible (à l'ouverture de l'Audit, elle n'est visible
+       qu'à 40-47 % sous la barre du bas : au seuil de 45 % elle restait parfois vide). */
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting && (e.intersectionRatio >= 0.45 || (e.target === cartes[0] && e.intersectionRatio >= 0.15))) { jouer(e.target); io.unobserve(e.target); } }); }, { threshold: [0.15, 0.45], rootMargin: '0px 0px -8% 0px' });
     [].forEach.call(cartes, function (c) { io.observe(c); });
   }
 
@@ -313,5 +315,5 @@
   var attente = 0;
   function planifier() { clearTimeout(attente); attente = setTimeout(monter, 60); }
   try { var a = doc.getElementById('v-audit'); if (a) new MutationObserver(function (l) { for (var i = 0; i < l.length; i++) { var t = l[i].target; if (t && t.closest && t.closest('#vdRecit')) continue; return planifier(); } }).observe(a, { childList: true, subtree: true }); } catch (e) {}
-  planifier();
+  if (w.VIEW === 'audit') planifier(); /* C103 : rien au lancement quand l'Audit est caché */
 })();
