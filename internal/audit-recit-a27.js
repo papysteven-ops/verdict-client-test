@@ -139,10 +139,10 @@
   function grandEcran(box, cartes) {
     /* Hauteur de la barre du haut (Mac) mesurée au moment de lire : elle n'existe pas encore pendant l'ouverture. */
     function caler() {
-      var haut = 12; try {
+      var haut = 0; try {
         var b = doc.querySelector('[data-v="audit"]'), n = b && b.closest('nav,div'), cs = n && getComputedStyle(n), h = n ? n.getBoundingClientRect().height : 0, t = cs ? parseFloat(cs.top) : NaN;
         /* barre collée en haut (Mac) : on se place juste dessous ; barre en bas (iPhone, iPad) : rien à éviter */
-        if (h && h < 150 && (cs.position === 'sticky' || cs.position === 'fixed') && isFinite(t) && t < 40) haut = Math.round(t + h) + 10;
+        if (h && h < 150 && (cs.position === 'sticky' || cs.position === 'fixed') && isFinite(t) && t < 40) haut = Math.floor(t + h); /* C100 : collée, sans interstice */
       } catch (e) {}
       if (box.__rcTop !== haut) { box.__rcTop = haut; box.style.setProperty('--rc-top', haut + 'px'); }
     }
@@ -178,7 +178,7 @@
     var corps = tableaux(D), noms = { 1: 'Verdict', 2: 'Où part l’argent', 3: 'Seuil', 4: 'Fuites', 5: 'Remonter', 6: 'Prochain pas' }, puces = '';
     corps.replace(/data-rc="(\d)"/g, function (m, n) { puces += '<button type="button" data-rc-nav="' + n + '"><i>' + n + '</i>' + noms[n] + '</button>'; return m; });
     box.innerHTML = '<header class="rc-head"><span>Audit Verdict · ' + esc(D.nom) + '</span><h1>Votre audit en 6 images</h1><p><span class="rc-m">Faites défiler : chaque image se joue quand elle arrive.</span><span class="rc-l">Six images, une idée chacune, toutes calculées avec vos chiffres.</span></p></header>' +
-      '<div class="rc-nav" role="navigation" aria-label="Chapitres de l’audit">' + puces + '</div>' + corps;
+      '<div class="rc-navwrap"><div class="rc-nav" role="navigation" aria-label="Chapitres de l’audit">' + puces + '</div></div>' + corps;
     var wrap = body.querySelector('.au-wrap') || body;
     if (box.parentNode !== wrap || wrap.firstChild !== box) wrap.insertBefore(box, wrap.firstChild);
     [].forEach.call(box.querySelectorAll('[data-rc-go]'), function (b) {
@@ -259,19 +259,22 @@
     '#vdRecit .rc-cta{min-height:60px;border:0;border-radius:18px;background:linear-gradient(180deg,#22c55e,#16a34a);color:#fff;font:900 18px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 14px 34px rgba(22,163,74,.45)}' +
     '#vdRecit .rc-on .rc-cta{animation:rcHalo 1.9s ease-out .6s 3}@keyframes rcHalo{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6),0 14px 34px rgba(22,163,74,.45)}70%{box-shadow:0 0 0 16px rgba(34,197,94,0),0 14px 34px rgba(22,163,74,.45)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0),0 14px 34px rgba(22,163,74,.45)}}' +
     '#vdRecit .rc-cta2{display:flex;gap:10px}#vdRecit .rc-cta2 button{flex:1;min-height:50px;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font:800 15px/1 -apple-system,system-ui;cursor:pointer}' +
-    '#vdRecit .rc-nav,#vdRecit .rc-l,#vdRecit .rc-stack i>span{display:none}' +
+    '#vdRecit .rc-navwrap,#vdRecit .rc-l,#vdRecit .rc-stack i>span{display:none}' +
     /* C98 — Tablette et grand écran : mises en page horizontales propres à l'écran large. */
     '@media (min-width:700px){' +
       '#vdRecit{max-width:880px;margin-left:auto;margin-right:auto}#vdRecit .rc-m{display:none}#vdRecit .rc-l{display:inline}#vdRecit .rc-suite{display:none}' +
       '#vdRecit .rc-head{padding:10px 4px 16px}#vdRecit .rc-head h1{font-size:44px}#vdRecit .rc-head p{font-size:16px}' +
-      '#vdRecit .rc-nav{order:0;display:flex;gap:8px;position:sticky;top:var(--rc-top,12px);z-index:4;margin:0 0 18px;padding:6px;border-radius:18px;background:#ffffff;border:1px solid #e3e8ee;box-shadow:0 10px 30px rgba(15,23,42,.10);overflow-x:auto;scrollbar-width:none}' +
+      /* C100 — bandeau plein de la couleur de la page, collé sous la barre du haut : le texte ne défile plus entre les deux */
+      '#vdRecit{--rc-shelf:#f3f5f7}html.vd-workspace-dark #vdRecit{--rc-shelf:#0b0f14}' +
+      '#vdRecit .rc-navwrap{order:0;display:block;position:sticky;top:max(var(--rc-top,0px),env(safe-area-inset-top,0px));z-index:4;margin:0 0 10px;padding:10px 0 12px;background:var(--rc-shelf);box-shadow:0 0 0 100vmax var(--rc-shelf);clip-path:inset(0 -100vmax)}' +
+      '#vdRecit .rc-nav{display:flex;gap:8px;padding:6px;border-radius:18px;background:#ffffff;border:1px solid #e3e8ee;box-shadow:0 10px 30px rgba(15,23,42,.10);overflow-x:auto;scrollbar-width:none}' +
       '#vdRecit .rc-nav::-webkit-scrollbar{display:none}' +
       '#vdRecit .rc-nav button{flex:1 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 14px;border:0;border-radius:13px;background:transparent;color:#475569;font:700 14px/1 -apple-system,system-ui;cursor:pointer;white-space:nowrap;transition:background .25s,color .25s}' +
       '#vdRecit .rc-nav button i{font-style:normal;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#eef2f6;color:#334155;font-size:12px;font-weight:800}' +
       '#vdRecit .rc-nav button[aria-current]{background:#0f172a;color:#fff}#vdRecit .rc-nav button[aria-current] i{background:#22c55e;color:#fff}' +
       'html.vd-workspace-dark #vdRecit .rc-nav{background:#11161d;border-color:#222b36;box-shadow:0 12px 34px rgba(0,0,0,.45)}html.vd-workspace-dark #vdRecit .rc-nav button{color:#cbd5e1}' +
       'html.vd-workspace-dark #vdRecit .rc-nav button i{background:#1e2733;color:#e2e8f0}html.vd-workspace-dark #vdRecit .rc-nav button[aria-current]{background:#f8fafc;color:#0b0f14}' +
-      '#vdRecit .rc-card{min-height:0;padding:38px 42px;border-radius:32px;margin:0 0 20px;scroll-margin-top:calc(var(--rc-top,12px) + 70px)}' +
+      '#vdRecit .rc-card{min-height:0;padding:38px 42px;border-radius:32px;margin:0 0 20px;scroll-margin-top:calc(var(--rc-top,0px) + 92px)}' +
       '#vdRecit .rc-c1{display:grid;grid-template-columns:minmax(0,1fr) 230px;grid-template-areas:"k d" "h d" "b d" "p d";gap:14px 40px;align-content:center;align-items:center}' +
       '#vdRecit .rc-c1>.rc-k{grid-area:k}#vdRecit .rc-c1>h2{grid-area:h}#vdRecit .rc-c1>.rc-big{grid-area:b}#vdRecit .rc-c1>.rc-p{grid-area:p}#vdRecit .rc-c1>.rc-dial{grid-area:d;width:230px;height:230px;margin:0}' +
       '#vdRecit .rc-c1 .rc-dial-n{padding-top:86px}#vdRecit .rc-c1 .rc-dial-n b{font-size:64px}' +
@@ -288,7 +291,7 @@
     '}' +
     /* Mac et iPad à l'horizontale : mosaïque sur 12 colonnes. */
     '@media (min-width:1100px){' +
-      '#vdRecit{max-width:1240px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:22px;align-items:stretch}#vdRecit .rc-head,#vdRecit .rc-nav{grid-column:1/-1;margin:0}' +
+      '#vdRecit{max-width:1240px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:22px;align-items:stretch}#vdRecit .rc-head,#vdRecit .rc-navwrap{grid-column:1/-1;margin:0}' +
       '#vdRecit .rc-card{margin:0}#vdRecit .rc-c1,#vdRecit .rc-c6{grid-column:1/-1}' +
       '#vdRecit .rc-c2{grid-column:span 7}#vdRecit .rc-c3{grid-column:span 5}#vdRecit .rc-c4{grid-column:span 5}#vdRecit .rc-c5{grid-column:span 7}' +
       '#vdRecit .rc-c1{min-height:340px;grid-template-columns:minmax(0,1fr) 270px;padding:46px 56px}#vdRecit .rc-c1>.rc-dial{width:270px;height:270px}#vdRecit .rc-c1 .rc-dial-n{padding-top:100px}#vdRecit .rc-c1 .rc-dial-n b{font-size:76px}' +
