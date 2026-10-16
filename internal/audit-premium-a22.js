@@ -16,7 +16,7 @@
     '#auditBody .av31-full>summary{position:relative;min-height:86px!important;padding:18px 20px!important;color:#ffffff!important}' +
     '#auditBody .av31-full>summary span b{font-size:20px!important;color:#ffffff!important;letter-spacing:-.01em}' +
     '#auditBody .av31-full>summary span small{color:rgba(255,255,255,.88)!important;font-size:13px!important}' +
-    '#auditBody .av31-full>summary i{background:#ffffff!important;color:#15803d!important;font-weight:800!important;padding:10px 16px!important;font-style:normal}' +
+    '#auditBody .av31-full>summary i{background:#ffffff!important;color:#15803d!important;font-weight:800!important;padding:10px 16px!important;font-style:normal;white-space:nowrap}' +
     '#auditBody .av31-full>summary i::after{content:" \\1F446";}' +
     '#auditBody .av31-full[open]{background:#ffffff!important;box-shadow:0 18px 48px rgba(18,27,22,.10)!important}' +
     '#auditBody .av31-full[open]>summary{color:#101214!important;background:linear-gradient(135deg,#16a34a,#22c55e)!important}' +
