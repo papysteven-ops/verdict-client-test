@@ -29,6 +29,21 @@
     if (avance > 0) return '<span class="vx39-pos avance">Avance du mois : <b>+' + eur(avance) + '</b></span><small>Gardée en réserve pour un jour plus faible : l’objectif du jour reste la base.</small>';
     return '<span class="vx39-pos">Mois dans les temps</span><small>Ni avance ni retard : l’objectif du jour est la base.</small>';
   }
+  /* C126 — Détail d'un jour passé : le retard (ou l'avance) du mois avant ce jour, ce qu'il y avait à réaliser ce
+     jour-là (base + retard), et la position du mois après ce jour. Le calendrier juge chaque jour contre sa base ; ces
+     lignes montrent comment le retard s'accumule jusqu'à l'objectif d'aujourd'hui (Steven, 16/10 : « chaque jour on
+     dit 1 000 €, mais aujourd'hui 3 000 € : pas logique »). */
+  function lignesJour(input, date) {
+    if (!input || !w.VerdictCHR) return '';
+    var jour = input.days.filter(function (d) { return d.date === date; })[0]; if (!jour || jour.ca == null) return '';
+    var c; try { c = w.VerdictCHR.calculate({ minimum: input.minimum, today: date, days: input.days.map(function (d) { return Object.assign({}, d, { ca: d.date >= date ? null : d.ca }); }) }); } catch (e) { return ''; }
+    if (!c || !c.exact || c.next !== date) return '';
+    var base = Number(c.base) || 0, avant = (Number(c.deficit) || 0) - (Number(c.advance) || 0), aFaire = base + Math.max(0, avant), ca = Number(jour.ca) || 0, apres = avant + base - ca;
+    function pos(v, quand) { return v > 0.5 ? '<dt>Retard du mois ' + quand + '</dt><dd class="vx39-r">' + eur(v) + '</dd>' : (v < -0.5 ? '<dt>Avance du mois ' + quand + '</dt><dd class="vx39-a">+' + eur(-v) + '</dd>' : '<dt>Mois ' + quand + '</dt><dd>dans les temps</dd>'); }
+    return '<div class="vx39-l" data-vx39l="' + date + '">' + pos(avant, 'avant ce jour').replace(/^/, '') + '</div>' +
+      '<div class="vx39-l"><dt>À réaliser ce jour-là<small>base ' + eur(base) + (avant > 0.5 ? ' + retard ' + eur(avant) : '') + '</small></dt><dd><b>' + eur(aFaire) + '</b></dd></div>' +
+      '<div class="vx39-l">' + pos(apres, 'après ce jour') + '</div>';
+  }
   var ouverts = {}; /* l'ouverture survit aux redessins du module */
   function bloc(input, date, aujourdHui) {
     if (!input || !Array.isArray(input.days) || !w.VerdictCHR) return '';
@@ -50,7 +65,8 @@
       '<li><b>Le retard</b> : ' + ret + '</li></ol>' +
       '<p class="vx39-f">' + (retard > 0 ? 'Base ' + eur(base) + ' + retard ' + eur(retard) + ' = <b>' + eur(total) + '</b> ' + (aujourdHui ? 'à réaliser aujourd’hui' : 'à réaliser ce jour-là') : (aujourdHui ? 'À réaliser aujourd’hui' : 'À réaliser ce jour-là') + ' : <b>' + eur(total) + '</b>, la base du jour') + '</p></div></details>';
   }
-  var CSS = 'p.vx39-p{display:flex;flex-direction:column;gap:3px;margin:6px 0 10px}p.vx39-p small{font-size:13px;opacity:.85}.vx39-pos{font-weight:700}.vx39-pos.avance b{color:#16a34a}.vx39-pos.retard b{color:#ea580c}html.vd-workspace-dark .vx39-pos.avance b{color:#4ade80}html.vd-workspace-dark .vx39-pos.retard b{color:#fb923c}' +
+  var CSS = '.vx39-r{color:#ea580c!important;font-weight:800}.vx39-a{color:#16a34a!important;font-weight:800}html.vd-workspace-dark .vx39-r{color:#fb923c!important}html.vd-workspace-dark .vx39-a{color:#4ade80!important}.vx39-l dt small{display:block;font-size:12px;opacity:.75;font-weight:500}' +
+    'p.vx39-p{display:flex;flex-direction:column;gap:3px;margin:6px 0 10px}p.vx39-p small{font-size:13px;opacity:.85}.vx39-pos{font-weight:700}.vx39-pos.avance b{color:#16a34a}.vx39-pos.retard b{color:#ea580c}html.vd-workspace-dark .vx39-pos.avance b{color:#4ade80}html.vd-workspace-dark .vx39-pos.retard b{color:#fb923c}' +
     '.vx39>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;min-height:44px}.vx39>summary::-webkit-details-marker{display:none}' +
     '.vx39>summary i{font-style:normal;font-size:22px;line-height:1;opacity:.6;transition:transform .25s}.vx39[open]>summary i{transform:rotate(90deg)}.vx39:not([open]){padding-top:4px!important;padding-bottom:4px!important}.vx39-c{padding-top:4px}' +
     '.vx39{margin:16px 0 0;padding:14px 16px;border-radius:16px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.22);color:inherit;font-size:14.5px;line-height:1.5}' +
@@ -81,6 +97,11 @@
       var ex2 = det.querySelector('.vx39');
       if (date && (!ex2 || ex2.getAttribute('data-vx39') !== date)) { if (ex2) ex2.remove(); var h2 = bloc(input, date, false); if (h2) det.insertAdjacentHTML('beforeend', h2); }
       if (!date && ex2) ex2.remove();
+      var dl = det.querySelector('dl'), exl = det.querySelector('.vx39-l');
+      if (dl && date && (!exl || exl.getAttribute('data-vx39l') !== date)) {
+        [].forEach.call(det.querySelectorAll('.vx39-l'), function (n) { n.remove(); });
+        var hl = lignesJour(input, date); if (hl) { var ref = [].filter.call(dl.children, function (n) { return /Minimum de structure/.test(n.textContent || ''); })[0]; if (ref) ref.insertAdjacentHTML('afterend', hl); else dl.insertAdjacentHTML('beforeend', hl); }
+      }
     }
   }
   var suivis = new WeakSet();
@@ -98,5 +119,5 @@
   setInterval(tour, 1500);
   doc.addEventListener('DOMContentLoaded', tour);
   w.addEventListener('load', function () { setTimeout(tour, 300); });
-  w.VerdictObjectifExplique = { bloc: bloc, position: position, tour: tour };
+  w.VerdictObjectifExplique = { bloc: bloc, position: position, lignesJour: lignesJour, tour: tour };
 })();
