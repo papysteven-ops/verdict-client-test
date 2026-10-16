@@ -125,13 +125,15 @@ function plan(){
   var k=cle();if(CACHE.k===k&&CACHE.v)return CACHE.v;
   var R=w.moteur();if(!R||!R.ready)return null;
   var d=R.d,v=R.v,ca=d.ca,F=format(),fam=F.fam,type=F.type,L=[],cf=carteFiable();
+  function texteCarte(cap){var c=cartePlan(cap);return {why:c.sous+' plat'+(c.sous>1?'s':'')+' sous leur objectif de marge. Prix relevés au plus de '+cap+' %, sans dépasser le prix le plus haut de leur catégorie ; 3 % de ventes en moins comptés.',
+    how:'Nouveaux prix : '+c.rows.slice(0,3).map(function(r){return r.nom+' '+fr2(r.avant)+' → '+fr2(r.apres)+' €';}).join(' · ')+(c.rows.length>3?' · …':'')};}
   function add(id,val,why,how){if(val&&isFinite(val))L.push({id:id,v:val,why:why,how:how,ctrl:ctrlLib(id)});}
   /* équipe : un tiers de l'écart au repère médian */
   if(num(d.salM)>0&&v.ms>fam.ms[1]){var m=Math.floor((v.ms-fam.ms[1])/100*ca/3/12/50)*50;
     add('sal',-m,'Coût humain à '+pc(v.ms)+' du CA ; repère médian '+F.nom+' : '+pc(fam.ms[1],0)+'. Verdict retient un tiers de l’écart.',txt('p11StaffAction',type)||'Comparer ventes et heures, service par service.');}
   /* charges fixes : un tiers de l'écart, exprimé sur l'ensemble mais à chercher hors loyer */
   if(num(d.af)>0&&v.acf>fam.acf[1]){var sv=(v.acf-fam.acf[1])/100*ca/3,p=Math.floor(sv/d.af*100);
-    add('fix',-p,'Charges fixes à '+pc(v.acf)+' du CA ; repère '+pc(fam.acf[1],0)+'. Un tiers de l’écart : '+eur(sv)+' par an.','Assurances, énergie, abonnements et maintenance, ligne par ligne. Le loyer n’est pas compté.');}
+    add('fix',-p,'Charges fixes à '+pc(v.acf)+' du CA ; repère '+pc(fam.acf[1],0)+'. Un tiers de l’écart, arrondi au pas du curseur : '+eur(d.af*p/100)+' par an.','Assurances, énergie, abonnements et maintenance, ligne par ligne. Le loyer n’est pas compté.');}
   /* commissions */
   if(num(d.com)>0)add('com',-10,'Commissions plateformes : '+eur(d.com)+' par an.','Faire passer une partie des commandes en clic-et-retrait et revoir les prix affichés en livraison.');
   /* emballages */
@@ -145,8 +147,7 @@ function plan(){
   pts=Math.floor(pts*2)/2;if(pts>=.5)add('fc',-pts,why,'Repeser les portions clés, mettre à jour les fiches techniques, renégocier le premier fournisseur.');
   /* carte : prix des plats sous leur objectif, plafonnés */
   var cp=cf?cartePlan(CARTE_CAP):null;
-  if(cp&&cp.dContribAn>0)add('carte',CARTE_CAP,cp.sous+' plat'+(cp.sous>1?'s':'')+' sous leur objectif de marge. Prix relevés au plus de '+CARTE_CAP+' %, sans dépasser le prix le plus haut de leur catégorie ; 3 % de ventes en moins comptés.',
-    'Nouveaux prix : '+cp.rows.slice(0,3).map(function(r){return r.nom+' '+fr2(r.avant)+' → '+fr2(r.apres)+' €';}).join(' · ')+(cp.rows.length>3?' · …':''));
+  if(cp&&cp.dContribAn>0){var tc=texteCarte(CARTE_CAP);add('carte',CARTE_CAP,tc.why,tc.how);}
   /* panier : remplacé par la carte quand elle est fiable */
   var pa=num(d.panierTTC);
   var bornePanier=0;
@@ -171,7 +172,7 @@ function plan(){
       if(w.moteur(overAll(t)).v.rn<=haut+1e-9){st2=t;ret2.push(x);continue;}
       plafonne=true;var dd=def(x.id),pas=dd?dd.step:1,sg=x.v<0?-1:1,best=0;
       for(var kk=Math.floor(Math.abs(x.v)/pas+1e-9)-1;kk>=1;kk--){var val=Math.round(sg*kk*pas*100)/100;t[x.id]=val;if(w.moteur(overAll(t)).v.rn<=haut+1e-9){best=val;break;}}
-      if(best){st2[x.id]=best;var y={};for(var z in x)y[z]=x[z];y.v=best;y.why=x.why+' Réduit pour ne pas dépasser '+pc(haut,0)+' de rentabilité, le niveau des meilleurs établissements de votre format.';ret2.push(y);}
+      if(best){st2[x.id]=best;var y={};for(var z in x)y[z]=x[z];y.v=best;if(x.id==='carte'){var tc2=texteCarte(best);y.why=tc2.why;y.how=tc2.how;}y.why=y.why+' Réduit pour ne pas dépasser '+pc(haut,0)+' de rentabilité, le niveau des meilleurs établissements de votre format.';ret2.push(y);}
       break;}
     if(plafonne){state=st2;retenus=ret2;}
   }
@@ -198,7 +199,7 @@ function installerSimuler(){
       label:'Je relève les prix des plats sous leur objectif, au plus de',
       fmt:function(v){return '+'+Math.round(v)+' % max';},
       dispBase:function(){var cp=cartePlan(CARTE_CAP);return cp.sous+' plat'+(cp.sous>1?'s':'')+' sous l’objectif';},
-      dispAfter:function(R,v){var cp=cartePlan(v);return (cp.dContribAn>=0?'+':'')+eur(cp.dContribAn)+' / an · '+cp.rows.length+' prix';},
+      dispAfter:function(R,v){var cp=cartePlan(v),I=null;try{I=w.decImpact('carte',v);}catch(e){}var g=I&&isFinite(I.delta)?I.delta:cp.dContribAn;return (g>=0?'+':'')+eur(g)+' / an · '+cp.rows.length+' prix';},
       apply:function(over,v){var o=overAll({carte:v});for(var k in o)over[k]=o[k];}});
     try{w.DEC_CONTROLE.carte=['partiel','vous fixez les prix ; la réaction des clients ne se décide pas'];}catch(e){}
   }
@@ -211,7 +212,7 @@ function installerSimuler(){
   w.potentiel=function(){
     var P=plan();if(!P)return null;var b=P.base;
     var lev=P.retenus.map(function(x){var o={};o[x.id]=x.v;var M=w.moteur(overAll(o)),dd=def(x.id);
-      return {n:dd?dd.t:x.id,de:'',vers:dd?dd.fmt(x.v):String(x.v),act:x.how,gain:M.d.res-b.res,pts:M.score-b.score,sc:M.score,over:o,livraison:x.id==='com',id:x.id,why:x.why};})
+      return {n:dd?dd.t:x.id,de:'',vers:dd?dd.fmt(x.v):String(x.v),act:x.how,gain:(isFinite(x.gain)?x.gain:M.d.res-b.res),pts:M.score-b.score,sc:M.score,over:o,livraison:x.id==='com',id:x.id,why:x.why};})
       .filter(function(x){return x.gain>1||x.pts>0;});
     lev.sort(function(a,c){return c.gain-a.gain;});
     return {base:b.score,baseRes:b.res,leviers:lev,max:{score:P.central.score,res:P.central.res},state:P.state,realiste:P};
@@ -393,5 +394,7 @@ w.VerdictGainRealiste={version:'C91',plan:plan,cartePlan:cartePlan,horsBornes:ho
   ouvrirSimuler:function(){var P=plan();if(!P)return;try{w.decDepuisPotentiel();}catch(e){w.DEC_STATE=w.decPotentialState(P);w.go('dec');}},
   ouvrirDetail:function(){var d=document.querySelector('[data-audit-full-report]');if(d)d.open=true;setTimeout(function(){var c=document.getElementById('auGainReel');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});},40);}};
 installerSimuler();installerAudit();
+/* C106 (I-6) : le chapitre « Prix & panier » rejoue +1 € et +2 € hors de toute borne ; on le rattache au gain réaliste pour qu'il n'y ait qu'une référence. */
+if(typeof w.auPrixPremiumHTML==='function'&&!w.auPrixPremiumHTML.__c106){var ap0=w.auPrixPremiumHTML;w.auPrixPremiumHTML=function(R,P){var h=ap0.apply(this,arguments);try{var Pl=plan();if(Pl&&Pl.central)h=h.replace('</h2>','</h2><p class="au-p c106-ref" style="margin:0 0 10px;padding:10px 12px;border-radius:12px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25)"><b>Repère :</b> le gain réaliste de Verdict, borné et rejoué levier par levier, est de <b>'+signe(Pl.central.gain)+' par an</b>. Les montants ci-dessous sont une mécanique pure, sans réaction des clients ni plafond : ils ne s’y ajoutent pas.</p>');}catch(e){}return h;};w.auPrixPremiumHTML.__c106=true;}
 w.addEventListener('load',function(){setTimeout(function(){installerAudit();if(w.VIEW==='audit')patchAudit();/* C103 : l'Audit caché n'est plus préparé au lancement ; drawAudit s'en charge à l'ouverture */},30);},{once:true});
 })(window);

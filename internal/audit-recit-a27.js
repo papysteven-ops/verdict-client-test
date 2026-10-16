@@ -41,7 +41,7 @@
       if (M.status === 'positive') rn = Math.round(Math.max(0, 100 - charges) * 10) / 10; else if (M.status === 'loss') rn = -Math.round(Math.max(0, charges - 100) * 10) / 10;
     }
     var seuil = (P && P.seuil) || {}, mini = num(seuil.eur);
-    var leviers = (G && G.leviers || []).slice(0, 3);
+    var leviers = (G && G.leviers || []).slice(0, 8);
     return {
       R: R, ca: num(d.ca), res: num(d.res), rn: rn, score: Math.round(num(R.score)), postes: postes,
       mini: mini, securite: isFinite(Number(seuil.securiteEur)) ? Number(seuil.securiteEur) : num(d.ca) - mini,
