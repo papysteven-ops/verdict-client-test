@@ -24,10 +24,11 @@
      saisies) : la position du mois — avance gardée en réserve, retard compris dans l'objectif du jour, ou dans les temps. */
   function position(c) {
     if (!c || !c.exact) return '';
+    var rp = c.input ? report(c.input) : null, rl = rp && rp.retard > 0 ? '<small class="vx39-rep">Dont <b>' + eur(rp.retard) + '</b> de retard de ' + rp.mois + ' reportés sur ce mois.</small>' : (rp && rp.avance > 0 ? '<small class="vx39-rep">' + rp.mois.charAt(0).toUpperCase() + rp.mois.slice(1) + ' a fini avec ' + eur(rp.avance) + ' d’avance, gardée en réserve.</small>' : '');
     var base = Number(c.base) || 0, retard = Number(c.deficit) || 0, avance = Number(c.advance) || 0;
-    if (retard > 0) return '<span class="vx39-pos retard">Retard du mois : <b>' + eur(retard) + '</b></span><small>Il est compris dans l’objectif du jour : base ' + eur(base) + ' + retard ' + eur(retard) + '.</small>';
-    if (avance > 0) return '<span class="vx39-pos avance">Avance du mois : <b>+' + eur(avance) + '</b></span><small>Gardée en réserve pour un jour plus faible : l’objectif du jour reste la base.</small>';
-    return '<span class="vx39-pos">Mois dans les temps</span><small>Ni avance ni retard : l’objectif du jour est la base.</small>';
+    if (retard > 0) return '<span class="vx39-pos retard">Retard du mois : <b>' + eur(retard) + '</b></span><small>Il est compris dans l’objectif du jour : base ' + eur(base) + ' + retard ' + eur(retard) + '.</small>' + rl;
+    if (avance > 0) return '<span class="vx39-pos avance">Avance du mois : <b>+' + eur(avance) + '</b></span><small>Gardée en réserve pour un jour plus faible : l’objectif du jour reste la base.</small>' + rl;
+    return '<span class="vx39-pos">Mois dans les temps</span><small>Ni avance ni retard : l’objectif du jour est la base.</small>' + rl;
   }
   /* C126 — Détail d'un jour passé : le retard (ou l'avance) du mois avant ce jour, ce qu'il y avait à réaliser ce
      jour-là (base + retard), et la position du mois après ce jour. Le calendrier juge chaque jour contre sa base ; ces
@@ -43,6 +44,12 @@
     return '<div class="vx39-l" data-vx39l="' + date + '">' + pos(avant, 'avant ce jour').replace(/^/, '') + '</div>' +
       '<div class="vx39-l"><dt>À réaliser ce jour-là<small>base ' + eur(base) + (avant > 0.5 ? ' + retard ' + eur(avant) : '') + '</small></dt><dd><b>' + eur(aFaire) + '</b></dd></div>' +
       '<div class="vx39-l">' + pos(apres, 'après ce jour') + '</div>';
+  }
+  /* C128 — Report du mois précédent (retard injecté dans ce mois, ou avance gardée visible). */
+  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  function report(input) {
+    try { var k = input.days[0].date.slice(0, 7), p = w.DB && w.DB.performancePlans && w.DB.performancePlans[k], r = p && p.report; if (!r || !r.connu) return null;
+      return { retard: Number(r.montant) || 0, avance: Number(r.avance) || 0, mois: MOIS[Number(String(r.mois).slice(5, 7)) - 1] || r.mois }; } catch (e) { return null; }
   }
   var ouverts = {}; /* l'ouverture survit aux redessins du module */
   function bloc(input, date, aujourdHui) {
@@ -60,7 +67,7 @@
       ? 'Les jours précédents du mois sont en retard de <b>' + eur(retard) + '</b> sur leurs bases : ' + (aujourdHui ? 'ce retard se rattrape en entier aujourd’hui' : 'ce retard était à rattraper en entier ce jour-là') + '.'
       : (avance > 0 ? 'Les jours précédents ont <b>' + eur(avance) + '</b> d’avance : elle reste en réserve pour un jour plus faible, la base ' + (aujourdHui ? 'reste à faire.' : 'restait à faire.') : 'Aucun retard avant ce jour : la base suffit.');
     return '<details class="vx39" data-vx39="' + date + '"' + (ouverts[date] ? ' open' : '') + '><summary class="vx39-t"><span>Pourquoi ' + (aujourdHui ? 'ce montant aujourd’hui' : 'ce montant le ' + libJour(date)) + '\u00a0?</span><i aria-hidden="true">›</i></summary><div class="vx39-c"><ol>' +
-      '<li><b>Votre structure ce mois-ci</b> : <b>' + eur(input.minimum) + '</b> de chiffre d’affaires pour couvrir vos charges, salaires et loyer, sur <b>' + input.days.length + ' jours ouverts</b> (jours de repos exclus).</li>' +
+      '<li><b>Votre structure ce mois-ci</b> : <b>' + eur(input.minimum) + '</b> de chiffre d’affaires pour couvrir vos charges, salaires et loyer, sur <b>' + input.days.length + ' jours ouverts</b> (jours de repos exclus)' + (function () { var rp = report(input); return rp && rp.retard > 0 ? ', dont <b>' + eur(rp.retard) + '</b> de retard de ' + rp.mois + ' reportés sur ce mois' : (rp && rp.avance > 0 ? ' ; ' + rp.mois + ' a fini avec <b>' + eur(rp.avance) + '</b> d’avance, gardée en réserve : le minimum de ce mois ne baisse pas' : ''); })() + '.</li>' +
       '<li><b>La part de ce jour</b> : ' + part + '</li>' +
       '<li><b>Le retard</b> : ' + ret + '</li></ol>' +
       '<p class="vx39-f">' + (retard > 0 ? 'Base ' + eur(base) + ' + retard ' + eur(retard) + ' = <b>' + eur(total) + '</b> ' + (aujourdHui ? 'à réaliser aujourd’hui' : 'à réaliser ce jour-là') : (aujourdHui ? 'À réaliser aujourd’hui' : 'À réaliser ce jour-là') + ' : <b>' + eur(total) + '</b>, la base du jour') + '</p></div></details>';
@@ -119,5 +126,5 @@
   setInterval(tour, 1500);
   doc.addEventListener('DOMContentLoaded', tour);
   w.addEventListener('load', function () { setTimeout(tour, 300); });
-  w.VerdictObjectifExplique = { bloc: bloc, position: position, lignesJour: lignesJour, tour: tour };
+  w.VerdictObjectifExplique = { report: report, bloc: bloc, position: position, lignesJour: lignesJour, tour: tour };
 })();

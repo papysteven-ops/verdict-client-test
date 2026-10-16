@@ -4,7 +4,7 @@
   if(global.__VERDICT_PERFORMANCES_INTEGRATED_V1__)return;
   global.__VERDICT_PERFORMANCES_INTEGRATED_V1__=true;
 
-  var RULES="verdict-performances/1.7.0",TRAJECTORY_RULES="verdict-trajectory/2.3.0",SEASON_RULES="verdict-season/1.1.0",ANNUAL_RULES="verdict-annual-closure/1.0.0",ACCOUNTING_RULES="verdict-accounting-anchor/1.0.0",MOTION_RULES="verdict-motion/1.1.0",DEMO_SCENARIO="verdict-demo-trajectory/1.1.0";
+  var RULES="verdict-performances/1.8.0",TRAJECTORY_RULES="verdict-trajectory/2.3.0",SEASON_RULES="verdict-season/1.1.0",ANNUAL_RULES="verdict-annual-closure/1.0.0",ACCOUNTING_RULES="verdict-accounting-anchor/1.0.0",MOTION_RULES="verdict-motion/1.1.0",DEMO_SCENARIO="verdict-demo-trajectory/1.1.0";
   var activeTab="days",selectedDay="",selectedMonth="",chartMode="daily",storyTimers=[],motionTimer=null,motionSession={};
 
   function data(){return global.DB||{};}
@@ -131,6 +131,16 @@
     return Object.keys(seen).sort();
   }
   function planFingerprint(dates){return hash(dates.join("|")+"|"+businessTimezone()+"|"+businessEndHour());}
+  /* C128 — Report de mois en mois (Steven, 17/10) : le retard de fin de mois est injecté dans le mois suivant (son minimum
+     augmente, chaque jour reçoit une nouvelle base) ; une avance est gardée visible mais ne baisse pas le mois suivant. */
+  function reportMoisPrecedent(key){
+    try{var y=Number(key.slice(0,4)),m=Number(key.slice(5,7))-1;if(m<1){m=12;y--;}var pk=y+'-'+(m<10?'0':'')+m,d=data(),p=d.performancePlans&&d.performancePlans[pk];
+      if(!p||!hasNumber(p.minimum))return {mois:pk,montant:0,avance:0,connu:false};
+      var recs=monthRecords(pk),ca=0;Object.keys(recs).forEach(function(k){var r=recs[k];if(r&&!r.invalid&&hasNumber(r.ca))ca+=Number(r.ca);});
+      var ecart=Math.round((Number(p.minimum)-ca)*100)/100;return {mois:pk,montant:Math.max(0,ecart),avance:Math.max(0,-ecart),minimumPrecedent:Number(p.minimum),encaisse:Math.round(ca*100)/100,connu:true};
+    }catch(_){return {montant:0,avance:0,connu:false};}
+  }
+  function minimumMois(R,key){return monthlyMinimum(R)+reportMoisPrecedent(key).montant;}
   function monthlyMinimum(R){
     try{var objective=global.progObjJour(R);if(objective&&hasNumber(objective.mois))return Number(objective.mois);}catch(_){ }
     try{var state=global.piloteMoisEtat(R);if(state&&state.economique)return Number(state.economique.seuilMois)||0;}catch(_){ }
@@ -172,7 +182,7 @@
     seed=seed||{};var d=data();if(!d.businessTimezone)d.businessTimezone=businessTimezone();
     var annualPlan=seed.annualPlan||seasonPlanFor(R,key.slice(0,4),true),records=monthRecords(key),dates=withRecordedOpenings(seed.openDates||openDates(key),records,key),start=validDateKey(seed.trackingStart)?seed.trackingStart:trackingStartKey();
     if(start&&key===start.slice(0,7))dates=dates.filter(function(date){return date>=start||records[date]&&records[date].ca!=null;});
-    var minimum=hasNumber(seed.minimum)?Number(seed.minimum):monthlyMinimum(R),means=seed.weekdayMeans||weekdayHistory(key+'-01'),F=global.VerdictFinance,targets={},locked={},lockedTotal=F.fraction(0),remaining=[],budget=global.VerdictBudgetUI&&global.VerdictBudgetUI.getBudget(key+'-01'),budgetRevision=budget&&budget.revisions[budget.revisions.length-1].id,budgetMonth=null;
+    var minimum=hasNumber(seed.minimum)?Number(seed.minimum):(typeof minimumMois==='function'?minimumMois(R,key):monthlyMinimum(R)),means=seed.weekdayMeans||weekdayHistory(key+'-01'),F=global.VerdictFinance,targets={},locked={},lockedTotal=F.fraction(0),remaining=[],budget=global.VerdictBudgetUI&&global.VerdictBudgetUI.getBudget(key+'-01'),budgetRevision=budget&&budget.revisions[budget.revisions.length-1].id,budgetMonth=null;
     if(budget){
       dates.forEach(function(date){var value=global.VerdictOperatingLedger.budgetAt(budget,date);targets[date]=value.target;});
       budgetMonth=global.VerdictOperatingLedger.periodBudget(budget,key+'-01',key+'-'+pad(daysCount(key)));
@@ -182,7 +192,7 @@
       /* C120 : le minimum du mois est réparti selon le poids réel de chaque jour de semaine (10 dernières semaines) ; parts égales tant qu'au moins 3 jours de semaine ne sont pas connus. Le total du mois ne change pas. */var connus=(means||[]).filter(function(m){return m!=null&&m>0;}),moyenne=connus.length?connus.reduce(function(a,b){return a+b;},0)/connus.length:0;var poids=remaining.map(function(date){if(connus.length<3)return 1;var m=means[weekday(date)];return Math.max(1,Math.round((m!=null&&m>0?m:moyenne)*100)/100);});var shares=F.allocate(residual,poids);remaining.forEach(function(date,i){targets[date]=shares[i];});
     }
     var assigned=F.sum(Object.keys(targets).filter(function(date){return targets[date]!=null;}).map(function(date){return targets[date];})),gap=F.fraction(minimum).sub(assigned);
-    return {schema:'verdict-performance-plan/v3',rulesVersion:RULES,month:key,minimum:minimum,minimumSource:'complete-economic-costs',targetBasis:budget?'declared-sales-budget':'economic-minimum',budgetRevision:budgetRevision||null,budgetMonth:budgetMonth,annualPlanRevision:annualPlan&&annualPlan.revision||null,accountingAnchorId:annualPlan&&annualPlan.accountingAnchorId||null,openDates:dates,targets:targets,lockedTargets:locked,unallocatedMinimum:budget?null:gap.cmp(0)>0?F.money(gap):0,overallocatedMinimum:budget?null:gap.cmp(0)<0?F.money(gap.mul(-1)):0,trackingStart:start,weekdayMeans:means,calendarFingerprint:planFingerprint(dates),businessDayEndHour:businessEndHour(),timeZone:businessTimezone(),createdAt:new Date().toISOString(),revision:revision||1};
+    return {schema:'verdict-performance-plan/v3',rulesVersion:RULES,month:key,minimum:minimum,report:typeof reportMoisPrecedent==='function'?reportMoisPrecedent(key):null,minimumSource:'complete-economic-costs',targetBasis:budget?'declared-sales-budget':'economic-minimum',budgetRevision:budgetRevision||null,budgetMonth:budgetMonth,annualPlanRevision:annualPlan&&annualPlan.revision||null,accountingAnchorId:annualPlan&&annualPlan.accountingAnchorId||null,openDates:dates,targets:targets,lockedTargets:locked,unallocatedMinimum:budget?null:gap.cmp(0)>0?F.money(gap):0,overallocatedMinimum:budget?null:gap.cmp(0)<0?F.money(gap.mul(-1)):0,trackingStart:start,weekdayMeans:means,calendarFingerprint:planFingerprint(dates),businessDayEndHour:businessEndHour(),timeZone:businessTimezone(),createdAt:new Date().toISOString(),revision:revision||1};
   }
   function planFor(R,key,create){
     var d=data();d.performancePlans=d.performancePlans||{};var plan=d.performancePlans[key]||null;
@@ -190,7 +200,7 @@
       var dates=withRecordedOpenings(openDates(key),monthRecords(key),key),start=plan.trackingStart;
       if(start&&start.slice(0,7)===key)dates=dates.filter(function(date){return date>=start||monthRecords(key)[date];});
       Object.keys(plan.targets||{}).forEach(function(date){if(date<todayKey()&&dates.indexOf(date)<0)dates.push(date);});dates.sort();
-      var minimum=monthlyMinimum(R);
+      var minimum=typeof minimumMois==='function'?minimumMois(R,key):monthlyMinimum(R);
       var declaredBudget=global.VerdictBudgetUI&&global.VerdictBudgetUI.getBudget(key+'-01'),declaredRevision=declaredBudget&&declaredBudget.revisions[declaredBudget.revisions.length-1].id;
       if((plan.budgetRevision||null)!==(declaredRevision||null)||plan.rulesVersion!==RULES||plan.calendarFingerprint!==planFingerprint(dates)||Math.abs(plan.minimum-minimum)>.01){
         var locks={},records=monthRecords(key);Object.keys(plan.targets||{}).forEach(function(date){if(date<todayKey()||records[date]&&records[date].ca!=null){locks[date]=plan.targets[date];if(dates.indexOf(date)<0)dates.push(date);}});
