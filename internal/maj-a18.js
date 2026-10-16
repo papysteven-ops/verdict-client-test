@@ -58,7 +58,7 @@
     if (notifEtat() !== 'active') return;
     versionPubliee().then(function (v) {
       v = v || 'nouvelle'; if (lire(NOTIF_FAITE) === v) return; ecrire(NOTIF_FAITE, v);
-      var titre = 'Nouvelle version de Verdict', opts = { body: 'Touchez pour mettre à jour. Vos saisies sont enregistrées avant.', tag: 'verdict-maj', renotify: true, icon: new URL('icon-192.png', (doc.querySelector('link[rel=manifest]') || {}).href || location.href).href };
+      var titre = 'Nouvelle version disponible', opts /* C117 : iOS ajoute lui-même « from Verdict » */ = { body: 'Touchez pour mettre à jour. Vos saisies sont enregistrées avant.', tag: 'verdict-maj', renotify: true, icon: new URL('icon-192.png', (doc.querySelector('link[rel=manifest]') || {}).href || location.href).href };
       var viaWorker = 'serviceWorker' in navigator ? navigator.serviceWorker.getRegistration().then(function (r) { if (!r) throw 0; return r.showNotification(titre, opts); }) : Promise.reject();
       return viaWorker.catch(function () { var n = new Notification(titre, opts); n.onclick = function () { try { w.focus(); } catch (e) {} n.close(); apply(); }; });
     }).catch(function () {});
