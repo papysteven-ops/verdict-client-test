@@ -20,6 +20,15 @@
     try { (w.DB && w.DB.histJour || []).forEach(function (r) { var d = new Date(String(r.date) + 'T00:00:00'), v = Number(r.caJ); if (d < fin && d >= debut && isFinite(v) && v >= 0) s[jourSem(String(r.date))].push(v); }); } catch (e) {}
     return s.map(function (a) { return a.length >= 2 ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : null; });
   }
+  /* C125 — Sous « À réaliser aujourd'hui » (l'objectif du jour) et avant « Reste à faire » (qui baisse au fil des
+     saisies) : la position du mois — avance gardée en réserve, retard compris dans l'objectif du jour, ou dans les temps. */
+  function position(c) {
+    if (!c || !c.exact) return '';
+    var base = Number(c.base) || 0, retard = Number(c.deficit) || 0, avance = Number(c.advance) || 0;
+    if (retard > 0) return '<span class="vx39-pos retard">Retard du mois : <b>' + eur(retard) + '</b></span><small>Il est compris dans l’objectif du jour : base ' + eur(base) + ' + retard ' + eur(retard) + '.</small>';
+    if (avance > 0) return '<span class="vx39-pos avance">Avance du mois : <b>+' + eur(avance) + '</b></span><small>Gardée en réserve pour un jour plus faible : l’objectif du jour reste la base.</small>';
+    return '<span class="vx39-pos">Mois dans les temps</span><small>Ni avance ni retard : l’objectif du jour est la base.</small>';
+  }
   var ouverts = {}; /* l'ouverture survit aux redessins du module */
   function bloc(input, date, aujourdHui) {
     if (!input || !Array.isArray(input.days) || !w.VerdictCHR) return '';
@@ -41,7 +50,8 @@
       '<li><b>Le retard</b> : ' + ret + '</li></ol>' +
       '<p class="vx39-f">' + (retard > 0 ? 'Base ' + eur(base) + ' + retard ' + eur(retard) + ' = <b>' + eur(total) + '</b> ' + (aujourdHui ? 'à réaliser aujourd’hui' : 'à réaliser ce jour-là') : (aujourdHui ? 'À réaliser aujourd’hui' : 'À réaliser ce jour-là') + ' : <b>' + eur(total) + '</b>, la base du jour') + '</p></div></details>';
   }
-  var CSS = '.vx39>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;min-height:44px}.vx39>summary::-webkit-details-marker{display:none}' +
+  var CSS = 'p.vx39-p{display:flex;flex-direction:column;gap:3px;margin:6px 0 10px}p.vx39-p small{font-size:13px;opacity:.85}.vx39-pos{font-weight:700}.vx39-pos.avance b{color:#16a34a}.vx39-pos.retard b{color:#ea580c}html.vd-workspace-dark .vx39-pos.avance b{color:#4ade80}html.vd-workspace-dark .vx39-pos.retard b{color:#fb923c}' +
+    '.vx39>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;min-height:44px}.vx39>summary::-webkit-details-marker{display:none}' +
     '.vx39>summary i{font-style:normal;font-size:22px;line-height:1;opacity:.6;transition:transform .25s}.vx39[open]>summary i{transform:rotate(90deg)}.vx39:not([open]){padding-top:4px!important;padding-bottom:4px!important}.vx39-c{padding-top:4px}' +
     '.vx39{margin:16px 0 0;padding:14px 16px;border-radius:16px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.22);color:inherit;font-size:14.5px;line-height:1.5}' +
     '.vx39-t{margin:0!important;font-weight:800;font-size:15px}.vx39 ol{margin:0;padding-left:20px;display:grid;gap:7px}.vx39 li{padding-left:2px}' +
@@ -56,6 +66,9 @@
     var input = cw.VD.chr && cw.VD.chr.input; if (!input) return;
     /* Saisie du jour : le prochain jour ouvert à faire. */
     var saisie = d.getElementById('modSaisie'), next = cw.VD.chr.next;
+    if (saisie) { var lp = [].filter.call(saisie.querySelectorAll('.day-total p'), function (p) { return /^À réaliser aujourd/.test((p.textContent || '').trim()); })[0];
+      var deja = lp && lp.nextElementSibling && lp.nextElementSibling.classList.contains('vx39-p');
+      if (lp && !deja) { var hp = position(cw.VD.chr); if (hp) lp.insertAdjacentHTML('afterend', '<p class="vx39-p">' + hp + '</p>'); } }
     if (saisie && next) {
       var ex = saisie.querySelector('.vx39');
       if (!ex || ex.getAttribute('data-vx39') !== next) { if (ex) ex.remove(); var h = bloc(input, next, true); if (h) saisie.insertAdjacentHTML('beforeend', h); }
@@ -85,5 +98,5 @@
   setInterval(tour, 1500);
   doc.addEventListener('DOMContentLoaded', tour);
   w.addEventListener('load', function () { setTimeout(tour, 300); });
-  w.VerdictObjectifExplique = { bloc: bloc, tour: tour };
+  w.VerdictObjectifExplique = { bloc: bloc, position: position, tour: tour };
 })();
