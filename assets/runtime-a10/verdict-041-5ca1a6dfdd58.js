@@ -4,7 +4,7 @@
   if(global.__VERDICT_PERFORMANCES_INTEGRATED_V1__)return;
   global.__VERDICT_PERFORMANCES_INTEGRATED_V1__=true;
 
-  var RULES="verdict-performances/1.8.0",TRAJECTORY_RULES="verdict-trajectory/2.3.0",SEASON_RULES="verdict-season/1.1.0",ANNUAL_RULES="verdict-annual-closure/1.0.0",ACCOUNTING_RULES="verdict-accounting-anchor/1.0.0",MOTION_RULES="verdict-motion/1.1.0",DEMO_SCENARIO="verdict-demo-trajectory/1.1.0";
+  var RULES="verdict-performances/1.9.0",TRAJECTORY_RULES="verdict-trajectory/2.3.0",SEASON_RULES="verdict-season/1.1.0",ANNUAL_RULES="verdict-annual-closure/1.0.0",ACCOUNTING_RULES="verdict-accounting-anchor/1.0.0",MOTION_RULES="verdict-motion/1.1.0",DEMO_SCENARIO="verdict-demo-trajectory/1.1.0";
   var activeTab="days",selectedDay="",selectedMonth="",chartMode="daily",storyTimers=[],motionTimer=null,motionSession={};
 
   function data(){return global.DB||{};}
@@ -140,7 +140,11 @@
       var ecart=Math.round((Number(p.minimum)-ca)*100)/100;return {mois:pk,montant:Math.max(0,ecart),avance:Math.max(0,-ecart),minimumPrecedent:Number(p.minimum),encaisse:Math.round(ca*100)/100,connu:true};
     }catch(_){return {montant:0,avance:0,connu:false};}
   }
-  function minimumMois(R,key){return monthlyMinimum(R)+reportMoisPrecedent(key).montant;}
+  /* C129 — Cohérence jour/mois/année : le minimum du mois est sa part du plan annuel (saisonnalité, capacité
+     d'ouverture), la même que dans « Mon année » ; la somme des bases journalières retombe ainsi sur la part du mois
+     et les 12 mois sur le minimum annuel. Repli sur le calcul mensuel si le plan annuel n'existe pas. */
+  function partMoisAnnee(R,key){try{var ap=seasonPlanFor(R,key.slice(0,4),true),v=ap&&ap.monthlyTargets&&ap.monthlyTargets[key];if(hasNumber(v)&&Number(v)>0)return Number(v);}catch(_){}return monthlyMinimum(R);}
+  function minimumMois(R,key){return partMoisAnnee(R,key)+reportMoisPrecedent(key).montant;}
   function monthlyMinimum(R){
     try{var objective=global.progObjJour(R);if(objective&&hasNumber(objective.mois))return Number(objective.mois);}catch(_){ }
     try{var state=global.piloteMoisEtat(R);if(state&&state.economique)return Number(state.economique.seuilMois)||0;}catch(_){ }

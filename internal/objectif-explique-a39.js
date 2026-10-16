@@ -126,5 +126,23 @@
   setInterval(tour, 1500);
   doc.addEventListener('DOMContentLoaded', tour);
   w.addEventListener('load', function () { setTimeout(tour, 300); });
+  /* C129 — Un seul minimum du mois partout : quand le plan du mois existe (part saisonnière du plan annuel + report),
+     l'objectif mensuel lu par les autres écrans (progObjJour) prend ce même montant ; l'objectif de résultat choisi
+     garde son supplément. Sans plan du mois ou sans plan annuel, le calcul d'origine reste. */
+  (function () {
+    var orig = w.progObjJour; if (typeof orig !== 'function' || orig.__c129) return;
+    var f = function (R) {
+      var o = orig.apply(this, arguments);
+      try {
+        var key = w.verdictOperationalClock().key.slice(0, 7), p = w.DB && w.DB.performancePlans && w.DB.performancePlans[key], ap = w.DB && w.DB.performanceYearPlans && w.DB.performanceYearPlans[key.slice(0, 4)];
+        if (!o || !p || !(Number(p.minimum) > 0) || !/1\.9\.0$/.test(String(p.rulesVersion || '')) || !(ap && Number(ap.monthlyTargets && ap.monthlyTargets[key]) > 0)) return o;
+        var r = Object.assign({}, o), delta = Number(p.minimum) - Number(o.mois || 0), n = Number(o.jOuv) || (p.openDates && p.openDates.length) || 0;
+        r.mois = Math.round(Number(p.minimum) * 100) / 100; if (n > 0) r.obj = Math.round(r.mois / n * 100) / 100;
+        if (o.objectifMois != null) { r.objectifMois = Math.round((Number(o.objectifMois) + delta) * 100) / 100; if (n > 0) r.objectif = Math.round(r.objectifMois / n * 100) / 100; }
+        r.source = 'plan-du-mois'; return r;
+      } catch (e) { return o; }
+    };
+    f.__c129 = true; w.progObjJour = f;
+  })();
   w.VerdictObjectifExplique = { report: report, bloc: bloc, position: position, lignesJour: lignesJour, tour: tour };
 })();
