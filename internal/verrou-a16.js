@@ -431,7 +431,9 @@
     css(); cover(true);
     idb('get').then(function (raw) {
       var saved = null; try { saved = raw ? JSON.parse(raw) : null; } catch (e) {}
-      if (saved && (saved.hash || saved.bio)) C = saved; else if (C && (C.hash || C.bio)) idb('put', JSON.stringify(C));
+      /* C113 — La mémoire durable vaut aussi pour les réglages seuls (délai, « Touch ID déjà proposé ») : dans le
+         coffre (Perso, Pilote), le stockage local est vidé à chaque ouverture, IndexedDB est la seule référence. */
+      if (saved && (saved.hash || saved.bio || saved.bioPropose || saved.delai != null)) C = saved; else if (C && (C.hash || C.bio)) idb('put', JSON.stringify(C));
       /* Face ID activé sans code (version du 15/10 à 20 h) : le code de base est créé à la prochaine ouverture. */
       cover(false);
       if (COFFRE) {
