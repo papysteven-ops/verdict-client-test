@@ -1315,7 +1315,8 @@ if(STAFF_PROFILE_INCOMPLETE){
 setTimeout(function(){ var w=document.getElementById("welcome");
   if(w&&w.classList.contains("on")&&DB.profile&&DB.profile.done) w.classList.remove("on"); },45000);
 if(!SAVE) toast("Aper\u00e7u : ouvrez la page dans Safari pour garder vos chiffres");
-if(navigator.serviceWorker&&!DEMO&&!(window.parent!==window&&new URLSearchParams(location.search+(self.__vdq||"")).get('embed')==='1')){ window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
+/* C118 : dans un cadre (coquille ou appli Inventaire seule), la page hôte installe le service worker ; seule, l'Inventaire utilise celui de l'appli (../../sw.js), il n'en existe pas dans modules/inventaire/. */
+if(navigator.serviceWorker&&!DEMO&&window.parent===window){ window.addEventListener("load",function(){ navigator.serviceWorker.register("../../sw.js").catch(function(){}); }); }
 
 /* ═══════════════════════════════════════════════════════════════════
    ENVOI VERS VERDICT® (V4.78) — on ne transmet QUE le résultat.
