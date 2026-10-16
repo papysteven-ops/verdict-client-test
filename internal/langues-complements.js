@@ -747,8 +747,10 @@
   function index(l) {
     if (IDX[l]) return IDX[l];
     var p = ORDER.indexOf(l), map = {}, tpl = [];
+    var EMO = /^(?:\s|\uFE0F|\u200D|[\u2600-\u27BF]|[\uD83C-\uDBFF][\uDC00-\uDFFF])+/; /* C109 : les titres perdent leur emoji de tête ; la clé nue traduit aussi */
     Object.keys(D).forEach(function (k) {
       var v = D[k][p], src = norm(k).trim(); if (!v) return;
+      var nu = src.replace(EMO, ''); if (nu !== src && nu && map[nu] === undefined) { var vn = String(v).replace(EMO, ''); if (nu.indexOf('{') < 0) map[nu] = vn; else { var nn = [], rr = '', ll = 0, mm, tk = /\{([A-Za-z0-9_]+)\}/g; while ((mm = tk.exec(nu))) { rr += nu.slice(ll, mm.index).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(.+?)'; nn.push(mm[1]); ll = mm.index + mm[0].length; } rr += nu.slice(ll).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); tpl.push({ re: new RegExp('^' + rr + '$'), names: nn, val: vn, len: nu.length }); } }
       if (src.indexOf('{') < 0) { map[src] = v; return; }
       var names = [], rx = '', last = 0, m, tok = /\{([A-Za-z0-9_]+)\}/g;
       while ((m = tok.exec(src))) { rx += src.slice(last, m.index).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(.+?)'; names.push(m[1]); last = m.index + m[0].length; }
