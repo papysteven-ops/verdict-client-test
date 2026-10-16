@@ -194,7 +194,10 @@ function candidates(cat,o){
      suivant change de climat (« maintenant » et « quand il fera froid / chaud »). */
   var nouveaux=[];try{if(root.VerdictSaison)nouveaux=root.VerdictSaison.composer({db:d,cat:cat,rang:courseRank(cat),mois:m,tva:num(d&&d.reg&&d.reg.tvac)});}catch(e){nouveaux=[];}
   if(!nouveaux.length){var n0=newCreation(cat,m,o.price);if(n0)nouveaux=[n0];}
-  nouveaux.forEach(function(n){prixSaison(n,cat,o.price);var pr=o.price||n.ttc;list.push({p:n,origin:'new',qty:null,years:[],price:pr,margin:marginAt(n,pr),shared:sharedShare(n),fit:seasonFit(n,m),k:calc(n)});});
+  nouveaux.forEach(function(n){prixSaison(n,cat,o.price);var pr=o.price||n.ttc,mg=marginAt(n,pr);
+    /* une nouveauté dont le coût matière dépasse l'objectif de loin n'est pas proposée : Vera ne vend pas de rêve */
+    if(mg&&mg.pct!=null&&mg.pct<Math.max(35,objective(n)-25))return;
+    list.push({p:n,origin:'new',qty:null,years:[],price:pr,margin:mg,shared:sharedShare(n),fit:seasonFit(n,m),k:calc(n)});});
   var qs=list.map(function(x){return x.qty||0;}),qMax=Math.max.apply(null,qs.concat([1])),cs=list.map(function(x){return x.margin?x.margin.contrib:0;}),cMax=Math.max.apply(null,cs.concat([.01]));
   var co=corridor(cat);
   list.forEach(function(x){

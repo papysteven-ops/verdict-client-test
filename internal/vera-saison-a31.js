@@ -69,7 +69,12 @@
     'chocolat': /chocolat|cacao/, 'sucre': /sucre/, 'farine': /farine/, 'vanille': /vanille/, 'café': /\bcafe\b/, 'caramel': /caramel|sucre/, 'glace vanille': /glace|sorbet|creme glacee/, 'sorbet': /sorbet|glace/, 'pâte feuilletée': /pate feuilletee|pate brisee|pate sablee|fond de tarte/, 'biscuit': /biscuit|speculoos|sable|cuillere/, 'amande': /amande|poudre d.amande|pralin/, 'pistache': /pistache/,
     'vin blanc': /vin blanc|vin de pays|\bvin\b|bib/, 'vin rouge': /vin rouge|vin de pays|\bvin\b|bib/, 'bière': /biere/, 'cidre': /cidre/, 'fond de veau': /fond de veau|fond brun|jus de veau/, 'bouillon': /bouillon|fond de volaille|fumet/, 'moutarde': /moutarde/, 'mayonnaise': /mayonnaise|aioli/, 'vinaigrette': /vinaigrette|huile d.olive|vinaigre/, 'huile d’olive': /huile d.olive/, 'soja': /soja|sauce soja|teriyaki/, 'sésame': /sesame/, 'gingembre': /gingembre/, 'lait de coco': /lait de coco|coco/, 'curry': /curry|cari|massaman/, 'épices': /epice|paprika|cumin|ras el|piment|curry/, 'olives': /olive(?! vierge)|tapenade/, 'câpres': /capre|cornichon/, 'oignons frits': /oignon frit|oignon/, 'cornichon': /cornichon|pickle/, 'cheddar': /cheddar|fromage a burger|tranche de fromage|emmental/, 'bacon': /bacon|poitrine fum|lardon/, 'sauce burger': /sauce burger|ketchup|mayonnaise|barbecue/, 'frites': /frite|pomme de terre/, 'sauce blanche': /sauce blanche|yaourt|fromage blanc/, 'pita': /pita|galette|pain/, 'kebab': /kebab|broche|dinde|veau/, 'falafel': /falafel|pois chiche/, 'tofu': /tofu|soja/, 'nori': /nori|algue/, 'wasabi': /wasabi|gingembre/, 'edamame': /edamame|feve|petit pois/, 'crème fraîche': /creme/, 'sarrasin': /sarrasin|ble noir|galette/, 'caramel beurre salé': /caramel|beurre sale|sucre/, 'andouille': /andouille|saucisse/, 'brie': /brie|camembert|coulommiers/, 'tomme': /tomme|cantal|salers|saint.?nectaire|comte/
   };
+  /* C105 : les données de la recherche web (158 plats de plus, calendrier, alias « fromage de chèvre » → « chèvre ») */
+  function web() { return root.VERDICT_SAISON_WEB || null; }
+  function tousGabarits() { var w = web(); return w && w.gabarits ? G.concat(w.gabarits) : G; }
+  function saisonDe(m) { var w = web(), k = String(m).padStart(2, '0'); return (w && w.saison && w.saison[k]) || SAISON[m] || SAISON[10]; }
   function trouver(generic, ing) {
+    var w = web(); if (w && w.alias && w.alias[generic] && !SYN[generic]) generic = w.alias[generic];
     var g = norm(generic), rx = SYN[generic] || SYN[g], out = null, mot = new RegExp('(^|[^a-z])' + g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^a-z])');
     /* 1. le même nom · 2. la correspondance métier (« chèvre » → « Bûche de chèvre ») · 3. le mot entier, à défaut */
     for (var i = 0; i < ing.length; i++) { if (norm(ing[i].nom) === g) return ing[i]; }
@@ -191,8 +196,9 @@
     var ing = (d.ing || []).filter(function (g) { return g && g.nom && !EXCLU.test(g.nom); });
     var fam = o.famille || famille(d.etabType), rang = o.rang, m = o.mois || (new Date().getMonth() + 1), m2 = (m % 12) + 1;
     var c1 = climat(m), c2 = climat(m2), rangs = rangsDeCategorie(rang);
-    var gabs = G.filter(function (g) { return g.f.indexOf(fam) >= 0 && g.c.some(function (r) { return rangs.indexOf(r) >= 0; }) && !dejaALaCarte(g, d); });
-    if (!gabs.length && fam !== 'brasserie') gabs = G.filter(function (g) { return g.f.indexOf('brasserie') >= 0 && g.c.some(function (r) { return rangs.indexOf(r) >= 0; }) && !dejaALaCarte(g, d); });
+    var TG = tousGabarits();
+    var gabs = TG.filter(function (g) { return g.f.indexOf(fam) >= 0 && g.c.some(function (r) { return rangs.indexOf(r) >= 0; }) && !dejaALaCarte(g, d); });
+    if (!gabs.length && fam !== 'brasserie') gabs = TG.filter(function (g) { return g.f.indexOf('brasserie') >= 0 && g.c.some(function (r) { return rangs.indexOf(r) >= 0; }) && !dejaALaCarte(g, d); });
     function evaluer(g, climatCible) {
       var rec = [], avec = [], manque = [], poids = 0, couv = 0;
       g.comp.forEach(function (c) {
@@ -205,7 +211,8 @@
       return { g: g, rec: rec, avec: avec, manque: manque, couverture: couverture, saison: saison, score: saison * 1.2 + couverture + (manque.length === 0 ? .3 : 0) - manque.length * .08 };
     }
     function meilleur(climatCible, exclure) {
-      var l = gabs.filter(function (g) { return g.s.indexOf(climatCible) >= 0 && exclure.indexOf(g) < 0; }).map(function (g) { return evaluer(g, climatCible); })
+      /* un plat complet : au moins 3 composants nommés (jamais « mousse au chocolat » tout court) */
+      var l = gabs.filter(function (g) { return g.s.indexOf(climatCible) >= 0 && exclure.indexOf(g) < 0 && g.comp.length >= 3 && g.nom.split(/[ ,]+/).length >= 3; }).map(function (g) { return evaluer(g, climatCible); })
         .filter(function (e) { return e.couverture >= .5 && e.manque.length <= 2; }).sort(function (a, b) { return b.score - a.score; });
       return l[0] || null;
     }
@@ -232,6 +239,6 @@
     else if (c1 === 'chaud') s += ' : fraîcheur et légèreté';
     return s;
   }
-  function produitsDuMoment(m) { var a = SAISON[m] || SAISON[10], b = SAISON[(m % 12) + 1] || a; var l = []; ['legumes', 'fruits', 'mer', 'terre'].forEach(function (k) { (a[k] || []).forEach(function (x) { if (l.indexOf(x) < 0 && (b[k] || []).indexOf(x) >= 0) l.push(x); }); }); return l; }
-  root.VerdictSaison = { version: 'C104', dejaALaCarte: dejaALaCarte, TEMP: TEMP, MOIS: MOIS, SAISON: SAISON, gabarits: G, synonymes: SYN, famille: famille, nomFamille: function (f) { return NOM_FAMILLE[f] || f; }, climat: climat, composer: composer, trouver: trouver, phraseSaison: phraseSaison, produitsDuMoment: produitsDuMoment, moisReel: function () { return new Date().getMonth() + 1; }, rangLibelle: function (r) { return RANG_LIBELLE[r] || 'plat'; } };
+  function produitsDuMoment(m) { var a = saisonDe(m), b = saisonDe((m % 12) + 1); var l = []; ['legumes', 'fruits', 'mer', 'terre'].forEach(function (k) { (a[k] || []).forEach(function (x) { if (l.indexOf(x) < 0 && (b[k] || []).indexOf(x) >= 0) l.push(x); }); }); return l; }
+  root.VerdictSaison = { version: 'C105', dejaALaCarte: dejaALaCarte, tousGabarits: tousGabarits, saisonDe: saisonDe, TEMP: TEMP, MOIS: MOIS, SAISON: SAISON, gabarits: G, synonymes: SYN, famille: famille, nomFamille: function (f) { return NOM_FAMILLE[f] || f; }, climat: climat, composer: composer, trouver: trouver, phraseSaison: phraseSaison, produitsDuMoment: produitsDuMoment, moisReel: function () { return new Date().getMonth() + 1; }, rangLibelle: function (r) { return RANG_LIBELLE[r] || 'plat'; } };
 })(window);
