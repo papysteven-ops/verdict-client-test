@@ -167,18 +167,23 @@
     } catch (e) {}
     return true;
   }
+  /* C112 — Le cadre n'est habillé (sa barre rendue invisible) que lorsque la barre de la coquille est réellement
+     affichée. Avant, l'habillage se faisait dès l'attache : sur Mac et iPad, où la barre du cadre n'est pas fixée en
+     bas, la coquille n'affichait rien et la barre du cadre était invisible → « module blanc, on clique, rien ». */
+  var habille = false;
   function verifier() {
     if (gel > Date.now()) { return; }
     var ok = false;
     try { ok = visibleDansCadre() && placer(); } catch (e) { ok = false; }
     if (ok) synchroniserEtat();
+    if (ok !== habille) { habille = ok; if (ok) habillerCadre(); else deshabillerCadre(cdoc, cnav); }
     doc.documentElement.classList.toggle('vd-dock-on', ok);
   }
 
   function detacher() {
     if (obsNav) { try { obsNav.disconnect(); } catch (e) {} obsNav = null; }
     if (obsHtml) { try { obsHtml.disconnect(); } catch (e) {} obsHtml = null; }
-    deshabillerCadre(cdoc, cnav);
+    deshabillerCadre(cdoc, cnav); habille = false;
     cdoc = null; cnav = null; boutons = {}; geom = ''; dernierGabarit = '';
     doc.documentElement.classList.remove('vd-dock-on');
   }
@@ -189,7 +194,7 @@
     if (!n) { if (d !== cdoc) detacher(); cadre = f; return false; }
     if (d === cdoc && n === cnav) return true;
     detacher(); cadre = f; cdoc = d; cnav = n;
-    habillerCadre(); reconstruire();
+    reconstruire();
     try {
       obsNav = new MutationObserver(function () { verifier(); }); obsNav.observe(cnav, { attributes: true, attributeFilter: ['class', 'style', 'hidden', 'aria-current', 'data-cp-back'], childList: true, subtree: true, characterData: true });
       obsHtml = new MutationObserver(function () { verifier(); }); obsHtml.observe(cdoc.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
