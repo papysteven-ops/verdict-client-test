@@ -222,7 +222,8 @@
     if (!M || !M.parentNode) return;
     var card = doc.getElementById('vdOffCard');
     if (!doc.getElementById('vdOffCss')) { var st = doc.createElement('style'); st.id = 'vdOffCss'; st.textContent = CSS; (doc.head || doc.body).appendChild(st); }
-    if (card && card.previousElementSibling === M) { if (card.__lvl !== niveau()) render(doc, card); return; }
+    /* C132 : rangée dans un tiroir de l’Accueil en chapitres (accueil-chapitres-a40), elle y reste. */
+    if (card && (card.previousElementSibling === M || (card.parentElement && card.parentElement.classList.contains('vx40-t')))) { if (card.__lvl !== niveau()) render(doc, card); return; }
     if (!card) { card = doc.createElement('section'); card.id = 'vdOffCard'; card.setAttribute('aria-labelledby', 'vdOffTitle'); bind(doc, card); }
     M.parentNode.insertBefore(card, M.nextSibling);
     render(doc, card);

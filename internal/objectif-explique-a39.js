@@ -151,7 +151,7 @@
       var o = orig.apply(this, arguments);
       try {
         var key = w.verdictOperationalClock().key.slice(0, 7), p = w.DB && w.DB.performancePlans && w.DB.performancePlans[key], ap = w.DB && w.DB.performanceYearPlans && w.DB.performanceYearPlans[key.slice(0, 4)];
-        if (!o || !p || !(Number(p.minimum) > 0) || !/1\.9\.0$/.test(String(p.rulesVersion || '')) || !(ap && Number(ap.monthlyTargets && ap.monthlyTargets[key]) > 0)) return o;
+        if (!o || !p || !(Number(p.minimum) > 0) || !/(1\.9\.0|[2-9]\.\d+\.\d+)$/.test(String(p.rulesVersion || '')) || !(ap && Number(ap.monthlyTargets && ap.monthlyTargets[key]) > 0)) return o;
         var r = Object.assign({}, o), delta = Number(p.minimum) - Number(o.mois || 0), n = Number(o.jOuv) || (p.openDates && p.openDates.length) || 0;
         r.mois = Math.round(Number(p.minimum) * 100) / 100; if (n > 0) r.obj = Math.round(r.mois / n * 100) / 100;
         if (o.objectifMois != null) { r.objectifMois = Math.round((Number(o.objectifMois) + delta) * 100) / 100; if (n > 0) r.objectif = Math.round(r.objectifMois / n * 100) / 100; }
