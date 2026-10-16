@@ -26,10 +26,16 @@
   var system = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
   var mobile = window.matchMedia && window.matchMedia('(max-width: 767px)');
   var frameObservers = new WeakMap();
+  /* C127 — Un seul choix de thème, quelle que soit l'orientation (Steven, 16/10 : « je pivote mon téléphone, la
+     couleur change ; je le remets droit, ça revient »). En paysage, l'iPhone dépasse 767 px et lisait le réglage
+     « grand écran ». Les deux clés sont désormais tenues identiques : le choix de l'écran actuel fait foi. */
+  function cleAppareil() { try { var c = Math.min(screen.width || 9999, screen.height || 9999); return c < 768 ? mobileKey : desktopKey; } catch (e) { return mobile && mobile.matches ? mobileKey : desktopKey; } } /* la petite dimension de l'écran ne change pas en pivotant */
+  try { var cle0 = cleAppareil(), autre0 = cle0 === mobileKey ? desktopKey : mobileKey, v0 = localStorage.getItem(cle0);
+    if (v0 === 'light' || v0 === 'dark') { if (localStorage.getItem(autre0) !== v0) localStorage.setItem(autre0, v0); } else if (localStorage.getItem(autre0) === 'light' || localStorage.getItem(autre0) === 'dark') localStorage.removeItem(autre0); } catch (e) {}
 
   function preference() {
     try {
-      var saved = localStorage.getItem(mobile && mobile.matches ? mobileKey : desktopKey);
+      var saved = localStorage.getItem(cleAppareil());
       return saved === 'light' || saved === 'dark' ? saved : 'auto';
     } catch (error) { return 'auto'; }
   }
@@ -196,7 +202,7 @@
   }
   button.addEventListener('click', function () {
     var next = appearance(preference()) === 'dark' ? 'light' : 'dark';
-    try { localStorage.setItem(mobile && mobile.matches ? mobileKey : desktopKey, next); } catch (error) {}
+    try { localStorage.setItem(mobileKey, next); localStorage.setItem(desktopKey, next); } catch (error) {}
     render();
   });
   document.addEventListener('load', function (event) {
