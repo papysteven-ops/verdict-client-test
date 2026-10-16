@@ -4,7 +4,7 @@
   if(global.__VERDICT_PERFORMANCES_INTEGRATED_V1__)return;
   global.__VERDICT_PERFORMANCES_INTEGRATED_V1__=true;
 
-  var RULES="verdict-performances/1.6.0",TRAJECTORY_RULES="verdict-trajectory/2.3.0",SEASON_RULES="verdict-season/1.1.0",ANNUAL_RULES="verdict-annual-closure/1.0.0",ACCOUNTING_RULES="verdict-accounting-anchor/1.0.0",MOTION_RULES="verdict-motion/1.1.0",DEMO_SCENARIO="verdict-demo-trajectory/1.1.0";
+  var RULES="verdict-performances/1.7.0",TRAJECTORY_RULES="verdict-trajectory/2.3.0",SEASON_RULES="verdict-season/1.1.0",ANNUAL_RULES="verdict-annual-closure/1.0.0",ACCOUNTING_RULES="verdict-accounting-anchor/1.0.0",MOTION_RULES="verdict-motion/1.1.0",DEMO_SCENARIO="verdict-demo-trajectory/1.1.0";
   var activeTab="days",selectedDay="",selectedMonth="",chartMode="daily",storyTimers=[],motionTimer=null,motionSession={};
 
   function data(){return global.DB||{};}
@@ -179,7 +179,7 @@
     }else{
       dates.forEach(function(date){var amount=seed.lockedTargets&&seed.lockedTargets[date];if(hasNumber(amount)&&Number(amount)>=0){locked[date]=F.money(amount);lockedTotal=lockedTotal.add(amount);}else remaining.push(date);});
       targets=Object.assign({},locked);var residual=F.fraction(minimum).sub(lockedTotal);if(residual.cmp(0)<0)residual=F.fraction(0);
-      var shares=F.allocate(residual,remaining.map(function(){return 1;}));remaining.forEach(function(date,i){targets[date]=shares[i];});
+      /* C120 : le minimum du mois est réparti selon le poids réel de chaque jour de semaine (10 dernières semaines) ; parts égales tant qu'au moins 3 jours de semaine ne sont pas connus. Le total du mois ne change pas. */var connus=(means||[]).filter(function(m){return m!=null&&m>0;}),moyenne=connus.length?connus.reduce(function(a,b){return a+b;},0)/connus.length:0;var poids=remaining.map(function(date){if(connus.length<3)return 1;var m=means[weekday(date)];return Math.max(1,Math.round((m!=null&&m>0?m:moyenne)*100)/100);});var shares=F.allocate(residual,poids);remaining.forEach(function(date,i){targets[date]=shares[i];});
     }
     var assigned=F.sum(Object.keys(targets).filter(function(date){return targets[date]!=null;}).map(function(date){return targets[date];})),gap=F.fraction(minimum).sub(assigned);
     return {schema:'verdict-performance-plan/v3',rulesVersion:RULES,month:key,minimum:minimum,minimumSource:'complete-economic-costs',targetBasis:budget?'declared-sales-budget':'economic-minimum',budgetRevision:budgetRevision||null,budgetMonth:budgetMonth,annualPlanRevision:annualPlan&&annualPlan.revision||null,accountingAnchorId:annualPlan&&annualPlan.accountingAnchorId||null,openDates:dates,targets:targets,lockedTargets:locked,unallocatedMinimum:budget?null:gap.cmp(0)>0?F.money(gap):0,overallocatedMinimum:budget?null:gap.cmp(0)<0?F.money(gap.mul(-1)):0,trackingStart:start,weekdayMeans:means,calendarFingerprint:planFingerprint(dates),businessDayEndHour:businessEndHour(),timeZone:businessTimezone(),createdAt:new Date().toISOString(),revision:revision||1};
