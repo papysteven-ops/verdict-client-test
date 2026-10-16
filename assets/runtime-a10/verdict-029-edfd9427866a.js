@@ -13772,20 +13772,23 @@ function auRepriseHTML(R){
   var h='<div class="au-sc"><div class="au-tag">La reprise</div><h2 class="au-h">'+
     (prec?'Depuis votre audit du '+prec.date.split('-').reverse().join('/'):'Gardez une trace de cet audit')+'</h2>';
   if(prec){
-    var ds=Math.round(R.score)-prec.score, dr=Math.round(R.v.rn*10)/10-prec.rn, de=Math.round(R.d.res)-prec.res;
+    /* C99 — écarts au format français : « +1 pt » (et non « +1 € »), « +0,3 pt » (et non « +0.33000000000000007 pts »). */
+    var fr1=function(x){return (Math.round((+x||0)*10)/10).toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1});};
+    var rnNow=Math.round(R.v.rn*10)/10, rnAvant=Math.round((+prec.rn||0)*10)/10;
+    var ds=Math.round(R.score)-prec.score, dr=Math.round((rnNow-rnAvant)*10)/10, de=Math.round(R.d.res)-prec.res;
     /* La phrase vient de Trajectoire : une seule façon de dire ce qui a bougé. */
     var _ph=(typeof trajPhrase==='function')?trajPhrase():null;
     if(_ph)h+='<p class="au-p" style="color:var(--txt);font-size:16px">'+_ph+'</p>';
     h+='<div class="au-card">'+
-      [['Score',prec.score,Math.round(R.score),ds,''],
-       ['R\u00e9sultat / CA',prec.rn+'\u00a0%',(Math.round(R.v.rn*10)/10)+'\u00a0%',dr,'\u00a0pts'],
+      [['Score',prec.score,Math.round(R.score),ds,'pt'],
+       ['R\u00e9sultat / CA',fr1(rnAvant)+'\u00a0%',fr1(rnNow)+'\u00a0%',dr,'pt%'],
        ['R\u00e9sultat',eur(prec.res),eur(Math.round(R.d.res)),de,'']].map(function(l){
         var pos=l[3]>0, nul=(Math.abs(l[3])<0.05);
         return '<div class="au-ok"><span style="flex:1">'+l[0]+'</span>'+
           '<span style="font-family:var(--mono);color:var(--mut2)">'+l[1]+' \u2192 </span>'+
           '<b style="font-family:var(--mono)">'+l[2]+'</b>'+
           '<span style="font-family:var(--mono);color:'+(nul?'var(--mut2)':(pos?'#22c55e':'#ef4444'))+'">'+
-          (nul?'\u2014':((pos?'+':'')+(l[4]?l[3]+l[4]:eur(l[3]))))+'</span></div>';
+          (nul?'\u2014':((pos?'+':'')+(l[4]==='pt'?l[3]+'\u00a0'+(Math.abs(l[3])>=2?'pts':'pt'):(l[4]==='pt%'?fr1(l[3])+'\u00a0'+(Math.abs(l[3])>=2?'pts':'pt'):eur(l[3])))))+'</span></div>';
       }).join('')+'</div>'+
       '<p class="au-p">Ce que ces \u00e9carts doivent \u00e0 vos d\u00e9cisions et ce qu\u2019ils doivent \u00e0 la saison, Verdict ne peut pas le d\u00e9partager. Il montre le mouvement.</p>'+
       '<p class="au-p">L\u2019audit est la <b>photo</b> d\u2019aujourd\u2019hui. Votre <b>\u00e9volution</b> \u2014 actions dat\u00e9es, mouvements mesur\u00e9s ensuite et cycles \u2014 se lit dans Trajectoire.</p>'+

@@ -32,6 +32,14 @@
     ].filter(function (x) { return x.v > 0.05; });
     var reste = Math.max(0, 100 - rn - postes.reduce(function (s, x) { return s + x.v; }, 0));
     if (reste > 0.05) postes.push({ l: 'Loyer et autres charges', v: reste, c: '#94a3b8' });
+    /* C99 — Une seule référence (Steven, C90) : mêmes postes, mêmes arrondis et mêmes couleurs que le chapitre
+       « Sur 100 € HT » de l'analyse complète (matière = nourriture + boissons, structure, amortissements). */
+    var M = P && P.money100, COURT = { matter: 'Matière', variable: 'Emballages', platforms: 'Plateformes', team: 'Équipe', structure: 'Structure', amortization: 'Amortissements' };
+    if (M && M.rows && M.rows.length) {
+      postes = M.rows.filter(function (x) { return num(x.display) > 0.05; }).map(function (x) { return { l: COURT[x.id] || x.l, v: num(x.display), c: x.c || '#94a3b8' }; });
+      var charges = Math.round(postes.reduce(function (s, x) { return s + x.v; }, 0) * 10) / 10;
+      if (M.status === 'positive') rn = Math.round(Math.max(0, 100 - charges) * 10) / 10; else if (M.status === 'loss') rn = -Math.round(Math.max(0, charges - 100) * 10) / 10;
+    }
     var seuil = (P && P.seuil) || {}, mini = num(seuil.eur);
     var leviers = (G && G.leviers || []).slice(0, 3);
     return {
@@ -56,10 +64,12 @@
       '<p class="rc-big"><b data-rc-count="' + Math.round(D.res) + '" data-rc-eur>0 €</b><small>de résultat sur un an · marge ' + pct(D.rn) + '</small></p>' +
       '<p class="rc-p">Indice de sérénité Verdict, calculé avec vos chiffres.</p><span class="rc-suite">Voir où part l’argent ↓</span></section>');
     /* 2 · Où part chaque 100 € */
-    var seg = D.postes.map(function (x, i) { return '<i style="--w:' + Math.max(0, x.v).toFixed(2) + '%;--c:' + x.c + ';--i:' + i + '"></i>'; }).join('') +
-      (D.rn > 0 ? '<i class="rc-res" style="--w:' + D.rn.toFixed(2) + '%;--c:#22c55e;--i:' + D.postes.length + '"></i>' : '');
+    /* C98 — sur grand écran, chaque segment assez large porte son nom et son montant. */
+    function dedans(l, v) { return v >= 9 ? '<span><small>' + esc(l) + '</small>' + (Math.round(v * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</span>' : ''; }
+    var seg = D.postes.map(function (x, i) { return '<i style="--w:' + Math.max(0, x.v).toFixed(2) + '%;--c:' + x.c + ';--i:' + i + '">' + dedans(x.l, x.v) + '</i>'; }).join('') +
+      (D.rn > 0 ? '<i class="rc-res" style="--w:' + D.rn.toFixed(2) + '%;--c:#22c55e;--i:' + D.postes.length + '">' + dedans('Reste avant impôt', D.rn) + '</i>' : '');
     var leg = D.postes.map(function (x) { return '<li><i style="background:' + x.c + '"></i>' + esc(x.l) + '<b>' + (Math.round(x.v * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>'; }).join('') +
-      '<li><i style="background:' + (D.rn > 0 ? '#22c55e' : '#ef4444') + '"></i>Il vous reste<b>' + (D.rn >= 0 ? '' : '−') + Math.abs(Math.round(D.rn * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>';
+      '<li><i style="background:' + (D.rn > 0 ? '#22c55e' : '#ef4444') + '"></i>' + (D.rn >= 0 ? 'Reste avant impôt' : 'Il manque') + '<b>' + (D.rn >= 0 ? '' : '−') + Math.abs(Math.round(D.rn * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>';
     t.push('<section class="rc-card rc-c2" data-rc="2"><span class="rc-k">2 · Où part l’argent</span><h2>Sur chaque 100 € encaissés</h2>' +
       '<div class="rc-stack">' + seg + '</div><ul class="rc-leg">' + leg + '</ul>' +
       '<p class="rc-p">' + (D.postes[0] ? 'Le premier poste est <b>' + esc(D.postes.slice().sort(function (a, b) { return b.v - a.v; })[0].l.toLowerCase()) + '</b>.' : '') + '</p><span class="rc-suite">Votre seuil ↓</span></section>');
@@ -124,6 +134,39 @@
     card.classList.add('rc-on');
     [].forEach.call(card.querySelectorAll('[data-rc-count]'), function (el, i) { setTimeout(function () { compter(el); }, REDUIT ? 0 : 180 + i * 120); });
   }
+  /* C98 — Grand écran (Steven : « pas un copier-coller du mobile, meilleure expérience sur grand ») : barre de chapitres
+     collante sous la barre du haut, qui suit la lecture ; à la souris, lumière qui suit le pointeur sur chaque carte. */
+  function grandEcran(box, cartes) {
+    /* Hauteur de la barre du haut (Mac) mesurée au moment de lire : elle n'existe pas encore pendant l'ouverture. */
+    function caler() {
+      var haut = 12; try {
+        var b = doc.querySelector('[data-v="audit"]'), n = b && b.closest('nav,div'), cs = n && getComputedStyle(n), h = n ? n.getBoundingClientRect().height : 0, t = cs ? parseFloat(cs.top) : NaN;
+        /* barre collée en haut (Mac) : on se place juste dessous ; barre en bas (iPhone, iPad) : rien à éviter */
+        if (h && h < 150 && (cs.position === 'sticky' || cs.position === 'fixed') && isFinite(t) && t < 40) haut = Math.round(t + h) + 10;
+      } catch (e) {}
+      if (box.__rcTop !== haut) { box.__rcTop = haut; box.style.setProperty('--rc-top', haut + 'px'); }
+    }
+    caler(); if (!box.__rcCale) { box.__rcCale = true; w.addEventListener('resize', caler, { passive: true }); }
+    var puces = box.querySelectorAll('[data-rc-nav]');
+    [].forEach.call(puces, function (p) {
+      p.onclick = function () { var c = box.querySelector('[data-rc="' + p.getAttribute('data-rc-nav') + '"]'); if (c) { jouer(c); c.scrollIntoView({ behavior: REDUIT ? 'auto' : 'smooth', block: 'start' }); } };
+    });
+    if ('IntersectionObserver' in w) {
+      var suivi = new IntersectionObserver(function (es) {
+        caler(); es.forEach(function (e) { if (!e.isIntersecting) return; var n = e.target.getAttribute('data-rc');
+          [].forEach.call(puces, function (p) { if (p.getAttribute('data-rc-nav') === n) p.setAttribute('aria-current', 'true'); else p.removeAttribute('aria-current'); }); });
+      }, { rootMargin: '-35% 0px -55% 0px' });
+      [].forEach.call(cartes, function (c) { suivi.observe(c); });
+    }
+    if (box.__rcSouris || REDUIT || !w.matchMedia || !w.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+    box.__rcSouris = true;
+    var vise = null, image = 0, mx = 0, my = 0;
+    box.addEventListener('pointermove', function (e) {
+      vise = e.target.closest && e.target.closest('.rc-card'); mx = e.clientX; my = e.clientY;
+      if (!vise || image) return;
+      image = requestAnimationFrame(function () { image = 0; if (!vise) return; var r = vise.getBoundingClientRect(); vise.style.setProperty('--mx', (mx - r.left) + 'px'); vise.style.setProperty('--my', (my - r.top) + 'px'); });
+    });
+  }
   function monter() {
     var body = doc.getElementById('auditBody'); if (!body) return;
     var D = donnees(); if (!D) return;
@@ -132,7 +175,10 @@
     if (box && box.getAttribute('data-cle') === cle && box.parentNode) return;
     if (!box) { box = doc.createElement('div'); box.id = 'vdRecit'; }
     box.setAttribute('data-cle', cle);
-    box.innerHTML = '<header class="rc-head"><span>Audit Verdict · ' + esc(D.nom) + '</span><h1>Votre audit en 6 images</h1><p>Faites défiler : chaque image se joue quand elle arrive.</p></header>' + tableaux(D);
+    var corps = tableaux(D), noms = { 1: 'Verdict', 2: 'Où part l’argent', 3: 'Seuil', 4: 'Fuites', 5: 'Remonter', 6: 'Prochain pas' }, puces = '';
+    corps.replace(/data-rc="(\d)"/g, function (m, n) { puces += '<button type="button" data-rc-nav="' + n + '"><i>' + n + '</i>' + noms[n] + '</button>'; return m; });
+    box.innerHTML = '<header class="rc-head"><span>Audit Verdict · ' + esc(D.nom) + '</span><h1>Votre audit en 6 images</h1><p><span class="rc-m">Faites défiler : chaque image se joue quand elle arrive.</span><span class="rc-l">Six images, une idée chacune, toutes calculées avec vos chiffres.</span></p></header>' +
+      '<div class="rc-nav" role="navigation" aria-label="Chapitres de l’audit">' + puces + '</div>' + corps;
     var wrap = body.querySelector('.au-wrap') || body;
     if (box.parentNode !== wrap || wrap.firstChild !== box) wrap.insertBefore(box, wrap.firstChild);
     [].forEach.call(box.querySelectorAll('[data-rc-go]'), function (b) {
@@ -140,10 +186,12 @@
         var g = b.getAttribute('data-rc-go'), V = w.VerdictGainRealiste;
         if (g === 'simuler') { if (V && V.ouvrirSimuler) V.ouvrirSimuler(); else w.go('dec'); }
         else if (g === 'actions') w.go('priorities');
+        else if (w.VerdictLecteur) w.VerdictLecteur.ouvrir('les preuves'); /* C99 : lecteur premium */
         else { var d = doc.querySelector('[data-audit-full-report]'); if (d) { d.open = true; d.scrollIntoView({ behavior: REDUIT ? 'auto' : 'smooth', block: 'start' }); } }
       };
     });
     var cartes = box.querySelectorAll('.rc-card');
+    grandEcran(box, cartes);
     if (!('IntersectionObserver' in w) || REDUIT) { [].forEach.call(cartes, jouer); return; }
     var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { jouer(e.target); io.unobserve(e.target); } }); }, { threshold: 0.45, rootMargin: '0px 0px -8% 0px' });
     [].forEach.call(cartes, function (c) { io.observe(c); });
@@ -154,7 +202,7 @@
   css.textContent =
     '#auditBody .av31{display:none!important}' +
     '#vdRecit{margin:4px 0 26px;font-family:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif}' +
-    '#vdRecit .rc-head{padding:6px 4px 14px;color:#101214}#vdRecit .rc-head span{font:800 11.5px/1 -apple-system,system-ui;letter-spacing:.14em;text-transform:uppercase;color:#16a34a}' +
+    '#vdRecit .rc-head{padding:6px 4px 14px;color:#101214}#vdRecit .rc-head>span{font:800 11.5px/1 -apple-system,system-ui;letter-spacing:.14em;text-transform:uppercase;color:#16a34a}' +
     '#vdRecit .rc-head h1{margin:8px 0 6px;font:900 32px/1.05 -apple-system,system-ui;letter-spacing:-.025em}#vdRecit .rc-head p{margin:0;color:#5f6670;font-size:14.5px}' +
     'html.vd-workspace-dark #vdRecit .rc-head{color:#f1f5f9}html.vd-workspace-dark #vdRecit .rc-head p{color:#94a3b8}' +
     '#vdRecit .rc-card{position:relative;overflow:hidden;min-height:min(68vh,580px);margin:0 0 16px;padding:26px 22px 22px;border-radius:28px;color:#f8fafc;display:flex;flex-direction:column;justify-content:center;gap:14px;scroll-snap-align:start;box-shadow:0 22px 60px rgba(2,8,23,.28);isolation:isolate}' +
@@ -211,10 +259,54 @@
     '#vdRecit .rc-cta{min-height:60px;border:0;border-radius:18px;background:linear-gradient(180deg,#22c55e,#16a34a);color:#fff;font:900 18px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 14px 34px rgba(22,163,74,.45)}' +
     '#vdRecit .rc-on .rc-cta{animation:rcHalo 1.9s ease-out .6s 3}@keyframes rcHalo{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6),0 14px 34px rgba(22,163,74,.45)}70%{box-shadow:0 0 0 16px rgba(34,197,94,0),0 14px 34px rgba(22,163,74,.45)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0),0 14px 34px rgba(22,163,74,.45)}}' +
     '#vdRecit .rc-cta2{display:flex;gap:10px}#vdRecit .rc-cta2 button{flex:1;min-height:50px;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font:800 15px/1 -apple-system,system-ui;cursor:pointer}' +
-    '@media (min-width:900px){#vdRecit .rc-card{min-height:520px;padding:40px 44px}#vdRecit{display:grid;grid-template-columns:1fr 1fr;gap:18px}#vdRecit .rc-head{grid-column:1/-1}#vdRecit .rc-card{margin:0}}' +
+    '#vdRecit .rc-nav,#vdRecit .rc-l,#vdRecit .rc-stack i>span{display:none}' +
+    /* C98 — Tablette et grand écran : mises en page horizontales propres à l'écran large. */
+    '@media (min-width:700px){' +
+      '#vdRecit{max-width:880px;margin-left:auto;margin-right:auto}#vdRecit .rc-m{display:none}#vdRecit .rc-l{display:inline}#vdRecit .rc-suite{display:none}' +
+      '#vdRecit .rc-head{padding:10px 4px 16px}#vdRecit .rc-head h1{font-size:44px}#vdRecit .rc-head p{font-size:16px}' +
+      '#vdRecit .rc-nav{order:0;display:flex;gap:8px;position:sticky;top:var(--rc-top,12px);z-index:4;margin:0 0 18px;padding:6px;border-radius:18px;background:#ffffff;border:1px solid #e3e8ee;box-shadow:0 10px 30px rgba(15,23,42,.10);overflow-x:auto;scrollbar-width:none}' +
+      '#vdRecit .rc-nav::-webkit-scrollbar{display:none}' +
+      '#vdRecit .rc-nav button{flex:1 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 14px;border:0;border-radius:13px;background:transparent;color:#475569;font:700 14px/1 -apple-system,system-ui;cursor:pointer;white-space:nowrap;transition:background .25s,color .25s}' +
+      '#vdRecit .rc-nav button i{font-style:normal;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#eef2f6;color:#334155;font-size:12px;font-weight:800}' +
+      '#vdRecit .rc-nav button[aria-current]{background:#0f172a;color:#fff}#vdRecit .rc-nav button[aria-current] i{background:#22c55e;color:#fff}' +
+      'html.vd-workspace-dark #vdRecit .rc-nav{background:#11161d;border-color:#222b36;box-shadow:0 12px 34px rgba(0,0,0,.45)}html.vd-workspace-dark #vdRecit .rc-nav button{color:#cbd5e1}' +
+      'html.vd-workspace-dark #vdRecit .rc-nav button i{background:#1e2733;color:#e2e8f0}html.vd-workspace-dark #vdRecit .rc-nav button[aria-current]{background:#f8fafc;color:#0b0f14}' +
+      '#vdRecit .rc-card{min-height:0;padding:38px 42px;border-radius:32px;margin:0 0 20px;scroll-margin-top:calc(var(--rc-top,12px) + 70px)}' +
+      '#vdRecit .rc-c1{display:grid;grid-template-columns:minmax(0,1fr) 230px;grid-template-areas:"k d" "h d" "b d" "p d";gap:14px 40px;align-content:center;align-items:center}' +
+      '#vdRecit .rc-c1>.rc-k{grid-area:k}#vdRecit .rc-c1>h2{grid-area:h}#vdRecit .rc-c1>.rc-big{grid-area:b}#vdRecit .rc-c1>.rc-p{grid-area:p}#vdRecit .rc-c1>.rc-dial{grid-area:d;width:230px;height:230px;margin:0}' +
+      '#vdRecit .rc-c1 .rc-dial-n{padding-top:86px}#vdRecit .rc-c1 .rc-dial-n b{font-size:64px}' +
+      '#vdRecit .rc-stack{height:66px;border-radius:16px;clip-path:inset(0 100% 0 0 round 16px)}#vdRecit .rc-on .rc-stack{clip-path:inset(0 0 0 0 round 16px)}' +
+      '#vdRecit .rc-stack i>span{display:flex;flex-direction:column;justify-content:center;height:100%;padding:0 12px;overflow:hidden;white-space:nowrap;color:#0b1120;font:800 17px/1.1 -apple-system,system-ui;font-variant-numeric:tabular-nums}' +
+      '#vdRecit .rc-stack i>span small{font:700 11px/1.2 -apple-system,system-ui;letter-spacing:.06em;text-transform:uppercase;opacity:.72;overflow:hidden;text-overflow:ellipsis}' +
+      '#vdRecit .rc-leg{grid-template-columns:1fr 1fr;column-gap:28px}#vdRecit .rc-leg li:last-child{grid-column:1/-1}' +
+      '#vdRecit .rc-c5{display:grid;grid-template-columns:minmax(0,1fr) 250px;grid-template-areas:"k k" "h h" "w b";gap:14px 40px;align-items:center}' +
+      '#vdRecit .rc-c5>.rc-k{grid-area:k}#vdRecit .rc-c5>h2{grid-area:h}#vdRecit .rc-c5>.rc-wf{grid-area:w;margin:10px 0 0}#vdRecit .rc-c5>.rc-big{grid-area:b;margin:0}' +
+      '#vdRecit .rc-wf-row{grid-template-columns:150px minmax(0,1fr) 104px;grid-template-areas:"l t v";align-items:center;gap:0 16px}' +
+      '#vdRecit .rc-wf-l{grid-area:l}#vdRecit .rc-wf-track{grid-area:t;grid-column:auto}#vdRecit .rc-wf-v{grid-area:v;text-align:right}' +
+      '#vdRecit .rc-c6{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);grid-template-areas:"k c" "h c" "p c2";gap:12px 44px;align-items:center}' +
+      '#vdRecit .rc-c6>.rc-k{grid-area:k}#vdRecit .rc-c6>h2{grid-area:h}#vdRecit .rc-c6>.rc-p{grid-area:p}#vdRecit .rc-c6>.rc-cta{grid-area:c;align-self:end}#vdRecit .rc-c6>.rc-cta2{grid-area:c2;align-self:start}' +
+    '}' +
+    /* Mac et iPad à l'horizontale : mosaïque sur 12 colonnes. */
+    '@media (min-width:1100px){' +
+      '#vdRecit{max-width:1240px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:22px;align-items:stretch}#vdRecit .rc-head,#vdRecit .rc-nav{grid-column:1/-1;margin:0}' +
+      '#vdRecit .rc-card{margin:0}#vdRecit .rc-c1,#vdRecit .rc-c6{grid-column:1/-1}' +
+      '#vdRecit .rc-c2{grid-column:span 7}#vdRecit .rc-c3{grid-column:span 5}#vdRecit .rc-c4{grid-column:span 5}#vdRecit .rc-c5{grid-column:span 7}' +
+      '#vdRecit .rc-c1{min-height:340px;grid-template-columns:minmax(0,1fr) 270px;padding:46px 56px}#vdRecit .rc-c1>.rc-dial{width:270px;height:270px}#vdRecit .rc-c1 .rc-dial-n{padding-top:100px}#vdRecit .rc-c1 .rc-dial-n b{font-size:76px}' +
+      '#vdRecit .rc-c1>h2{font-size:56px}#vdRecit .rc-c1 .rc-big b{font-size:72px}' +
+      '#vdRecit .rc-c5{grid-template-columns:1fr;grid-template-areas:"k" "h" "w" "b"}#vdRecit .rc-c5 .rc-big b{font-size:52px}' +
+      '#vdRecit .rc-c6{padding:34px 56px}' +
+    '}' +
+    /* À la souris : lumière qui suit le pointeur, carte qui se soulève légèrement. */
+    '@media (hover:hover) and (pointer:fine) and (min-width:700px){' +
+      '#vdRecit .rc-card{transition:transform .35s ' + E + ',box-shadow .35s ' + E + '}#vdRecit .rc-card:hover{transform:translateY(-3px);box-shadow:0 30px 70px rgba(2,8,23,.34)}' +
+      '#vdRecit .rc-card:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(520px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.09),transparent 62%);opacity:0;transition:opacity .35s}' +
+      '#vdRecit .rc-card:hover:after{opacity:1}#vdRecit .rc-nav button:not([aria-current]):hover{background:rgba(148,163,184,.14)}' +
+      '#vdRecit .rc-leaks li{cursor:default}#vdRecit .rc-on .rc-leaks li:hover{background:rgba(255,255,255,.11)}#vdRecit .rc-cta:hover{filter:brightness(1.06)}#vdRecit .rc-cta2 button:hover{background:rgba(255,255,255,.14)}' +
+    '}' +
     '@media (prefers-reduced-motion:reduce){#vdRecit *{transition:none!important;animation:none!important}#vdRecit .rc-card>*{opacity:1;transform:none}}';
   (doc.head || doc.documentElement).appendChild(css);
 
+  w.VerdictRecit = { monter: monter }; /* C99 : appelé dans la même image que l'Audit (plus de flash de l'ancien) */
   var attente = 0;
   function planifier() { clearTimeout(attente); attente = setTimeout(monter, 60); }
   try { var a = doc.getElementById('v-audit'); if (a) new MutationObserver(function (l) { for (var i = 0; i < l.length; i++) { var t = l[i].target; if (t && t.closest && t.closest('#vdRecit')) continue; return planifier(); } }).observe(a, { childList: true, subtree: true }); } catch (e) {}
