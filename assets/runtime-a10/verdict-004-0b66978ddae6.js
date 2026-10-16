@@ -10,8 +10,8 @@ function calculate(input){
   if(known){actual+=cents(Number(day.ca));expected+=cents(Number(day.target)||0);}
   else if(day.date<input.today)missing.push(day.date);else remaining.push(day);
  });
- var rest=Math.max(0,cents(minimum)-actual),deficit=Math.max(0,expected-actual),next=remaining[0],base=next?cents(Number(next.target)||0):null,exact=!missing.length;
- return {minimum:minimum,actual:actual/100,expected:expected/100,advance:exact?Math.max(0,actual-expected)/100:null,remaining:rest/100,exact:exact,missing:missing,next:next?next.date:null,base:base===null?null:base/100,deficit:exact?deficit/100:null,catchup:exact&&next?(base+deficit)/100:null,openRemaining:remaining.length,average:exact&&remaining.length?Math.ceil(rest/remaining.length)/100:null};
+ var rest=Math.max(0,cents(minimum)-actual),deficit=Math.max(0,expected-actual),next=remaining[0],base=next?cents(Number(next.target)||0):null,exact=!missing.length;/* C121 : le retard n'est plus reporté en entier sur le lendemain ; il est réparti sur tous les jours ouverts restants, au prorata de leur poids (samedi plus que lundi). */var poidsRestants=remaining.reduce(function(s,d){return s+Math.max(0,cents(Number(d.target)||0));},0),partRetard=exact&&next&&deficit>0?(poidsRestants>0?Math.round(deficit*base/poidsRestants):Math.round(deficit/remaining.length)):0;
+ return {minimum:minimum,actual:actual/100,expected:expected/100,advance:exact?Math.max(0,actual-expected)/100:null,remaining:rest/100,exact:exact,missing:missing,next:next?next.date:null,base:base===null?null:base/100,deficit:exact?deficit/100:null,catchup:exact&&next?(base+partRetard)/100:null,catchupShare:exact&&next?partRetard/100:null,openRemaining:remaining.length,average:exact&&remaining.length?Math.ceil(rest/remaining.length)/100:null};
 }
 function preview(input,date,amount){
  if(!Number.isFinite(amount)||amount<0||!input||!Array.isArray(input.days))return null;
@@ -26,7 +26,7 @@ function nextHTML(c,draft){
  var isTomorrow=tomorrow&&tomorrow.toISOString().slice(0,10)===c.next;
  var date=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}).format(new Date(c.next+'T12:00:00Z'));
  var title=isTomorrow?'Demain · '+date:'Prochain jour ouvert · '+date;
- var explanation=c.deficit>0?'Base '+money(c.base)+' + retard restant '+money(c.deficit)+'.':(c.advance>0?'Avance cumulée restante : '+money(c.advance)+'. La base du prochain jour reste à faire.':'Aucun retard cumulé. La base du prochain jour reste à faire.');
+ var explanation=c.deficit>0?'Base '+money(c.base)+' + '+money(c.catchupShare!=null?c.catchupShare:c.deficit)+' de rattrapage (retard de '+money(c.deficit)+' réparti sur les '+c.openRemaining+' jours ouverts restants).':(c.advance>0?'Avance cumulée restante : '+money(c.advance)+'. La base du prochain jour reste à faire.':'Aucun retard cumulé. La base du prochain jour reste à faire.');
  return '<p>'+(draft?'Aperçu après enregistrement':'Journée enregistrée')+'</p><strong>'+title+' : '+money(c.catchup)+' TTC</strong><p>'+explanation+'</p>'+dayExplanation(c,c.selectedDate)+(draft?'<small>Montant non enregistré : confirme avec le bouton.</small>':'');
 }
 function savedHTML(c,date,amount){
