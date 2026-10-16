@@ -4,7 +4,7 @@
   if(global.__VERDICT_PERFORMANCES_INTEGRATED_V1__)return;
   global.__VERDICT_PERFORMANCES_INTEGRATED_V1__=true;
 
-  var RULES="verdict-performances/1.9.0",TRAJECTORY_RULES="verdict-trajectory/2.3.0",SEASON_RULES="verdict-season/1.1.0",ANNUAL_RULES="verdict-annual-closure/1.0.0",ACCOUNTING_RULES="verdict-accounting-anchor/1.0.0",MOTION_RULES="verdict-motion/1.1.0",DEMO_SCENARIO="verdict-demo-trajectory/1.1.0";
+  var RULES="verdict-performances/2.0.0",TRAJECTORY_RULES="verdict-trajectory/2.3.0",SEASON_RULES="verdict-season/1.1.0",ANNUAL_RULES="verdict-annual-closure/1.0.0",ACCOUNTING_RULES="verdict-accounting-anchor/1.0.0",MOTION_RULES="verdict-motion/1.1.0",DEMO_SCENARIO="verdict-demo-trajectory/1.1.0";
   var activeTab="days",selectedDay="",selectedMonth="",chartMode="daily",storyTimers=[],motionTimer=null,motionSession={};
 
   function data(){return global.DB||{};}
@@ -144,7 +144,13 @@
      d'ouverture), la même que dans « Mon année » ; la somme des bases journalières retombe ainsi sur la part du mois
      et les 12 mois sur le minimum annuel. Repli sur le calcul mensuel si le plan annuel n'existe pas. */
   function partMoisAnnee(R,key){try{var ap=seasonPlanFor(R,key.slice(0,4),true),v=ap&&ap.monthlyTargets&&ap.monthlyTargets[key];if(hasNumber(v)&&Number(v)>0)return Number(v);}catch(_){}return monthlyMinimum(R);}
-  function minimumMois(R,key){return partMoisAnnee(R,key)+reportMoisPrecedent(key).montant;}
+  /* C130 — Règle des références CHR (Steven, 17/10 : « la vraie règle, cohérente ») : le BUDGET (minimum du mois, bases
+     des jours, couleurs) reste la part du mois dans le plan annuel ; l'OBJECTIF GLISSANT (à réaliser) ajoute l'écart
+     de l'année à date, réparti sur les mois restants au prorata de leur part : un retard fait monter, une avance fait
+     baisser. Le jour reçoit ensuite sa part du reste à faire du mois (VerdictCHR). */
+  function minimumMois(R,key){return partMoisAnnee(R,key);}
+  function ecartAnneeAvant(key){var y=key.slice(0,4),d=data(),ecart=0,mois=0;try{yearMonths(y).forEach(function(k){if(k>=key)return;var p=d.performancePlans&&d.performancePlans[k];if(!p||!hasNumber(p.minimum))return;var recs=monthRecords(k),ca=0;Object.keys(recs).forEach(function(x){var r=recs[x];if(r&&!r.invalid&&hasNumber(r.ca))ca+=Number(r.ca);});ecart+=Number(p.minimum)-ca;mois++;});}catch(_){}return {ecart:Math.round(ecart*100)/100,mois:mois};}
+  function objectifGlissantMois(R,key,plan){var base=Number(plan&&plan.minimum)||0;try{var y=key.slice(0,4),ap=seasonPlanFor(R,y,false),e=ecartAnneeAvant(key);if(!ap||!e.mois)return {objectif:base,budget:base,ecartAnnee:0,partMois:0,moisRestants:0};var restants=yearMonths(y).filter(function(k){return k>=key&&Number(ap.monthlyTargets[k]||0)>0;}),poids=restants.reduce(function(s,k){return s+Number(ap.monthlyTargets[k]||0);},0),w=Number(ap.monthlyTargets[key]||base),part=poids>0?e.ecart*w/poids:e.ecart/Math.max(1,restants.length);return {objectif:Math.max(0,Math.round((base+part)*100)/100),budget:base,ecartAnnee:e.ecart,partMois:Math.round(part*100)/100,moisRestants:restants.length};}catch(_){return {objectif:base,budget:base,ecartAnnee:0,partMois:0,moisRestants:0};}}
   function monthlyMinimum(R){
     try{var objective=global.progObjJour(R);if(objective&&hasNumber(objective.mois))return Number(objective.mois);}catch(_){ }
     try{var state=global.piloteMoisEtat(R);if(state&&state.economique)return Number(state.economique.seuilMois)||0;}catch(_){ }
@@ -220,8 +226,9 @@
   function currentPlan(R){return planFor(R,currentMonth(),true);}
   global.verdictCHRReading=function(R){
     var key=currentMonth(),plan=currentPlan(R),records=monthRecords(key),days=plan.openDates.map(function(date){return {date:date,target:plan.targets[date],ca:records[date]&&!records[date].estimatedCa?records[date].ca:null};});
-    var result=global.VerdictCHR.calculate({minimum:plan.minimum,today:todayKey(),days:days});
-    result.input={minimum:plan.minimum,today:todayKey(),days:days};result.change=data().chrCalendarChange||null;return result;
+    var gl=objectifGlissantMois(global.moteur(),plan.month||currentMonth(),plan);
+    var result=global.VerdictCHR.calculate({minimum:gl.objectif,today:todayKey(),days:days});
+    result.input={minimum:gl.objectif,budget:plan.minimum,glissant:gl,today:todayKey(),days:days};result.change=data().chrCalendarChange||null;return result;
   };
   function round2(value){return Math.round(Number(value||0)*100)/100;}
   function allocate(rows,total,read,write,integer){

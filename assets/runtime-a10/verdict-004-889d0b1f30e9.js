@@ -10,8 +10,8 @@ function calculate(input){
   if(known){actual+=cents(Number(day.ca));expected+=cents(Number(day.target)||0);}
   else if(day.date<input.today)missing.push(day.date);else remaining.push(day);
  });
- var rest=Math.max(0,cents(minimum)-actual),deficit=Math.max(0,expected-actual),next=remaining[0],base=next?cents(Number(next.target)||0):null,exact=!missing.length;/* C122 (Steven, 16/10) : le retard se rattrape en entier le jour suivant (jour 1 à 10 sur 20 → jour 2 à 30), pour voir clair chaque jour. */
- return {minimum:minimum,actual:actual/100,expected:expected/100,advance:exact?Math.max(0,actual-expected)/100:null,remaining:rest/100,exact:exact,missing:missing,next:next?next.date:null,base:base===null?null:base/100,deficit:exact?deficit/100:null,catchup:exact&&next?(base+deficit)/100:null,catchupShare:exact&&next?deficit/100:null,openRemaining:remaining.length,average:exact&&remaining.length?Math.ceil(rest/remaining.length)/100:null};
+ var rest=Math.max(0,cents(minimum)-actual),deficit=Math.max(0,expected-actual),next=remaining[0],base=next?cents(Number(next.target)||0):null,exact=!missing.length;/* C130 (règle des références CHR) : à réaliser aujourd'hui = reste à faire du mois (objectif − encaissé) × poids du jour ÷ poids des jours ouverts restants. Un retard fait monter, une avance fait baisser ; la base (budget) ne change pas. */var poidsRestants=remaining.reduce(function(s,d){return s+Math.max(0,cents(Number(d.target)||0));},0),aFaire=exact&&next?(poidsRestants>0?Math.round(rest*base/poidsRestants):Math.round(rest/Math.max(1,remaining.length))):null;
+ return {minimum:minimum,actual:actual/100,expected:expected/100,advance:exact?Math.max(0,actual-expected)/100:null,remaining:rest/100,exact:exact,missing:missing,next:next?next.date:null,base:base===null?null:base/100,deficit:exact?deficit/100:null,catchup:aFaire===null?null:aFaire/100,catchupShare:aFaire===null?null:(aFaire-base)/100,openRemaining:remaining.length,average:exact&&remaining.length?Math.ceil(rest/remaining.length)/100:null};
 }
 function preview(input,date,amount){
  if(!Number.isFinite(amount)||amount<0||!input||!Array.isArray(input.days))return null;
