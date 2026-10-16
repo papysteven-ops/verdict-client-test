@@ -13,7 +13,7 @@ if(!doc||root.VerdictSaveGuard)return;
 var GESTURE_MS=1500;
 var IGNORE_FIELDS='[type=search],[data-guard-ignore],#sg13-ask *,#sg13-bar *,.cmp12-sheet *,[id*=search],[id*=Search],[id*=filtre],[id*=Filtre],[id*=recherche],[id*=query],#ntfCenter *,.ntf-center *';
 var COMMIT_BUTTON=/enregistr|valider|confirmer|appliquer|terminer|importer ces|ajouter au/i;
-var EXPLICIT_REASON=/^(create-establishment|archive-establishment|restore-establishment|delete-archived-establishment|duplicate-establishment|bar-visibility|restore|file-restore|load-demo|reset-establishment|demo-|sg13-|switch)/;
+var EXPLICIT_REASON=/^(fec-import|recent-apply|ref-valider|create-establishment|archive-establishment|restore-establishment|delete-archived-establishment|duplicate-establishment|bar-visibility|restore|file-restore|load-demo|reset-establishment|demo-|sg13-|switch)/;
 var LABELS_VERDICT={etab:'Nom de l’établissement',etabVille:'Ville',etabQuartier:'Arrondissement / quartier',etabType:'Type d’établissement',
   plats:'Carte et recettes',ing:'Ingrédients',preparations:'Préparations',supp:'Suppléments',reg:'Réglages de la carte',histJour:'Saisies du jour',
   achats:'Achats',suivi:'Suivi mensuel',monthlyHistory:'Historique mensuel',establishmentProfile:'Profil de l’établissement',services:'Services',
@@ -68,7 +68,8 @@ function pending(){
 
 /* ───────── Ce qui a changé, en clair ───────── */
 function fieldLabel(k){
-  try{if(root.FIX_LABELS&&root.FIX_LABELS[k])return String(root.FIX_LABELS[k]);}catch(e){}
+  if(k==='amort')return 'Amortissements';
+  try{if(root.FIX_LABELS&&root.FIX_LABELS[k])return String(root.FIX_LABELS[k]).replace(/&amp;/g,'&').replace(/&nbsp;/g,'\u00a0').replace(/&rsquo;/g,'’');}catch(e){}
   var el=doc.getElementById('i-'+k),lab=el&&(el.closest('label')||doc.querySelector('label[for="i-'+k+'"]'));
   if(lab){var t='';for(var n=lab.firstChild;n;n=n.nextSibling){if(n.nodeType===3)t+=n.nodeValue;else if(n.nodeType===1&&!/INPUT|SELECT|TEXTAREA/.test(n.tagName))t+=n.textContent;if(t.trim().length>2&&n.nodeType===1)break;}
     t=t.replace(/\s+/g,' ').trim();if(t)return t.length>48?t.slice(0,46)+'…':t;}

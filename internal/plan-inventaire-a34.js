@@ -70,7 +70,7 @@
     '<li><span class="ic">📈</span><div><b>Pilotage</b><small>Votre résultat, votre seuil, la caisse du soir et les décisions du jour, en 60 secondes.</small></div></li>' +
     '<li><span class="ic">📋</span><div><b>Carte</b><small>Indice Carte, marge matière plat par plat, prix justes et Vera qui compose vos plats de saison.</small></div></li>' +
     '<li><span class="ic">🔍</span><div><b>Audit & Simuler</b><small>Les fuites que vous ne voyez pas, et des gains réalistes, bornés, rejoués levier par levier.</small></div></li></ul>' +
-    '<div class="vo-prix"><div><em>Pilotage</em><b>69 €</b><small>par mois · Pilotage + Inventaire</small></div><div><em>Pro</em><b>129 €</b><small>par mois · tout Verdict, Carte et Vera compris</small></div></div>';
+    '<div class="vo-prix"><div><em>Pilotage</em><b>69 € HT</b><small>par mois · Pilotage + Inventaire</small></div><div><em>Pro</em><b>129 € HT</b><small>par mois · tout Verdict, Carte et Vera compris</small></div></div>';
   function fermer() { var o = doc.getElementById('vdOffre'); if (!o) return; o.classList.remove('on'); setTimeout(function () { if (o.parentNode) o.parentNode.removeChild(o); }, 320); }
   function ouvrirOffre(mode) {
     var E = etat(); mode = mode || (E.niveau === 'essai' ? 'essai' : (E.termine ? 'termine' : 'inviter'));
@@ -112,7 +112,7 @@
   function badge() {
     var acts = doc.body; if (!acts) return;
     var b = doc.getElementById('vdPlanBadge'), E = etat();
-    var texte = !actif() ? '' : (E.niveau === 'essai' ? 'Essai · J-' + E.jours : (E.niveau === 'inventaire' ? 'Tout Verdict · 14 j gratuits' : ''));
+    var texte = !actif() ? '' : (E.niveau === 'essai' ? 'Essai · J-' + E.jours : (E.niveau === 'inventaire' ? (E.termine || (lire() || {}).essaiUtilise ? 'Passer à Pilotage ou Pro' : 'Tout Verdict · 14 j gratuits') : ''));
     if (!texte) { if (b) b.remove(); return; }
     if (!b) { b = doc.createElement('button'); b.id = 'vdPlanBadge'; b.type = 'button'; acts.appendChild(b); b.onclick = function () { ouvrirOffre(); }; }
     b.innerHTML = '<i></i>' + texte; b.setAttribute('aria-label', texte);

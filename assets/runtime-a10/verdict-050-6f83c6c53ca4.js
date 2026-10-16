@@ -17,7 +17,7 @@ function words(){return copy[typeof w.LOCALE==='string'?w.LOCALE:'fr']||copy.fr;
 function demo(){return !!(w.VERDICT_PRESENTATION_PROFILE||w.VERDICT_DEMO_SESSION||w.VERDICT_TEST_SESSION);}
 function installed(){try{return w.navigator.standalone===true||w.matchMedia('(display-mode: standalone)').matches||(w.parent!==w&&(w.parent.navigator.standalone===true||w.parent.matchMedia('(display-mode: standalone)').matches));}catch(e){return false;}}
 function element(tag,text){var e=d.createElement(tag);if(text)e.textContent=text;return e;}
-function card(id){var e=element('section');e.id=id;e.className='card';e.style.cssText='margin:12px 0;padding:16px;border:1px solid var(--border,#47515c);border-radius:16px;background:var(--bg2,#10161c);color:var(--text,#eef2f6)';return e;}
+function card(id){var e=element('section');e.id=id;e.className='card';e.style.cssText='margin:12px 0;padding:16px;border:1px solid var(--border,#47515c);border-radius:16px;background:#10161c;color:#eef2f6';return e;}
 /* V2 : dans un aperçu intégré (lien claude.ai, cadre d’un autre site), « Sur l’écran d’accueil » installerait la page
    hôte et non Verdict : le conseil serait faux et bloquerait l’entrée. Il n’est donné que si Verdict est la page ouverte. */
 function embedded(){try{var shell=w.parent!==w?w.parent:w;return shell.parent!==shell;}catch(e){return true;}}

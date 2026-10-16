@@ -147,7 +147,7 @@
     var d=DBx()||{},today=op.key,now=op.civilKey+"T"+String(op.hour).padStart(2,"0")+":"+String(op.minute).padStart(2,"0");
     var depuis=decale(today,-14),actif=(d.histJour||[]).some(function(r){return r&&r.date>=depuis&&r.date<=today&&(r.caJ!=null||r.ca!=null);});if(!actif)return null;
     var jours=[decale(today,-1),today];
-    for(var i=0;i<jours.length;i++){var k=jours[i];if(d.chrDays&&d.chrDays[k])continue;if(fermeLe(k,op))continue;
+    var debutSuivi=String(d.performanceTrackingStartedAt||'').slice(0,10);for(var i=0;i<jours.length;i++){var k=jours[i];if(debutSuivi&&k<debutSuivi)continue;if(d.chrDays&&d.chrDays[k])continue;if(fermeLe(k,op))continue;
       var need=servicesDu(weekday(k)),rec=(d.servicesJour||{})[k]||{},parSvc=need.length>=2,aSvc=Object.keys(rec).some(function(id){return rec[id]&&isFinite(rec[id].ca);});
       if(!parSvc||!aSvc){if(ligneJour(k))continue;}
       var unites=parSvc?need:["jour"];

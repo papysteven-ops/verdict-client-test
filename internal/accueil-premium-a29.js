@@ -15,7 +15,8 @@
   var css = doc.createElement('style'); css.id = 'accueil-premium-a29';
   css.textContent =
     /* ── Bienvenue ── */
-    'html body #refSh.on>.p{' + VARS + ';background:' + PANNEAU + '!important;border:1px solid rgba(148,163,184,.16)!important;border-radius:28px!important;box-shadow:0 30px 80px rgba(2,8,23,.38),0 2px 8px rgba(2,8,23,.22)!important;padding:22px 20px 20px!important}' +
+    'html body #refSh.on>.p .f small,html body #refSh.on>.p small{color:#aeb6bf!important}html body #refSh.on>.p h2,html body #refSh.on>.p h3,html body #refSh.on>.p .p{color:#f3f5f7!important}' +
+    'html body #refSh.on>.p{' + VARS + ';color:#eef2f6!important;background:' + PANNEAU + '!important;border:1px solid rgba(148,163,184,.16)!important;border-radius:28px!important;box-shadow:0 30px 80px rgba(2,8,23,.38),0 2px 8px rgba(2,8,23,.22)!important;padding:22px 20px 20px!important}' +
     'html body #refSh .grab{background:rgba(148,163,184,.35)!important}' +
     'html body #refSh h3{margin:16px 2px 6px!important;font:900 clamp(24px,6vw,30px)/1.1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif!important;letter-spacing:-.025em;color:#ffffff!important}' +
     'html body #refSh .p>.note{color:#a3b1c2!important;font-size:15px!important;margin:0 2px 14px!important}' +

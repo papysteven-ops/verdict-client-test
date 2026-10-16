@@ -5,11 +5,10 @@
    l'Inventaire où l'on était. Maintenant : la démonstration s'éteint (clé de reprise et contexte de démo effacés),
    la coquille revient sur l'Inventaire réel, sans redemander le code (même tolérance que la mise à jour sans verrou),
    et l'adresse est nettoyée. Ce fichier sert dans les deux cadres : dans l'Inventaire il remplace la sortie ; dans
-   la coquille il applique l'arrivée. Perso et atelier gardent leur sortie d'origine. */
+   la coquille il applique l'arrivée. C114 : Perso et atelier ont la même sortie (ils relançaient toute l'appli). */
 (function () {
   'use strict';
   var w = window, CLE_REPRISE = 'verdict:demo:resume:client:v1', CLE_CONTEXTE = 'verdict:unified:client:v1:context', CLE_SANS_VERROU = 'verdict:maj-sans-verrou';
-  if (w.VERDICT_PERSO || w.VERDICT_TEST_SESSION) return;
   function eteindre() {
     try { localStorage.removeItem(CLE_REPRISE); } catch (e) {}
     try { sessionStorage.removeItem(CLE_CONTEXTE); } catch (e) {}

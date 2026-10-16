@@ -25,6 +25,9 @@
     /* B2 : la page du module seule (hors coquille) en thème clair : titres, boutons et colonnes de Simuler lisibles. */
     'html.vd-workspace-light .cp-pagehead h2,html.vd-workspace-light .cp-menuhead h2,html.vd-workspace-light #v-carte.cp-active .sv>h2{color:#14202b}html.vd-workspace-light #c-menu .cp-actions button.cp-button{color:#14202b}' +
     'html.vd-workspace-light .dec-col .li b{color:#14202b}html.vd-workspace-light #toast{color:#f8fafc;background:#14202b}' +
+    /* C114 : sous une sous-page courte de la Carte (Mac, thème clair), plus de bande noire ; bouton TEST du Perso à 44 px. */
+    'html.vd-workspace-light.p40,html.vd-workspace-light.p40 body{background:#f3f5f7!important}html.vd-workspace-light.p40 body{min-height:100vh}' +
+    'button.verdict-edition-test{min-height:44px;padding-left:12px;padding-right:12px}' +
     /* D2 : le mini-anneau reste dans son bouton. */
     '#scBox{overflow:visible}#scBox .scmini{max-width:100%}';
   (doc.head || doc.documentElement).appendChild(css);

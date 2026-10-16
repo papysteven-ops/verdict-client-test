@@ -59,7 +59,7 @@
     if (!bib) { bib = doc.createElement('section'); bib.id = 'vdBiblio'; }
     bib.setAttribute('data-cle', cle);
     var n = 0, html = '<header class="bb-head"><span class="bb-k">L’analyse complète</span><h2>Tout le détail, chapitre par chapitre</h2>' +
-      '<p>' + L.length + ' chapitres en ' + THEMES.filter(function (T) { return L.some(function (x) { return x.th === T; }); }).length + ' thèmes, tous calculés avec vos chiffres.</p>' +
+      '<p>' + L.length + ' chapitres en ' + (function (n) { return n + (n > 1 ? ' thèmes' : ' thème'); })(THEMES.filter(function (T) { return L.some(function (x) { return x.th === T; }); }).length) + ', tous calculés avec vos chiffres.</p>' +
       '<button type="button" class="bb-go" data-bb="0">Lire depuis le début<span aria-hidden="true">→</span></button></header>';
     THEMES.forEach(function (T) {
       var dans = L.filter(function (x) { return x.th === T; }); if (!dans.length) return;
