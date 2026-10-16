@@ -13,7 +13,7 @@ if(!doc||root.VerdictSaveGuard)return;
 var GESTURE_MS=1500;
 var IGNORE_FIELDS='[type=search],[data-guard-ignore],#sg13-ask *,#sg13-bar *,.cmp12-sheet *,[id*=search],[id*=Search],[id*=filtre],[id*=Filtre],[id*=recherche],[id*=query],#ntfCenter *,.ntf-center *';
 var COMMIT_BUTTON=/enregistr|valider|confirmer|appliquer|terminer|importer ces|ajouter au/i;
-var EXPLICIT_REASON=/^(fec-import|recent-apply|ref-valider|create-establishment|archive-establishment|restore-establishment|delete-archived-establishment|duplicate-establishment|bar-visibility|restore|file-restore|load-demo|reset-establishment|demo-|sg13-|switch)/;
+var EXPLICIT_REASON=/^(etab-lien|fec-import|recent-apply|ref-valider|create-establishment|archive-establishment|restore-establishment|delete-archived-establishment|duplicate-establishment|bar-visibility|restore|file-restore|load-demo|reset-establishment|demo-|sg13-|switch)/;
 var LABELS_VERDICT={etab:'Nom de l’établissement',etabVille:'Ville',etabQuartier:'Arrondissement / quartier',etabType:'Type d’établissement',
   plats:'Carte et recettes',ing:'Ingrédients',preparations:'Préparations',supp:'Suppléments',reg:'Réglages de la carte',histJour:'Saisies du jour',
   achats:'Achats',suivi:'Suivi mensuel',monthlyHistory:'Historique mensuel',establishmentProfile:'Profil de l’établissement',services:'Services',
@@ -301,7 +301,7 @@ function onGesture(e){
   var t=e.target;if(t&&t.closest&&(t.closest('#sg13-ask')||t.closest('#sg13-bar')))return;
   S.gestureAt=Date.now();ensureBase();if(e.type==='pointerdown')wrapAll();
   if(e.type==='pointerdown'||e.type==='click'){var ch=t&&t.closest&&t.closest('[aria-checked],[role=radio],[role=option],[role=switch],[role=checkbox],[role=menuitemradio]');if(ch&&!ignoredTarget(ch))S.editAt=Date.now();}
-  if(e.type==='click'){var b=t&&t.closest&&t.closest('button,[role=button],a');if(b&&COMMIT_BUTTON.test((b.textContent||'')+' '+(b.getAttribute('aria-label')||'')))S.commitClickAt=Date.now();}
+  if(e.type==='click'){var b=t&&t.closest&&t.closest('button,[role=button],a');if(b&&(COMMIT_BUTTON.test((b.textContent||'')+' '+(b.getAttribute('aria-label')||''))||(b.closest&&b.closest('#welcome'))))S.commitClickAt=Date.now(); /* C116 : l'accueil de l'Inventaire (Continuer, Entrer) enregistre */}
 }
 function onFocus(e){if(!trusted(e)||!S.mode||S.mode==='shell')return;var t=e.target;if(isField(t)&&!ignoredTarget(t))trackField(t);}
 function onEdit(e){
