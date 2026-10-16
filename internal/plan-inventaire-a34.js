@@ -14,7 +14,16 @@
   var w = window, doc = document; if (w.VerdictPlan) return;
   var CLE = 'verdict:plan:v1', JOURS = 14, JOUR = 86400000;
   var params = new URLSearchParams(location.search);
-  function estDemo() { return params.get('demo') === '1'; }
+  function estDemo() { if (params.get('demo') === '1' || params.get('presentation')) return true; try { return localStorage.getItem('verdict:demo:resume:client:v1') === '1'; } catch (e) { return false; } }
+  /* C119 — Une seule appli : l'essai de 14 jours démarre tout seul au premier usage réel (hors démonstration), tout est
+     ouvert ; à la fin, selon l'offre prise : rien → Inventaire gratuit ; Pilotage ou Pro → ce que le serveur ouvre.
+     La fermeture n'agit que lorsque les abonnements peuvent réellement être pris (VERDICT_PAIEMENT_ACTIF, émis par le
+     serveur quand Stripe est configuré) : on ne coupe jamais un client qui n'a aucun moyen de payer. */
+  function dejaInstalle() {
+    try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i) || ''; if (k.indexOf('verdict:etabs:v2') !== 0 || /demo/i.test(k)) continue; if (/"onboardingDone":true/.test(localStorage.getItem(k) || '')) return true; } } catch (e) {}
+    return false;
+  }
+  function fermetureActive() { return w.VERDICT_PAIEMENT_ACTIF === true; }
   function horsChamp() { return !!(w.VERDICT_PERSO || w.VERDICT_TEST_SESSION || estDemo()); }
   /* Le serveur a le dernier mot : espace connecté sans accès ouvert = ses droits, pas une formule locale. */
   function serveurDecide() { return w.VERDICT_WORKSPACE_CONNECTED === true && w.VERDICT_OPEN_ACCESS !== true; }
@@ -22,12 +31,13 @@
   function lire() { try { return JSON.parse(localStorage.getItem(CLE) || 'null'); } catch (e) { return null; } }
   function ecrire(p) { try { if (p) localStorage.setItem(CLE, JSON.stringify(p)); else localStorage.removeItem(CLE); } catch (e) {} }
   /* État effectif, fonction pure (testée) : {niveau:'complet'|'inventaire'|'essai', jours, termine} */
-  function calc(p, now) {
-    now = now || Date.now();
+  function calc(p, now, ferme) {
+    now = now || Date.now(); if (ferme === undefined) ferme = fermetureActive();
     if (!p || !p.niveau) return { niveau: 'complet', jours: 0, termine: false };
     if (p.niveau === 'essai') {
       var fin = Number(p.fin) || 0;
       if (fin > now) return { niveau: 'essai', jours: Math.max(1, Math.ceil((fin - now) / JOUR)), termine: false, fin: fin };
+      if (!ferme) return { niveau: 'essai', jours: 0, termine: false, attente: true, fin: fin };
       return { niveau: 'inventaire', jours: 0, termine: true, fin: fin };
     }
     if (p.niveau === 'inventaire') return { niveau: 'inventaire', jours: 0, termine: !!p.termine };
@@ -61,6 +71,8 @@
     '#vdOffre .vo-cta{width:100%;min-height:58px;border:0;border-radius:18px;background:linear-gradient(90deg,#b8860b,#e3b341);color:#1a1200;font:900 17px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 14px 34px rgba(212,167,44,.4)}' +
     '#vdOffre .vo-sec{width:100%;min-height:50px;margin-top:10px;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#fff;font:800 15px/1 -apple-system,system-ui;cursor:pointer}' +
     '#vdOffre .vo-stop{width:100%;min-height:46px;margin-top:10px;border-radius:16px;border:1px solid rgba(239,68,68,.45);background:rgba(239,68,68,.12);color:#fecaca;font:800 14.5px/1 -apple-system,system-ui;cursor:pointer}' +
+    '#vdOffre .vo-choix{display:flex;gap:14px;align-items:flex-start;width:100%;text-align:left;margin:0 0 12px;padding:16px;border-radius:20px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);color:#fff;cursor:pointer;font:inherit}#vdOffre .vo-choix .ic{flex:0 0 44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(134,239,172,.16);font-size:22px}#vdOffre .vo-choix b{display:block;font:800 17px/1.2 -apple-system,system-ui;margin-bottom:4px}#vdOffre .vo-choix small{color:rgba(248,250,252,.75);font-size:13.5px;line-height:1.4}#vdOffre .vo-choix.or{border-color:rgba(227,179,65,.55);background:linear-gradient(135deg,rgba(184,134,11,.2),rgba(227,179,65,.12))}#vdOffre .vo-choix.or .ic{background:rgba(227,179,65,.2)}' +
+    'body.shell-startup-locked #vdOffre{display:none!important}' +
     '#vdOffre .vo-note{margin:12px 0 0;font-size:12.5px;color:rgba(248,250,252,.6)}#vdOffre .vo-x{position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;font-size:20px;cursor:pointer}' +
     '@media (max-width:699px){#vdPlanBadge{top:calc(env(safe-area-inset-top,0px) + 66px);right:10px}}@media (min-width:700px){#vdOffre{align-items:center}#vdOffre .vo-card{border-radius:30px;padding:36px 36px 30px}}';
   (doc.head || doc.documentElement).appendChild(css);
@@ -73,21 +85,30 @@
     '<div class="vo-prix"><div><em>Pilotage</em><b>69 € HT</b><small>par mois · Pilotage + Inventaire</small></div><div><em>Pro</em><b>129 € HT</b><small>par mois · tout Verdict, Carte et Vera compris</small></div></div>';
   function fermer() { var o = doc.getElementById('vdOffre'); if (!o) return; o.classList.remove('on'); setTimeout(function () { if (o.parentNode) o.parentNode.removeChild(o); }, 320); }
   function ouvrirOffre(mode) {
-    var E = etat(); mode = mode || (E.niveau === 'essai' ? 'essai' : (E.termine ? 'termine' : 'inviter'));
+    var E = etat(), P = lire() || {}, reste = P.fin && P.fin > Date.now() ? Math.ceil((P.fin - Date.now()) / JOUR) : 0;
+    mode = mode || (E.attente ? 'attente' : E.niveau === 'essai' ? 'essai' : (E.termine && !reste ? 'termine' : 'inviter'));
     fermer();
     var o = doc.createElement('div'); o.id = 'vdOffre'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
     var h = '<div class="vo-card"><button type="button" class="vo-x" aria-label="Fermer">×</button>';
-    if (mode === 'essai') h += '<span class="vo-k">Essai · encore ' + E.jours + ' jour' + (E.jours > 1 ? 's' : '') + '</span><h1>Tout Verdict est ouvert</h1><p>Pilotage, Carte, Audit, Simuler et Vera, avec vos vrais chiffres. Vous pouvez arrêter quand vous voulez : rien n’est supprimé, l’Inventaire reste gratuit.</p>' + LIGNES +
+    if (mode === 'choix') h = '<div class="vo-card"><span class="vo-k">Bienvenue sur Verdict</span><h1>Que venez-vous faire ?</h1><p>Choisissez votre départ : l’appli ne vous montre que ce qui vous sert. Vous pourrez changer d’avis à tout moment.</p>' +
+      '<button type="button" class="vo-choix" data-vo="choix-inventaire"><span class="ic">📦</span><span><b>Gérer mon inventaire</b><small>Gratuit, pour toujours. Compter, commander, suivre vos stocks, cuisine et bar.</small></span></button>' +
+      '<button type="button" class="vo-choix or" data-vo="choix-complet"><span class="ic">📈</span><span><b>Piloter tout mon restaurant</b><small>14 jours gratuits, sans carte : Pilotage, Carte, Audit, Simuler, Vera, et l’Inventaire.</small></span></button>' +
+      '<p class="vo-note">Après l’essai : Pilotage 69 € HT ou Pro 129 € HT par mois, ou retour à l’Inventaire gratuit. Rien n’est jamais supprimé.</p>';
+    else if (mode === 'attente') h += '<span class="vo-k">Essai terminé</span><h1>Tout reste ouvert, pour l’instant.</h1><p>Vos 14 jours d’essai sont passés. Les abonnements Pilotage et Pro ouvrent très bientôt : d’ici là, rien ne se ferme et rien n’est supprimé.</p>' + LIGNES +
+      '<button type="button" class="vo-cta" data-vo="continuer">Continuer</button>';
+    else if (mode === 'essai') h += '<span class="vo-k">Essai · encore ' + E.jours + ' jour' + (E.jours > 1 ? 's' : '') + '</span><h1>Tout Verdict est ouvert</h1><p>Pilotage, Carte, Audit, Simuler et Vera, avec vos vrais chiffres. Vous pouvez arrêter quand vous voulez : rien n’est supprimé, l’Inventaire reste gratuit.</p>' + LIGNES +
       '<button type="button" class="vo-cta" data-vo="continuer">Continuer l’essai</button><button type="button" class="vo-stop" data-vo="arreter">Arrêter l’essai maintenant</button><p class="vo-note">À la fin de l’essai, aucun prélèvement : vous choisissez vous-même de passer à Pilotage ou Pro.</p>';
     else if (mode === 'termine') h += '<span class="vo-k">Essai terminé</span><h1>Rien n’est supprimé.</h1><p>Vos fiches, vos ventes et vos stocks sont conservés. L’Inventaire reste gratuit, pour toujours. Pour retrouver Pilotage, Carte, Audit, Simuler et Vera :</p>' + LIGNES +
       '<button type="button" class="vo-cta" data-vo="passer">Passer à Pilotage ou Pro</button><button type="button" class="vo-sec" data-vo="rester">Rester sur l’Inventaire gratuit</button>';
     else h += '<span class="vo-k">Verdict · Inventaire gratuit</span><h1>Vos stocks sont gratuits. Et tout le reste ?</h1><p><b>14 jours gratuits</b>, sans carte bancaire, à arrêter à tout moment. À la fin, rien n’est supprimé : vous retrouvez l’Inventaire gratuit.</p>' + LIGNES +
-      '<button type="button" class="vo-cta" data-vo="essayer">Essayer tout Verdict 14 jours</button><button type="button" class="vo-sec" data-vo="rester">Rester sur l’Inventaire</button>';
+      (reste && P.essaiUtilise ? '<button type="button" class="vo-cta" data-vo="essayer">Reprendre mon essai · encore ' + reste + ' jour' + (reste > 1 ? 's' : '') + '</button>' : '<button type="button" class="vo-cta" data-vo="essayer">Essayer tout Verdict 14 jours</button>') + '<button type="button" class="vo-sec" data-vo="rester">Rester sur l’Inventaire</button>';
     h += '</div>'; o.innerHTML = h; doc.body.appendChild(o);
     requestAnimationFrame(function () { o.classList.add('on'); });
     o.addEventListener('click', function (ev) {
-      var b = ev.target.closest('[data-vo],.vo-x'); if (!b) { if (ev.target === o) fermer(); return; }
+      var b = ev.target.closest('[data-vo],.vo-x'); if (!b) { if (ev.target === o && mode !== 'choix') fermer(); return; }
       var a = b.getAttribute('data-vo');
+      if (a === 'choix-inventaire') { ecrire({ niveau: 'inventaire', depuis: Date.now(), choix: 'inventaire' }); fermer(); setTimeout(function () { location.replace(urlAvec('inventory')); }, 60); return; }
+      if (a === 'choix-complet') { var t1 = Date.now(); ecrire({ niveau: 'essai', depuis: t1, fin: t1 + JOURS * JOUR, essaiUtilise: true, choix: 'complet' }); fermer(); appliquer(); try { w.VerdictUnifiedShell && w.VerdictUnifiedShell.activateModule('pilotage', {}); } catch (e) {} return; }
       if (a === 'essayer') demarrerEssai();
       else if (a === 'arreter') { if (b.getAttribute('data-sur') !== '1') { b.setAttribute('data-sur', '1'); b.textContent = 'Confirmer : revenir à l’Inventaire gratuit'; return; } arreterEssai(); }
       else if (a === 'passer') { try { location.href = 'account.html?view=abo'; } catch (e) {} }
@@ -98,12 +119,13 @@
   /* ── Actions ── */
   function demarrerEssai() {
     var p = lire(); if (p && p.niveau === 'essai' && !calc(p).termine) { fermer(); return; }
+    if (p && p.essaiUtilise && p.fin > Date.now()) { ecrire({ niveau: 'essai', depuis: p.depuis, fin: p.fin, essaiUtilise: true }); fermer(); setTimeout(function () { location.replace(urlAvec('verdict')); }, 60); return; }
     if (p && p.essaiUtilise) { ouvrirOffre('termine'); return; }
     var now = Date.now(); ecrire({ niveau: 'essai', depuis: now, fin: now + JOURS * JOUR, essaiUtilise: true });
     fermer(); appliquer(); try { w.VerdictUnifiedShell && w.VerdictUnifiedShell.activateModule('pilotage', {}); } catch (e) {}
     setTimeout(function () { location.reload(); }, 60);
   }
-  function arreterEssai() { var p = lire() || {}; ecrire({ niveau: 'inventaire', depuis: Date.now(), essaiUtilise: !!p.essaiUtilise, termine: true }); fermer(); appliquer(); setTimeout(function () { location.replace(urlAvec('inventory')); }, 60); }
+  function arreterEssai() { var p = lire() || {}; ecrire({ niveau: 'inventaire', depuis: Date.now(), essaiUtilise: !!p.essaiUtilise, termine: true, fin: p.fin }); fermer(); appliquer(); setTimeout(function () { location.replace(urlAvec('inventory')); }, 60); }
   function choisirInventaire() { ecrire({ niveau: 'inventaire', depuis: Date.now() }); appliquer(); }
   function urlAvec(module) { var u = new URL(location.href); u.searchParams.set('module', module); u.searchParams.delete('plan'); u.searchParams.delete('profile'); return u.pathname + u.search + u.hash; }
 
@@ -112,12 +134,13 @@
   function badge() {
     var acts = doc.body; if (!acts) return;
     var b = doc.getElementById('vdPlanBadge'), E = etat();
-    var texte = !actif() ? '' : (E.niveau === 'essai' ? 'Essai · J-' + E.jours : (E.niveau === 'inventaire' ? (E.termine || (lire() || {}).essaiUtilise ? 'Passer à Pilotage ou Pro' : 'Tout Verdict · 14 j gratuits') : ''));
+    var texte = !actif() ? '' : (E.attente ? 'Essai terminé · tout reste ouvert' : E.niveau === 'essai' ? 'Essai · J-' + E.jours : (E.niveau === 'inventaire' ? (E.termine || (lire() || {}).essaiUtilise ? 'Passer à Pilotage ou Pro' : 'Tout Verdict · 14 j gratuits') : ''));
     if (!texte) { if (b) b.remove(); return; }
     if (!b) { b = doc.createElement('button'); b.id = 'vdPlanBadge'; b.type = 'button'; acts.appendChild(b); b.onclick = function () { ouvrirOffre(); }; }
     b.innerHTML = '<i></i>' + texte; b.setAttribute('aria-label', texte);
   }
   function appliquer() {
+    if (actif() && !lire() && !doc.getElementById('vdOffre') && doc.body) { ouvrirOffre('choix'); }
     var v = verrou(); doc.documentElement.classList.toggle('vd-plan-inventaire', v); badge();
     if (!v) return;
     /* Le cadre Pilotage ne doit jamais être le module courant : on ramène sur Inventaire et on ouvre l'offre. */
@@ -131,6 +154,9 @@
   }
 
   if (actif()) {
+    /* C119 : un client déjà installé (dossier Verdict rempli) entre directement dans son essai de 14 jours ; un nouveau
+       venu choisit d'abord ce qu'il vient faire (Inventaire gratuit ou tout Verdict) et ne voit que ce parcours. */
+    if (!lire() && dejaInstalle()) { var t0 = Date.now(); ecrire({ niveau: 'essai', depuis: t0, fin: t0 + JOURS * JOUR, essaiUtilise: true, auto: true }); }
     /* Avant le démarrage de la coquille : la formule Inventaire entre toujours par ?module=inventory. */
     if (verrou() && params.get('module') !== 'inventory') { location.replace(urlAvec('inventory')); return; }
     /* Les appels publics vers Pilotage/Carte sont refusés sous la formule Inventaire. */
@@ -150,5 +176,5 @@
     setInterval(function () { var E = etat(); if (E.termine) appliquer(); else badge(); }, 60000);
   }
 
-  w.VerdictPlan = { etat: etat, calc: calc, demarrerEssai: demarrerEssai, arreterEssai: arreterEssai, choisirInventaire: choisirInventaire, ouvrirOffre: ouvrirOffre, actif: actif, JOURS: JOURS };
+  w.VerdictPlan = { etat: etat, calc: calc, fermetureActive: fermetureActive, demarrerEssai: demarrerEssai, arreterEssai: arreterEssai, choisirInventaire: choisirInventaire, ouvrirOffre: ouvrirOffre, actif: actif, JOURS: JOURS };
 })();
