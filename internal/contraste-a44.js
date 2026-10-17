@@ -53,6 +53,34 @@
     }
     return n;
   }
+  /* C147 (Steven, 18/10 : « pourquoi je vois des repos côte à côte, Structure, mois ») : dans les courbes de journées
+     et du mois, une pastille « N j repos » est posée à chaque interruption ; deux repos proches (jours de fermeture
+     rapprochés, écran étroit) se superposaient ou se répétaient (« 1 j repos » « 1 j repos »). Une seule étiquette
+     reste, en haut à gauche, avec le total (« 2 j repos ») ; chaque jour de repos garde un fin repère pointillé. */
+  function fusionRepos(d) {
+    var NS = 'http://www.w3.org/2000/svg';
+    [].forEach.call(d.querySelectorAll('svg'), function (svg) {
+      var pastilles = [].slice.call(svg.querySelectorAll('g.vp-rest-mark'));
+      var resume = [].filter.call(svg.querySelectorAll('text'), function (t) { return !t.closest('g.vp-rest-mark') && /^\d+ j repos$/.test((t.textContent || '').trim()); })[0];
+      if (!pastilles.length || (pastilles.length < 2 && !resume)) return;
+      var grilles = [].map.call(svg.querySelectorAll('line.vp-grid'), function (l) { return { x: parseFloat(l.getAttribute('x1')), y: parseFloat(l.getAttribute('y1')) }; });
+      var gauche = grilles.length ? Math.min.apply(null, grilles.map(function (g) { return g.x; })) : 8;
+      var bas = grilles.length ? Math.max.apply(null, grilles.map(function (g) { return g.y; })) : 120;
+      var total = 0;
+      pastilles.forEach(function (g) {
+        var r = g.querySelector('rect'), t = g.querySelector('text'), n = parseInt(t && t.textContent, 10) || 0; total += n;
+        var cx = parseFloat(t && t.getAttribute('x')); if (r && isFinite(cx)) {
+          var l = d.createElementNS(NS, 'line'); l.setAttribute('x1', cx.toFixed(1)); l.setAttribute('x2', cx.toFixed(1)); l.setAttribute('y1', '26'); l.setAttribute('y2', String(bas));
+          l.setAttribute('class', 'vx47-repos'); l.setAttribute('stroke', 'currentColor'); l.setAttribute('stroke-opacity', '.22'); l.setAttribute('stroke-dasharray', '2 4'); l.setAttribute('stroke-width', '1');
+          var titre = d.createElementNS(NS, 'title'); titre.textContent = n + ' jour' + (n > 1 ? 's' : '') + ' de repos'; l.appendChild(titre); svg.insertBefore(l, svg.firstChild);
+        }
+        g.remove();
+      });
+      if (resume) return; /* le total est déjà écrit en haut à gauche */
+      var t2 = d.createElementNS(NS, 'text'); t2.setAttribute('x', String(gauche)); t2.setAttribute('y', '18'); t2.setAttribute('text-anchor', 'start'); t2.setAttribute('class', 'vp-axis');
+      t2.textContent = total + ' j repos'; svg.appendChild(t2);
+    });
+  }
   /* C145 — petits défauts relevés par l'analyse complète. */
   var SERVICES = { matin: 'Matin', midi: 'Midi', apres: 'Après-midi', aprem: 'Après-midi', soir: 'Soir', nuit: 'Nuit', petitdej: 'Petit-déjeuner', brunch: 'Brunch' };
   function petitsDefauts(d) {
@@ -85,7 +113,7 @@
     var theme = doc.documentElement.className.indexOf('vd-workspace-dark') >= 0 ? 'sombre' : 'clair';
     var ds = documents();
     if (theme !== dernierTheme) { ds.forEach(effacer); dernierTheme = theme; vus = new WeakSet(); }
-    ds.forEach(function (d) { try { petitsDefauts(d); passe(d); } catch (e) {} });
+    ds.forEach(function (d) { try { fusionRepos(d); petitsDefauts(d); passe(d); } catch (e) {} });
   }
   function surveiller(d) {
     if (!d || d.__vx44) return; d.__vx44 = true;
