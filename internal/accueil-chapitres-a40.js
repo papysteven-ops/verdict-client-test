@@ -53,12 +53,30 @@
   function titre(m) { return txt(m.querySelector('.mod-h>.kicker,#vdOffTitle,h3,.kicker')) || ''; }
 
   function signaler(d) { try { d.defaultView.dispatchEvent(new d.defaultView.Event('resize')); } catch (e) {} }
+  /* C137 (Steven, 17/10 : « le module courbe des journées : impossible de défiler ») : déplacer un module dans le document
+     remet ses zones défilantes à zéro, et une courbe dessinée dans un chapitre caché ne peut pas se placer. La courbe
+     s'ouvrait donc sur le 1er du mois (légende : dernière journée) et semblait bloquée. On garde la position pendant le
+     déplacement, et la courbe montrée pour la première fois se place sur la dernière journée, comme à l'origine. */
+  function deplacer(m, faire) {
+    var pos = [];
+    [m].concat([].slice.call(m.querySelectorAll('*'))).forEach(function (e) { if (e.scrollLeft > 0 || e.scrollTop > 0) pos.push([e, e.scrollLeft, e.scrollTop]); });
+    faire();
+    pos.forEach(function (x) { try { x[0].scrollLeft = x[1]; x[0].scrollTop = x[2]; } catch (e) {} });
+  }
+  function aLaFin(racine) {
+    if (!racine) return;
+    [].forEach.call(racine.querySelectorAll('.jscroll'), function (e) {
+      if (e.__vx40fin || e.clientWidth < 1 || e.scrollWidth <= e.clientWidth + 1) return;
+      e.__vx40fin = true; if (e.scrollLeft < 1) e.scrollLeft = e.scrollWidth;
+    });
+  }
 
   function montrer(d, k, defiler) {
     var nav = d.querySelector('.vx40-nav'); if (!nav) return;
     [].forEach.call(nav.querySelectorAll('button'), function (b) { var on = b.getAttribute('data-k') === k; b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; });
     [].forEach.call(d.querySelectorAll('.vx40-ch'), function (c) { c.hidden = c.getAttribute('data-k') !== k; });
     ecrire(k); signaler(d);
+    var vu = d.getElementById('vx40-' + k); d.defaultView.requestAnimationFrame(function () { aLaFin(vu); });
     if (defiler) { try { var f = d.defaultView.frameElement, P = d.defaultView.parent; var r = nav.getBoundingClientRect(), fr = f.getBoundingClientRect(); var y = fr.top + r.top; if (y < 0 || y > P.innerHeight * 0.6) P.scrollBy({ top: y - 12, behavior: 'smooth' }); } catch (e) {} }
   }
 
@@ -98,12 +116,12 @@
         var m = d.getElementById(id); if (!m) return;
         if (plie) {
           var t = d.querySelector('.vx40-t[data-m="' + id + '"]');
-          if (t && m.parentElement !== t) t.appendChild(m);
-          if (!t) { t = d.createElement('details'); t.className = 'vx40-t'; t.setAttribute('data-m', id); /* C133 : déplié d'office dans Jour et Mois (Steven, 17/10) ; le client peut replier. */ if (c.ouvert) t.open = true; t.innerHTML = '<summary><b></b><span></span><i aria-hidden="true">›</i></summary>'; m.before(t); t.appendChild(m); t.addEventListener('toggle', function () { signaler(d); }); }
+          if (t && m.parentElement !== t) deplacer(m, function () { t.appendChild(m); });
+          if (!t) { t = d.createElement('details'); t.className = 'vx40-t'; t.setAttribute('data-m', id); /* C133 : déplié d'office dans Jour et Mois (Steven, 17/10) ; le client peut replier. */ if (c.ouvert) t.open = true; t.innerHTML = '<summary><b></b><span></span><i aria-hidden="true">›</i></summary>'; m.before(t); deplacer(m, function () { t.appendChild(m); }); t.addEventListener('toggle', function () { signaler(d); if (t.open) d.defaultView.requestAnimationFrame(function () { aLaFin(t); }); }); }
           var tb = titre(m), rs = resume(m), sb = t.querySelector('summary>b'), sp = t.querySelector('summary>span');
           if (sb.textContent !== tb) sb.textContent = tb; if (sp.textContent !== rs) sp.textContent = rs;
-          if (t.parentElement !== col) col.appendChild(t);
-        } else if (m.parentElement !== col) col.appendChild(m);
+          if (t.parentElement !== col) deplacer(t, function () { col.appendChild(t); });
+        } else if (m.parentElement !== col) deplacer(m, function () { col.appendChild(m); });
       }
       c.p.forEach(function (id) { placer(id, colP); });
       c.s.forEach(function (id) { placer(id, colS); });
@@ -111,7 +129,7 @@
       [[c.p, colP], [c.s, colS]].forEach(function (pc) {
         var voulu = pc[0].map(function (id) { id = id.replace('~', ''); var m = d.getElementById(id); return m && (m.parentElement && m.parentElement.classList.contains('vx40-t') ? m.parentElement : m); }).filter(function (n) { return n && n.parentElement === pc[1]; });
         var reel = [].filter.call(pc[1].children, function (n) { return voulu.indexOf(n) >= 0; });
-        if (voulu.some(function (n, i) { return reel[i] !== n; })) voulu.forEach(function (n) { pc[1].appendChild(n); });
+        if (voulu.some(function (n, i) { return reel[i] !== n; })) voulu.forEach(function (n) { deplacer(n, function () { pc[1].appendChild(n); }); });
       });
       ch.classList.toggle('vx40-2', !c.large && colS.children.length > 0);
     });
@@ -145,10 +163,11 @@
     }
   }
 
+  function finRanger(d) { var c = d.querySelector('.vx40-ch:not([hidden])'); if (c) d.defaultView.requestAnimationFrame(function () { aLaFin(c); }); }
   var suivis = new WeakSet();
   function tour() {
     [].forEach.call(doc.querySelectorAll('iframe.p41-ecran'), function (f) {
-      ranger(f);
+      ranger(f); try { if (f.contentDocument && f.contentDocument.querySelector('.vx40-ch')) finRanger(f.contentDocument); } catch (e) {}
       var d; try { d = f.contentDocument; } catch (e) { d = null; }
       if (d && d.body && !suivis.has(d)) {
         suivis.add(d); var att = null;
@@ -160,5 +179,13 @@
   setInterval(tour, 1500);
   doc.addEventListener('DOMContentLoaded', tour);
   w.addEventListener('load', function () { setTimeout(tour, 300); });
+  /* C137 — Vérification complète (Steven, 17/10) : sur iPhone, la ligne sous le logo coupait ses deux textes
+     (« Indice Carte · Démonstration f… », « Période · septembre 2… »). Écran étroit : ils passent à la ligne, entiers. */
+  (function () {
+    if (doc.getElementById('vx40-topsub')) return;
+    var st = doc.createElement('style'); st.id = 'vx40-topsub';
+    st.textContent = '@media (max-width:520px){#topSub{flex-wrap:wrap!important;row-gap:2px}#topSub>#topZone,#topSub>#topKpi{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;min-width:0}#topSub>#topKpi{flex:1 1 100%!important;text-align:left!important}}';
+    (doc.head || doc.documentElement).appendChild(st);
+  })();
   w.VerdictAccueilChapitres = { chapitres: CHAP, ranger: ranger, tour: tour };
 })();
