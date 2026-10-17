@@ -8,7 +8,9 @@
    cadre ; chaque appui s'allume immédiatement, puis commande le vrai bouton du cadre (toutes les fonctions d'origine
    restent les mêmes). La barre d'origine du cadre devient invisible mais garde sa place et son rôle de repère.
    - Même apparence (capsule blanche en clair, sombre en sombre, icônes et libellés copiés du cadre).
-   - Même capsule au repos et en défilement (choix R34) : plus de repli qui bouge les boutons sous le doigt.
+   - C134 (Steven, 17/10 : « sur iPhone, le module du bas ne bouge plus du tout quand je défile, il diminuait avant ») :
+     la capsule suit de nouveau le repli de la barre du cadre : en descendant, elle rétrécit au centre (icônes seules) ;
+     en remontant, elle se redéploie. Elle reste dans la coquille : un seul appui suffit toujours, repliée ou non.
    - Elle disparaît quand le cadre cache sa barre (grand écran : navigation en haut ; écran plein : lecteur, feuilles),
      pendant le verrou et pendant l'ouverture. */
 (function () {
@@ -19,7 +21,9 @@
   css.textContent =
     '#vdDock{position:fixed;left:0;right:0;z-index:60;display:none;box-sizing:border-box;margin:0 auto;padding:6px;gap:2px;' +
       'border:1px solid rgba(15,23,42,.12);border-radius:999px;background:#ffffff;color:#405266;box-shadow:0 10px 30px rgba(15,23,42,.18);' +
-      'font:700 11.5px/1.15 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-user-select:none;user-select:none;touch-action:manipulation;opacity:0;transform:translateY(8px);transition:opacity .22s ease,transform .28s ' + E + '}' +
+      'font:700 11.5px/1.15 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-user-select:none;user-select:none;touch-action:manipulation;opacity:0;transform:translateY(8px);transition:opacity .22s ease,transform .28s ' + E + ',width .3s ' + E + ',left .3s ' + E + ',height .3s ' + E + ',padding .3s ' + E + '}' +
+    '#vdDock>button>:not(.ic):not(svg):not(.bdg){display:block;max-width:100%;max-height:16px;opacity:1;overflow:hidden;text-overflow:ellipsis;transition:max-height .3s ' + E + ',opacity .2s ease}' +
+    'html.vd-dock-replie #vdDock{padding:5px}html.vd-dock-replie #vdDock>button{min-height:44px;gap:0}html.vd-dock-replie #vdDock>button>:not(.ic):not(svg):not(.bdg){max-height:0;opacity:0}' +
     'html.vd-dock-on #vdDock{display:flex;opacity:1;transform:none}' +
     'html.vd-workspace-dark #vdDock{background:#141b22;border-color:#2b3644;color:#e5e7eb;box-shadow:0 10px 30px rgba(0,0,0,.55)}' +
     '#vdDock>button{position:relative;flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:4px 2px 5px;border:0;border-radius:999px;background:transparent;color:inherit;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
@@ -117,7 +121,7 @@
       var nb = doc.createElement('button'); nb.type = 'button'; nb.setAttribute('data-v', v);
       [].forEach.call(b.childNodes, function (n) {
         if (n.nodeType === 1) { var c = doc.importNode(n, true); if (c.id === 'bdg') { c.removeAttribute('id'); c.className = 'bdg'; } nb.appendChild(c); }
-        else if (n.nodeType === 3 && String(n.nodeValue).trim()) nb.appendChild(doc.createTextNode(String(n.nodeValue).trim()));
+        else if (n.nodeType === 3 && String(n.nodeValue).trim()) { var lb = doc.createElement('span'); lb.className = 'lib'; lb.textContent = String(n.nodeValue).trim(); nb.appendChild(lb); }
       });
       var lib = String(b.getAttribute('aria-label') || b.textContent || '').trim(); if (lib) nb.setAttribute('aria-label', lib);
       if (b.classList.contains('on') || b.getAttribute('aria-current') === 'page') { nb.classList.add('on'); nb.setAttribute('aria-current', 'page'); }
@@ -137,7 +141,13 @@
   }
 
   /* Géométrie : la capsule de la coquille se pose exactement sur la barre du cadre. */
-  var geom = '';
+  var geom = '', G = null, replie = false;
+  /* C134 : repliée = capsule centrée sur la barre déployée, largeur réduite, même bas. */
+  function poser() {
+    if (!dock || !G) return;
+    var lg = replie ? Math.min(G.w, Math.max(200, Math.min(240, w.innerWidth - 28))) : G.w, h = replie ? 56 : G.h;
+    dock.style.left = (G.x + (G.w - lg) / 2) + 'px'; dock.style.right = 'auto'; dock.style.width = lg + 'px'; dock.style.height = h + 'px'; dock.style.bottom = G.b + 'px';
+  }
   function placer() {
     if (!dock || !cnav || !cadre) return false;
     /* Barre du cadre repliée (après un défilement) : sa capsule rétrécit ; on garde la géométrie de la barre déployée. */
@@ -147,7 +157,7 @@
     var hv = cdoc.defaultView.innerHeight || cadre.clientHeight;
     var bas = Math.max(0, Math.round((hv - r.bottom) + (w.innerHeight - f.bottom)));
     var g = [Math.round(f.left + r.left), Math.round(r.width), Math.round(r.height), bas].join(',');
-    if (g !== geom) { geom = g; dock.style.left = (f.left + r.left) + 'px'; dock.style.right = 'auto'; dock.style.width = r.width + 'px'; dock.style.height = r.height + 'px'; dock.style.bottom = bas + 'px'; }
+    if (g !== geom) { geom = g; G = { x: f.left + r.left, w: r.width, h: r.height, b: bas }; poser(); }
     return true;
   }
 
@@ -176,6 +186,8 @@
     var ok = false;
     try { ok = visibleDansCadre() && placer(); } catch (e) { ok = false; }
     if (ok) synchroniserEtat();
+    var rp = !!(ok && cdoc && cdoc.documentElement.classList.contains('premium-dock-hidden'));
+    if (rp !== replie) { replie = rp; doc.documentElement.classList.toggle('vd-dock-replie', rp); poser(); }
     if (ok !== habille) { habille = ok; if (ok) habillerCadre(); else deshabillerCadre(cdoc, cnav); }
     doc.documentElement.classList.toggle('vd-dock-on', ok);
   }
@@ -184,8 +196,8 @@
     if (obsNav) { try { obsNav.disconnect(); } catch (e) {} obsNav = null; }
     if (obsHtml) { try { obsHtml.disconnect(); } catch (e) {} obsHtml = null; }
     deshabillerCadre(cdoc, cnav); habille = false;
-    cdoc = null; cnav = null; boutons = {}; geom = ''; dernierGabarit = '';
-    doc.documentElement.classList.remove('vd-dock-on');
+    cdoc = null; cnav = null; boutons = {}; geom = ''; G = null; dernierGabarit = ''; replie = false;
+    doc.documentElement.classList.remove('vd-dock-on'); doc.documentElement.classList.remove('vd-dock-replie');
   }
   function attacher() {
     var f = trouverCadre(); var d = null; try { d = f && f.contentDocument; } catch (e) { d = null; }
