@@ -32,7 +32,7 @@
     if (doc.getElementById('maj18') || postponed) return;
     css();
     var b = doc.createElement('div'); b.id = 'maj18'; b.setAttribute('role', 'status');
-    b.innerHTML = '<span><b>Nouvelle version de Verdict</b><small>Vos saisies sont enregistrées avant la mise à jour.</small></span><button type="button" class="maj18-go">Mettre à jour</button><button type="button" class="maj18-later" aria-label="Plus tard">Plus tard</button>';
+    b.innerHTML = '<span><b>Nouvelle version Verdict disponible</b><small>Vos saisies sont enregistrées avant la mise à jour.</small></span><button type="button" class="maj18-go">Mettre à jour</button><button type="button" class="maj18-later" aria-label="Plus tard">Plus tard</button>';
     doc.body.appendChild(b); contraste(); ranger();
     b.querySelector('.maj18-go').onclick = apply;
     prevenir();
@@ -50,15 +50,22 @@
   /* C72 — Vraie notification du système (avec le son de l'appareil) quand une nouvelle version arrive, si le client l'a
      activée dans Sécurité 🔒. Une seule fois par version ; la toucher ouvre Verdict et lance la mise à jour.
      Appli ouverte ou en arrière-plan ; appli fermée : il faudra le serveur Verdict (notifications push). */
-  var NOTIF_PREF = 'verdict:maj-notifications', NOTIF_FAITE = 'verdict:maj-notifiee';
+  var NOTIF_PREF = 'verdict:maj-notifications', NOTIF_FAITE = 'verdict:maj-notifiee', prevenirPlusTard = false;
+  doc.addEventListener('visibilitychange', function () { if (doc.hidden && prevenirPlusTard && doc.getElementById('maj18')) prevenir(); });
   function lire(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function ecrire(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function notifEtat() { if (!('Notification' in w)) return 'indisponible'; if (Notification.permission === 'denied') return 'refusee'; return Notification.permission === 'granted' && lire(NOTIF_PREF) !== 'non' ? 'active' : 'inactive'; }
+  /* C135 (Steven, 17/10 : « je veux juste Nouvelle version Verdict disponible, rien d'autre, pas de from ») : iOS ajoute
+     lui-même « from Verdict » à toute notification système d'une appli web installée, et aucune appli ne peut l'enlever.
+     Appli ouverte : plus de notification système, seulement le bandeau de Verdict (titre exact, sans « from »).
+     La notification système ne part que si Verdict est en arrière-plan (ou dès qu'il y passe). */
   function prevenir() {
     if (notifEtat() !== 'active') return;
+    if (!doc.hidden) { prevenirPlusTard = true; return; }
+    prevenirPlusTard = false;
     versionPubliee().then(function (v) {
       v = v || 'nouvelle'; if (lire(NOTIF_FAITE) === v) return; ecrire(NOTIF_FAITE, v);
-      var titre = 'Nouvelle version disponible', opts /* C117 : iOS ajoute lui-même « from Verdict » */ = { body: 'Touchez pour mettre à jour. Vos saisies sont enregistrées avant.', tag: 'verdict-maj', renotify: true, icon: new URL('icon-192.png', (doc.querySelector('link[rel=manifest]') || {}).href || location.href).href };
+      var titre = 'Nouvelle version Verdict disponible', opts /* C117/C135 : iOS ajoute lui-même « from Verdict » en arrière-plan */ = { body: 'Touchez pour mettre à jour. Vos saisies sont enregistrées avant.', tag: 'verdict-maj', renotify: true, icon: new URL('icon-192.png', (doc.querySelector('link[rel=manifest]') || {}).href || location.href).href };
       var viaWorker = 'serviceWorker' in navigator ? navigator.serviceWorker.getRegistration().then(function (r) { if (!r) throw 0; return r.showNotification(titre, opts); }) : Promise.reject();
       return viaWorker.catch(function () { var n = new Notification(titre, opts); n.onclick = function () { try { w.focus(); } catch (e) {} n.close(); apply(); }; });
     }).catch(function () {});
@@ -111,7 +118,7 @@
     var c = centre();
     if (!c || !c.ingest) { if (rangerEssais++ < 240) setTimeout(ranger, 500); return; }
     rangerEssais = 0;
-    c.ingest({ id: NOTIF_ID, source: 'Verdict', module: 'verdict', level: 'info', title: 'Nouvelle version de Verdict disponible', detail: 'Mettez à jour quand vous voulez : vos saisies sont enregistrées avant.', actionLabel: 'Mettre à jour', proof: 'Une nouvelle version a été publiée et téléchargée sur cet appareil.', createdAt: new Date().toISOString(), forceUnread: true });
+    c.ingest({ id: NOTIF_ID, source: 'Verdict', module: 'verdict', level: 'info', title: 'Nouvelle version Verdict disponible', detail: 'Mettez à jour quand vous voulez : vos saisies sont enregistrées avant.', actionLabel: 'Mettre à jour', proof: 'Une nouvelle version a été publiée et téléchargée sur cet appareil.', createdAt: new Date().toISOString(), forceUnread: true });
   }
   /* Ouvrir cette notification = mettre à jour (avant l'action habituelle du centre). */
   doc.addEventListener('click', function (e) {
