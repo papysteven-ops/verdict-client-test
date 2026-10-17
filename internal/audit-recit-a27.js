@@ -78,7 +78,7 @@
       var echelle = Math.max(D.ca, D.mini) * 1.08, pc = D.ca / echelle * 100, pm = D.mini / echelle * 100, ok = D.securite >= 0;
       t.push('<section class="rc-card rc-c3" data-rc="3"><span class="rc-k">3 · Le seuil</span><h2>' + (ok ? 'Vous passez le seuil' : 'Le seuil n’est pas atteint') + '</h2>' +
         '<div class="rc-gauge"><div class="rc-track"><i style="--w:' + pc.toFixed(2) + '%"></i><span class="rc-mark" style="--x:' + pm.toFixed(2) + '%"><b>minimum</b></span></div>' +
-        '<div class="rc-gauge-l"><span>Minimum ' + eur(D.mini) + '</span><span>Réalisé ' + eur(D.ca) + '</span></div></div>' +
+        '<div class="rc-gauge-l"><span>Minimum ' + eur(D.mini) + ' HT</span><span>Réalisé ' + eur(D.ca) + ' HT</span></div></div>' /* C143 : HT dit */ +
         '<p class="rc-big"><b data-rc-count="' + Math.round(Math.abs(D.securite)) + '" data-rc-eur>0 €</b><small>' + (ok ? 'de marge de sécurité sur un an' : 'à aller chercher sur un an') + '</small></p>' +
         '<span class="rc-suite">Vos fuites ↓</span></section>');
     }

@@ -98,12 +98,35 @@
     '.vx39-f{margin:10px 0 0!important;padding-top:10px;border-top:1px dashed rgba(34,197,94,.35);font-variant-numeric:tabular-nums}.vx39-f b{color:#16a34a;font-size:16px}' +
     'html.vd-workspace-dark .vx39{background:rgba(34,197,94,.09);border-color:rgba(34,197,94,.28)}html.vd-workspace-dark .vx39-f b{color:#4ade80}';
 
+  /* C143 — Une seule « avance du mois » partout. Dans le détail du mois en cours (courbe des mois), la case
+     « Écart au minimum » montrait l'écart PRÉVU en fin de mois (fin de mois estimée − minimum : +3 957 €), à côté de
+     « Encaissé à ce jour » : le client y lisait une deuxième avance, différente de celle de la carte du jour (+2 036 €).
+     La case est renommée « Écart prévu en fin de mois » et une case « Avance à ce jour » (ou « Retard à ce jour ») reprend
+     exactement le chiffre de la carte du jour (règle CHR, attendu à cette date selon le poids des jours). */
+  function uneSeuleAvance(d, chr) {
+    if (!d || !chr || !chr.exact) return;
+    [].forEach.call(d.querySelectorAll('.tuile small'), function (sm) {
+      if ((sm.textContent || '').trim() !== 'Écart au minimum') return;
+      var tuile = sm.closest('.tuile'), boite = tuile && tuile.parentElement; if (!boite) return;
+      var encours = [].some.call(boite.querySelectorAll('.tuile small'), function (x) { return (x.textContent || '').trim() === 'Encaissé à ce jour'; });
+      if (!encours) return;
+      sm.textContent = 'Écart prévu en fin de mois';
+      if (boite.querySelector('.vx43-avance')) return;
+      var retard = Number(chr.deficit) || 0, avance = Number(chr.advance) || 0;
+      var t = d.createElement('div'); t.className = 'tuile vx43-avance'; t.style.minWidth = '0';
+      t.innerHTML = '<small style="display:block;overflow-wrap:anywhere"></small><b style="display:block;overflow-wrap:anywhere"></b>';
+      t.querySelector('small').textContent = retard > 0 ? 'Retard à ce jour' : 'Avance à ce jour';
+      var b = t.querySelector('b'); b.textContent = retard > 0 ? '−' + eur(retard) : (avance > 0 ? '+' + eur(avance) : '0 €'); b.style.color = retard > 0 ? '#ef4444' : '#22c55e';
+      boite.insertBefore(t, tuile);
+    });
+  }
   function enrichir(cadre) {
     var d, cw; try { d = cadre.contentDocument; cw = cadre.contentWindow; } catch (e) { return; }
     if (!d || !d.body || !cw || !cw.VD) return;
     if (!d.getElementById('vx39-css')) { var s = d.createElement('style'); s.id = 'vx39-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
     if (!d.__vx39t) { d.__vx39t = true; d.addEventListener('toggle', function (e) { var t = e.target; if (t && t.classList && t.classList.contains('vx39')) ouverts[t.getAttribute('data-vx39')] = t.open; }, true); }
     var input = cw.VD.chr && cw.VD.chr.input; if (!input) return;
+    try { uneSeuleAvance(d, cw.VD.chr); uneSeuleAvance(doc, cw.VD.chr); mentionTTC(d); } catch (e) {}
     /* Saisie du jour : le prochain jour ouvert à faire. */
     var saisie = d.getElementById('modSaisie'), next = cw.VD.chr.next;
     if (saisie) { var lp = [].filter.call(saisie.querySelectorAll('.day-total p'), function (p) { return /^À réaliser aujourd/.test((p.textContent || '').trim()); })[0];
@@ -131,8 +154,47 @@
       }
     }
   }
+  /* C143 — Structure › Chiffre minimum : la case « Seuil de trésorerie annuel » affichait en réalité le chiffre minimum
+     annuel (574 390 €, amortissements compris), alors que le vrai seuil de trésorerie (583 241 €, sorties d'argent +
+     remboursement du capital d'emprunt, C130) est affiché juste en dessous et dans l'Accueil. Le libellé reprend son nom
+     d'origine quand la valeur est bien celle du chiffre minimum. */
+  /* C143 — HT ou TTC dit à chaque minimum. Le pilotage du jour et du mois compte en TTC (comme la caisse et la saisie) ;
+     Structure, Audit et Simuler comptent en HT. Sans la mention, 643 593 € (TTC) et 574 390 € (HT) semblaient se
+     contredire. Les étiquettes de minimum issues du pilotage reçoivent « TTC ». */
+  var LIBELLES_TTC = { 'Minimum du mois': 1, 'Minimum annuel': 1, 'Minimum à couvrir': 1, 'Minimum de structure ce jour': 1, 'Minimum du jour': 1, 'Reste pour couvrir le minimum': 1, 'Encaissé à ce jour': 1 };
+  function mentionTTC(d) {
+    if (!d) return;
+    [].forEach.call(d.querySelectorAll('small, .k, dt, span, b, div'), function (e) {
+      if (e.children.length) return; var t = (e.textContent || '').trim();
+      if (LIBELLES_TTC[t]) e.textContent = t + ' TTC';
+    });
+  }
+  /* C143 — Salaires : la page donnait deux coûts d'équipe sans les relier (253 286 € · 39,7 % du CA en haut ; « Équipe ·
+     2026 » 242 376 € · 37,9 % plus bas). Ce ne sont pas les mêmes périmètres : l'exercice complet de la structure (repris
+     par Structure, Priorités et l'Audit) et l'année 2026 reconstruite d'après les services saisis. Une phrase le dit. */
+  function deuxCouts() {
+    var mod = doc.getElementById('vtModule'); if (!mod || mod.querySelector('.vx43-lien')) return;
+    var masse = '', part = '';
+    [].forEach.call(doc.querySelectorAll('#v-sal .kpi'), function (k) { var l = (k.querySelector('.k') || {}).textContent || ''; if (/Masse salariale \/ an/.test(l)) masse = ((k.querySelector('.v') || {}).textContent || '').trim(); });
+    [].forEach.call(doc.querySelectorAll('#v-sal .jauge .jt'), function (j) { if (/Masse salariale % CA/.test(j.textContent || '')) { var m = /(\d+(?:,\d+)?)\s*%/.exec(j.parentElement.textContent || ''); if (m) part = m[1] + ' %'; } });
+    if (!masse) return;
+    var chips = mod.querySelector('.vt-chips'); if (!chips) return;
+    var p = doc.createElement('p'); p.className = 'vt-note vx43-lien'; p.style.margin = '6px 0 10px';
+    p.textContent = 'Ici : l’année 2026, reconstruite d’après vos services saisis. Le coût humain de référence de la structure (' + masse + (part ? ' · ' + part + ' du CA' : '') + ') porte sur l’exercice complet : c’est lui que reprennent Structure, Priorités et l’Audit.';
+    chips.insertAdjacentElement('afterend', p);
+  }
+  function libelleSeuil() {
+    var p = null; try { p = w.point3Calc(w.moteur()); } catch (e) {} if (!p || !(p.breakEven > 0)) return;
+    var mini = Math.round(p.breakEven), treso = Math.round(p.breakEvenTresorerie || 0);
+    [].forEach.call(doc.querySelectorAll('.kpi > .k'), function (k) {
+      if ((k.textContent || '').trim() !== 'Seuil de trésorerie annuel') return;
+      var v = k.parentElement.querySelector('.v'), n = v ? Number(String(v.textContent).replace(/[^0-9-]/g, '')) : NaN;
+      if (n === mini && n !== treso) k.textContent = 'Chiffre minimum annuel';
+    });
+  }
   var suivis = new WeakSet();
   function tour() {
+    try { libelleSeuil(); mentionTTC(doc.getElementById('v-data')); deuxCouts(); } catch (e) {}
     [].forEach.call(doc.querySelectorAll('iframe.p41-ecran'), function (f) {
       enrichir(f);
       var d; try { d = f.contentDocument; } catch (e) { d = null; }
