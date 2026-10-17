@@ -80,6 +80,16 @@
       '<p class="vx39-f">Base ' + eur(base) + ' ' + signe(total - base) + ' = <b>' + eur(total) + '</b> ' + (aujourdHui ? 'à réaliser aujourd’hui' : 'à réaliser ce jour-là') + '</p></div></details>';
   }
   var CSS = '.vx39-r{color:#ea580c!important;font-weight:800}.vx39-a{color:#16a34a!important;font-weight:800}html.vd-workspace-dark .vx39-r{color:#fb923c!important}html.vd-workspace-dark .vx39-a{color:#4ade80!important}.vx39-l dt small{display:block;font-size:12px;opacity:.75;font-weight:500}' +
+    /* C142 (Steven, 17/10 : « avant c'était nickel, fluide, clair ; là énormément d'infos utiles, ça fait chargé ») :
+       la carte du jour garde l'essentiel (à réaliser, avance ou retard du mois, saisie) ; le détail passe dans le volet
+       replié « Pourquoi ce montant ? » ; « Reste à faire aujourd'hui » et sa barre n'apparaissent qu'une fois une saisie
+       commencée (avant, ils répètent exactement « À réaliser »). */
+    '#modSaisie .day-total>p:not(.vx39-p){font-size:19px;font-weight:800;margin:6px 0 2px;letter-spacing:-.01em}' +
+    '#modSaisie p.vx39-p{flex-direction:row;flex-wrap:wrap;margin:6px 0 12px}#modSaisie p.vx39-p small{display:none}' +
+    '#modSaisie .vx39-pos{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:14px;background:rgba(148,163,184,.14)}' +
+    '#modSaisie .vx39-pos.avance{background:rgba(34,197,94,.13)}#modSaisie .vx39-pos.retard{background:rgba(249,115,22,.14)}' +
+    '#modSaisie .day-total:has(.day-none)>.day-track,#modSaisie .day-total:has(.day-none)>b{display:none}' +
+    '.vx39-d{display:grid;gap:6px;margin:0 0 12px;padding:0 0 12px;border-bottom:1px dashed rgba(34,197,94,.35)}.vx39-d small{font-size:14px;line-height:1.45;opacity:.9}' +
     '.vx39-alerte{color:#ea580c;font-weight:700}html.vd-workspace-dark .vx39-alerte{color:#fb923c}p.vx39-p{display:flex;flex-direction:column;gap:3px;margin:6px 0 10px}p.vx39-p small{font-size:13px;opacity:.85}.vx39-pos{font-weight:700}.vx39-pos.avance b{color:#16a34a}.vx39-pos.retard b{color:#ea580c}html.vd-workspace-dark .vx39-pos.avance b{color:#4ade80}html.vd-workspace-dark .vx39-pos.retard b{color:#fb923c}' +
     '.vx39>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;min-height:44px}.vx39>summary::-webkit-details-marker{display:none}' +
     '.vx39>summary i{font-style:normal;font-size:22px;line-height:1;opacity:.6;transition:transform .25s}.vx39[open]>summary i{transform:rotate(90deg)}.vx39:not([open]){padding-top:4px!important;padding-bottom:4px!important}.vx39-c{padding-top:4px}' +
@@ -102,6 +112,9 @@
     if (saisie && next) {
       var ex = saisie.querySelector('.vx39');
       if (!ex || ex.getAttribute('data-vx39') !== next) { if (ex) ex.remove(); var h = bloc(input, next, !input.today || input.today === next) /* C131 : jour fermé aujourd'hui → titre du prochain jour ouvert */; if (h) saisie.insertAdjacentHTML('beforeend', h); }
+      /* C142 : le détail de la position (reste du mois, couverts, année à date) est en tête du volet replié. */
+      var vol = saisie.querySelector('.vx39 .vx39-c');
+      if (vol && !vol.querySelector('.vx39-d')) { var hp2 = position(cw.VD.chr); if (hp2) { var t = d.createElement('div'); t.innerHTML = hp2; var lignes = t.querySelectorAll('small'); if (lignes.length) { var dd = d.createElement('div'); dd.className = 'vx39-d'; [].forEach.call(lignes, function (x) { dd.appendChild(x); }); vol.insertBefore(dd, vol.firstChild); } } }
     }
     /* Détail d'un jour touché dans le calendrier. */
     var det = d.getElementById('detail');
