@@ -38,7 +38,11 @@
     '.vx40-t>.mod,.vx40-t>section{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}' +
     '.vx40-t>.mod,.vx40-t>section{padding-top:2px!important}.vx40-t>.mod>.mod-h:empty,.vx40-t>.mod>.mod-h:not(:has(>:not(.kicker))){display:none}' +
     '.vx40-t>.mod>.mod-h>.kicker:first-child,.vx40-t>#vdOffCard>#vdOffTitle{display:none}' +
-    '.vx40-suite{display:flex;justify-content:space-between;gap:10px;margin:4px 0 8px;grid-column:1/-1}.vx40-suite .vx40-suiv{margin-left:auto}.vx40-suite button{appearance:none;border:1px solid var(--line,rgba(148,163,184,.2));background:transparent;color:var(--txt,inherit);font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;cursor:pointer;min-height:44px}' +
+    '.vx40-suite{display:flex;justify-content:space-between;gap:10px;margin:4px 0 0;padding-bottom:26px;grid-column:1/-1}.vx40-suite .vx40-suiv{margin-left:auto}.vx40-suite button{appearance:none;border:1px solid var(--line,rgba(148,163,184,.2));background:transparent;color:var(--txt,inherit);font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;cursor:pointer;min-height:44px}' +
+    /* C139 (Steven, 17/10 : « boutons Mois / Année : en blanc en sombre, en sombre en clair, pour les identifier parfaitement ») */
+    '.vx40-suite button{background:#111827!important;color:#ffffff!important;border-color:#111827!important;box-shadow:0 2px 6px rgba(15,23,42,.16)}.vx40-suite button:active{transform:scale(.97)}' +
+    'html.vd-workspace-dark .vx40-suite button{background:#ffffff!important;color:#0b1220!important;border-color:#ffffff!important;box-shadow:0 2px 6px rgba(0,0,0,.4)}' +
+    '@media (prefers-color-scheme:dark){html:not(.vd-workspace-light) .vx40-suite button{background:#ffffff!important;color:#0b1220!important;border-color:#ffffff!important}}' +
     'main.cadre>.vx40-nav,main.cadre>.vx40-ch,main.cadre>.vx40-ch~*{grid-column:1/-1!important}@media (min-width:768px){main.cadre>.vx40-nav{margin:0}}' +
     '@media (min-width:980px){.cadre.vx40-large{max-width:1180px}.vx40-ch.vx40-2{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}.vx40-nav{max-width:520px}}' +
     '@media (prefers-reduced-motion:reduce){.vx40-nav button,.vx40-t>summary i{transition:none}}';
