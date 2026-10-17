@@ -13,7 +13,7 @@
   /* p = essentiel (ouvert), s = complément (replié sous une ligne de résumé). */
   var CHAP = [
     { k: 'jour', t: 'Jour', ouvert: true, p: ['modSaisie'], s: ['modAction', 'modRupture', '~modReperesJour', '~modJour'] },
-    { k: 'mois', t: 'Mois', ouvert: true, p: ['calendrier'], s: ['modMois', '~vdOffCard', '~modManqueCarte'] },
+    { k: 'mois', t: 'Mois', ouvert: true, large: true /* C136 : calendrier et mois ont leur propre mise en page en deux colonnes : pleine largeur, l’un sous l’autre */, p: ['calendrier'], s: ['modMois', '~vdOffCard', '~modManqueCarte'] },
     { k: 'annee', t: 'Année', p: ['modAnnee'], s: [] },
     { k: 'argent', t: 'Argent', p: ['modArgent'], s: ['~modTreso', '~modCash13'] }
   ];
@@ -113,7 +113,7 @@
         var reel = [].filter.call(pc[1].children, function (n) { return voulu.indexOf(n) >= 0; });
         if (voulu.some(function (n, i) { return reel[i] !== n; })) voulu.forEach(function (n) { pc[1].appendChild(n); });
       });
-      ch.classList.toggle('vx40-2', colS.children.length > 0);
+      ch.classList.toggle('vx40-2', !c.large && colS.children.length > 0);
     });
     /* Un tiroir dont le module a disparu (re-rendu) est retiré ; un doublon éventuel aussi. */
     var vus = {};
