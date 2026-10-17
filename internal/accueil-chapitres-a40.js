@@ -38,7 +38,7 @@
     '.vx40-t>.mod,.vx40-t>section{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}' +
     '.vx40-t>.mod,.vx40-t>section{padding-top:2px!important}.vx40-t>.mod>.mod-h:empty,.vx40-t>.mod>.mod-h:not(:has(>:not(.kicker))){display:none}' +
     '.vx40-t>.mod>.mod-h>.kicker:first-child,.vx40-t>#vdOffCard>#vdOffTitle{display:none}' +
-    '.vx40-suite{display:flex;justify-content:flex-end;margin:4px 0 8px}.vx40-suite button{appearance:none;border:1px solid var(--line,rgba(148,163,184,.2));background:transparent;color:var(--txt,inherit);font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;cursor:pointer;min-height:44px}' +
+    '.vx40-suite{display:flex;justify-content:space-between;gap:10px;margin:4px 0 8px;grid-column:1/-1}.vx40-suite .vx40-suiv{margin-left:auto}.vx40-suite button{appearance:none;border:1px solid var(--line,rgba(148,163,184,.2));background:transparent;color:var(--txt,inherit);font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;cursor:pointer;min-height:44px}' +
     'main.cadre>.vx40-nav,main.cadre>.vx40-ch,main.cadre>.vx40-ch~*{grid-column:1/-1!important}@media (min-width:768px){main.cadre>.vx40-nav{margin:0}}' +
     '@media (min-width:980px){.cadre.vx40-large{max-width:1180px}.vx40-ch.vx40-2{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}.vx40-nav{max-width:520px}}' +
     '@media (prefers-reduced-motion:reduce){.vx40-nav button,.vx40-t>summary i{transition:none}}';
@@ -105,8 +105,18 @@
       if (!ch) {
         ch = d.createElement('div'); ch.id = 'vx40-' + c.k; ch.className = 'vx40-ch'; ch.setAttribute('role', 'tabpanel'); ch.setAttribute('data-k', c.k); ch.setAttribute('aria-label', c.t);
         ch.innerHTML = '<div class="vx40-col vx40-p"></div><div class="vx40-col vx40-s"></div>';
-        var suiv = CHAP[ci + 1];
-        if (suiv) { var bt = d.createElement('div'); bt.className = 'vx40-suite'; bt.innerHTML = '<button type="button">' + suiv.t + ' ›</button>'; bt.firstChild.addEventListener('click', function () { montrer(d, suiv.k, true); }); ch.appendChild(bt); }
+        /* C138 (Steven, 17/10 : « un retour intelligent : Jour → Mois, Mois → Année, et ‹ Jour pour revenir ; Année revient à
+           Mois ») : en bas de chaque chapitre, « ‹ précédent » à gauche et « suivant › » à droite. */
+        var prec = CHAP[ci - 1], suiv = CHAP[ci + 1];
+        if (prec || suiv) {
+          var bt = d.createElement('div'); bt.className = 'vx40-suite';
+          [[prec, '‹ ' + (prec && prec.t), 'vx40-prec'], [suiv, (suiv && suiv.t) + ' ›', 'vx40-suiv']].forEach(function (x) {
+            if (!x[0]) return; var b = d.createElement('button'); b.type = 'button'; b.className = x[2]; b.textContent = x[1];
+            b.setAttribute('aria-label', (x[2] === 'vx40-prec' ? 'Revenir à ' : 'Aller à ') + x[0].t);
+            b.addEventListener('click', function () { montrer(d, x[0].k, true); }); bt.appendChild(b);
+          });
+          ch.appendChild(bt);
+        }
       }
       if (dernier.nextElementSibling !== ch) dernier.after(ch);
       dernier = ch;
