@@ -53,6 +53,26 @@
     }
     return n;
   }
+  /* C145 — petits défauts relevés par l'analyse complète. */
+  var SERVICES = { matin: 'Matin', midi: 'Midi', apres: 'Après-midi', aprem: 'Après-midi', soir: 'Soir', nuit: 'Nuit', petitdej: 'Petit-déjeuner', brunch: 'Brunch' };
+  function petitsDefauts(d) {
+    /* Entrées : boutons de service sans nom pour les lecteurs d'écran. */
+    [].forEach.call(d.querySelectorAll('button.svc-t:not([aria-label])'), function (b) {
+      var ligne = b.closest('.svc-row'), titre = ligne && ligne.querySelector('b'), id = b.getAttribute('data-id') || '';
+      b.setAttribute('aria-label', (titre ? titre.textContent.trim() + ' · ' : '') + (SERVICES[id] || id || 'service'));
+    });
+    /* Structure : zéro négatif d'arrondi (« −0,0 % ») affiché « 0,0 % ». */
+    var it = d.createTreeWalker(d.body, 4, null), n, a = [];
+    while ((n = it.nextNode())) if (/[-−]0,0(\s| )?%/.test(n.nodeValue)) a.push(n);
+    a.forEach(function (t) { t.nodeValue = t.nodeValue.replace(/[-−]0,0(\s| )?%/g, '0,0$1%'); });
+    /* Bandeau de démonstration sur téléphone : « Recommencer la démonstration » devient « Recommencer » (nom complet gardé
+       pour les lecteurs d'écran), pour que le × ait sa place. */
+    if ((d.defaultView || w).innerWidth < 600) [].forEach.call(d.querySelectorAll('#modeBar button'), function (b) { if ((b.textContent || '').trim() === 'Recommencer la démonstration') { b.setAttribute('aria-label', 'Recommencer la démonstration'); b.textContent = 'Recommencer'; } });
+    /* Aide : texte d'aide du champ trop long pour un téléphone. */
+    var q = d.getElementById('aideQ'); if (q && q.getBoundingClientRect().width > 0 && q.getBoundingClientRect().width < 300 && q.placeholder.length > 22) q.placeholder = 'Demander à Vera…';
+    /* Inventaire : lien « Ouvrir le même établissement » de 17 px de haut. */
+    [].forEach.call(d.querySelectorAll('a'), function (l) { if (/Ouvrir le même établissement/.test(l.textContent || '') && !l.__vx45) { l.__vx45 = true; l.style.display = 'inline-flex'; l.style.alignItems = 'center'; l.style.minHeight = '44px'; } });
+  }
   /* Changement de thème : on efface nos corrections puis on repasse. */
   function effacer(d) { [].forEach.call(d.querySelectorAll('[data-vx44]'), function (e) { e.style.removeProperty('color'); e.removeAttribute('data-vx44'); }); }
   var minuteur = 0, dernierTheme = '';
@@ -65,7 +85,7 @@
     var theme = doc.documentElement.className.indexOf('vd-workspace-dark') >= 0 ? 'sombre' : 'clair';
     var ds = documents();
     if (theme !== dernierTheme) { ds.forEach(effacer); dernierTheme = theme; vus = new WeakSet(); }
-    ds.forEach(function (d) { try { passe(d); } catch (e) {} });
+    ds.forEach(function (d) { try { petitsDefauts(d); passe(d); } catch (e) {} });
   }
   function surveiller(d) {
     if (!d || d.__vx44) return; d.__vx44 = true;
@@ -88,6 +108,12 @@
       '@media (max-width:600px){html.vx44-dans-appli body>.top{padding-top:6px!important;padding-bottom:6px!important}' +
       'html.vx44-dans-appli #siteSeg,html.vx44-dans-appli #zoneSeg{margin-top:6px!important;padding:3px!important}html.vx44-dans-appli #siteSeg>button,html.vx44-dans-appli #zoneSeg>button{padding-top:7px!important;padding-bottom:7px!important;min-height:38px}' +
       'html.vx44-dans-appli .lvl{margin-top:6px!important}html.vx44-dans-appli #lvlSeg>button{padding-top:6px!important;padding-bottom:6px!important;min-height:36px}html.vx44-dans-appli #demoBanner{margin-top:6px!important}}' +
+      /* C145 — petits défauts (groupe 3) : bouton × du bandeau de démonstration à 32 px, sans déborder ; noms de produits et
+         légendes de l'Inventaire sur deux lignes au lieu d'être coupés. */
+      '.mb-label{display:inline-flex!important;align-items:center;gap:6px}.p40-mb-x{min-width:32px!important;min-height:32px!important;flex:0 0 auto;display:inline-grid;place-items:center}' +
+      'html.p40-app body #modeBar .mb-label .p40-mb-x{width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;margin-left:6px!important;margin-right:8px!important;font-size:15px!important}html.p40-app body #modeBar .mb-label{flex:0 0 auto;min-width:0}' +
+      '.pinv-b small{white-space:normal!important;text-overflow:clip!important;overflow:visible!important}' +
+      'div.nm{white-space:normal!important;text-overflow:clip!important;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}' +
       '.solidarity-status{flex-wrap:wrap;row-gap:4px}.solidarity-status>b{flex:0 0 auto;white-space:nowrap;overflow-wrap:normal;word-break:keep-all}.solidarity-status>span{flex:1 1 140px;min-width:0}';
     (doc.head || doc.documentElement).appendChild(st);
     try { if (w.top !== w) doc.documentElement.classList.add('vx44-dans-appli'); } catch (e) {}
