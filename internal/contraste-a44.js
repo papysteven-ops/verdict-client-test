@@ -1,0 +1,99 @@
+/* C144 — Garde-contraste (analyse complète du 17/10, groupe 2 : « textes trop pâles »).
+   L'appli est dessinée en sombre ; le mode clair repeint les couleurs automatiquement, et selon les composants il repeint
+   le fond sans le texte, ou l'inverse : blanc sur blanc (Historique, bouton « Importer / renseigner mes ventes »), gris
+   foncé sur noir (cases du Chiffre d'affaires, Planning, Alertes), onglets inactifs à 1,8 pour 1.
+   Après chaque affichage, chaque texte visible est mesuré face à son fond réel. S'il est sous le seuil de lisibilité
+   (4,5 pour 1 ; 3 pour 1 pour les grands textes gras), sa couleur est assombrie ou éclaircie EN GARDANT SA TEINTE
+   (un vert reste vert, un rouge reste rouge), juste assez pour passer le seuil. Rien d'autre n'est modifié.
+   Ignorés : éléments désactivés, cachés, transparents (animations en cours), dessins SVG, champs de saisie. */
+(function () {
+  'use strict';
+  var w = window, doc = document; if (w.__vdContraste) return; w.__vdContraste = true;
+  function rgb(c) { var m = String(c || '').match(/[\d.]+/g); return m && m.length >= 3 ? { r: +m[0], g: +m[1], b: +m[2], a: m[3] != null ? +m[3] : 1 } : null; }
+  function lin(v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+  function lum(c) { return 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b); }
+  function ratio(a, b) { var x = Math.max(a, b), y = Math.min(a, b); return (x + 0.05) / (y + 0.05); }
+  function fondDe(e, win) {
+    for (var p = e; p && p.nodeType === 1; p = p.parentElement) {
+      var cs = win.getComputedStyle(p), c = rgb(cs.backgroundColor);
+      if (c && c.a > 0.55) return c;
+      var img = cs.backgroundImage; if (img && img !== 'none' && /gradient/.test(img)) { var m = img.match(/rgba?\([^)]*\)/); var g = m && rgb(m[0]); if (g && g.a > 0.55) return g; }
+    }
+    var b = rgb(win.getComputedStyle(e.ownerDocument.body).backgroundColor); return b && b.a > 0.5 ? b : { r: 255, g: 255, b: 255, a: 1 };
+  }
+  function opacite(e, win) { var o = 1; for (var p = e; p && p.nodeType === 1; p = p.parentElement) o *= Number(win.getComputedStyle(p).opacity) || 0; return o; }
+  /* Rapproche la couleur du noir (fond clair) ou du blanc (fond sombre) par petits pas, en gardant la teinte. */
+  function corriger(t, f, seuil) {
+    var lf = lum(f), versNoir = lf > 0.18, c = { r: t.r, g: t.g, b: t.b };
+    for (var i = 0; i < 24 && ratio(lum(c), lf) < seuil; i++) {
+      if (versNoir) { c.r *= 0.86; c.g *= 0.86; c.b *= 0.86; }
+      else { c.r += (255 - c.r) * 0.16; c.g += (255 - c.g) * 0.16; c.b += (255 - c.b) * 0.16; }
+    }
+    return 'rgb(' + Math.round(c.r) + ',' + Math.round(c.g) + ',' + Math.round(c.b) + ')';
+  }
+  var vus = new WeakSet(); /* textes déjà vérifiés pour le thème courant : pas remesurés */
+  function passe(racine) {
+    var d = racine.ownerDocument || racine, win = d.defaultView; if (!win) return 0;
+    var n = 0, liste = racine.querySelectorAll('body *');
+    for (var i = 0; i < liste.length; i++) {
+      var e = liste[i]; if (vus.has(e)) continue;
+      if (e.closest('svg') || /^(INPUT|TEXTAREA|SELECT|OPTION|SCRIPT|STYLE|IMG|CANVAS|VIDEO)$/.test(e.tagName)) continue;
+      if (e.disabled || e.getAttribute('aria-disabled') === 'true' || e.closest('[disabled],.attente,[aria-hidden="true"]')) continue;
+      var direct = false; for (var k = 0; k < e.childNodes.length; k++) { var nd = e.childNodes[k]; if (nd.nodeType === 3 && nd.nodeValue.trim()) { direct = true; break; } }
+      if (!direct) continue;
+      var r = e.getBoundingClientRect(); if (r.width < 1 || r.height < 1) continue;
+      var cs = win.getComputedStyle(e); if (cs.visibility === 'hidden' || cs.display === 'none') continue;
+      var t = rgb(cs.color); if (!t || t.a < 0.4) continue;
+      if (opacite(e, win) < 0.6) continue; /* animation en cours ou effacement voulu */
+      var f = fondDe(e, win), taille = parseFloat(cs.fontSize) || 14, gras = Number(cs.fontWeight) >= 600;
+      var seuil = (taille >= 24 || (taille >= 18.6 && gras)) ? 3 : 4.5;
+      vus.add(e);
+      if (ratio(lum(t), lum(f)) >= seuil) continue;
+      e.style.setProperty('color', corriger(t, f, seuil), 'important'); e.setAttribute('data-vx44', '1'); n++;
+    }
+    return n;
+  }
+  /* Changement de thème : on efface nos corrections puis on repasse. */
+  function effacer(d) { [].forEach.call(d.querySelectorAll('[data-vx44]'), function (e) { e.style.removeProperty('color'); e.removeAttribute('data-vx44'); }); }
+  var minuteur = 0, dernierTheme = '';
+  function planifier() { clearTimeout(minuteur); minuteur = setTimeout(tout, 450); }
+  function documents() {
+    var l = [doc]; [].forEach.call(doc.querySelectorAll('iframe'), function (f) { try { if (f.contentDocument && f.contentDocument.body) l.push(f.contentDocument); } catch (e) {} });
+    return l;
+  }
+  function tout() {
+    var theme = doc.documentElement.className.indexOf('vd-workspace-dark') >= 0 ? 'sombre' : 'clair';
+    var ds = documents();
+    if (theme !== dernierTheme) { ds.forEach(effacer); dernierTheme = theme; vus = new WeakSet(); }
+    ds.forEach(function (d) { try { passe(d); } catch (e) {} });
+  }
+  function surveiller(d) {
+    if (!d || d.__vx44) return; d.__vx44 = true;
+    try { new d.defaultView.MutationObserver(function (l) { for (var i = 0; i < l.length; i++) { var x = l[i]; if (x.type === 'attributes' && x.target.hasAttribute && x.target.hasAttribute('data-vx44')) continue; planifier(); return; } }).observe(d.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'open'] }); } catch (e) {}
+  }
+  /* Santé › Diagnostic de solidité : « Correct » était coupé en « Corr / ect » (colonne de 56 px, coupure autorisée
+     partout). Le mot garde sa largeur ; c'est le texte voisin qui passe à la ligne. */
+  (function () {
+    if (doc.getElementById('vx44-css')) return;
+    var st = doc.createElement('style'); st.id = 'vx44-css';
+    st.textContent =
+      /* C144 — En-tête compact sur iPhone dans l'appli (coquille) : le sous-titre passe sur la ligne du score et de Vera
+         (une ligne entière gagnée, rien retiré) ; Vera garde son visage, sans le mot. */
+      '@media (max-width:600px){html.verdict-hosted-viewer .stickytop .top{flex-wrap:nowrap!important;align-items:center!important;gap:8px!important}' +
+      'html.verdict-hosted-viewer .stickytop .top>#topSub{order:-1;flex:1 1 auto!important;min-width:0;flex-direction:column!important;align-items:flex-start!important;margin:0!important;padding:0!important}' +
+      'html.verdict-hosted-viewer .stickytop .top>#topSub>#topKpi{flex:0 0 auto!important;margin-left:0!important;align-self:flex-start!important;text-align:left!important}' +
+      'html.verdict-hosted-viewer .stickytop .top>.brand{display:none!important}' +
+      'html.verdict-hosted-viewer #aideBtn .verdict-vera-label{display:none!important}html.verdict-hosted-viewer #aideBtn{padding-right:6px!important;min-width:0!important}}' +
+      /* Inventaire dans l'appli, sur iPhone : établissements, zones et niveau d'activité resserrés (≈ 45 px gagnés). */
+      '@media (max-width:600px){html.vx44-dans-appli body>.top{padding-top:6px!important;padding-bottom:6px!important}' +
+      'html.vx44-dans-appli #siteSeg,html.vx44-dans-appli #zoneSeg{margin-top:6px!important;padding:3px!important}html.vx44-dans-appli #siteSeg>button,html.vx44-dans-appli #zoneSeg>button{padding-top:7px!important;padding-bottom:7px!important;min-height:38px}' +
+      'html.vx44-dans-appli .lvl{margin-top:6px!important}html.vx44-dans-appli #lvlSeg>button{padding-top:6px!important;padding-bottom:6px!important;min-height:36px}html.vx44-dans-appli #demoBanner{margin-top:6px!important}}' +
+      '.solidarity-status{flex-wrap:wrap;row-gap:4px}.solidarity-status>b{flex:0 0 auto;white-space:nowrap;overflow-wrap:normal;word-break:keep-all}.solidarity-status>span{flex:1 1 140px;min-width:0}';
+    (doc.head || doc.documentElement).appendChild(st);
+    try { if (w.top !== w) doc.documentElement.classList.add('vx44-dans-appli'); } catch (e) {}
+  })();
+  function demarrer() { surveiller(doc); documents().forEach(surveiller); planifier(); }
+  if (doc.readyState === 'complete') setTimeout(demarrer, 1200); else w.addEventListener('load', function () { setTimeout(demarrer, 1200); });
+  setInterval(function () { documents().forEach(surveiller); }, 3000);
+  w.VerdictContraste = { passe: function () { tout(); }, mesurer: passe };
+})();
