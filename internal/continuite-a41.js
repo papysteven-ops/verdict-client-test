@@ -144,6 +144,8 @@
   function publierBientot() { clearTimeout(minuteur); minuteur = setTimeout(function () { publier(false); }, 1500); }
   function recevoir(r) {
     if (!r || !Array.isArray(r.appareils)) return;
+    /* C141 : un autre appareil a envoyé des données : les modules relisent (signal sans données). */
+    if (r.donnees) [].forEach.call(doc.querySelectorAll('iframe'), function (f) { try { f.contentWindow.postMessage({ type: 'verdict-sync-donnees', module: r.donnees.module, etabId: r.donnees.etabId, rev: r.donnees.rev }, location.origin); } catch (e) {} });
     appareils = r.appareils.filter(function (a) { return a && a.id !== moi.id; });
     bouton();
     /* Une commande « ouvrir » envoyée par un autre appareil (Spotify Connect). */
