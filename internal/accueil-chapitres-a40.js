@@ -38,6 +38,7 @@
     '.vx40-t>.mod,.vx40-t>section{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}' +
     '.vx40-t>.mod,.vx40-t>section{padding-top:2px!important}.vx40-t>.mod>.mod-h:empty,.vx40-t>.mod>.mod-h:not(:has(>:not(.kicker))){display:none}' +
     '.vx40-t>.mod>.mod-h>.kicker:first-child,.vx40-t>#vdOffCard>#vdOffTitle{display:none}' +
+    '#vx40-prio{margin:4px 0 16px}#vx40-prio>#modSaisie{margin:0}' +
     '.vx40-suite{display:flex;justify-content:space-between;gap:10px;margin:4px 0 0;padding-bottom:26px;grid-column:1/-1}.vx40-suite .vx40-suiv{margin-left:auto}.vx40-suite button{appearance:none;border:1px solid var(--line,rgba(148,163,184,.2));background:transparent;color:var(--txt,inherit);font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;cursor:pointer;min-height:44px}' +
     /* C139 (Steven, 17/10 : « boutons Mois / Année : en blanc en sombre, en sombre en clair, pour les identifier parfaitement ») */
     '.vx40-suite button{background:#111827!important;color:#ffffff!important;border-color:#111827!important;box-shadow:0 2px 6px rgba(15,23,42,.16)}.vx40-suite button:active{transform:scale(.97)}' +
@@ -84,6 +85,7 @@
     if (defiler) { try { var f = d.defaultView.frameElement, P = d.defaultView.parent; var r = nav.getBoundingClientRect(), fr = f.getBoundingClientRect(); var y = fr.top + r.top; if (y < 0 || y > P.innerHeight * 0.6) P.scrollBy({ top: y - 12, behavior: 'smooth' }); } catch (e) {} }
   }
 
+  function aRenseigner(d) { var m = d.getElementById('modSaisie'), chip = m && m.querySelector('.mod-h .chip'); return !!(chip && /À renseigner/.test(chip.textContent || '') && !/Jour fermé/.test(m.textContent || '')); }
   function ranger(f) {
     var d; try { d = f.contentDocument; } catch (e) { return; }
     if (!d || !d.body) return;
@@ -103,6 +105,11 @@
       });
     }
     if (ident && ident.nextElementSibling !== nav) ident.after(nav); else if (!ident && main.firstElementChild !== nav) main.prepend(nav);
+    /* C155 (Steven, 18/10 : « la saisie doit être en priorité, en haut : c'est la première chose à faire en ouvrant
+       Verdict ; là on scrolle, on scrolle ») : tant que la journée est « À renseigner », la carte de saisie passe tout en
+       haut, juste sous le titre, avant les chapitres. Une fois la journée enregistrée, elle retourne dans « Jour ». */
+    var prio = aRenseigner(d), hold = d.getElementById('vx40-prio');
+    if (prio) { if (!hold) { hold = d.createElement('div'); hold.id = 'vx40-prio'; } if (nav.previousElementSibling !== hold) deplacer(hold, function () { nav.before(hold); }); }
     var dernier = nav;
     CHAP.forEach(function (c, ci) {
       var ch = d.getElementById('vx40-' + c.k);
@@ -127,6 +134,7 @@
       var colP = ch.querySelector('.vx40-p'), colS = ch.querySelector('.vx40-s');
       function placer(id, col) {
         var plie = id.charAt(0) === '~'; id = plie ? id.slice(1) : id;
+        if (id === 'modSaisie' && prio && hold) col = hold;
         var m = d.getElementById(id); if (!m) return;
         if (plie) {
           var t = d.querySelector('.vx40-t[data-m="' + id + '"]');
@@ -147,6 +155,7 @@
       });
       ch.classList.toggle('vx40-2', !c.large && colS.children.length > 0);
     });
+    if (!prio && hold && !hold.children.length) hold.remove();
     /* Un tiroir dont le module a disparu (re-rendu) est retiré ; un doublon éventuel aussi. */
     var vus = {};
     [].forEach.call(d.querySelectorAll('.vx40-t'), function (t) { var id = t.getAttribute('data-m'); if (vus[id] || !t.querySelector(':scope>#' + id)) t.remove(); else vus[id] = true; });
@@ -155,7 +164,7 @@
     [].forEach.call(main.querySelectorAll(':scope>h2'), function (h) { if (h.style.display !== 'none') h.style.display = 'none'; });
     /* Tout autre bloc ajouté plus tard dans main rejoint le complément du jour, plutôt que de flotter sous les chapitres. */
     [].forEach.call(main.children, function (e) {
-      if (e === ident || e === nav || e.classList.contains('vx40-ch') || e.tagName === 'H2' || e.tagName === 'SCRIPT' || e.tagName === 'STYLE') return;
+      if (e === ident || e === nav || e.id === 'vx40-prio' || e.classList.contains('vx40-ch') || e.tagName === 'H2' || e.tagName === 'SCRIPT' || e.tagName === 'STYLE') return;
       if (e.getBoundingClientRect().height < 1 && !e.id) return;
       d.querySelector('#vx40-jour .vx40-s').appendChild(e);
     });

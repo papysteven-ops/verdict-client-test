@@ -19,7 +19,7 @@
   /* C59 : « Mettre à jour » validé alors que l'appli était ouverte → le rechargement ne redemande rien. */
   var MAJ = false; try { var t = +sessionStorage.getItem('verdict:maj-sans-verrou') || 0; sessionStorage.removeItem('verdict:maj-sans-verrou'); MAJ = t > 0 && Date.now() - t < 120000; } catch (e) {}
   var doc = document, KEY = 'verdict:verrou:v1', ITER = 310000, LEN = 6;
-  var DELAIS = [[0, 'Immédiatement'], [60, 'Après 1 minute'], [300, 'Après 5 minutes'], [900, 'Après 15 minutes']];
+  var DELAIS = [[0, 'Immédiatement'], [60, 'Après 1 minute'], [300, 'Après 5 minutes'], [900, 'Après 15 minutes'], [3600, 'Après 1 heure'], [14400, 'Après 4 heures']];
   var PALIERS = [0, 0, 0, 0, 0, 60, 300, 900, 3600];
   var S = { locked: true, hiddenAt: 0, entry: '', mode: '', tmp: '', busy: false, timer: 0 };
   var IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -194,7 +194,7 @@
     bioVerify().then(function () { S.busy = false; success(); }, function () { S.busy = false; msg(COFFRE ? BIO + ' n’a pas abouti : réessayez ou utilisez votre mot de passe.' : 'Saisissez votre code.'); });
   }
   function success() {
-    C.fails = 0; C.until = 0; store(C); S.locked = false; S.hiddenAt = 0; hide();
+    C.fails = 0; C.until = 0; store(C); S.locked = false; S.hiddenAt = 0; hide(); marquer();
   }
   function checkCode(code) {
     S.busy = true;
@@ -307,7 +307,7 @@
         '<div class="vr-version" style="margin:14px 0 4px;color:#a3adb8;font-size:13px">Version : vérification…</div><button type="button" class="vr-btn sec" data-maj>Rechercher une mise à jour</button>' +
         '<button type="button" class="vr-btn" data-lock>Verrouiller maintenant</button>' + (COFFRE ? '' : '<button type="button" class="vr-btn sec" data-code>Changer mon code</button>'), true);
       var el = root();
-      el.querySelector('[data-lock]').onclick = function () { lock(false); };
+      el.querySelector('[data-lock]').onclick = function () { effacer(); lock(false); };
       /* C72 : notifications de mise à jour (vraie notification du système, avec son). */
       var nf = el.querySelector('[data-notif]');
       if (nf) nf.onchange = function () {
@@ -411,13 +411,24 @@
     if (!c) { c = doc.createElement('div'); c.id = 'vr16-cache'; c.textContent = 'VERDICT'; c.hidden = true; doc.body.appendChild(c); }
     c.hidden = !on;
   }
+  /* C154 (Steven, 18/10 : « une fois accepté, j'ouvre l'appli et elle fait tout, comme une banque ; je ne veux rien faire »).
+     Une appli web ne peut pas lancer Face ID sans un appui (règle d'iOS : la feuille « Utiliser la clé d'accès » le
+     demande). Ce qui est possible, c'est de ne rien redemander du tout tant que le délai choisi n'est pas écoulé — y
+     compris quand iOS a fermé l'appli entre-temps (avant, une réouverture « à froid » reverrouillait toujours).
+     L'heure de dernière activité est gardée sur l'appareil ; le bouton 🔒 « Verrouiller maintenant » l'efface.
+     Espace chiffré (Perso, Pilote) : inchangé, son mot de passe déchiffre les données à chaque ouverture. */
+  var ACTIF = 'verdict:verrou:actif';
+  function marquer() { if (COFFRE || S.locked || !configured()) return; try { localStorage.setItem(ACTIF, String(Date.now())); } catch (e) {} }
+  function effacer() { try { localStorage.removeItem(ACTIF); } catch (e) {} }
+  function encoreOuvert() { if (COFFRE || !configured()) return false; var d = +((C && C.delai) || 0), t = 0; try { t = +localStorage.getItem(ACTIF) || 0; } catch (e) {} return d > 0 && t > 0 && Date.now() - t >= 0 && (Date.now() - t) / 1000 < d; }
+  var tMarque = setInterval(function () { if (!doc.hidden) marquer(); }, 20000); if (tMarque && tMarque.unref) tMarque.unref(); /* hors navigateur (tests), ne retient pas le processus */
   doc.addEventListener('visibilitychange', function () {
-    if (doc.hidden) { S.hiddenAt = Date.now(); cover(true); return; }
+    if (doc.hidden) { marquer(); S.hiddenAt = Date.now(); cover(true); return; }
     cover(false);
     if (!S.locked && configured() && S.hiddenAt && (Date.now() - S.hiddenAt) / 1000 >= (+C.delai || 0)) lock(true);
   });
-  window.addEventListener('pagehide', function () { cover(true); });
-  window.addEventListener('pageshow', function (e) { cover(false); if (e.persisted && configured()) lock(true); });
+  window.addEventListener('pagehide', function () { marquer(); cover(true); });
+  window.addEventListener('pageshow', function (e) { cover(false); if (e.persisted && configured() && !encoreOuvert()) lock(true); });
 
   /* Bouton 🔒 dans l'en-tête (à côté des notifications). */
   function lockButton() {
@@ -443,6 +454,7 @@
         return;
       }
       if (MAJ && configured()) { S.locked = false; annoncerOuvert(); return; }
+      if (encoreOuvert()) { S.locked = false; annoncerOuvert(); marquer(); return; }
       lock(true);
     });
     lockButton(); hookFrames(); [].forEach.call(doc.querySelectorAll("iframe"), function (f) { f.addEventListener("load", function () { setTimeout(hookFrames, 0); }); });
@@ -457,6 +469,6 @@
   }
   if (doc.body) start(); else doc.addEventListener('DOMContentLoaded', start);
 
-  window.VerdictVerrou = { lock: function () { lock(false); }, settings: screenSettings, state: function () { return { locked: S.locked, mode: S.mode, configured: configured(), coffre: COFFRE, bio: !!(C && C.bio), fails: (C && C.fails) || 0, wait: waitLeft() }; },
+  window.VerdictVerrou = { lock: function () { effacer(); lock(false); }, _encoreOuvert: function () { return encoreOuvert(); }, settings: screenSettings, state: function () { return { locked: S.locked, mode: S.mode, configured: configured(), coffre: COFFRE, bio: !!(C && C.bio), fails: (C && C.fails) || 0, wait: waitLeft() }; },
     _hash: hashCode, _derToRaw: derToRaw, _weak: weak, _wipeKeep: function (n) { return /^coffre:|^verdict-coffre/.test(n); } };
 })();
