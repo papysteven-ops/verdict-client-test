@@ -100,7 +100,7 @@
       var W = d.defaultView; W.requestAnimationFrame(function () { W.requestAnimationFrame(function () { vu.classList.remove('vx40-rej'); }); });
       vu.__fin = W.setTimeout(function () { vu.classList.add('vx40-fin'); }, 1600);
     }
-    if (defiler) { try { var f = d.defaultView.frameElement, P = d.defaultView.parent; var r = nav.getBoundingClientRect(), fr = f.getBoundingClientRect(); var y = fr.top + r.top; if (y < 0 || y > P.innerHeight * 0.6) P.scrollBy({ top: y - 12, behavior: 'smooth' }); } catch (e) {} }
+    if (defiler) { try { var f = d.defaultView.frameElement, P = d.defaultView.parent; var r = nav.getBoundingClientRect(), fr = f.getBoundingClientRect(); var y = fr.top + r.top, haut = 0; try { /* hauteur des barres fixes du haut : l'élément tout en haut de l'écran, remonté jusqu'à son bloc fixe ou collant */ var el = P.document.elementFromPoint(P.innerWidth / 2, 4); while (el && el !== P.document.body) { var ps = P.getComputedStyle(el).position; if (ps === 'fixed' || ps === 'sticky') { haut = Math.max(0, el.getBoundingClientRect().bottom); break; } el = el.parentElement; } var st = P.document.querySelector('.stickytop'); if (st && st.getClientRects().length) haut = Math.max(haut, st.getBoundingClientRect().height); haut = Math.min(haut, P.innerHeight * 0.3); } catch (e2) {} if (y < haut || y > P.innerHeight * 0.35) P.scrollBy({ top: y - haut - 12, behavior: 'smooth' }); } catch (e) {} }
   }
 
   function aRenseigner(d) { var m = d.getElementById('modSaisie'), chip = m && m.querySelector('.mod-h .chip'); return !!(chip && /À renseigner/.test(chip.textContent || '') && !/Jour fermé/.test(m.textContent || '')); }
@@ -118,7 +118,9 @@
     if (!nav) {
       nav = d.createElement('div'); nav.className = 'vx40-nav'; nav.setAttribute('role', 'tablist'); nav.setAttribute('aria-label', 'Chapitres de l’accueil');
       nav.innerHTML = CHAP.map(function (c) { return '<button type="button" role="tab" data-k="' + c.k + '" aria-controls="vx40-' + c.k + '">' + c.t + '</button>'; }).join('');
-      nav.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button[data-k]'); if (b) montrer(d, b.getAttribute('data-k'), false); });
+      /* C162 (Steven, 19/10 : « je clique sur Mois, ça bouge pas — PC ») : la saisie étant en tête, la barre des chapitres
+         tombe en bas de l'écran et le chapitre s'ouvrait hors de la vue. Un appui remonte la page sur le chapitre choisi. */
+      nav.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button[data-k]'); if (b) montrer(d, b.getAttribute('data-k'), true); });
       nav.addEventListener('keydown', function (e) {
         if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
         var bs = [].slice.call(nav.querySelectorAll('button')), i = bs.indexOf(d.activeElement); if (i < 0) return;
