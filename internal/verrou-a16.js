@@ -428,6 +428,10 @@
     if (!S.locked && configured() && S.hiddenAt && (Date.now() - S.hiddenAt) / 1000 >= (+C.delai || 0)) lock(true);
   });
   window.addEventListener('pagehide', function () { marquer(); cover(true); });
+  /* C167 — Le voile « VERDICT » (aperçu des applis) ne bloque jamais l'appli : dès qu'on clique, fait défiler ou tape
+     dedans, elle est sous les yeux — le voile se retire (Safari peut croire une fenêtre Mac en partie couverte cachée). */
+  ['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(function (t) { doc.addEventListener(t, function () { var c = doc.getElementById('vr16-cache'); if (c && !c.hidden) cover(false); }, { capture: true, passive: true }); });
+  window.addEventListener('focus', function () { var c = doc.getElementById('vr16-cache'); if (c && !c.hidden) cover(false); });
   window.addEventListener('pageshow', function (e) { cover(false); if (e.persisted && configured() && !encoreOuvert()) lock(true); });
 
   /* Bouton 🔒 dans l'en-tête (à côté des notifications). */

@@ -112,7 +112,7 @@
     if (!d || !d.body) return;
     var main = d.querySelector('main.cadre') || d.querySelector('main'); if (!main || !d.getElementById('modSaisie')) return;
     if (!d.getElementById('vx40-css')) { var s = d.createElement('style'); s.id = 'vx40-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
-    main.classList.add('vx40-large');
+    if (!main.classList.contains('vx40-large')) main.classList.add('vx40-large'); /* C167 : jamais réécrite si déjà posée (sinon un changement toutes les 1,5 s) */
     var ident = main.querySelector(':scope>.identite');
     /* C160 — Noms d'établissement longs (« Cuisine de livraison (dark kitchen) (démonstration estimative) » : 5 lignes sur
        iPhone) : taille réduite au-delà de 28 caractères. */
