@@ -41,7 +41,8 @@
     '.vx40-fin .jr{opacity:1!important}.vx40-rej,.vx40-rej *{animation:none!important}' +
     '.identite .vx40-long{font-size:clamp(24px,6.6vw,36px)!important;line-height:1.08!important;letter-spacing:-.015em!important}' +
     '.identite .vx40-tres-long{font-size:clamp(21px,5.6vw,32px)!important}' +
-    '#vx40-prio{margin:4px 0 16px}#vx40-prio>#modSaisie{margin:0}' +
+    /* C161 : sur PC l'Accueil est une grille ; le bloc de saisie en tête prend toute la largeur (il était écrasé dans une colonne). */
+    '#vx40-prio{margin:4px 0 16px;grid-column:1/-1;width:100%;min-width:0;box-sizing:border-box}#vx40-prio>#modSaisie{margin:0;width:100%;box-sizing:border-box}' +
     '.vx40-suite{display:flex;justify-content:space-between;gap:10px;margin:4px 0 0;padding-bottom:26px;grid-column:1/-1}.vx40-suite .vx40-suiv{margin-left:auto}.vx40-suite button{appearance:none;border:1px solid var(--line,rgba(148,163,184,.2));background:transparent;color:var(--txt,inherit);font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;cursor:pointer;min-height:44px}' +
     /* C139 (Steven, 17/10 : « boutons Mois / Année : en blanc en sombre, en sombre en clair, pour les identifier parfaitement ») */
     '.vx40-suite button{background:#111827!important;color:#ffffff!important;border-color:#111827!important;box-shadow:0 2px 6px rgba(15,23,42,.16)}.vx40-suite button:active{transform:scale(.97)}' +
