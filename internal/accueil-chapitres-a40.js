@@ -38,7 +38,7 @@
     '.vx40-t>.mod,.vx40-t>section{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}' +
     '.vx40-t>.mod,.vx40-t>section{padding-top:2px!important}.vx40-t>.mod>.mod-h:empty,.vx40-t>.mod>.mod-h:not(:has(>:not(.kicker))){display:none}' +
     '.vx40-t>.mod>.mod-h>.kicker:first-child,.vx40-t>#vdOffCard>#vdOffTitle{display:none}' +
-    '.vx40-fin .jr{opacity:1!important}' +
+    '.vx40-fin .jr{opacity:1!important}.vx40-rej,.vx40-rej *{animation:none!important}' +
     '#vx40-prio{margin:4px 0 16px}#vx40-prio>#modSaisie{margin:0}' +
     '.vx40-suite{display:flex;justify-content:space-between;gap:10px;margin:4px 0 0;padding-bottom:26px;grid-column:1/-1}.vx40-suite .vx40-suiv{margin-left:auto}.vx40-suite button{appearance:none;border:1px solid var(--line,rgba(148,163,184,.2));background:transparent;color:var(--txt,inherit);font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;cursor:pointer;min-height:44px}' +
     /* C139 (Steven, 17/10 : « boutons Mois / Année : en blanc en sombre, en sombre en clair, pour les identifier parfaitement ») */
@@ -89,7 +89,14 @@
     if (vu) [].forEach.call([vu].concat([].slice.call(vu.querySelectorAll('.attente'))), function (e) { e.classList.remove('attente'); });
     /* Filet : dans Safari, une animation d'apparition lancée pendant que le chapitre était caché peut rester figée à
        opacité 0 (cases du calendrier invisibles). 1,2 s après l'ouverture, l'état final est imposé. */
-    if (vu) { clearTimeout(vu.__fin); vu.__fin = d.defaultView.setTimeout(function () { vu.classList.add('vx40-fin'); }, 1200); }
+    /* C159 (Steven, 18/10 : « les animations ne marchent pas directement ; si je reviens sur le module, ça marche ; ça doit
+       marcher dès le premier passage ») : un chapitre est dessiné pendant qu'il est caché, et Safari tient ses animations
+       pour déjà jouées. À chaque ouverture, elles sont rejouées sous les yeux (comme au second passage). */
+    if (vu) {
+      clearTimeout(vu.__fin); vu.classList.remove('vx40-fin'); vu.classList.add('vx40-rej'); void vu.offsetWidth;
+      var W = d.defaultView; W.requestAnimationFrame(function () { W.requestAnimationFrame(function () { vu.classList.remove('vx40-rej'); }); });
+      vu.__fin = W.setTimeout(function () { vu.classList.add('vx40-fin'); }, 1600);
+    }
     if (defiler) { try { var f = d.defaultView.frameElement, P = d.defaultView.parent; var r = nav.getBoundingClientRect(), fr = f.getBoundingClientRect(); var y = fr.top + r.top; if (y < 0 || y > P.innerHeight * 0.6) P.scrollBy({ top: y - 12, behavior: 'smooth' }); } catch (e) {} }
   }
 
