@@ -28,8 +28,24 @@
   var canal = null; try { canal = new BroadcastChannel('verdict-maj'); canal.onmessage = function (e) { if (e.data === 'plus-tard') later(true); }; } catch (e) {}
   var NOTIF_ID = 'maj:nouvelle-version', postponed = false;
   function centre() { var s = window.VerdictUnifiedShell; return s && s.notifications; }
+  /* C166 (Steven, 19/10 : « j'ai toujours l'info Journée tout en bas, je sais pas si j'ai les vraies mises à jour ») :
+     l'appli installée gardait l'ancienne version tant que « Mettre à jour » n'était pas touché. Désormais, à l'ouverture
+     (30 premières secondes) et au retour sur l'appli après plus d'une minute ailleurs, une nouvelle version s'installe
+     d'elle-même — jamais pendant une saisie (champ en cours de remplissage) : le bandeau reste alors proposé. */
+  var ouvertA = Date.now(), cacheA = 0, retourA = 0, autoFaite = false;
+  doc.addEventListener('visibilitychange', function () { if (doc.hidden) cacheA = Date.now(); else if (cacheA && Date.now() - cacheA > 60000) retourA = Date.now(); });
+  function champActif(d, n) {
+    try {
+      var a = d.activeElement; if (!a) return false;
+      if (a.tagName === 'IFRAME') return n < 3 && !!a.contentDocument && champActif(a.contentDocument, n + 1);
+      if (a.isContentEditable) return true;
+      return /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !/^(button|submit|checkbox|radio|range|reset)$/i.test(a.type || '') && String(a.value || '') !== '';
+    } catch (e) { return false; }
+  }
+  function momentSur() { var t = Date.now(), dern = 0; try { dern = +sessionStorage.getItem('verdict:maj-appliquee') || 0; } catch (e) {} return !autoFaite && t - dern > 120000 && (t - ouvertA < 30000 || (!!retourA && t - retourA < 15000)) && !champActif(doc, 0); }
   function banner() {
     if (doc.getElementById('maj18') || postponed) return;
+    if (momentSur()) { autoFaite = true; return apply(true); }
     css();
     var b = doc.createElement('div'); b.id = 'maj18'; b.setAttribute('role', 'status');
     b.innerHTML = '<span><b>Nouvelle version Verdict disponible</b><small>Vos saisies sont enregistrées avant la mise à jour.</small></span><button type="button" class="maj18-go">Mettre à jour</button><button type="button" class="maj18-later" aria-label="Plus tard">Plus tard</button>';
@@ -128,9 +144,11 @@
   }, true);
   /* Une ouverture charge toujours la dernière version : la notification d'une mise à jour déjà faite disparaît. */
   setTimeout(function () { var c = centre(); if (c && c.getItems && c.getItems().some(function (i) { return i.id === NOTIF_ID; }) && !postponed) c.remove(NOTIF_ID); }, 1500);
-  function apply() {
-    /* C59 : la mise à jour est validée dans une appli déjà ouverte : le rechargement ne redemande ni code, ni mot de passe. */
-    try { sessionStorage.setItem('verdict:maj-sans-verrou', String(Date.now())); sessionStorage.setItem('verdict:maj-appliquee', String(Date.now())); } catch (e) {}
+  function apply(auto) {
+    /* C59 : la mise à jour est validée dans une appli déjà ouverte : le rechargement ne redemande ni code, ni mot de passe.
+       C166 : mise à jour automatique pendant que l'écran de verrouillage est affiché → le code reste demandé. */
+    var verrouille = auto === true && !!doc.getElementById('vr16');
+    try { if (!verrouille) sessionStorage.setItem('verdict:maj-sans-verrou', String(Date.now())); sessionStorage.setItem('verdict:maj-appliquee', String(Date.now())); } catch (e) {}
     var btn = doc.querySelector('#maj18 .maj18-go'); if (btn) { btn.disabled = true; btn.textContent = 'Mise à jour…'; }
     var guard = window.VerdictUpdateGuard && window.VerdictUpdateGuard.prepare ? window.VerdictUpdateGuard.prepare() : Promise.resolve({ ok: true });
     Promise.resolve(guard).catch(function () { return { ok: true }; }).then(function () {
