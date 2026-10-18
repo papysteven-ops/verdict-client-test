@@ -110,9 +110,9 @@
   var css = doc.createElement('style'); css.id = 'carte-recit-a33';
   css.textContent =
     '#vdRecitCarte{margin:4px 0 22px;font-family:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif}' +
-    '#vdRecitCarte .cr-head{padding:6px 4px 14px;color:#101214}#vdRecitCarte .cr-head>span{font:800 11.5px/1 -apple-system,system-ui;letter-spacing:.14em;text-transform:uppercase;color:#16a34a}' +
+    '#vdRecitCarte .cr-head{padding:6px 4px 14px;color:#101214}#vdRecitCarte .cr-head>span{font:800 11.5px/1 -apple-system,system-ui;letter-spacing:.14em;text-transform:uppercase;color:#166534}' +
     '#vdRecitCarte .cr-head h1{margin:8px 0 6px;font:900 32px/1.05 -apple-system,system-ui;letter-spacing:-.025em}#vdRecitCarte .cr-head p{margin:0;color:#5f6670;font-size:14.5px}' +
-    'html.vd-workspace-dark #vdRecitCarte .cr-head{color:#f1f5f9}html.vd-workspace-dark #vdRecitCarte .cr-head p{color:#94a3b8}' +
+    'html.vd-workspace-dark #vdRecitCarte .cr-head>span{color:#4ade80}html.vd-workspace-dark #vdRecitCarte .cr-head{color:#f1f5f9}html.vd-workspace-dark #vdRecitCarte .cr-head p{color:#94a3b8}' +
     '#vdRecitCarte .cr-card{position:relative;overflow:hidden;min-height:min(68vh,580px);margin:0 0 16px;padding:26px 22px 22px;border-radius:28px;color:#f8fafc;display:flex;flex-direction:column;justify-content:center;gap:14px;box-shadow:0 22px 60px rgba(2,8,23,.28);isolation:isolate}' +
     '#vdRecitCarte .cr-card:before{content:"";position:absolute;inset:-40%;z-index:-1;background:radial-gradient(circle at 75% 20%,var(--g1),transparent 45%),radial-gradient(circle at 15% 85%,var(--g2),transparent 50%);opacity:.9}' +
     '#vdRecitCarte .cr-c1{background:#07130d;--g1:rgba(34,197,94,.35);--g2:rgba(16,185,129,.18)}#vdRecitCarte .cr-c2{background:#0b1120;--g1:rgba(245,158,11,.30);--g2:rgba(192,132,252,.22)}' +
