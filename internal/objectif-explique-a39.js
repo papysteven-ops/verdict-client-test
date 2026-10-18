@@ -141,7 +141,7 @@
     else if (retard > 0) e = charges + '. Le mois a ' + eur(retard) + ' de retard, réparti sur les jours ouverts restants.';
     else if (avance > 0) e = charges + '. Le mois a ' + eur(avance) + ' d’avance.';
     else e = charges + '. Le mois est dans les temps.';
-    lp.className = 'vx53-o'; lp.innerHTML = 'Objectif ' + (passe ? 'de cette journée' : 'aujourd’hui') + ' : <b>' + eur(t) + '</b>';
+    lp.className = 'vx53-o'; /* C165 : « minimum », comme les repères (« objectif » est réservé à l'objectif de résultat) */ lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>' + eur(t) + '</b>';
     var ex = lp.nextElementSibling; if (!ex || !ex.classList.contains('vx53-e')) { ex = lp.ownerDocument.createElement('p'); ex.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex); }
     ex.innerHTML = e;
   }

@@ -48,8 +48,8 @@
     var meilleur = null; Object.keys(parJ).forEach(function (k) { var a = parJ[k], v = a.reduce(function (t, x) { return t + x; }, 0) / a.length; if (!meilleur || v > meilleur.v) meilleur = { k: k, v: v }; });
     return {
       vue: 'cal', kicker: 'Vos journées · ' + MOIS[Number(key.slice(5)) - 1] + ' ' + key.slice(0, 4), cols: cols, sel: sel,
-      resume: reels.length ? ok + ' journée' + (ok > 1 ? 's' : '') + ' sur ' + reels.length + ' au-dessus de leur objectif · moyenne ' + pct(moy) + (meilleur && reels.length >= 5 ? ' · meilleur jour : ' + JLONG[meilleur.k] + ' (' + pct(meilleur.v) + ')' : '') : 'Aucune journée saisie ce mois-ci',
-      unite: 'objectif du jour'
+      resume: reels.length ? ok + ' journée' + (ok > 1 ? 's' : '') + ' sur ' + reels.length + ' au-dessus de leur minimum · moyenne ' + pct(moy) + (meilleur && reels.length >= 5 ? ' · meilleur jour : ' + JLONG[meilleur.k] + ' (' + pct(meilleur.v) + ')' : '') : 'Aucune journée saisie ce mois-ci',
+      unite: 'minimum du jour'
     };
   }
   function court(r) { return Math.round(r * 100) + '<small>\u202f%</small>'; }
@@ -126,11 +126,11 @@
     if (!c) return { big: '—', lab: '', st: 'vide' };
     if (c.type === 'repos') return { big: 'Repos', lab: c.lib + ' · fermé, aucun chiffre attendu', st: 'vide', mot: '' };
     if (c.type === 'avant') return { big: '—', lab: c.lib + ' · avant le début du suivi', st: 'vide', mot: '' };
-    if (c.type === 'vide') return { big: c.cible ? eur(c.cible) : '—', lab: c.lib + (c.cible ? (c.avenir || c.auj ? ' · objectif du jour à réaliser' : ' · objectif du jour, chiffre à saisir') : ' · pas encore de chiffre'), st: 'vide', mot: c.cible ? (c.avenir ? 'À venir' : 'À saisir') : '' };
+    if (c.type === 'vide') return { big: c.cible ? eur(c.cible) : '—', lab: c.lib + (c.cible ? (c.avenir || c.auj ? ' · minimum du jour à réaliser' : ' · minimum du jour, chiffre à saisir') : ' · pas encore de chiffre'), st: 'vide', mot: c.cible ? (c.avenir ? 'À venir' : 'À saisir') : '' };
     var lab = c.type === 'encours' ? c.lib + ' · ' + eur(c.valeur) + ' encaissés pour ' + eur(c.cible) + ' attendus à cette date'
       : c.lib + ' · ' + (c.type === 'projete' ? eur(c.valeur) + ' projetés' : eur(c.valeur)) + ' pour ' + eur(c.cible) + ' (' + unite + ')';
     /* La couleur n'est jamais seule (WCAG 1.4.1) : un mot dit l'état. */
-    var mot = c.r >= 1 ? (c.type === 'projete' ? 'Projeté atteint' : 'Atteint') : '−' + pct(1 - c.r).replace(' %', ' %') + ' sous l’objectif';
+    var mot = c.r >= 1 ? (c.type === 'projete' ? 'Projeté atteint' : 'Atteint') : '−' + pct(1 - c.r).replace(' %', ' %') + ' sous le minimum';
     return { big: pct(c.r), lab: lab, st: etat(c.r), mot: mot };
   }
 
@@ -206,8 +206,8 @@
     box.innerHTML = '<p class="rx-k">' + esc(m.kicker) + '</p>' +
       '<div class="rx-hero"><b class="rx-big">' + esc(dt.big) + '</b><span class="rx-mot">' + esc(dt.mot) + '</span></div><p class="rx-lab" aria-live="polite">' + esc(dt.lab) + '</p>' +
       '<p class="rx-sub">' + esc(m.resume) + '</p>' + (m.vue === 'cal' ? calendrier(m) : svg(m, anime)) +
-      '<div class="rx-leg"><span><i style="background:#22c55e"></i>Objectif atteint</span><span><i style="background:#eab308"></i>À moins de 5 %</span><span><i style="background:#f97316"></i>5 à 10 %</span><span><i style="background:#ef4444"></i>Plus de 10 %</span>' +
-      (m.vue === 'cal' ? '<span><i style="background:rgba(148,163,184,.35)"></i>Repos</span><span><i style="background:transparent;border:2px solid currentColor;border-radius:50%"></i>Aujourd’hui</span>' : '<span><i style="width:14px;height:0;border-radius:0;border-top:2px dashed #d4a017;vertical-align:3px"></i>Objectif</span>') +
+      '<div class="rx-leg"><span><i style="background:#22c55e"></i>Minimum atteint</span><span><i style="background:#eab308"></i>À moins de 5 %</span><span><i style="background:#f97316"></i>5 à 10 %</span><span><i style="background:#ef4444"></i>Plus de 10 %</span>' +
+      (m.vue === 'cal' ? '<span><i style="background:rgba(148,163,184,.35)"></i>Repos</span><span><i style="background:transparent;border:2px solid currentColor;border-radius:50%"></i>Aujourd’hui</span>' : '<span><i style="width:14px;height:0;border-radius:0;border-top:2px dashed #d4a017;vertical-align:3px"></i>Minimum</span>') +
       (m.cols.some(function (c) { return c.type === 'projete'; }) ? '<span><i style="background:transparent;border:1.5px dashed #94a3b8"></i>Projeté</span>' : '') +
       (m.cols.some(function (c) { return c.type === 'encours'; }) ? '<span><i style="background:transparent;border:1.5px solid currentColor"></i>En cours</span>' : '') + '</div>';
   }

@@ -54,7 +54,9 @@
     return { mois: moisCourant(), libMois: MOIS[now.getMonth()], jour: j, jours: J, mode: 'demo', demo: true, debut: moisCourant() + '-01', fin: moisCourant() + '-' + String(j).padStart(2, '0'), produits: produits };
   }
   function conso() {
-    if (demo() && !brasserie()) { var Cm = consoModele(); if (Cm) return Cm; }
+    /* C165 : en démonstration, une seule source — les fiches et ventes de l'établissement — que l'Inventaire ait été ouvert
+       ou non (avant : deux calculs différents selon l'ordre d'ouverture des modules, totaux bar / cuisine différents). */
+    if (demo()) { var Cm = consoModele(); if (Cm) return Cm; }
     var C = null;
     try { var f = w.parent && w.parent !== w && w.parent.document.getElementById('frame-inventory'), I = f && f.contentWindow && f.contentWindow.VerdictConsoInventaire; if (I) C = I.etat(); } catch (e) {}
     if (!C) try { C = JSON.parse(localStorage.getItem(CLE + (demo() ? ':demo' : '')) || 'null'); } catch (e) {}
@@ -68,7 +70,6 @@
     var D = vdb(); if (!D) return [];
     if (!Array.isArray(D.consumptionLimits)) {
       if (!demo()) D.consumptionLimits = [];
-      else if (brasserie()) D.consumptionLimits = [['Entrecôte VBF', 1800], ['Filet de saumon frais', 950], ['Café en grains', 320], ['Bière blonde fût 30 L', 1300]].map(function (x, i) { return { id: 'lim-demo-' + i, nom: x[0], eur: x[1], demo: true }; });
       else { /* Limites d'exemple sur les produits du modèle : une dépassée, une en passe de l'être, deux sous la limite. */
         var Cm = consoModele(), top = Cm ? Cm.produits.slice().sort(function (a, b) { return b.valeur - a.valeur; }).slice(0, 4) : [], k = [1.12, 0.86, 0.5, 0.47];
         D.consumptionLimits = top.map(function (p, i) { return { id: 'lim-demo-' + i, productId: p.id, nom: p.nom, eur: Math.max(50, Math.round(p.valeur / k[i] / 50) * 50), demo: true }; });
