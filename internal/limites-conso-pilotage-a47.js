@@ -238,7 +238,7 @@
   /* ---------- Accueil ---------- */
   function accueil(E) {
     var f = doc.querySelector('iframe.p41-ecran'), d = null; try { d = f && f.contentDocument; } catch (e) {}
-    var col = d && d.querySelector('#vx40-jour .vx40-s'); if (!col) return;
+    var col = d && (d.querySelector('#vx40-jour .vx40-b') || d.querySelector('#vx40-jour .vx40-s')); if (!col) return; /* C164 : avec les alertes, sous « Vos journées » et le détail du jour */
     var vieux = d.getElementById('modLimites'), alerte = E.items.filter(function (it) { return it.etat === 'rouge' || it.etat === 'orange'; });
     if (!alerte.length) { if (vieux) vieux.remove(); return; }
     var pire = alerte[0], sig = JSON.stringify(alerte.map(function (it) { return [it.id, it.etat, Math.round(it.valeur), it.limite]; }));

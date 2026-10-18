@@ -12,7 +12,10 @@
   var CLE = 'verdict:accueil:chapitre:v1';
   /* p = essentiel (ouvert), s = complément (replié sous une ligne de résumé). */
   var CHAP = [
-    { k: 'jour', t: 'Jour', ouvert: true, p: ['modSaisie'], s: ['modAction', 'modRupture', '~modReperesJour', '~modJour'] },
+    /* C164 (Steven, 19/10 : « une cohérence de lecture ») : d'abord « Vos journées », à côté le détail de la journée
+       (Journée d'exploitation, déplié), ensuite seulement les alertes et décisions (limite, décision, rupture, repères),
+       en pleine largeur (b = bas). */
+    { k: 'jour', t: 'Jour', ouvert: true, p: ['modSaisie'], s: ['modJour'], b: ['modAction', 'modRupture', '~modReperesJour'] },
     { k: 'mois', t: 'Mois', ouvert: true, large: true /* C136 : calendrier et mois ont leur propre mise en page en deux colonnes : pleine largeur, l’un sous l’autre */, p: ['calendrier'], s: ['modMois', '~vdOffCard', '~modManqueCarte'] },
     { k: 'annee', t: 'Année', p: ['modAnnee'], s: [] },
     { k: 'argent', t: 'Argent', p: ['modArgent'], s: ['~modTreso', '~modCash13'] }
@@ -27,7 +30,7 @@
     '.vx40-nav button{appearance:none;border:0;background:transparent;color:var(--mut,#8b94a0);font:inherit;font-size:14.5px;font-weight:700;letter-spacing:.01em;padding:11px 4px;border-radius:12px;cursor:pointer;min-height:44px;transition:background .2s,color .2s}' +
     '.vx40-nav button[aria-selected="true"]{background:linear-gradient(180deg,rgba(34,197,94,.20),rgba(34,197,94,.10));color:var(--txt,inherit);box-shadow:inset 0 0 0 1px rgba(34,197,94,.38)}' +
     '.vx40-nav button:focus-visible{outline:2px solid rgba(34,197,94,.6);outline-offset:2px}' +
-    '.vx40-ch[hidden]{display:none!important}.vx40-ch{display:grid;gap:0 16px;align-items:start}.vx40-col{min-width:0}' +
+    '.vx40-ch[hidden]{display:none!important}.vx40-ch{display:grid;gap:0 16px;align-items:start}.vx40-col{min-width:0}.vx40-b{grid-column:1/-1}.vx40-b:empty{display:none}.vx40-ch>.vx40-suite{grid-column:1/-1}' +
     '.vx40-t{margin:0 0 12px;border:1px solid var(--line,rgba(148,163,184,.16));border-radius:var(--r-mod,18px);background:var(--card,transparent);overflow:hidden}' +
     '.vx40-t>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:14px 16px;min-height:44px}' +
     '.vx40-t>summary::-webkit-details-marker{display:none}' +
@@ -164,7 +167,8 @@
       }
       if (dernier.nextElementSibling !== ch) dernier.after(ch);
       dernier = ch;
-      var colP = ch.querySelector('.vx40-p'), colS = ch.querySelector('.vx40-s');
+      var colP = ch.querySelector('.vx40-p'), colS = ch.querySelector('.vx40-s'), colB = ch.querySelector('.vx40-b');
+      if (!colB) { colB = d.createElement('div'); colB.className = 'vx40-col vx40-b'; var su = ch.querySelector(':scope > .vx40-suite'); if (su) ch.insertBefore(colB, su); else ch.appendChild(colB); }
       function placer(id, col) {
         var plie = id.charAt(0) === '~'; id = plie ? id.slice(1) : id;
         if (id === 'modSaisie' && prio && hold) col = hold;
@@ -180,8 +184,9 @@
       }
       c.p.forEach(function (id) { placer(id, colP); });
       c.s.forEach(function (id) { placer(id, colS); });
+      (c.b || []).forEach(function (id) { placer(id, colB); });
       /* L'ordre voulu est rétabli si un module a été réinséré ailleurs. */
-      [[c.p, colP], [c.s, colS]].forEach(function (pc) {
+      [[c.p, colP], [c.s, colS], [c.b || [], colB]].forEach(function (pc) {
         var voulu = pc[0].map(function (id) { id = id.replace('~', ''); var m = d.getElementById(id); return m && (m.parentElement && m.parentElement.classList.contains('vx40-t') ? m.parentElement : m); }).filter(function (n) { return n && n.parentElement === pc[1]; });
         var reel = [].filter.call(pc[1].children, function (n) { return voulu.indexOf(n) >= 0; });
         if (voulu.some(function (n, i) { return reel[i] !== n; })) voulu.forEach(function (n) { deplacer(n, function () { pc[1].appendChild(n); }); });
@@ -199,7 +204,7 @@
     [].forEach.call(main.children, function (e) {
       if (e === ident || e === nav || e.id === 'vx40-prio' || e.classList.contains('vx40-ch') || e.tagName === 'H2' || e.tagName === 'SCRIPT' || e.tagName === 'STYLE') return;
       if (e.getBoundingClientRect().height < 1 && !e.id) return;
-      d.querySelector('#vx40-jour .vx40-s').appendChild(e);
+      (d.querySelector('#vx40-jour .vx40-b') || d.querySelector('#vx40-jour .vx40-s')).appendChild(e);
     });
     if (!d.__vx40) {
       d.__vx40 = true;
