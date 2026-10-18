@@ -34,7 +34,27 @@
     return { mois: moisCourant(), libMois: MOIS[now.getMonth()], jour: j, jours: J, mode: 'demo', demo: true, debut: moisCourant() + '-01', fin: moisCourant() + '-' + String(j).padStart(2, '0'),
       produits: DEMO_P.map(function (p, i) { return { id: 'demo-conso-' + i, nom: p[0], zone: p[1], unite: p[2], prix: p[3], statut: 'ok', valeur: p[4], qte: p[4] / p[3], jours: Math.max(1, j) }; }) };
   }
+  /* C157 — Démonstration d'un autre modèle que la Brasserie (pizzeria, kebab, gastro…) : la consommation vient de ses
+     propres fiches techniques et ventes (coût de chaque ingrédient par portion × ventes du mois à date), pas des produits de
+     la Brasserie. */
+  function brasserie() { var D = vdb(); return !D || !D.modele || D.modele === 'Brasserie'; }
+  function consoModele() {
+    var D = vdb(); if (!D || !Array.isArray(D.plats) || !Array.isArray(D.ing)) return null;
+    var now = new Date(), j = now.getDate(), J = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), av = j / J, par = {};
+    D.plats.forEach(function (pl) {
+      if (pl.cpArchived) return; var bar = /boisson|bière|biere|vin|cocktail|soft|café|cafe|alcool/i.test(String(pl.cat || '')), vol = Number(pl.vol) || 0; if (!vol) return;
+      (pl.rec || []).forEach(function (l) {
+        var g = D.ing.filter(function (x) { return x.nom === l[0]; })[0], st = null; if (!g || !(Number(g.prix) > 0)) return;
+        try { st = w.coutLignesRecette([l]).st; } catch (e) {} if (!(st > 0)) return;
+        var x = par[g.nom] = par[g.nom] || { id: 'mod-' + (g.id || g.nom), nom: g.nom, zone: bar ? 'bar' : 'cuisine', unite: g.type === 'KG' ? 'kg' : g.type === 'L' ? 'L' : 'unité', prix: Number(g.prix), statut: 'ok', valeur: 0, qte: 0, jours: Math.max(1, j) };
+        x.valeur += st * vol * av; x.qte = x.valeur / x.prix; if (!bar) x.zone = 'cuisine';
+      });
+    });
+    var produits = Object.keys(par).map(function (k) { return par[k]; }); if (!produits.length) return null;
+    return { mois: moisCourant(), libMois: MOIS[now.getMonth()], jour: j, jours: J, mode: 'demo', demo: true, debut: moisCourant() + '-01', fin: moisCourant() + '-' + String(j).padStart(2, '0'), produits: produits };
+  }
   function conso() {
+    if (demo() && !brasserie()) { var Cm = consoModele(); if (Cm) return Cm; }
     var C = null;
     try { var f = w.parent && w.parent !== w && w.parent.document.getElementById('frame-inventory'), I = f && f.contentWindow && f.contentWindow.VerdictConsoInventaire; if (I) C = I.etat(); } catch (e) {}
     if (!C) try { C = JSON.parse(localStorage.getItem(CLE + (demo() ? ':demo' : '')) || 'null'); } catch (e) {}
@@ -46,7 +66,14 @@
   function vdb() { try { return w.DB && typeof w.DB === 'object' ? w.DB : null; } catch (e) { return null; } }
   function limites() {
     var D = vdb(); if (!D) return [];
-    if (!Array.isArray(D.consumptionLimits)) { D.consumptionLimits = demo() ? [['Entrecôte VBF', 1800], ['Filet de saumon frais', 950], ['Café en grains', 320], ['Bière blonde fût 30 L', 1300]].map(function (x, i) { return { id: 'lim-demo-' + i, nom: x[0], eur: x[1], demo: true }; }) : []; }
+    if (!Array.isArray(D.consumptionLimits)) {
+      if (!demo()) D.consumptionLimits = [];
+      else if (brasserie()) D.consumptionLimits = [['Entrecôte VBF', 1800], ['Filet de saumon frais', 950], ['Café en grains', 320], ['Bière blonde fût 30 L', 1300]].map(function (x, i) { return { id: 'lim-demo-' + i, nom: x[0], eur: x[1], demo: true }; });
+      else { /* Limites d'exemple sur les produits du modèle : une dépassée, une en passe de l'être, deux sous la limite. */
+        var Cm = consoModele(), top = Cm ? Cm.produits.slice().sort(function (a, b) { return b.valeur - a.valeur; }).slice(0, 4) : [], k = [1.12, 0.86, 0.5, 0.47];
+        D.consumptionLimits = top.map(function (p, i) { return { id: 'lim-demo-' + i, productId: p.id, nom: p.nom, eur: Math.max(50, Math.round(p.valeur / k[i] / 50) * 50), demo: true }; });
+      }
+    }
     return D.consumptionLimits;
   }
   function enregistrer() { try { if (typeof w.save === 'function') w.save(); } catch (e) {} }

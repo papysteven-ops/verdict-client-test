@@ -39,12 +39,14 @@
   var HAB = { village: 'Moins de 2 000 habitants', bourg: '2 000 à 20 000', ville: '20 000 à 100 000', grande: 'Plus de 100 000' };
   var TOUR = { non: 'Pas de saison touristique', ete: 'Haute saison l’été (juin à septembre)', hiver: 'Haute saison l’hiver (décembre à mars)', annee: 'Touristique toute l’année' };
   var SERV = { deux: 'Midi et soir', midi: 'Midi seulement', soir: 'Soir seulement' };
-  function familleDe(t) { t = String(t || '').toLowerCase(); return /gastro|étoil|etoil|fine/.test(t) ? 'gastro' : /pizz/.test(t) ? 'pizzeria' : /snack|fast|burger|kebab|sandwich|rapide/.test(t) ? 'rapide' : /bistro|ardoise|bouchon/.test(t) ? 'bistrot' : /\bbar\b|café|cafe|pub/.test(t) ? 'bar' : /tradition/.test(t) ? 'traditionnel' : 'brasserie'; }
+  function familleDe(t) { t = String(t || '').toLowerCase(); return /gastro|étoil|etoil|fine/.test(t) ? 'gastro' : /pizz/.test(t) ? 'pizzeria' : /snack|fast|burger|kebab|sandwich|rapide|boulang|dark|livraison/.test(t) ? 'rapide' : /bistro|ardoise|bouchon/.test(t) ? 'bistrot' : /\bbar\b|café|cafe|pub/.test(t) ? 'bar' : /tradition/.test(t) ? 'traditionnel' : 'brasserie'; }
   function profil() {
     var D = DB(); if (!D) return null;
     if (!D.carteProfil || typeof D.carteProfil !== 'object') {
       var cmd = Math.round(Number(D.in && D.in.cmdj)) || null;
-      D.carteProfil = demo() ? { type: familleDe(D.etabType), habitants: 'ville', tourisme: 'ete', places: 80, couverts: cmd || 110, services: 'deux', demo: true } : { type: familleDe(D.etabType), habitants: '', tourisme: '', places: null, couverts: cmd, services: 'deux' };
+      /* C157 : chaque modèle de démonstration a son propre profil d'exemple (avant : 80 places et « été » pour tous). */
+      var EX = { Kebab: ['rapide', 'ville', 'non', 30], Pizzeria: ['pizzeria', 'bourg', 'non', 50], Traditionnel: ['traditionnel', 'bourg', 'non', 60], Brasserie: ['brasserie', 'ville', 'ete', 80], Gastro: ['gastro', 'grande', 'annee', 35], Palace: ['gastro', 'grande', 'annee', 60], Boulangerie: ['rapide', 'bourg', 'non', 15], DarkKitchen: ['rapide', 'grande', 'non', 10], SaisonnierMer: ['traditionnel', 'village', 'ete', 70], BarRestaurant: ['bar', 'bourg', 'non', 45] }[D.modele];
+      D.carteProfil = demo() ? { type: EX ? EX[0] : familleDe(D.etabType), habitants: EX ? EX[1] : 'ville', tourisme: EX ? EX[2] : 'ete', places: EX ? EX[3] : 80, couverts: cmd || 110, services: 'deux', demo: true } : { type: familleDe(D.etabType), habitants: '', tourisme: '', places: null, couverts: cmd, services: 'deux' };
     }
     return D.carteProfil;
   }
@@ -53,7 +55,10 @@
 
   /* ---------- Nombre de plats visé ---------- */
   var CIBLES = { brasserie: { e: [6, 8], p: [8, 10], d: [6, 7] }, traditionnel: { e: [5, 7], p: [6, 9], d: [5, 6] }, bistrot: { e: [3, 5], p: [3, 6], d: [3, 4] }, gastro: { e: [3, 5], p: [3, 5], d: [3, 4] }, pizzeria: { e: [4, 6], p: [8, 12], d: [4, 6] }, rapide: { e: [3, 5], p: [5, 7], d: [3, 5] }, bar: { e: [3, 6], p: [3, 5], d: [2, 4] } };
-  function role(cat) { var c = String(cat || '').toLowerCase(); return /entr|starter|planche|tapas/.test(c) ? 'e' : /dessert|sucr|douceur/.test(c) ? 'd' : /plat|pizza|burger|principal|viande|poisson|pâte|pate/.test(c) ? 'p' : ''; }
+  function role(cat) { var c = String(cat || '').toLowerCase(); return /boisson|bière|biere|vin|cocktail|soft|café|cafe|alcool/.test(c) ? '' : /entr|starter|planche|tapas|accomp|frit|salade/.test(c) ? 'e' : /dessert|sucr|douceur|viennoiser|pâtisser|patisser/.test(c) ? 'd' : /plat|pizza|burger|principal|viande|poisson|pâte|pate|sandwich|tacos|menu|bowl|assiette|kebab|wrap|galette|crêpe|crepe|fruits de mer|pain/.test(c) ? 'p' : ''; }
+  /* C157 : les cartes de restauration rapide ont beaucoup de petites catégories (Burgers, Tacos, Bowls…) : en dessous de
+     3 plats, une catégorie est regroupée avec celles du même rôle pour pouvoir être analysée. */
+  function groupe(cat, n) { if (n >= 3) return cat; var c = String(cat || '').toLowerCase(), r = role(cat); return /boisson|bière|biere|vin|cocktail|soft|café|cafe|alcool/.test(c) ? 'Boissons' : r === 'd' ? 'Desserts' : r === 'e' ? 'Entrées et accompagnements' : r === 'p' ? 'Plats' : cat; }
   function cible(P, r, m) {
     var R = (CIBLES[P.type] || CIBLES.brasserie)[r]; if (!R) return null;
     var places = Number(P.places) || 0, pos = places < 30 ? 0 : places > 80 ? 1 : (places - 30) / 50, raisons = [];
@@ -85,7 +90,8 @@
     if (!R.pret || !R.profilOk) return R;
     /* Utilisation croisée des ingrédients (règle « un ingrédient doit servir au moins deux fois »). */
     var usage = {}; complets.forEach(function (x) { lignes(x.p).forEach(function (l) { var k = String(l[0]); (usage[k] = usage[k] || []).push(x.id); }); });
-    var parCat = {}; complets.forEach(function (x) { (parCat[x.cat] = parCat[x.cat] || []).push(x); });
+    var nCat = {}; complets.forEach(function (x) { nCat[x.cat] = (nCat[x.cat] || 0) + 1; });
+    var parCat = {}, origines = {}; complets.forEach(function (x) { var g = groupe(x.cat, nCat[x.cat]); (parCat[g] = parCat[g] || []).push(x); (origines[g] = origines[g] || {})[x.cat] = 1; });
     Object.keys(parCat).forEach(function (cat) {
       if (parCat[cat].length < 3) { R.petites = (R.petites || []).concat(cat); return; }
       var L = parCat[cat], n = L.length, sv = L.reduce(function (t, x) { return t + x.vol; }, 0) || 1;
@@ -120,7 +126,7 @@
       var omnes = { ouverture: pmax / pmin, limite: lim, okOuverture: pmax / pmin <= lim, zones: zones, okDispersion: zones[1] >= zones[0] + zones[2] || n < 4, pmin: pmin, pmax: pmax };
       var vegs = L.filter(function (x) { return x.veg; }).length;
       var retires = L.filter(function (x) { return x.retirer; }).length, apres = n - retires;
-      var C = { cat: cat, role: r, n: n, apres: apres, cible: ci, plats: L.slice().sort(function (a, b) { var o = { etoile: 0, cheval: 1, enigme: 2, mort: 3 }; return o[a.classe] - o[b.classe] || b.vol - a.vol; }), omnes: omnes, vegs: vegs, mMoy: mMoy };
+      var C = { cat: cat, regroupe: Object.keys(origines[cat] || {}).filter(function (k) { return k !== cat; }), role: r, n: n, apres: apres, cible: ci, plats: L.slice().sort(function (a, b) { var o = { etoile: 0, cheval: 1, enigme: 2, mort: 3 }; return o[a.classe] - o[b.classe] || b.vol - a.vol; }), omnes: omnes, vegs: vegs, mMoy: mMoy };
       if (ci) { C.ajouter = Math.max(0, ci.min - apres); C.enlever = Math.max(0, apres - ci.max); }
       C.vegManque = (r === 'e' || r === 'p') && vegs === 0;
       R.cats.push(C);
@@ -170,7 +176,7 @@
     '#c-smart .ci-pl .n{font-weight:800;color:var(--ci-t);overflow-wrap:anywhere;min-width:0}#c-smart .ci-tag{flex:0 0 auto;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;color:var(--ci-c);background:color-mix(in srgb,var(--ci-c) 14%,transparent);white-space:nowrap}' +
     '#c-smart .ci-pl .d{font-size:13px;color:var(--ci-m);margin:4px 0 0;line-height:1.4}#c-smart .ci-pl .x{font-size:14px;color:var(--ci-t);margin:4px 0 0;line-height:1.4}#c-smart .ci-pl .g{font-weight:800;color:#15803d}html.vd-workspace-dark #c-smart .ci-pl .g{color:#4ade80}' +
     '#c-smart .ci-ok{color:#15803d;font-weight:800}#c-smart .ci-ko{color:#c2410c;font-weight:800}html.vd-workspace-dark #c-smart .ci-ok{color:#4ade80}html.vd-workspace-dark #c-smart .ci-ko{color:#fb923c}' +
-    '#cp-nav:has([data-ci-onglet]){grid-template-columns:repeat(4,minmax(0,1fr))!important}#cp-nav [data-ci-onglet]{white-space:nowrap}#cp-nav [data-ci-onglet] .ci-np{display:none}@media (min-width:700px){#cp-nav [data-ci-onglet] .ci-np{display:inline}}' +
+    '#cp-nav:has([data-ci-onglet]),.cp-nav:has([data-ci-onglet]),html.p40-app #v32ModuleDock .cp-nav:has([data-ci-onglet]){grid-template-columns:repeat(4,minmax(0,1fr))!important}#cp-nav [data-ci-onglet]{white-space:nowrap}#cp-nav [data-ci-onglet] .ci-np{display:none}@media (min-width:700px){#cp-nav [data-ci-onglet] .ci-np{display:inline}}' +
     '#c-smart details{margin-top:8px}#c-smart summary{cursor:pointer;font-weight:700;color:var(--ci-t);min-height:32px;display:flex;align-items:center}';
   var part = 1, editProfil = false;
   function css() { if (!doc.getElementById('ciCss')) { var s = doc.createElement('style'); s.id = 'ciCss'; s.textContent = CSS; (doc.head || doc.documentElement).appendChild(s); } }
@@ -229,7 +235,7 @@
       '<div class="ci-a"><button type="button" class="ci-b" data-ci="profil">Modifier</button></div></div>';
     R.cats.forEach(function (C) {
       var ci = C.cible, o = C.omnes;
-      h += '<div class="ci-sec"><div class="ci-cat"><b>' + esc(C.cat) + '</b><span class="ci-cnt">' + C.n + ' plat' + (C.n > 1 ? 's' : '') + (C.apres !== C.n ? ' → ' + C.apres : '') + (ci ? ' · visé ' + ci.n + ' (' + ci.min + ' à ' + ci.max + ')' : '') + '</span></div>';
+      h += '<div class="ci-sec"><div class="ci-cat"><b>' + esc(C.cat) + (C.regroupe && C.regroupe.length ? ' <small style="font-weight:600;color:var(--ci-m);font-size:13px">(' + esc(C.regroupe.join(', ')) + ')</small>' : '') + '</b><span class="ci-cnt">' + C.n + ' plat' + (C.n > 1 ? 's' : '') + (C.apres !== C.n ? ' → ' + C.apres : '') + (ci ? ' · visé ' + ci.n + ' (' + ci.min + ' à ' + ci.max + ')' : '') + '</span></div>';
       if (ci) h += '<p class="ci-m">' + esc(ci.raisons.join(' · ')) + '.' + (C.ajouter ? ' <b>Ajouter ' + C.ajouter + ' plat' + (C.ajouter > 1 ? 's' : '') + '</b> (Vera peut en proposer de saison).' : '') + (C.enlever ? ' <b>Encore ' + C.enlever + ' plat' + (C.enlever > 1 ? 's' : '') + ' de trop</b> : la carte est trop longue pour votre salle.' : '') + '</p>';
       h += '<p class="ci-m">Prix de ' + eur2(o.pmin) + ' à ' + eur2(o.pmax) + ' : ouverture ' + o.ouverture.toFixed(1).replace('.', ',') + ' ' + (o.okOuverture ? '<span class="ci-ok">équilibrée</span>' : '<span class="ci-ko">trop large (repère ≤ ' + String(o.limite).replace('.', ',') + ')</span>') + ' · ' + (o.okDispersion ? '<span class="ci-ok">assez de plats au prix du milieu</span>' : '<span class="ci-ko">trop peu de plats au prix du milieu (' + o.zones[1] + ' contre ' + (o.zones[0] + o.zones[2]) + ')</span>') +
         (C.role === 'e' || C.role === 'p' ? ' · ' + (C.vegManque ? '<span class="ci-ko">aucun plat végétarien</span>' : '<span class="ci-ok">' + C.vegs + ' végétarien' + (C.vegs > 1 ? 's' : '') + '</span>') : '') + '</p>';

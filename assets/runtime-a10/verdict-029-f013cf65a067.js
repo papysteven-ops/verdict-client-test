@@ -726,7 +726,7 @@ function verdictCompleteDemo(d){
     for(var m=0;m<12;m++)if(monthOpen(m))for(var j=1;j<=new Date(y,m+1,0).getDate();j++){
       var dt=new Date(y,m,j,12),iso=y+'-'+pad(m+1)+'-'+pad(j);if(iso>end)continue;
       if(d.fermes.indexOf((dt.getDay()+6)%7)>=0&&!existing[iso])continue;
-      var w=weights[m]*(.9+(dt.getDay()%6)*.04)*(1+((j*17+m*3)%9-4)*.012);rows.push({date:iso,w:w});sum+=w;
+      var w=weights[m]*[.96,.9,.94,.98,1.02,1.1,1.16][dt.getDay()]/* C157 : profil de semaine CHR, samedi le plus fort (avant : getDay()%6 mettait le samedi au niveau du dimanche) */*(1+((j*17+m*3)%9-4)*.012);rows.push({date:iso,w:w});sum+=w;
     }
     // Current year uses a full-year daily scale, not an annual sum squeezed into elapsed months.
     var divisor=y===year?Math.max(1,Number(I.jsem)*4.33*openMonths):sum;

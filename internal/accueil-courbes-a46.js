@@ -71,13 +71,27 @@
     (m.days || []).forEach(function (d) { if (!d.closed && d.ca != null && d.target > 0) { att += d.target; enc += d.ca; } });
     return { encaisse: enc, attendu: att };
   }
+  /* C157 — Projection annuelle indisponible (ex. Saisonnier mer : historique incomplet) : les mois sont repris du plan
+     mensuel (minimum de chaque mois) et de l'historique, au lieu de laisser le chapitre Mois sans graphique. */
+  function moisDuPlan(c, an) {
+    var cur = Number(moisCle().slice(5)), plans = w.DB && w.DB.performancePlans || {}, hist = {};
+    (w.DB && w.DB.monthlyHistory || []).forEach(function (x) { hist[String(x.period).slice(0, 7)] = x; });
+    var parMois = Number(c && c.minimum) > 0 ? Number(c.minimum) / 12 : 0;
+    return MOIS.map(function (_, i) {
+      var k = an + '-' + String(i + 1).padStart(2, '0'), h = hist[k], pl = plans[k], t = pl && Number(pl.minimum) > 0 ? Number(pl.minimum) : parMois;
+      if (h && (h.seasonClosed || Number(h.openDays) === 0)) t = 0;
+      return { kind: i + 1 < cur ? 'past' : i + 1 === cur ? 'current' : 'future', target: t, actual: h ? Number(h.caTTC) || 0 : 0, value: null };
+    });
+  }
   function moisAnnee() {
     var A = w.VerdictAnnualProjection, c = A.core(A.input()), an = moisCle().slice(0, 4), ad = aDate();
-    var cols = (c.months || []).map(function (m, i) {
+    var mois = c && c.months && c.months.length ? c.months : moisDuPlan(c, an);
+    var cols = mois.map(function (m, i) {
       var lib = MOIS[i] + ' ' + an;
       if (!(m.target > 0)) return { lib: lib, axe: INIT[i], type: 'repos' };
       if (m.kind === 'past') return { lib: lib, axe: INIT[i], type: 'reel', valeur: m.actual, cible: m.target, r: m.actual / m.target };
       if (m.kind === 'current') return ad.attendu > 0 ? { lib: lib + ' (en cours)', axe: INIT[i], type: 'encours', encours: true, valeur: ad.encaisse, cible: ad.attendu, r: ad.encaisse / ad.attendu } : { lib: lib, axe: INIT[i], type: 'vide' };
+      if (m.value == null) return { lib: lib, axe: INIT[i], type: 'vide', cible: m.target, avenir: true };
       return { lib: lib, axe: INIT[i], type: 'projete', valeur: m.value, cible: m.target, r: m.value / m.target };
     });
     var passes = cols.filter(function (x) { return x.type === 'reel'; }), ok = passes.filter(function (x) { return x.r >= 1; }).length;
@@ -92,6 +106,10 @@
     var A = w.VerdictAnnualProjection, c = A.core(A.input()), an = Number(moisCle().slice(0, 4)), cible = Number(c.minimum) || 0;
     var par = {}; (w.DB && w.DB.monthlyHistory || []).forEach(function (x) { var y = Number(String(x.period || '').slice(0, 4)); if (y && y < an && x.caTTC > 0) par[y] = (par[y] || 0) + Number(x.caTTC); });
     var cols = Object.keys(par).map(Number).sort().slice(-6).map(function (y) { return { lib: 'Année ' + y, axe: String(y), type: 'reel', valeur: par[y], cible: cible, r: cible > 0 ? par[y] / cible : null }; });
+    if (!(c.expected > 0)) { /* C157 : projection indisponible → année à date reprise du plan mensuel et de l'historique. */
+      var ad = aDate(), ac = ad.encaisse, ex = ad.attendu; moisDuPlan(c, String(an)).forEach(function (m) { if (m.kind === 'past' && m.target > 0) { ac += m.actual; ex += m.target; } });
+      c = Object.assign({}, c, { actual: ac, expected: ex });
+    }
     if (c.expected > 0) cols.push({ lib: 'Année ' + an + ' (en cours)', axe: String(an), type: 'encours', encours: true, valeur: c.actual, cible: c.expected, r: c.actual / c.expected });
     /* Évolution : même période de l'année précédente (janvier → mois en cours), à périmètre comparable. */
     var mc = Number(moisCle().slice(5)), meme = 0; (w.DB && w.DB.monthlyHistory || []).forEach(function (x) { var p = String(x.period || ''); if (Number(p.slice(0, 4)) === an - 1 && Number(p.slice(5, 7)) <= mc && x.caTTC > 0) meme += Number(x.caTTC); });
