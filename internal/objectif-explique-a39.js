@@ -89,6 +89,9 @@
     '#modSaisie .vx39-pos{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:14px;background:rgba(148,163,184,.14)}' +
     '#modSaisie .vx39-pos.avance{background:rgba(34,197,94,.13)}#modSaisie .vx39-pos.retard{background:rgba(249,115,22,.14)}' +
     '#modSaisie .day-total:has(.day-none)>.day-track,#modSaisie .day-total:has(.day-none)>b{display:none}' +
+    '#modSaisie .day-total:has(.day-none)>small,#modSaisie .day-total:has(.day-none)>strong{display:none}#modSaisie p.vx39-p{display:none!important}' +
+    '#modSaisie p.vx53-o{font-size:22px!important;font-weight:800;margin:4px 0 4px!important;letter-spacing:-.01em}#modSaisie p.vx53-o b{font-variant-numeric:tabular-nums}' +
+    '#modSaisie .day-total>p.vx53-e{margin:0 0 12px!important;font-size:15px!important;font-weight:500!important;line-height:1.45;letter-spacing:0!important;opacity:.92}#modSaisie p.vx53-e b{font-weight:800}' +
     '.vx39-d{display:grid;gap:6px;margin:0 0 12px;padding:0 0 12px;border-bottom:1px dashed rgba(34,197,94,.35)}.vx39-d small{font-size:14px;line-height:1.45;opacity:.9}' +
     '.vx39-alerte{color:#ea580c;font-weight:700}html.vd-workspace-dark .vx39-alerte{color:#fb923c}p.vx39-p{display:flex;flex-direction:column;gap:3px;margin:6px 0 10px}p.vx39-p small{font-size:13px;opacity:.85}.vx39-pos{font-weight:700}.vx39-pos.avance b{color:#16a34a}.vx39-pos.retard b{color:#ea580c}html.vd-workspace-dark .vx39-pos.avance b{color:#4ade80}html.vd-workspace-dark .vx39-pos.retard b{color:#fb923c}' +
     '.vx39>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;min-height:44px}.vx39>summary::-webkit-details-marker{display:none}' +
@@ -120,6 +123,35 @@
       boite.insertBefore(t, tuile);
     });
   }
+  /* C153 (Steven, 18/10 : « j'aime pas du tout, tu trouves ça cohérent, compréhensible ? » devant « À réaliser
+     aujourd'hui : 1 147,98 € (base 967,15 € + rattrapage) · Retard du mois : 2 796 € ») : des centimes, du jargon
+     (« base », « rattrapage ») et deux chiffres sans lien visible (181 € de rattrapage aujourd'hui contre 2 796 € de
+     retard). Désormais une seule phrase relie tout : « Objectif aujourd'hui : 1 148 € » puis « 967 € pour couvrir les
+     charges d'un dimanche + 181 € pour rattraper le retard du mois (2 796 € à combler sur 13 jours ouverts…) ».
+     Montants à l'euro près dans la carte du jour. */
+  function montant(t) { var m = /([\d\u202f\u00a0 .]+(?:,\d{1,2})?)\s*€/.exec(t || ''); return m ? Number(m[1].replace(/[\s\u202f\u00a0.]/g, '').replace(',', '.')) : null; }
+  function clair(lp, c, S) {
+    var t = montant(lp.textContent), base = Number(S.obj) || t, passe = /pour cette journée/.test(lp.textContent);
+    if (!(t > 0)) return;
+    var date = S.cle || (c && c.next), jour = date ? JOURS[jourSem(date)] : 'jour', extra = Math.round(t) - Math.round(base);
+    var meme = c && c.exact && c.next === date, retard = meme ? Number(c.deficit) || 0 : 0, avance = meme ? Number(c.advance) || 0 : 0, ouv = meme ? Number(c.openRemaining) || 0 : 0;
+    var charges = '<b>' + eur(base) + '</b> pour couvrir les charges d’un ' + jour, e;
+    if (extra >= 1 && retard > 0) e = charges + ', <b>+ ' + eur(extra) + '</b> pour rattraper le retard du mois (' + eur(retard) + ' répartis sur ' + ouv + ' jour' + (ouv > 1 ? 's' : '') + ' ouvert' + (ouv > 1 ? 's' : '') + ' restant' + (ouv > 1 ? 's' : '') + ', davantage sur les jours forts).';
+    else if (extra <= -1 && avance > 0) e = charges + ', <b>− ' + eur(-extra) + '</b> grâce à l’avance du mois (' + eur(avance) + ').';
+    else if (retard > 0) e = charges + '. Le mois a ' + eur(retard) + ' de retard, réparti sur les jours ouverts restants.';
+    else if (avance > 0) e = charges + '. Le mois a ' + eur(avance) + ' d’avance.';
+    else e = charges + '. Le mois est dans les temps.';
+    lp.className = 'vx53-o'; lp.innerHTML = 'Objectif ' + (passe ? 'de cette journée' : 'aujourd’hui') + ' : <b>' + eur(t) + '</b>';
+    var ex = lp.nextElementSibling; if (!ex || !ex.classList.contains('vx53-e')) { ex = lp.ownerDocument.createElement('p'); ex.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex); }
+    ex.innerHTML = e;
+  }
+  /* Montants de la carte du jour à l'euro près (le détail replié garde ses décimales utiles, ex. ticket moyen). */
+  function arrondir(saisie) {
+    var tot = saisie.querySelector('.day-total'); if (!tot) return;
+    var it = tot.ownerDocument.createTreeWalker(tot, 4), n, re = /(\d[\d\u202f\u00a0 ]*),(\d{1,2})\s?€/g;
+    while ((n = it.nextNode())) { if (re.test(n.nodeValue)) { re.lastIndex = 0; n.nodeValue = n.nodeValue.replace(re, function (m0, a, b) { return eur(Number(a.replace(/[\s\u202f\u00a0]/g, '') + '.' + b)); }); } re.lastIndex = 0; }
+  }
+  w.VerdictObjectifClair = { clair: clair, arrondir: arrondir, montant: montant };
   function enrichir(cadre) {
     var d, cw; try { d = cadre.contentDocument; cw = cadre.contentWindow; } catch (e) { return; }
     if (!d || !d.body || !cw || !cw.VD) return;
@@ -129,9 +161,8 @@
     try { uneSeuleAvance(d, cw.VD.chr); uneSeuleAvance(doc, cw.VD.chr); mentionTTC(d); } catch (e) {}
     /* Saisie du jour : le prochain jour ouvert à faire. */
     var saisie = d.getElementById('modSaisie'), next = cw.VD.chr.next;
-    if (saisie) { var lp = [].filter.call(saisie.querySelectorAll('.day-total p'), function (p) { return /^À réaliser aujourd/.test((p.textContent || '').trim()); })[0];
-      var deja = lp && lp.nextElementSibling && lp.nextElementSibling.classList.contains('vx39-p');
-      if (lp && !deja) { var hp = position(cw.VD.chr); if (hp) lp.insertAdjacentHTML('afterend', '<p class="vx39-p">' + hp + '</p>'); } }
+    if (saisie) { var lp = [].filter.call(saisie.querySelectorAll('.day-total p'), function (p) { return /^À réaliser (aujourd|pour cette journée)/.test((p.textContent || '').trim()); })[0];
+      if (lp) clair(lp, cw.VD.chr, cw.VD.saisie || {}); arrondir(saisie); }
     if (saisie && next) {
       var ex = saisie.querySelector('.vx39');
       if (!ex || ex.getAttribute('data-vx39') !== next) { if (ex) ex.remove(); var h = bloc(input, next, !input.today || input.today === next) /* C131 : jour fermé aujourd'hui → titre du prochain jour ouvert */; if (h) saisie.insertAdjacentHTML('beforeend', h); }
