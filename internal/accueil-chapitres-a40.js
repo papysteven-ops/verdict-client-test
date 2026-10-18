@@ -39,6 +39,8 @@
     '.vx40-t>.mod,.vx40-t>section{padding-top:2px!important}.vx40-t>.mod>.mod-h:empty,.vx40-t>.mod>.mod-h:not(:has(>:not(.kicker))){display:none}' +
     '.vx40-t>.mod>.mod-h>.kicker:first-child,.vx40-t>#vdOffCard>#vdOffTitle{display:none}' +
     '.vx40-fin .jr{opacity:1!important}.vx40-rej,.vx40-rej *{animation:none!important}' +
+    '.identite .vx40-long{font-size:clamp(24px,6.6vw,36px)!important;line-height:1.08!important;letter-spacing:-.015em!important}' +
+    '.identite .vx40-tres-long{font-size:clamp(21px,5.6vw,32px)!important}' +
     '#vx40-prio{margin:4px 0 16px}#vx40-prio>#modSaisie{margin:0}' +
     '.vx40-suite{display:flex;justify-content:space-between;gap:10px;margin:4px 0 0;padding-bottom:26px;grid-column:1/-1}.vx40-suite .vx40-suiv{margin-left:auto}.vx40-suite button{appearance:none;border:1px solid var(--line,rgba(148,163,184,.2));background:transparent;color:var(--txt,inherit);font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;cursor:pointer;min-height:44px}' +
     /* C139 (Steven, 17/10 : « boutons Mois / Année : en blanc en sombre, en sombre en clair, pour les identifier parfaitement ») */
@@ -108,6 +110,9 @@
     if (!d.getElementById('vx40-css')) { var s = d.createElement('style'); s.id = 'vx40-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
     main.classList.add('vx40-large');
     var ident = main.querySelector(':scope>.identite');
+    /* C160 — Noms d'établissement longs (« Cuisine de livraison (dark kitchen) (démonstration estimative) » : 5 lignes sur
+       iPhone) : taille réduite au-delà de 28 caractères. */
+    if (ident) [].forEach.call(ident.querySelectorAll('h1,h2'), function (h) { var n = (h.textContent || '').trim().length, lg = n > 28, tl = n > 44; if (h.classList.contains('vx40-long') !== lg) h.classList.toggle('vx40-long', lg); if (h.classList.contains('vx40-tres-long') !== tl) h.classList.toggle('vx40-tres-long', tl); });
     var nav = main.querySelector(':scope>.vx40-nav');
     if (!nav) {
       nav = d.createElement('div'); nav.className = 'vx40-nav'; nav.setAttribute('role', 'tablist'); nav.setAttribute('aria-label', 'Chapitres de l’accueil');

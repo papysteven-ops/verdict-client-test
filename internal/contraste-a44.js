@@ -95,7 +95,7 @@
     a.forEach(function (t) { t.nodeValue = t.nodeValue.replace(/[-−]0,0(\s| )?%/g, '0,0$1%'); });
     /* Bandeau de démonstration sur téléphone : « Recommencer la démonstration » devient « Recommencer » (nom complet gardé
        pour les lecteurs d'écran), pour que le × ait sa place. */
-    if ((d.defaultView || w).innerWidth < 600) [].forEach.call(d.querySelectorAll('#modeBar button'), function (b) { if ((b.textContent || '').trim() === 'Recommencer la démonstration') { b.setAttribute('aria-label', 'Recommencer la démonstration'); b.textContent = 'Recommencer'; } });
+    if ((d.defaultView || w).innerWidth < 600) [].forEach.call(d.querySelectorAll('#modeBar button'), function (b) { if (/^Recommencer\s+la\s+démonstration$/.test((b.textContent || '').replace(/\s+/g, ' ').trim())) { /* C160 : aussi après un changement de modèle (espaces insécables) */ b.setAttribute('aria-label', 'Recommencer la démonstration'); b.textContent = 'Recommencer'; } });
     /* Aide : texte d'aide du champ trop long pour un téléphone. */
     var q = d.getElementById('aideQ'); if (q && q.getBoundingClientRect().width > 0 && q.getBoundingClientRect().width < 300 && q.placeholder.length > 22) q.placeholder = 'Demander à Vera…';
     /* Inventaire : lien « Ouvrir le même établissement » de 17 px de haut. */
@@ -139,6 +139,9 @@
       /* C145 — petits défauts (groupe 3) : bouton × du bandeau de démonstration à 32 px, sans déborder ; noms de produits et
          légendes de l'Inventaire sur deux lignes au lieu d'être coupés. */
       '.mb-label{display:inline-flex!important;align-items:center;gap:6px}.p40-mb-x{min-width:32px!important;min-height:32px!important;flex:0 0 auto;display:inline-grid;place-items:center}' +
+      /* C160 — Pastille du score (« 67 → 30 −37 rejouer ») : sur téléphone elle couvrait « Mes contrôles et actions » ; elle
+         passe en bas, au-dessus de la barre de navigation. */
+      '@media (max-width:600px){#scTrace{top:auto!important;bottom:calc(104px + env(safe-area-inset-bottom))!important;right:12px!important}}' +
       'html.p40-app body #modeBar .mb-label .p40-mb-x{width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;margin-left:6px!important;margin-right:8px!important;font-size:15px!important}html.p40-app body #modeBar .mb-label{flex:0 0 auto;min-width:0}' +
       '.pinv-b small{white-space:normal!important;text-overflow:clip!important;overflow:visible!important}' +
       'div.nm{white-space:normal!important;text-overflow:clip!important;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}' +
@@ -149,5 +152,11 @@
   function demarrer() { surveiller(doc); documents().forEach(surveiller); planifier(); }
   if (doc.readyState === 'complete') setTimeout(demarrer, 1200); else w.addEventListener('load', function () { setTimeout(demarrer, 1200); });
   setInterval(function () { documents().forEach(surveiller); }, 3000);
+  /* C160 — Le bandeau de démonstration est redessiné à chaque changement de modèle : « Recommencer » est raccourci sans
+     attendre (le texte long recouvrait la croix pendant quelques secondes). */
+  var tBandeau = setInterval(function () {
+    if (w.innerWidth >= 600) return;
+    [].forEach.call(doc.querySelectorAll('#modeBar button'), function (b) { if (/^Recommencer\s+la\s+démonstration$/.test((b.textContent || '').replace(/\s+/g, ' ').trim())) { b.setAttribute('aria-label', 'Recommencer la démonstration'); b.textContent = 'Recommencer'; } });
+  }, 250); if (tBandeau && tBandeau.unref) tBandeau.unref();
   w.VerdictContraste = { passe: function () { tout(); }, mesurer: passe };
 })();
