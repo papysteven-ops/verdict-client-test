@@ -127,12 +127,22 @@
         var n = bs[(i + (e.key === 'ArrowRight' ? 1 : bs.length - 1)) % bs.length]; montrer(d, n.getAttribute('data-k'), false); n.focus(); e.preventDefault();
       });
     }
-    if (ident && ident.nextElementSibling !== nav) ident.after(nav); else if (!ident && main.firstElementChild !== nav) main.prepend(nav);
+    /* C163 — Ordre unique : titre → (saisie en tête si la journée est à renseigner) → chapitres. Avant, ces deux placements
+       se défaisaient l'un l'autre en boucle (toutes les 80 ms) dès que la saisie passait en tête : l'appli se figeait et ne
+       répondait plus aux clics (Steven, 19/10 : « je clique sur Mois, ça bouge pas »). */
+    var prio = aRenseigner(d), hold = d.getElementById('vx40-prio');
+    if (prio && !hold) { hold = d.createElement('div'); hold.id = 'vx40-prio'; }
+    var avant = prio ? hold : null;
+    if (ident) {
+      if (avant) { if (ident.nextElementSibling !== avant) ident.after(avant); if (avant.nextElementSibling !== nav) avant.after(nav); }
+      else if (ident.nextElementSibling !== nav) ident.after(nav);
+    } else {
+      if (avant) { if (main.firstElementChild !== avant) main.prepend(avant); if (avant.nextElementSibling !== nav) avant.after(nav); }
+      else if (main.firstElementChild !== nav) main.prepend(nav);
+    }
     /* C155 (Steven, 18/10 : « la saisie doit être en priorité, en haut : c'est la première chose à faire en ouvrant
        Verdict ; là on scrolle, on scrolle ») : tant que la journée est « À renseigner », la carte de saisie passe tout en
        haut, juste sous le titre, avant les chapitres. Une fois la journée enregistrée, elle retourne dans « Jour ». */
-    var prio = aRenseigner(d), hold = d.getElementById('vx40-prio');
-    if (prio) { if (!hold) { hold = d.createElement('div'); hold.id = 'vx40-prio'; } if (nav.previousElementSibling !== hold) deplacer(hold, function () { nav.before(hold); }); }
     var dernier = nav;
     CHAP.forEach(function (c, ci) {
       var ch = d.getElementById('vx40-' + c.k);
