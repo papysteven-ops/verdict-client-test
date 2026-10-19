@@ -73,10 +73,10 @@
       var x = lourds[0];
       if (x.part > repere) {
         var prodCible = x.coutHeure / repere, enTrop = x.h - x.ht / prodCible;
-        if (enTrop >= 1) R.lourd = { nom: x.nom, part: x.part, prod: x.prod, prodCible: prodCible, caEnPlus: prodCible * x.h - x.ht, heuresEnTrop: enTrop };
+        if (enTrop >= 1) R.lourd = { nom: x.nom, cout: x.cout, ht: x.ht, part: x.part, prod: x.prod, prodCible: prodCible, caEnPlus: prodCible * x.h - x.ht, heuresEnTrop: enTrop };
       }
       var m = lourds.slice().sort(function (a, b) { return a.part - b.part; })[0];
-      if (lourds.length > 1 && (!R.lourd || m.nom !== R.lourd.nom)) R.meilleur = { nom: m.nom, part: m.part, prod: m.prod };
+      if (lourds.length > 1 && (!R.lourd || m.nom !== R.lourd.nom)) R.meilleur = { nom: m.nom, cout: m.cout, ht: m.ht, part: m.part, prod: m.prod };
     }
     return R;
   }
@@ -121,9 +121,9 @@
   /* La phrase utile, la même dans la carte et dans « À faire ». */
   function phrase(R) {
     if (!R || R.vide) return '';
-    if (!R.lourd) return (R.total.part != null && R.total.part > R.repere + 0.005 ? 'Aucun service ne s’écarte d’une heure ou plus du repère de ' + pc(R.repere) : 'Chaque service tient le repère de ' + pc(R.repere)) + ' : l’équipe pèse ' + pc(R.total.part) + ' du CA HT, ' + eur(R.total.prod) + ' HT par heure travaillée.';
-    var L = R.lourd, t = L.nom + ' : ' + eur(L.prod) + ' HT par heure travaillée, l’équipe y pèse ' + pc(L.part) + ' du CA (repère ' + pc(R.repere) + ').';
-    if (R.meilleur && R.meilleur.nom !== L.nom) t += ' ' + R.meilleur.nom + ' : ' + eur(R.meilleur.prod) + ' par heure (' + pc(R.meilleur.part) + ').';
+    if (!R.lourd) return (R.total.part != null && R.total.part > R.repere + 0.005 ? 'Aucun service ne s’écarte d’une heure ou plus du repère de ' + pc(R.repere) : 'Chaque service tient le repère de ' + pc(R.repere)) + ' : l’équipe coûte ' + eur(R.total.cout) + ' pour ' + eur(R.total.ht) + ' de CA HT (' + pc(R.total.part) + '), ' + eur(R.total.prod) + ' HT par heure travaillée.';
+    var L = R.lourd, t = L.nom + ' : l’équipe coûte ' + eur(L.cout) + ' pour ' + eur(L.ht) + ' de CA HT (' + pc(L.part) + ', repère ' + pc(R.repere) + '), ' + eur(L.prod) + ' HT par heure travaillée.';
+    if (R.meilleur && R.meilleur.nom !== L.nom) t += ' ' + R.meilleur.nom + ' : ' + eur(R.meilleur.cout) + ' pour ' + eur(R.meilleur.ht) + ' (' + pc(R.meilleur.part) + '), ' + eur(R.meilleur.prod) + ' par heure.';
     t += ' Pour revenir au repère, il faudrait ' + eur(L.prodCible) + ' HT par heure : ' + eur(L.caEnPlus) + ' de CA HT en plus à heures égales, ou ' + hh(L.heuresEnTrop) + ' de moins à CA égal' + (R.periode === 'jour' ? ' ce jour-là' : R.periode === 'mois' ? ' ce mois-ci' : ' sur l’année') + '.';
     return t;
   }
@@ -133,17 +133,18 @@
     '.sh52 .sh52-p{display:inline-block;min-width:44px;padding:2px 7px;border-radius:999px;font-weight:700}' +
     '.sh52 .sh52-vert{background:rgba(34,197,94,.16);color:#15803d}.sh52 .sh52-orange{background:rgba(249,115,22,.16);color:#c2410c}.sh52 .sh52-rouge{background:rgba(239,68,68,.16);color:#b91c1c}.sh52 .sh52-info{opacity:.7}' +
     'html.vd-workspace-dark .sh52 .sh52-vert{color:#4ade80}html.vd-workspace-dark .sh52 .sh52-orange{color:#fb923c}html.vd-workspace-dark .sh52 .sh52-rouge{color:#f87171}' +
-    '.sh52 .sh52-c{display:none}' +
+    '.sh52 .sh52-c{display:none}.sh52 small.sh52-s{display:block;font-size:11px;font-weight:500;opacity:.7;margin-top:2px}.sh52 td{vertical-align:top}' +
     '@media (max-width:520px){.sh52 table{font-size:13px}.sh52 th,.sh52 td{padding:6px 3px}.sh52 td:first-child{white-space:normal}.sh52 .sh52-hab,.sh52 .sh52-l{display:none}.sh52 .sh52-c{display:inline}.sh52 .sh52-p{min-width:0;padding:2px 5px}}';
   function carteHTML(R) {
     var jour = R.periode === 'jour', aHab = jour && R.services.some(function (x) { return x.habituel != null; });
     var h = '<p class="kicker">Ventes et heures par service · ' + esc(libelle(R)) + (w.DB && (w.DB.demo || (w.DB.services || []).some(function (s) { return s && s.demo; })) ? ' · démonstration' : '') + '</p>' +
       '<p class="titre">' + esc(R.lourd ? R.lourd.nom + ' : l’équipe pèse ' + pc(R.lourd.part) + ' du CA' : R.total.part != null && R.total.part > R.repere + 0.005 ? 'L’équipe pèse ' + pc(R.total.part) + ' du CA, réparti sur tous les services' : 'Équipe dans le repère, service par service') + '</p>' +
-      '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>CA HT</th><th>Heures</th><th><span class="sh52-l">€ HT / heure</span><span class="sh52-c">€/h</span></th>' + (aHab ? '<th class="sh52-hab">D’habitude</th>' : '') + '<th><span class="sh52-l">Équipe / CA</span><span class="sh52-c">Équipe</span></th></tr></thead><tbody>';
-    R.services.concat(R.services.length > 1 ? [R.total] : []).forEach(function (x) {
+      '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>CA HT</th><th>Heures</th><th><span class="sh52-l">€ HT / heure</span><span class="sh52-c">€/h</span></th>' + (aHab ? '<th class="sh52-hab">D’habitude</th>' : '') + '<th><span class="sh52-l">Coût équipe / CA</span><span class="sh52-c">Équipe</span></th></tr></thead><tbody>';
+    var plusieurs = R.services.length > 1;
+    R.services.concat(plusieurs ? [R.total] : []).forEach(function (x) {
       var tot = x === R.total;
-      h += '<tr' + (tot ? ' class="sh52-tot"' : '') + '><td>' + esc(x.nom) + '</td><td>' + eur(x.ht) + '</td><td>' + hh(x.h) + '</td><td>' + eur(x.prod) + '</td>' + (aHab ? '<td class="sh52-hab">' + (tot || x.habituel == null ? '' : eur(x.habituel)) + '</td>' : '') +
-        '<td><span class="sh52-p sh52-' + couleur(x.part, R.repere) + '">' + pc(x.part) + '</span></td></tr>';
+      h += '<tr' + (tot ? ' class="sh52-tot"' : '') + '><td>' + esc(x.nom) + '</td><td>' + eur(x.ht) + (plusieurs && !tot && R.total.ht > 0 ? '<small class="sh52-s">' + pc(x.ht / R.total.ht) + ' du CA</small>' : '') + '</td><td>' + hh(x.h) + '</td><td>' + eur(x.prod) + '</td>' + (aHab ? '<td class="sh52-hab">' + (tot || x.habituel == null ? '' : eur(x.habituel)) + '</td>' : '') +
+        '<td><span class="sh52-p sh52-' + couleur(x.part, R.repere) + '">' + pc(x.part) + '</span>' + (x.coutConnu ? '<small class="sh52-s">' + eur(x.cout) + '</small>' : '') + '</td></tr>';
     });
     h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + esc((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et CA par service de vos saisies. ' : '') + 'Coût d’une heure = salaire chargé. Un service lourd se vérifie (planning, polyvalence, creux) avant toute décision : ce n’est pas ce qu’on économiserait en le fermant.') + '</p>' +
       '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
