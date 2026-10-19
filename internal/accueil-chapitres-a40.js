@@ -15,7 +15,7 @@
     /* C164 (Steven, 19/10 : « une cohérence de lecture ») : d'abord « Vos journées », à côté le détail de la journée
        (Journée d'exploitation, déplié), ensuite seulement les alertes et décisions (limite, décision, rupture, repères),
        en pleine largeur (b = bas). */
-    { k: 'jour', t: 'Jour', ouvert: true, p: ['modSaisie'], s: ['modJour'], b: ['modReperesJour', 'modLimites', 'modAction', 'modRupture', 'modServJ'] }, /* C168 : ventes et heures par service en dernier */ /* C165 : repères d'aujourd'hui dépliés, puis limite, décision, rupture */
+    { k: 'jour', t: 'Jour', ouvert: true, p: ['modSaisie'], s: ['modJour'], b: ['modReperesJour', 'modServJ', 'modRupture', 'modLimites', 'modAction'] }, /* C170 (Steven, 19/10 : « je veux ça en dernier, en bas ») : repères, ventes et heures par service, rupture, puis limite de consommation et décision prioritaire tout en bas */ /* C165 : repères d'aujourd'hui dépliés, puis limite, décision, rupture */
     { k: 'mois', t: 'Mois', ouvert: true, large: true /* C136 : calendrier et mois ont leur propre mise en page en deux colonnes : pleine largeur, l’un sous l’autre */, p: ['calendrier'], s: ['modMois', '~vdOffCard', '~modManqueCarte'], b: ['modServM'] },
     { k: 'annee', t: 'Année', p: ['modAnnee'], s: [], b: ['modServA'] },
     { k: 'argent', t: 'Argent', p: ['modArgent'], s: ['~modTreso', '~modCash13'] }
