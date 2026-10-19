@@ -93,7 +93,7 @@
   function vdlDecide(doc,win,e,vh,out){
     if(VDL_SKIP.test(e.tagName))return;
     /* V2 : l’écran d’ouverture (anneau VERDICT / score) garde son fond sombre dans les deux thèmes. */
-    if(e.id==='splash'||e.id==='verdictIntroHandoff'||(e.closest&&e.closest('#splash,#verdictIntroHandoff,#vr16,#vr16-cache,#vd-theme-btn,#maj18,#vd-plus,.vd-cta,.vd-cta-hint,#decReveal,.dec-scene,.av31-full>summary,#decTotalBar,.vd-pas,#vdRecit,#vdBiblio,#vdLecteur,#vdRecitCarte,#vdOffre,#vdPlanBadge,#vx41,#vx41-feuille,#refSh,#mDemoIntent'))){if(e.__vdl)vdlClear(e);return;}
+    if(e.id==='splash'||e.id==='verdictIntroHandoff'||(e.closest&&e.closest('#splash,#verdictIntroHandoff,#vr16,#vr16-cache,#vd-theme-btn,#maj18,#nv53,#vd-plus,.vd-cta,.vd-cta-hint,#decReveal,.dec-scene,.av31-full>summary,#decTotalBar,.vd-pas,#vdRecit,#vdBiblio,#vdLecteur,#vdRecitCarte,#vdOffre,#vdPlanBadge,#vx41,#vx41-feuille,#refSh,#mDemoIntent'))){if(e.__vdl)vdlClear(e);return;}
     /* V2-A8 : un onglet qui n’est plus sélectionné perd son fond « sélectionné » (avant : « Indice de sérénité » restait allumé). */
     if((e.__vdl==='sel'&&!vdlSelected(e))||(e.__vdl==='btn'&&vdlSelected(e)))vdlClear(e);
     if(e.__vdl&&e.__vdlVals){for(var pk in e.__vdlVals){if(e.style.getPropertyValue(pk)!==e.__vdlVals[pk]||e.style.getPropertyPriority(pk)!=='important'){vdlClear(e);e.__vdlVals=null;break;}}}

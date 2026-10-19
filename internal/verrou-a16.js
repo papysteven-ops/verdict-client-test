@@ -304,7 +304,9 @@
         (av ? '<label>' + esc(BIO) + '<input type="checkbox" data-bio' + (C.bio ? ' checked' : '') + '></label>' : '<label>' + esc(BIO) + '<span style="color:#a3adb8">indisponible ici</span></label>') +
         (window.VerdictMaj && window.VerdictMaj.notifications && window.VerdictMaj.notifications.etat() !== 'indisponible' ? '<label>Notifications et nombre sur l’icône<input type="checkbox" data-notif' + (window.VerdictMaj.notifications.etat() === 'active' ? ' checked' : '') + '></label>' : '<label>Notifications et nombre sur l’icône<span style="color:#a3adb8">indisponible ici</span></label>') +
         '<label>Verrouillage auto<select data-delai>' + DELAIS.map(function (d) { return '<option value="' + d[0] + '"' + (+C.delai === d[0] ? ' selected' : '') + '>' + d[1] + '</option>'; }).join('') + '</select></label></div>' +
-        '<div class="vr-version" style="margin:14px 0 4px;color:#a3adb8;font-size:13px">Version : vérification…</div><button type="button" class="vr-btn sec" data-maj>Rechercher une mise à jour</button>' +
+        '<div class="vr-version" style="margin:14px 0 4px;color:#a3adb8;font-size:13px">Version : vérification…</div>' +
+        (window.VerdictNouveautes ? window.VerdictNouveautes.listeHTML(6) : '') /* C171 : les dernières nouveautés */ +
+        '<button type="button" class="vr-btn sec" data-maj>Rechercher une mise à jour</button>' +
         '<button type="button" class="vr-btn" data-lock>Verrouiller maintenant</button>' + (COFFRE ? '' : '<button type="button" class="vr-btn sec" data-code>Changer mon code</button>'), true);
       var el = root();
       el.querySelector('[data-lock]').onclick = function () { effacer(); lock(false); };
