@@ -95,9 +95,9 @@
   }
 
   /* ---------- Lecture dans l'appli ---------- */
-  function eur(x) { return x == null ? '—' : Math.round(x).toLocaleString('fr-FR') + ' €'; }
-  function pc(x) { return x == null ? '—' : Math.round(x * 100) + ' %'; }
-  function hh(x) { return Math.round(x).toLocaleString('fr-FR') + ' h'; }
+  function eur(x) { return x == null ? '—' : Math.round(x).toLocaleString('fr-FR') + '\u00a0€'; }
+  function pc(x) { return x == null ? '—' : Math.round(x * 100) + '\u00a0%'; }
+  function hh(x) { return Math.round(x).toLocaleString('fr-FR') + '\u00a0h'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function repere() {
     try { var t = typeof w.fmtActif === 'function' ? w.fmtActif() : null, F = t && w.FORMATS && w.FORMATS[t] && w.FAMILLES && w.FAMILLES[w.FORMATS[t].f]; F = F || (w.FAMILLES && w.FAMILLES.trad); if (F && F.ms && F.ms[1] > 0) return F.ms[1] / 100; } catch (e) {}

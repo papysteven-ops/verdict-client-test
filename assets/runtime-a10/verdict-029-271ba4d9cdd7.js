@@ -23426,9 +23426,7 @@ function drawBench(R,el){
       '<b>Banque de France FIBEN \u00b7 secteur 56 Restauration \u00b7 2024</b>'+
       '<p class="note" style="margin:6px 0 0">Taux d\u2019exc\u00e9dent brut global / CA HT : <b>Q1 4,6 %</b> \u00b7 <b>m\u00e9diane 8,8 %</b> \u00b7 <b>Q3 13,9 %</b>. Statistique sectorielle affich\u00e9e pour contexte, sans transformer votre marge avant imp\u00f4t en faux classement.</p>'+
     '</div></div>';
-  /* ── 3. radar ── */
-  h+='<div class="card"><h3>La structure en un regard <span class="r">'+(bv.cas==null?'6':'7')+' axes normalis\u00e9s</span></h3>'+radarSVG(R)+
-    '<p class="note">Plus la surface colori\u00e9e s\u2019approche du polygone vert, plus elle rejoint la zone cible Verdict. Le polygone gris = le rep\u00e8re de pilotage Verdict, pas une moyenne statistique officielle.</p></div>';
+  /* ── 3. radar : retiré (C173, Steven : « inutile, à supprimer ») ── */
   /* ── 4. forces & vigilance ── */
   var comps=[];
   SECT.forEach(function(s){

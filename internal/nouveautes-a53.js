@@ -11,6 +11,8 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C173', date: '2026-10-19', titre: 'Repères & secteur : le radar « La structure en un regard » est retiré, place aux 9 repères' },
+    { id: 'C172', date: '2026-10-19', titre: 'Accueil › Mois : l’équipe en direct (jauge verte à rouge) et les heures à prévoir le mois prochain' },
     { id: 'C171', date: '2026-10-19', titre: 'Après chaque mise à jour, Verdict vous dit ce qui est nouveau' },
     { id: 'C170', date: '2026-10-19', titre: 'Accueil › Jour : limite de consommation et décision prioritaire regroupées tout en bas' },
     { id: 'C169', date: '2026-10-19', titre: 'Ventes et heures par service : coût de l’équipe en euros et part de chaque service dans le CA' },
