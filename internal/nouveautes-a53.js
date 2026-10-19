@@ -11,6 +11,7 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C175', date: '2026-10-19', titre: 'Plus de bandeau « Nouvelle version » : Verdict se met à jour tout seul, sans rien vous demander' },
     { id: 'C174', date: '2026-10-19', titre: 'Repères & secteur : la masse salariale se compare au repère de votre format d’établissement, le même que dans la décision et les cartes Équipe' },
     { id: 'C173', date: '2026-10-19', titre: 'Repères & secteur : le radar « La structure en un regard » est retiré, place aux 9 repères' },
     { id: 'C172', date: '2026-10-19', titre: 'Accueil › Mois : l’équipe en direct (jauge verte à rouge) et les heures à prévoir le mois prochain' },

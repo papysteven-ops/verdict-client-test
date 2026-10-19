@@ -43,17 +43,25 @@
     } catch (e) { return false; }
   }
   function momentSur() { var t = Date.now(), dern = 0; try { dern = +sessionStorage.getItem('verdict:maj-appliquee') || 0; } catch (e) {} return !autoFaite && t - dern > 120000 && (t - ouvertA < 30000 || (!!retourA && t - retourA < 15000)) && !champActif(doc, 0); }
+  /* C175 (Steven, 19/10, capture iPhone : « tu m'avais dit que je n'aurais plus ça ! J'ai encore le message — supprime tout,
+     sans casser ») : plus aucun bandeau « Nouvelle version Verdict disponible », plus aucune notification de nouvelle version
+     (ni système, ni cloche). Une nouvelle version s'installe d'elle-même au premier moment sûr : à l'ouverture ou au retour
+     sur l'appli (jamais pendant une saisie), ou dès que l'appli passe en arrière-plan (saisies enregistrées avant).
+     Espace chiffré (Perso, Pilote) : rien n'est rechargé en cours de route (le mot de passe n'est pas redemandé) ; la
+     prochaine ouverture charge la nouvelle version. Après coup, « ✓ Verdict mis à jour » (C171) dit ce qui est nouveau. */
+  var enAttente = false;
   function banner() {
-    if (doc.getElementById('maj18') || postponed) return;
-    if (momentSur()) { autoFaite = true; return apply(true); }
-    css();
-    var b = doc.createElement('div'); b.id = 'maj18'; b.setAttribute('role', 'status');
-    b.innerHTML = '<span><b>Nouvelle version Verdict disponible</b><small>Vos saisies sont enregistrées avant la mise à jour.</small></span><button type="button" class="maj18-go">Mettre à jour</button><button type="button" class="maj18-later" aria-label="Plus tard">Plus tard</button>';
-    doc.body.appendChild(b); contraste(); ranger();
-    b.querySelector('.maj18-go').onclick = apply;
-    prevenir();
-    b.querySelector('.maj18-later').onclick = function () { later(false); };
+    if (coffreUrl) return;
+    enAttente = true; essayer();
   }
+  function essayer() {
+    if (!enAttente || autoFaite) return;
+    var dern = 0; try { dern = +sessionStorage.getItem('verdict:maj-appliquee') || 0; } catch (e) {}
+    if (Date.now() - dern < 120000) return; /* pas de boucle */
+    if (doc.hidden || momentSur()) { enAttente = false; autoFaite = true; apply(true); }
+  }
+  doc.addEventListener('visibilitychange', function () { if (enAttente) setTimeout(essayer, doc.hidden ? 0 : 400); });
+  try { var tEssai = setInterval(function () { if (enAttente) essayer(); }, 5000); if (tEssai && tEssai.unref) tEssai.unref(); } catch (e) {}
   /* C72 — L'alerte prend la couleur opposée à l'écran (clair → alerte sombre, sombre → alerte blanche), y compris
      quand on change de thème pendant qu'elle est affichée. */
   function sombre() {
@@ -123,7 +131,7 @@
   function later(fromOther) {
     postponed = true; var b = doc.getElementById('maj18'); if (b) b.remove();
     if (!fromOther && canal) try { canal.postMessage('plus-tard'); } catch (e) {}
-    ranger();
+    /* C175 : plus d'entrée « nouvelle version » dans la cloche. */
   }
   /* C74 — Dès qu'une mise à jour existe, elle entre d'office dans le centre de notifications (cloche +1), sur
      ordinateur, tablette et mobile, comme une rupture d'Inventaire ; elle y reste jusqu'à la mise à jour. */
