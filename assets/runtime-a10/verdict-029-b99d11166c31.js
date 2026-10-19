@@ -23323,13 +23323,18 @@ var SECT=[
  {k:"rn",n:"Marge avant imp\u00f4t",cli:null,sec:4,sain:10,u:"%",inv:false,d:"ce qui reste avant imp\u00f4t selon vos charges saisies"},
  {k:"mc",n:"Contribution % CA",cli:null,sec:55,sain:65,u:"%",inv:false,d:"ce que chaque vente laisse pour payer le fixe"},
  {k:"cv",n:"Co\u00fbts variables % CA",cli:null,sec:40,sain:35,u:"%",inv:true,d:"mati\u00e8re, packaging, commissions"},
- {k:"ms",n:"Masse salariale % CA",cli:null,sec:37.5,sain:30,u:"%",inv:true,d:"un poste majeur à surveiller"},
+ {k:"ms",n:"Masse salariale % CA",cli:null,sec:36,sain:30,u:"%",inv:true,d:"un poste majeur à surveiller"},
  {k:"acf",n:"Charges fixes % CA",cli:null,sec:20,sain:null,u:"%",inv:true,d:"loyer, \u00e9nergie, assurances \u2014 hors salaires"},
  {k:"pm",n:"Point mort % CA",cli:null,sec:85,sain:75,u:"%",inv:true,d:"la part du CA qui ne sert qu\u2019\u00e0 survivre"},
  {k:"sen",n:"Sensibilit\u00e9 \u00e0 \u221210 % CA",cli:null,sec:2,sain:10,u:"%",inv:false,d:"votre marge si le CA c\u00e8de de 10 %"},
  {k:"cas",n:"CA par ETP",cli:null,sec:75,sain:200,u:"k",inv:false,d:"productivit\u00e9 calcul\u00e9e uniquement sur les ETP renseign\u00e9s"},
  {k:"score",n:"Score Verdict\u00ae",cli:null,sec:45,sain:75,u:"pts",inv:false,d:"la structure compl\u00e8te, not\u00e9e"}
 ];
+/* C174 — une seule référence de masse salariale dans toute l’appli : celle du format d’établissement
+   (FAMILLES[FORMATS[fmtActif()].f].ms, traditionnel sans format), comme la décision « Masse salariale »
+   et les cartes Équipe. Repère = médiane ms[1], zone cible = ms[0]. */
+function repereMS(){ var F=famActive()||FAMILLES.trad; return {sec:F.ms[1],sain:F.ms[0]}; }
+function sectActif(){ var m=repereMS(); return SECT.map(function(s){ return s.k==="ms"?Object.assign({},s,{sec:m.sec,sain:m.sain}):s; }); }
 var RADAR_SCALE={rn:[-5,15],mc:[40,75],cv:[60,30],ms:[55,25],pm:[110,60],sen:[-5,12],cas:[40,220]};
 function benchVals(R){
   var v=R.v,d=R.d;
@@ -23377,8 +23382,8 @@ function radarSVG(R){
       return val==null?0.06:norm(k,val);
     });
   }
-  var secV={rn:4,mc:55,cv:40,ms:37.5,pm:85,sen:2,cas:75};
-  var sainV={rn:10,mc:65,cv:35,ms:30,pm:75,sen:10,cas:200};
+  var secV={rn:4,mc:55,cv:40,ms:repereMS().sec,pm:85,sen:2,cas:75};
+  var sainV={rn:10,mc:65,cv:35,ms:repereMS().sain,pm:75,sen:10,cas:200};
   var svg='<svg viewBox="0 0 340 330" style="width:100%;max-width:420px;display:block;margin:0 auto">';
   [0.25,0.5,0.75,1].forEach(function(t){
     svg+='<polygon points="'+poly(axes.map(function(){return t;}))+'" fill="none" stroke="#1e242c" stroke-width="1"/>';
@@ -23429,7 +23434,7 @@ function drawBench(R,el){
   /* ── 3. radar : retiré (C173, Steven : « inutile, à supprimer ») ── */
   /* ── 4. forces & vigilance ── */
   var comps=[];
-  SECT.forEach(function(s){
+  sectActif().forEach(function(s){
     if(s.k==="score")return;
     var cli=bv[s.k]; if(cli==null)return;
     var diff=cli-s.sec, good=s.inv?diff<=0:diff>=0;
@@ -23447,7 +23452,7 @@ function drawBench(R,el){
   h+='</div>';
   /* ── 5. les 9 cartes détaillées ── */
   h+='<h2 class="sec">Les 9 rep\u00e8res de pilotage</h2>';
-  SECT.forEach(function(s){
+  sectActif().forEach(function(s){
     var cli=bv[s.k]; if(cli==null)return;
     var vals=[cli,s.sec]; if(s.sain!=null)vals.push(s.sain);
     var mx=Math.max.apply(null,vals)*1.12||1;
