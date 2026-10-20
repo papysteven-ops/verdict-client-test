@@ -1,5 +1,5 @@
 /* C106 — La Carte en récit, « même magie » que l'Audit (Steven, 16/10 : « voir Carte, même magie que Pilotage et
-   Audit »). En tête de « Ma carte », six images plein écran, une idée chacune, chiffre géant compté, visuel animé,
+   Audit »). Dans « Ma carte », sous la liste des plats (C176), six images plein écran, une idée chacune, chiffre géant compté, visuel animé,
    bouton : 1 Indice Carte · 2 Sur chaque 100 € de carte · 3 Vos plats vedettes · 4 L'écart à vos objectifs ·
    5 Comment remonter (le même gain que l'Audit et Simuler) · 6 Votre prochain pas (Vera, renouveler, tester un prix).
    Toutes les valeurs viennent des fonctions existantes (scoreState, carteStats, auditPremiumCalc, VerdictManqueCarte,
@@ -86,11 +86,16 @@
     var D = donnees(); if (!D) return;
     var cle = [D.etat && D.etat.value, Math.round(D.marge * 10), Math.round(D.theo * 10), D.manque && D.manque.totalC, D.levier && Math.round(num(D.levier.gain)), D.st.actifs, D.st.fiables].join('|');
     var box = doc.getElementById('vdRecitCarte');
-    if (box && box.getAttribute('data-cle') === cle && box.parentNode === hote) return;
+    /* C176 (Steven, 20/10 : un ami : « je vais dans Carte, je veux voir ma carte ; là j'ai 6 images avant, sans voir ma
+       carte. Voilà la carte, en bas : c'est ça que je veux voir, et après tes 6 images explicatives ») : le récit passe
+       SOUS la liste des plats (un seul ordre cible, jamais défait : il n'est déplacé que s'il n'y est pas déjà). */
+    var liste = hote.querySelector(':scope > .cp-menu-list');
+    function bienPlace() { return liste ? liste.nextElementSibling === box : box.parentNode === hote && !box.nextElementSibling; }
+    if (box && box.getAttribute('data-cle') === cle && box.parentNode === hote && bienPlace()) return;
     if (!box) { box = doc.createElement('div'); box.id = 'vdRecitCarte'; }
     box.setAttribute('data-cle', cle);
     box.innerHTML = '<header class="cr-head"><span>Carte · ' + esc(D.nom) + '</span><h1>Votre carte en 6 images</h1><p>Mêmes chiffres que l’Audit et Simuler, lus sur vos fiches et vos ventes.</p></header>' + tableaux(D);
-    if (hote.firstChild !== box) hote.insertBefore(box, hote.firstChild);
+    if (!bienPlace()) { if (liste) liste.after(box); else hote.appendChild(box); }
     [].forEach.call(box.querySelectorAll('[data-cr-go]'), function (b) {
       b.onclick = function () {
         var g = b.getAttribute('data-cr-go');
