@@ -69,7 +69,7 @@
     var D = w.DB; if (!D) return;
     var t = (D.fecImport && D.fecImport.totals) || {};
     D.docRef = { source: 'fec', at: new Date().toISOString(), year: D.refSource && D.refSource.exerciseYear, in: copie(D.in), ca: caDeclare(D), valeurs: valeurs(D) };
-    D.docAccords = {}; if (D.docVerrou) delete D.docVerrou;
+    D.docAccords = {}; D.docChangements = {}; delete D.docChoix; if (D.docVerrou) delete D.docVerrou;
     if (avantFec && avantFec.avait) {
       D.saisieAvantDocument = { at: new Date().toISOString(), in: avantFec.in, ref: avantFec.ref, refSource: avantFec.refSource, provenance: avantFec.provenance };
       /* Le FEC ne contient ni panier ni couverts : on garde ceux de la saisie (la caisse les vérifiera). */
@@ -88,18 +88,19 @@
   }
 
   /* ——— Écarts entre la saisie actuelle et les documents (ecarts = pas encore tranchés ; differences = tous) ——— */
-  function differences(D) { var bak = D.docAccords; D.docAccords = {}; try { return ecarts(D); } finally { D.docAccords = bak; } }
+  function differences(D) { var ba = D.docAccords, bc = D.docChangements; D.docAccords = {}; D.docChangements = {}; try { return ecarts(D); } finally { D.docAccords = ba; D.docChangements = bc; } }
+  function tranche(D, k, v) { var a = (D.docAccords || {})[k], c = (D.docChangements || {})[k]; return (a != null && !differe(a, v)) || (c && !differe(c.saisie, v)); }
   function ecarts(D) {
     var out = [], acc = D.docAccords || {};
     if (D.docRef) {
       var dv = D.docRef.valeurs || {}, sv = valeurs(D);
-      POSTES.forEach(function (p) { if (differe(sv[p.k], dv[p.k]) && !(acc[p.k] != null && !differe(acc[p.k], sv[p.k]))) out.push({ k: p.k, lib: p.lib, saisie: sv[p.k], doc: dv[p.k], source: 'votre document comptable' }); });
+      POSTES.forEach(function (p) { if (differe(sv[p.k], dv[p.k]) && !tranche(D, p.k, sv[p.k])) out.push({ k: p.k, lib: p.lib, saisie: sv[p.k], doc: dv[p.k], source: 'votre document comptable' }); });
     }
     var an = (D.refSource && D.refSource.exerciseYear) || (D.ref && D.ref.exercice), C = an ? caisse(D, an) : null;
     if (C) {
       var ca = caDeclare(D);
       if (!D.docRef && ca != null && differe(ca, C.ht) && !(acc.caCaisse != null && !differe(acc.caCaisse, ca))) out.push({ k: 'caCaisse', lib: 'Chiffre d’affaires HT ' + an, saisie: ca, doc: C.ht, source: 'votre caisse (' + C.jours + ' journées)' });
-      if (C.panier && !vide(D.in.panier) && Math.abs(num(D.in.panier) - C.panier) > C.panier * 0.05 && !(acc.panier != null && !differe(acc.panier, D.in.panier))) out.push({ k: 'panier', lib: 'Panier moyen TTC', saisie: num(D.in.panier), doc: C.panier, source: 'votre caisse', cents: true });
+      if (C.panier && !vide(D.in.panier) && Math.abs(num(D.in.panier) - C.panier) > C.panier * 0.05 && !tranche(D, 'panier', num(D.in.panier))) out.push({ k: 'panier', lib: 'Panier moyen TTC', saisie: num(D.in.panier), doc: C.panier, source: 'votre caisse', cents: true });
     }
     return out;
   }
@@ -120,8 +121,28 @@
     }
   }
   function cleDocuments(D) { var an = (D.refSource && D.refSource.exerciseYear) || (D.ref && D.ref.exercice), C = an ? caisse(D, an) : null; return (D.docRef ? D.docRef.at : '') + '|' + (C ? C.annee + ':' + C.jours : ''); }
-  function prendreTout(D, E) { (E || differences(D)).forEach(function (e) { appliquerDocument(D, e); }); D.docAccords = {}; D.docChoix = { cle: cleDocuments(D), choix: 'documents' }; majVerrou(D); enregistrer(true); }
-  function garderTout(D, E) { D.docAccords = D.docAccords || {}; (E || differences(D)).forEach(function (e) { D.docAccords[e.k] = e.saisie; }); D.docChoix = { cle: cleDocuments(D), choix: 'saisie' }; majVerrou(D); enregistrer(true); }
+  function prendreTout(D, E) { (E || differences(D)).forEach(function (e) { appliquerDocument(D, e); }); D.docAccords = {}; D.docChangements = {}; D.docChoix = { cle: cleDocuments(D), choix: 'documents' }; majVerrou(D); enregistrer(true); }
+  function garderTout(D, E) { D.docAccords = D.docAccords || {}; D.docChangements = {}; (E || differences(D)).forEach(function (e) { D.docAccords[e.k] = e.saisie; }); D.docChoix = { cle: cleDocuments(D), choix: 'saisie' }; majVerrou(D); enregistrer(true); }
+  /* C191 (Steven, 21/10 : « ton idée pouvait être bonne : comptabilité 2025, on est en 2026, des changements — un salarié de
+     plus dans l'équipe, un loyer revu en hausse… il faut vraiment comprendre tout ce qui peut se passer ») : un écart n'est pas
+     forcément une saisie embellie. « Ce sont des changements depuis 2025 » : le document reste la référence, Verdict tient
+     compte des changements (raison et date facultatives), la note reste un calcul (pas de lecture non finale) et le bandeau les
+     montre, avec la note des seuls documents. Le chiffre d'affaires de l'exercice n'est jamais un « changement » : il reste celui
+     des documents (les ventes de l'année en cours se suivent jour par jour). */
+  var RAISONS = { equipe: ['Nouveau salarié', 'Départ d’un salarié', 'Augmentation de salaire', 'Heures en plus ou en moins'], loyer: ['Loyer revu', 'Nouveau bail'],
+    nour: ['Prix fournisseurs', 'Changement de carte'], boi: ['Prix fournisseurs', 'Changement de carte'], autres: ['Nouveau contrat', 'Énergie'], amort: ['Nouvel investissement'], panier: ['Prix de la carte revus', 'Changement de carte'] };
+  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  function moisLib(m) { var p = String(m || '').split('-'); return p.length === 2 ? MOIS[Number(p[1]) - 1] + ' ' + p[0] : ''; }
+  function anneeDoc(D) { return (D.docRef && D.docRef.year) || (D.refSource && D.refSource.exerciseYear) || (D.ref && D.ref.exercice) || ''; }
+  function noterChangements(D, E, depuis, raisons) {
+    D.docChangements = D.docChangements || {}; D.docAccords = D.docAccords || {};
+    (E || differences(D)).forEach(function (e) {
+      if (e.k === 'ca' || e.k === 'caCaisse') { appliquerDocument(D, e); return; }
+      D.docChangements[e.k] = { lib: e.lib, saisie: e.saisie, doc: e.doc, depuis: depuis || null, raison: (raisons && raisons[e.k]) || null, cents: !!e.cents };
+      delete D.docAccords[e.k];
+    });
+    D.docChoix = { cle: cleDocuments(D), choix: 'changements' }; majVerrou(D); enregistrer(true);
+  }
   /* Note finale seulement si rien ne contredit les documents ; et, sans document, seulement sans « incertitude » confirmée. */
   function incertitudeSansDocument(D) {
     if (D.docRef) return false; var an = (D.refSource && D.refSource.exerciseYear) || (D.ref && D.ref.exercice); if (an && caisse(D, an)) return false;
@@ -144,11 +165,20 @@
   var ETAT = { ouvert: null, bilan: null, remplis: {} };
   function fermer() { var m = doc.getElementById('df58-m'); if (m) m.remove(); ETAT.ouvert = null; }
   function montant(e, x) { return e.cents ? x.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : eur(x); }
-  var SUITE = '<p>Verdict conseille de prendre vos documents : ce sont vos vrais chiffres. Si vous gardez votre saisie, votre note sera une <b>lecture non finale</b> ; vous pourrez changer d’avis à tout moment dans Mes chiffres.</p>';
+  var SUITE = '<p>Erreur ou oubli dans la saisie ? Verdict conseille de prendre vos documents : ce sont vos vrais chiffres. Si vous gardez votre saisie sans raison, votre note sera une <b>lecture non finale</b> ; vous pourrez changer d’avis à tout moment dans Mes chiffres.</p>';
   function questionHTML(E) {
-    var h = '<h2>Vos documents et votre saisie ne disent pas la même chose</h2><table class="df58-t"><thead><tr><th></th><th>Votre saisie</th><th>Vos documents</th></tr></thead><tbody>';
-    E.forEach(function (e) { h += '<tr><td>' + esc(e.lib) + '<br><small style="opacity:.7">' + esc(e.source) + '</small></td><td>' + montant(e, e.saisie) + '</td><td><b>' + montant(e, e.doc) + '</b></td></tr>'; });
-    return h + '</tbody></table>' + SUITE + '<div class="df58-b"><button type="button" class="btn" data-df58="tout-doc">Prendre tous mes documents (conseillé)</button><button type="button" class="btn ghost" data-df58="tout-saisie">Garder toute ma saisie</button></div>';
+    var D = w.DB, an = anneeDoc(D), auj = new Date(), mois = [], y, m;
+    for (y = Number(an) + 1 || auj.getFullYear(), m = 1; y < auj.getFullYear() || (y === auj.getFullYear() && m <= auj.getMonth() + 1); m++) { if (m > 12) { m = 0; y++; continue; } mois.push(y + '-' + ('0' + m).slice(-2)); }
+    if (!mois.length) mois.push(auj.getFullYear() + '-' + ('0' + (auj.getMonth() + 1)).slice(-2));
+    var h = '<h2>Vos documents et votre saisie ne disent pas la même chose</h2><table class="df58-t"><thead><tr><th></th><th>Votre saisie</th><th>Vos documents ' + esc(an) + '</th></tr></thead><tbody>';
+    E.forEach(function (e) {
+      var r = RAISONS[e.k], sel = r ? '<select class="df58-r" data-df58-raison="' + esc(e.k) + '"><option value="">Pourquoi ? (facultatif)</option>' + r.concat(['Autre']).map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select>' : '';
+      h += '<tr><td>' + esc(e.lib) + '<br><small style="opacity:.7">' + esc(e.source) + '</small>' + (sel ? '<br>' + sel : '') + '</td><td>' + montant(e, e.saisie) + '</td><td><b>' + montant(e, e.doc) + '</b></td></tr>';
+    });
+    var caSeul = E.every(function (e) { return e.k === 'ca' || e.k === 'caCaisse'; });
+    return h + '</tbody></table>' + SUITE +
+      (caSeul ? '' : '<p class="df58-ch">Ce sont des changements depuis ' + esc(an) + ' (nouveau salarié, loyer revu, prix…) ? Verdict garde votre document ' + esc(an) + ' comme référence et tient compte de ces changements. Depuis quand ? <select data-df58-depuis="1"><option value="">je ne sais pas</option>' + mois.reverse().map(function (x) { return '<option value="' + x + '">' + esc(moisLib(x)) + '</option>'; }).join('') + '</select></p>') +
+      '<div class="df58-b"><button type="button" class="btn" data-df58="tout-doc">Prendre tous mes documents (conseillé)</button>' + (caSeul ? '' : '<button type="button" class="btn sec" data-df58="tout-change">Ce sont des changements depuis ' + esc(an) + '</button>') + '<button type="button" class="btn ghost" data-df58="tout-saisie">Garder toute ma saisie</button></div>';
   }
   function bilanHTML(B) {
     var n = POSTES.filter(function (p) { return differe(B.saisie[p.k], B.doc[p.k]); }).length;
@@ -183,13 +213,16 @@
       fermer(); return; }
     if (a === 'tout-doc') { fermer(); prendreTout(D, O && O.liste); setTimeout(tour, 300); return; }
     if (a === 'tout-saisie') { fermer(); garderTout(D, O && O.liste); setTimeout(tour, 300); return; }
+    if (a === 'tout-change') { var m = doc.getElementById('df58-m'), rs = {}, dep = m && m.querySelector('[data-df58-depuis]');
+      if (m) [].forEach.call(m.querySelectorAll('[data-df58-raison]'), function (x) { if (x.value) rs[x.getAttribute('data-df58-raison')] = x.value; });
+      var depuis = dep ? dep.value : ''; fermer(); noterChangements(D, O && O.liste, depuis, rs); setTimeout(tour, 300); return; }
   });
 
   /* La note calculée avec les chiffres des documents (calcul à part, la saisie n'est jamais modifiée). */
   var NOTE_DOC = { cle: null, v: null };
   function noteDocuments(D) {
     if (!D.docRef || !D.docRef.in) return null;
-    var cle = JSON.stringify(D.docAccords || {}) + '|' + D.docRef.at; if (NOTE_DOC.cle === cle) return NOTE_DOC.v;
+    var cle = JSON.stringify(D.docAccords || {}) + '|' + JSON.stringify(D.docChangements || {}) + '|' + D.docRef.at; if (NOTE_DOC.cle === cle) return NOTE_DOC.v;
     var bak = D.in, bakCa = D.refSource && D.refSource.ca, v = null;
     try { D.in = copie(D.docRef.in); if (D.refSource) D.refSource.ca = D.docRef.ca; try { w.verdictInvalidateViews && w.verdictInvalidateViews(); } catch (e) {} var R = w.moteur(); v = R && R.score != null ? Math.round(R.score) : null; }
     catch (e) { v = null; }
@@ -203,8 +236,12 @@
     if (D.docRef) t.push('✓ Document comptable ' + (D.docRef.year || '') + ' : il fait foi pour vos ventes, achats, équipe et charges.');
     if (C) { var ca = caDeclare(D), e = ca ? (C.ht - ca) / ca : 0; t.push('✓ Caisse ' + an + ' : ' + C.jours + ' journées, ' + eur(C.ht) + ' HT' + (ca ? (Math.abs(e) <= 0.01 ? ', identique à votre chiffre d’affaires' : ', ' + (e > 0 ? '+' : '−') + Math.abs(Math.round(e * 1000) / 10).toLocaleString('fr-FR') + ' % par rapport à votre chiffre d’affaires' + (D.docRef ? ' : vérifiez avec votre comptable (ventes hors caisse, avoirs)' : '')) : '') + '. Panier moyen ' + (C.panier ? C.panier.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : '—') + '.'); }
     if (acc.length) { k = 'ko'; var nd = noteDocuments(D); t.push('Vous gardez votre saisie plutôt que vos documents : votre note est une lecture non finale.' + (nd != null ? ' Avec vos documents, votre note serait ' + nd + ' / 100.' : '')); }
+    var ch = D.docChangements || {}, chk = Object.keys(ch);
+    if (chk.length) { var ndc = noteDocuments(D), anr = anneeDoc(D);
+      t.push('Changements depuis ' + anr + ' pris en compte : ' + chk.map(function (x) { var c = ch[x], f = function (v) { return c.cents ? v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : eur(v); }; return c.lib.toLowerCase() + ' ' + f(c.doc) + ' → ' + f(c.saisie) + (c.raison || c.depuis ? ' (' + [c.raison, c.depuis ? 'depuis ' + moisLib(c.depuis) : null].filter(Boolean).join(', ') + ')' : ''); }).join(' ; ') + '.');
+      t.push('Votre note en tient compte.' + (ndc != null ? ' D’après vos seuls documents ' + anr + ' : ' + ndc + ' / 100.' : '')); }
     if (!D.docRef && !C) { k = D.docVerrou ? 'ko' : 'info'; t.push(D.docVerrou ? 'Vous avez confirmé des chiffres inhabituels sans document : votre note reste une lecture non finale.' : 'Note calculée sur votre saisie.'); t.push('Déposez votre document comptable (FEC) et l’export de votre caisse : Verdict s’appuiera sur vos vrais chiffres.'); }
-    var html = '<b>D’où viennent vos chiffres</b>' + t.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + (acc.length ? '<button type="button" class="btn" data-df58="tout-doc" style="margin-top:8px">Prendre mes documents</button>' : '');
+    var html = '<b>D’où viennent vos chiffres</b>' + t.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + (acc.length ? '<button type="button" class="btn" data-df58="tout-doc" style="margin-top:8px">Prendre mes documents</button>' : chk.length ? '<button type="button" class="btn ghost" data-df58="tout-doc" style="margin-top:8px">Annuler ces changements et revenir à mes documents</button>' : '');
     var el = doc.getElementById('df58-ban');
     if (!el) { el = doc.createElement('div'); el.id = 'df58-ban'; var h1 = vue.querySelector('h1'); if (h1 && h1.parentNode === vue) h1.insertAdjacentElement('afterend', el); else vue.insertBefore(el, vue.firstChild); }
     if (el.__html === html + k) return; el.__html = html + k; el.className = 'df58-ban df58-' + k; el.innerHTML = html;
@@ -213,11 +250,17 @@
   var CSS = '#df58-m{position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,23,.62)}' +
     '#df58-m .df58-p{max-width:560px;width:100%;max-height:90vh;overflow:auto;background:var(--card,#111827);color:var(--txt,#f8fafc);border:1px solid rgba(148,163,184,.3);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}' +
     'html:not(.vd-workspace-dark) #df58-m .df58-p{background:#fff;color:#0f172a}#df58-m h2{font-size:19px;margin:0 0 8px}#df58-m p{font-size:14.5px;line-height:1.5;margin:6px 0}' +
-    '.df58-b{display:flex;flex-direction:column;gap:8px;margin-top:14px}.df58-t{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0;font-variant-numeric:tabular-nums}.df58-t th,.df58-t td{padding:6px 4px;text-align:right;border-top:1px solid rgba(148,163,184,.22)}.df58-t th:first-child,.df58-t td:first-child{text-align:left}.df58-t th{font-size:12px;opacity:.75}.df58-res td{font-weight:700}.df58-ko{color:#ef4444;font-weight:700}.df58-ok{color:#22c55e}' +
+    '.df58-b{display:flex;flex-direction:column;gap:8px;margin-top:14px}.df58-r,#df58-m [data-df58-depuis]{font:inherit;font-size:13px;margin-top:4px;padding:4px 6px;border-radius:8px;border:1px solid rgba(148,163,184,.4);background:transparent;color:inherit}.df58-ch{font-size:14px;padding:8px 10px;border-radius:10px;background:rgba(96,165,250,.1)}.df58-t{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0;font-variant-numeric:tabular-nums}.df58-t th,.df58-t td{padding:6px 4px;text-align:right;border-top:1px solid rgba(148,163,184,.22)}.df58-t th:first-child,.df58-t td:first-child{text-align:left}.df58-t th{font-size:12px;opacity:.75}.df58-res td{font-weight:700}.df58-ko{color:#ef4444;font-weight:700}.df58-ok{color:#22c55e}' +
     '.df58-cmp{margin:12px 0;padding:12px;border-radius:12px;border:1px solid rgba(148,163,184,.3)}.df58-cmp h3{font-size:15px;margin:0 0 4px}.df58-cmp p{font-size:13.5px;line-height:1.45;margin:6px 0 0}' +
     '.df58-ban{margin:10px 0 14px;padding:12px 14px;border-radius:14px;border-left:4px solid #22c55e;background:rgba(34,197,94,.08)}.df58-ban.df58-ko{border-left-color:#f97316;background:rgba(249,115,22,.1)}.df58-ban.df58-info{border-left-color:#60a5fa;background:rgba(96,165,250,.1)}.df58-ban b{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.8}.df58-ban p{margin:4px 0 0;font-size:14px;line-height:1.45}';
   function css() { if (!doc.getElementById('df58-css')) { var s = doc.createElement('style'); s.id = 'df58-css'; s.textContent = CSS; (doc.head || doc.documentElement).appendChild(s); } }
-  function boucle() { try { css(); tour(); } catch (e) {} }
+  /* Étiquette de la note : document + changements déclarés = « calcul à jour », pas « FEC importé » tout court. */
+  function etiquette() {
+    var orig = w.verdictScoreText; if (typeof orig !== 'function' || orig.__df58) return;
+    var f = function (k, R, d) { var t = orig.apply(this, arguments); try { var D = d || w.DB; if (k === 'label' && D && D.docChangements && Object.keys(D.docChangements).length && /FEC/.test(String(t))) return 'CALCUL À JOUR · FEC ' + anneeDoc(D) + ' + VOS CHANGEMENTS'; } catch (e) {} return t; };
+    f.__df58 = true; w.verdictScoreText = f;
+  }
+  function boucle() { try { etiquette(); } catch (e) {} try { css(); tour(); } catch (e) {} }
   var it = setInterval(boucle, 1000); if (it && it.unref) it.unref();
-  w.VerdictDocumentsFoi = { comparaisonFEC: comparaisonFEC, valeurs: valeurs, valeursFEC: valeursFEC, ecarts: ecarts, differences: differences, prendreTout: prendreTout, garderTout: garderTout, caisse: caisse, majVerrou: majVerrou, incertitudeSansDocument: incertitudeSansDocument, differe: differe, tour: boucle };
+  w.VerdictDocumentsFoi = { comparaisonFEC: comparaisonFEC, valeurs: valeurs, valeursFEC: valeursFEC, ecarts: ecarts, differences: differences, prendreTout: prendreTout, garderTout: garderTout, noterChangements: noterChangements, caisse: caisse, majVerrou: majVerrou, incertitudeSansDocument: incertitudeSansDocument, differe: differe, tour: boucle };
 })();

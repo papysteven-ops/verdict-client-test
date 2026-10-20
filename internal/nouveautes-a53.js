@@ -11,6 +11,7 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C191', date: '2026-10-21', titre: 'Un salarié en plus, un loyer revu depuis votre dernier bilan ? Indiquez-le en un clic : Verdict garde votre bilan comme référence et calcule à jour' },
     { id: 'C190', date: '2026-10-21', titre: 'Vos vrais documents font foi : FEC et caisse comparés à votre saisie, une seule question pour tout prendre ou garder votre saisie' },
     { id: 'C189', date: '2026-10-21', titre: 'Mon équipe, salarié par salarié : trop de monde ou mauvais horaires ? Et sans lui ? (avant / après), saisons et grands coûts' },
     { id: 'C188', date: '2026-10-21', titre: 'Le mode sombre suit de nouveau votre iPhone ; jauge en couleur sur « Ventes et heures par service »' },
