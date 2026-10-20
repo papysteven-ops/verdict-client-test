@@ -11,6 +11,7 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C186', date: '2026-10-21', titre: 'Ventes et heures par service : la conclusion en titre, trois phrases simples et un tableau « En trop » en euros' },
     { id: 'C185', date: '2026-10-21', titre: 'Accueil › Jour : les repères suivent aussi le jour touché ; chiffres recoupés (ventes au même jour du mois précédent, plus de dates futures), démonstration et Aide corrigées' },
     { id: 'C184', date: '2026-10-21', titre: 'Salaires, Alertes, Simuler, Structure, Organisation et Recommandations en mots simples, sans jargon' },
     { id: 'C183', date: '2026-10-20', titre: 'Accueil › Jour : touchez un jour de « Vos journées » pour revoir tout son détail (journée, courbe, ventes et heures par service)' },
