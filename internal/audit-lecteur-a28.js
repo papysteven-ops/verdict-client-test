@@ -25,7 +25,7 @@
     { id: 'argent', n: 'Votre argent', c: '#f59e0b', ic: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a3 3 0 0 0-3-1.5c-1.7 0-3 .9-3 2.2 0 3 6 1.6 6 4.6 0 1.3-1.3 2.2-3 2.2a3 3 0 0 1-3-1.5M12 6v2M12 16v2"/>', re: /gain realiste|structure economique|l.argent|chiffre minimum|prix|risquez/ },
     { id: 'metier', n: 'Votre métier', c: '#60a5fa', ic: '<path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/>', re: /productivite|votre modele|carte|canaux|plateformes|contexte externe/ },
     { id: 'agir', n: 'Passer à l’action', c: '#a78bfa', ic: '<path d="M5 12h14"/><path d="m13 5 7 7-7 7"/>', re: /detecte|fonctionne|plan 90|reprise|questions strategiques/ },
-    { id: 'fiable', n: 'Preuves et fiabilité', c: '#2dd4bf', ic: '<path d="M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>', re: /contrat de verite|preuve|qualite des donnees|honnetete|sources|qui fait foi/ }
+    { id: 'fiable', n: 'Preuves et fiabilité', c: '#2dd4bf', ic: '<path d="M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>', re: /contrat de verite|preuve|qualite des donnees|honnetete|limites de l|sources|qui fait foi|chiffres cles/ }
   ];
   function theme(k, t) { var s = plat(k + ' ' + t); for (var i = 0; i < THEMES.length; i++) if (THEMES[i].re.test(s)) return THEMES[i]; return THEMES[3]; }
   function svg(p, cls) { return '<svg class="' + cls + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
@@ -38,7 +38,9 @@
     ['auditPreuves', 'sourcesEtat', 'sourcesVerite'].forEach(function (id) { var e = doc.getElementById(id); if (e && e.parentNode === body) bruts.push(e); });
     var L = bruts.map(function (el) {
       var k = txt(el.querySelector('.au-tag')).split(' · ')[0], h = el.querySelector('.au-h,h2,h3'), t = txt(h);
-      if (!k && el.classList.contains('card')) k = 'Preuves';
+      /* C187 : un nom par chapitre (avant : « Preuves » trois fois de suite) et des mots simples dans le sommaire. */
+      if (!k && el.classList.contains('card')) k = { auditPreuves: 'Chiffres clés', sourcesEtat: 'Vos sources', sourcesVerite: 'Source de référence' }[el.id] || 'Preuves';
+      k = { 'Contrat de vérité': 'Niveau de preuve', 'Honnêteté': 'Limites de l’audit' }[k] || k;
       var f = txt(el.querySelector('.au-eur,.au-big')).replace(/\s*·.*$/, '');
       return { el: el, k: k, t: t, f: f.length > 26 ? '' : f, th: theme(k, t) };
     }).filter(function (x) { return x.t; });

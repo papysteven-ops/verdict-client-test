@@ -36,9 +36,11 @@
     [/(\d+(?:,\d+)?)\s?pts?\b/g, function (m, n) { var v = Math.abs(Number(String(n).replace(',', '.'))); return n + '\u00a0point' + (v > 1 ? 's' : ''); }],
     [/(\d+)\.(\d+)\s?%/g, '$1,$2\u00a0%'],
     /* « unite » (sans accent, venu des unités de stock) */
-    [/\bunite\b/g, 'unités']
+    [/\bunite\b/g, 'unités'],
+    /* C187 : une bouteille compte en « unités » partout (l'Inventaire dit unités, l'écart disait pièces) */
+    [/(\d)(\s|\u00a0)pièces\b/g, '$1$2unités'], [/(\d)(\s|\u00a0)pièce\b/g, '$1$2unité']
   ];
-  var TEST = /co[uû]t humain|masse salariale|food cost|point mort|prime cost|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b|contribution|\d\s?pts?\b|\d\.\d+\s?%/i;
+  var TEST = /co[uû]t humain|masse salariale|food cost|point mort|prime cost|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b|\dpièce|\d\spièce|contribution|\d\s?pts?\b|\d\.\d+\s?%/i;
   var EXCLU = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, SELECT: 1, OPTION: 1, NOSCRIPT: 1, CODE: 1, PRE: 1 };
   function francais(d) { try { var l = (d.defaultView && d.defaultView.LOCALE) || w.LOCALE || d.documentElement.lang || 'fr'; return /^fr/i.test(String(l)); } catch (e) { return true; } }
   function corriger(t) {

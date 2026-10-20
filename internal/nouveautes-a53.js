@@ -11,6 +11,7 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C187', date: '2026-10-21', titre: 'Démonstration plus réaliste : achats suivant la carte, heures qui changent d’une année à l’autre, sommaire de l’Audit plus clair' },
     { id: 'C186', date: '2026-10-21', titre: 'Ventes et heures par service : la conclusion en titre, trois phrases simples et un tableau « En trop » en euros' },
     { id: 'C185', date: '2026-10-21', titre: 'Accueil › Jour : les repères suivent aussi le jour touché ; chiffres recoupés (ventes au même jour du mois précédent, plus de dates futures), démonstration et Aide corrigées' },
     { id: 'C184', date: '2026-10-21', titre: 'Salaires, Alertes, Simuler, Structure, Organisation et Recommandations en mots simples, sans jargon' },

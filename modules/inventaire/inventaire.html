@@ -817,6 +817,9 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
     lastStartupSignature=signature;send({type:'verdict-unified-startup-state',module:module,ready:state.ready,phase:state.phase});
     if(state.ready)try{document.dispatchEvent(new CustomEvent('verdict:startup-ready',{detail:{module:module}}));}catch(e){}
   }
+  /* C187 : ce que la carte consomme par mois (ventes déclarées × fiches), produit par produit — l'Inventaire de démonstration
+     y répartit ses achats, pour que le réel et le théorique de l'Analyse parlent de la même chose. */
+  function consoCarte(){var I={},u={};try{(DB.ing||[]).forEach(function(g){if(g&&g.nom)I[g.nom]=g;});(DB.plats||[]).forEach(function(p){(p&&p.rec||[]).forEach(function(r){var g=I[r[0]];if(!g)return;u[r[0]]=(u[r[0]]||0)+(Number(p.vol)||0)*(Number(r[1])||0)*(g.type==='UNITE'?1:.001);});});}catch(e){}return u;}
   function contextVerdict(){
     if(typeof DB!=='object'||!DB)return null;
     var id='',name=String(DB.etab||''),scope='';
@@ -925,7 +928,9 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
     function lines(value){return products.map(function(p){var price=Number(p.price)||1;return {id:p.id,name:p.name,unit:p.unit||'kg',price:price,qty:roundQ(p,(Number(p.stock)||0)*value/latestEnd),fictional:true};});}
     function eurOf(L){return Math.round(L.reduce(function(t,l){return t+l.qty*l.price;},0)*100)/100;}
     var goalTotal=products.reduce(function(t,p){return t+(Number(p.goal)||0)*(Number(p.price)||0);},0)||1;
-    function buy(p,amount){var share=(Number(p.goal)||0)*(Number(p.price)||0)/goalTotal,pack=Number(p.pack)>0?Number(p.pack):step(p),q=amount*share/(Number(p.price)||1);return Math.max(0,Number((Math.ceil(q/pack-1e-9)*pack).toFixed(3)));}
+    /* C187 : achats répartis selon ce que la carte consomme (et non selon le stock idéal, qui donnait 414 bouteilles de vin reçues pour 56 vendues). */
+    var U=P.usage||{},usageTotal=products.reduce(function(t,p){return t+(Number(U[p.name])||0)*(Number(p.price)||0);},0),parUsage=usageTotal>0&&products.filter(function(p){return Number(U[p.name])>0;}).length>=products.length*.8;
+    function buy(p,amount){var share=parUsage?(Number(U[p.name])||0)*(Number(p.price)||0)/usageTotal:(Number(p.goal)||0)*(Number(p.price)||0)/goalTotal,pack=Number(p.pack)>0?Number(p.pack):step(p),q=amount*share/(Number(p.price)||1);return Math.max(0,Number((Math.ceil(q/pack-1e-9)*pack).toFixed(3)));}
     if(!fromContract){space.products=products;DB.spaces[zone]=space;DB.meta[zone]={name:'Stock',emo:'📦',site:id,kind:'cuisine'};if(DB.list.indexOf(zone)<0)DB.list.push(zone);}
     if(!fromContract)DB.sites[id]={name:context.name,emo:'🏪',zones:[zone],establishmentId:id};if(DB.siteList.indexOf(id)<0)DB.siteList.push(id);
     DB.snapshots=(DB.snapshots||[]).filter(function(x){return x.site!==id;});DB.purchaseOrders=(DB.purchaseOrders||[]).filter(function(x){return x.site!==id;});

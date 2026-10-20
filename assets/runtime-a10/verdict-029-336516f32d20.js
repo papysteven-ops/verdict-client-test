@@ -622,6 +622,10 @@ function ensemencerBrasseriePresentation(d){
      soir porte un ticket plus élevé (boissons et alcool), tandis que l’équipe
      est renforcée en juillet–août et réduite en janvier–février. */
   d.services=[];var serviceRows=d.histJour.slice();
+  /* C187 : les heures changent d'une année à l'autre (avant : octobre 2025 = octobre 2026 au même nombre d'heures, à l'heure près) —
+     l'an dernier, environ 6 % d'heures en moins, deux ans avant 10 % : l'équipe a grossi plus vite que les ventes (+2,5 % par an). */
+  var anDemo=Number(String((serviceRows[serviceRows.length-1]||{}).date||'').slice(0,4))||0;
+  function heuresAn(dt,h){var e=anDemo-Number(String(dt).slice(0,4));return Math.round(h*(e<=0?1:e===1?.94:.9)*4)/4;}
   serviceRows.forEach(function(day,di){
     var month=Number(String(day.date).slice(5,7))-1,high=month===6||month===7,low=month===0||month===1;
     var splits=high?
@@ -632,7 +636,7 @@ function ensemencerBrasseriePresentation(d){
     splits.forEach(function(s,si){var ca=si===splits.length-1?Math.round((day.caJ-caUsed)*100)/100:Math.round(day.caJ*s[2]*100)/100;
       var tk=si===splits.length-1?Math.max(0,day.tkJ-tkUsed):Math.max(0,Math.round(day.tkJ*s[3]));caUsed+=ca;tkUsed+=tk;
       var ex=(di===7&&si===3)?'event':((di===18&&si===0)?'unknown':'normal');
-      d.services.push({d:day.date,s:s[0],label:s[1],pers:s[4],h:s[5],ca:ca,tickets:tk,rate:d.tauxH,otherCost:s[6],source:'combined-csv',completeDay:si===3?'yes':'no',exceptional:ex,
+      d.services.push({d:day.date,s:s[0],label:s[1],pers:s[4],h:heuresAn(day.date,s[5]),ca:ca,tickets:tk,rate:d.tauxH,otherCost:s[6],source:'combined-csv',completeDay:si===3?'yes':'no',exceptional:ex,
         note:ex==='event'?'Privatisation fictive':(ex==='unknown'?'Créneau à vérifier':(s[0]==='dinner'?'Boissons et alcool inclus dans le ticket du soir':'')),demo:true,fictional:true});
     });
   });

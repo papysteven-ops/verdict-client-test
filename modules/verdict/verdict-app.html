@@ -3033,7 +3033,7 @@ html.vd-workspace-light #v-carte.cp-active .cp-card {background:radial-gradient(
 <script data-mono="./dish-labor-v1.js" src="../../assets/runtime-a10/verdict-026-99d1632f83e6.js"></script>
 <script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/verdict-027-2ee1f78e3256.js"></script>
 <script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/verdict-028-17fe2f6d9d9b.js"></script>
-<script src="../../assets/runtime-a10/verdict-029-75348946c50d.js"></script>
+<script src="../../assets/runtime-a10/verdict-029-336516f32d20.js"></script>
 <script src="../../assets/runtime-a10/verdict-030-6e38d4d4d5a7.js"></script>
 <style>
 .gpulse{animation:gpk 1.6s ease 2;border-radius:12px}
@@ -3792,6 +3792,9 @@ label.f input,label.f select,.daily-guided-row .btn2{min-height:44px!important}
     lastStartupSignature=signature;send({type:'verdict-unified-startup-state',module:module,ready:state.ready,phase:state.phase});
     if(state.ready)try{document.dispatchEvent(new CustomEvent('verdict:startup-ready',{detail:{module:module}}));}catch(e){}
   }
+  /* C187 : ce que la carte consomme par mois (ventes déclarées × fiches), produit par produit — l'Inventaire de démonstration
+     y répartit ses achats, pour que le réel et le théorique de l'Analyse parlent de la même chose. */
+  function consoCarte(){var I={},u={};try{(DB.ing||[]).forEach(function(g){if(g&&g.nom)I[g.nom]=g;});(DB.plats||[]).forEach(function(p){(p&&p.rec||[]).forEach(function(r){var g=I[r[0]];if(!g)return;u[r[0]]=(u[r[0]]||0)+(Number(p.vol)||0)*(Number(r[1])||0)*(g.type==='UNITE'?1:.001);});});}catch(e){}return u;}
   function contextVerdict(){
     if(typeof DB!=='object'||!DB)return null;
     var id='',name=String(DB.etab||''),scope='';
@@ -3799,7 +3802,7 @@ label.f input,label.f select,.daily-guided-row .btn2{min-height:44px!important}
     try{scope=String(typeof VERDICT_STORAGE_SCOPE!=='undefined'?VERDICT_STORAGE_SCOPE:'');}catch(e){}
     var demo=false;
     try{var personal=window.VERDICT_EDITION==='test';demo=!!(typeof VERDICT_DEMO_SESSION!=='undefined'&&VERDICT_DEMO_SESSION)||!!(typeof VERDICT_PRESENTATION_PROFILE!=='undefined'&&VERDICT_PRESENTATION_PROFILE)||(!personal&&!!(DB._demo&&DB._demo.active));}catch(e){}
-    return {siteId:id,name:name,accountScope:scope,demo:demo,source:'verdict',demoData:demo&&DB.demoCompleteVersion==='R275'?{version:'R273',key:DB.modele,products:DB.ing,months:DB.monthlyHistory}:null};
+    return {siteId:id,name:name,accountScope:scope,demo:demo,source:'verdict',demoData:demo&&DB.demoCompleteVersion==='R275'?{version:'R273',key:DB.modele+':conso-carte',products:DB.ing,months:DB.monthlyHistory,usage:consoCarte()}:null};
   }
   function contextInventory(){
     if(typeof DB!=='object'||!DB)return null;
