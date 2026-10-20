@@ -135,12 +135,16 @@
     if (!(t > 0)) return;
     var date = S.cle || (c && c.next), jour = date ? JOURS[jourSem(date)] : 'jour', extra = Math.round(t) - Math.round(base);
     var meme = c && c.exact && c.next === date, retard = meme ? Number(c.deficit) || 0 : 0, avance = meme ? Number(c.advance) || 0 : 0, ouv = meme ? Number(c.openRemaining) || 0 : 0;
-    var charges = '<b>' + eur(base) + '</b> pour couvrir les charges d’un ' + jour, e;
-    if (extra >= 1 && retard > 0) e = charges + ', <b>+ ' + eur(extra) + '</b> pour rattraper le retard du mois (' + eur(retard) + ' répartis sur ' + ouv + ' jour' + (ouv > 1 ? 's' : '') + ' ouvert' + (ouv > 1 ? 's' : '') + ' restant' + (ouv > 1 ? 's' : '') + ', davantage sur les jours forts).';
-    else if (extra <= -1 && avance > 0) e = charges + ', <b>− ' + eur(-extra) + '</b> grâce à l’avance du mois (' + eur(avance) + ').';
-    else if (retard > 0) e = charges + '. Le mois a ' + eur(retard) + ' de retard, réparti sur les jours ouverts restants.';
-    else if (avance > 0) e = charges + '. Le mois a ' + eur(avance) + ' d’avance.';
-    else e = charges + '. Le mois est dans les temps.';
+    /* C177 (Steven, 20/10 : « je comprends rien : 2 300 c'est quoi, si 1 676… là tu additionnes, mais pourquoi ? Je ne
+       comprends pas l'info d'après ») : l'avance (ou le retard) du mois est partagée entre les jours ouverts qui restent ;
+       seule la part d'aujourd'hui compte. La phrase le dit, et montre le calcul. */
+    var jours = ouv + ' jour' + (ouv > 1 ? 's' : '') + ' ouvert' + (ouv > 1 ? 's' : '') + ' restant' + (ouv > 1 ? 's' : '');
+    var charges = 'Un ' + jour + ' coûte <b>' + eur(base) + '</b> de charges.', e;
+    if (extra >= 1 && retard > 0) e = charges + ' Le mois a <b>' + eur(retard) + '</b> de retard, partagé entre les ' + jours + ' selon le poids de chaque jour\u00a0: <b>+ ' + eur(extra) + '</b> pour ce ' + jour + '.<br>' + eur(base) + ' + ' + eur(extra) + ' = <b>' + eur(t) + '</b>.';
+    else if (extra <= -1 && avance > 0) e = charges + ' Le mois a <b>' + eur(avance) + '</b> d’avance, partagée entre les ' + jours + ' selon le poids de chaque jour\u00a0: <b>− ' + eur(-extra) + '</b> pour ce ' + jour + '.<br>' + eur(base) + ' − ' + eur(-extra) + ' = <b>' + eur(t) + '</b>.';
+    else if (retard > 0) e = charges + ' Le mois a ' + eur(retard) + ' de retard, partagé entre les jours ouverts restants.';
+    else if (avance > 0) e = charges + ' Le mois a ' + eur(avance) + ' d’avance.';
+    else e = charges + ' Le mois est dans les temps.';
     lp.className = 'vx53-o'; /* C165 : « minimum », comme les repères (« objectif » est réservé à l'objectif de résultat) */ lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>' + eur(t) + '</b>';
     var ex = lp.nextElementSibling; if (!ex || !ex.classList.contains('vx53-e')) { ex = lp.ownerDocument.createElement('p'); ex.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex); }
     ex.innerHTML = e;

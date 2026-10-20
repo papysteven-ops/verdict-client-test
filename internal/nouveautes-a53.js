@@ -11,6 +11,7 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C177', date: '2026-10-20', titre: 'Minimum du jour : chaque chiffre expliqué, avec le calcul (ex. 1 676 € − 170 € = 1 506 €)' },
     { id: 'C176', date: '2026-10-20', titre: 'L’essentiel d’abord : Ma carte s’ouvre sur vos plats, l’Accueil sur votre journée, Décisions sur les actions' },
     { id: 'C175', date: '2026-10-19', titre: 'Plus de bandeau « Nouvelle version » : Verdict se met à jour tout seul, sans rien vous demander' },
     { id: 'C174', date: '2026-10-19', titre: 'Repères & secteur : la masse salariale se compare au repère de votre format d’établissement, le même que dans la décision et les cartes Équipe' },
