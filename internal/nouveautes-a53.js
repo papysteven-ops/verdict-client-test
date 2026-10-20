@@ -11,6 +11,7 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C190', date: '2026-10-21', titre: 'Vos vrais documents font foi : FEC et caisse comparés à votre saisie, une seule question pour tout prendre ou garder votre saisie' },
     { id: 'C189', date: '2026-10-21', titre: 'Mon équipe, salarié par salarié : trop de monde ou mauvais horaires ? Et sans lui ? (avant / après), saisons et grands coûts' },
     { id: 'C188', date: '2026-10-21', titre: 'Le mode sombre suit de nouveau votre iPhone ; jauge en couleur sur « Ventes et heures par service »' },
     { id: 'C187', date: '2026-10-21', titre: 'Démonstration plus réaliste : achats suivant la carte, heures qui changent d’une année à l’autre, sommaire de l’Audit plus clair' },

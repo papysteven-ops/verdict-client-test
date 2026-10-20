@@ -95,7 +95,7 @@
     if(line.closingCandidate)return {category:"exclude",confidence:"high",reason:"écriture de clôture détectée",requiresConfirmation:false,candidates:["exclude"]};
     if(/^70/.test(account))return {category:"revenue",confidence:"high",reason:"compte 70",requiresConfirmation:false,candidates:["revenue"]};
     if(/^64/.test(account))return {category:"payroll",confidence:"high",reason:"compte 64",requiresConfirmation:false,candidates:["payroll"]};
-    if(/^613/.test(account)||/loyer|location.*(local|mur|immobil)/.test(label))return {category:"rent",confidence:"high",reason:"loyer/location",requiresConfirmation:false,candidates:["rent"]};
+    if(/^613/.test(account)||(/^6/.test(account)&&/loyer|location.*(local|mur|immobil)/.test(label)))return {category:"rent",confidence:"high",reason:"loyer/location",requiresConfirmation:false,candidates:["rent"]};
     if(/commission|uber|deliveroo|justeat|plateforme|marketplace/.test(label)&&/^(60|61|62|627)/.test(account))return {category:"commissions",confidence:"high",reason:"commission plateforme",requiresConfirmation:false,candidates:["commissions"]};
     if(/^60/.test(account)){
       if(/biere|vin|boisson|alcool|spiritueux|soda|cafe|the|eau mineral|jus/.test(label))return {category:"beverage",confidence:"high",reason:"libellé boisson",requiresConfirmation:false,candidates:["beverage"]};
@@ -155,6 +155,8 @@
   function renderReview(host,mapped,meta){
     var p=mapped.parsed,period=p.period.start&&p.period.end?p.period.start+" → "+p.period.end:"—";
     var html='<div class="v44-fec-summary"><div><span>'+escapeHTML(tr("summary"))+'</span><strong>'+p.rows.length+' '+escapeHTML(tr("lines"))+'</strong></div><div><span>'+escapeHTML(tr("period"))+'</span><strong>'+escapeHTML(period)+'</strong></div><div><span>'+escapeHTML(tr("encoding"))+'</span><strong>'+escapeHTML(meta.encoding)+'</strong></div></div>';
+    /* C190 : avant de calculer, ce que dit le document face à la saisie (écarts), et le document fait foi. */
+    try{if(root.VerdictDocumentsFoi)html+=root.VerdictDocumentsFoi.comparaisonFEC(aggregate(mapped,{}).totals);}catch(e){}
     if(mapped.ambiguous.length){html+='<div class="v44-fec-ambiguities"><h3>'+mapped.ambiguous.length+' '+escapeHTML(tr("ambiguous"))+'</h3>';mapped.ambiguous.forEach(function(item){html+='<label><span><b>'+escapeHTML(item.line.account||"—")+'</b> '+escapeHTML(item.line.accountLabel||item.line.entryLabel||"Ligne "+item.line.index)+'</span><select data-fec-decision="'+escapeHTML(item.id)+'"><option value="">'+escapeHTML(tr("choose"))+'</option>'+item.candidates.map(function(c){return '<option value="'+escapeHTML(c)+'">'+escapeHTML(CATEGORY_LABELS[c]||c)+'</option>';}).join("")+'</select></label>';});html+='</div>';}
     if(p.duplicates)html+='<p class="v44-fec-note">'+p.duplicates+' '+escapeHTML(tr("duplicate"))+'</p>';
     var days="";for(var di=1;di<=7;di++)days+='<option value="'+di+'">'+di+'</option>';
