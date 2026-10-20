@@ -105,7 +105,7 @@
   function directPhrase(A) {
     var x = A.direct, t = 'Du 1er à aujourd’hui : l’équipe a coûté ' + eur(x.cout) + ' pour ' + eur(x.ht) + ' de ventes hors TVA (' + hh(x.h) + ' de travail, ' + eur(x.prod) + ' de ventes par heure). Conseillé pour votre type d’établissement : ' + Math.round(A.rep * 100) + ' € de salaires au plus pour 100 € vendus.';
     if (A.statut.k === 'vert') t += ' Rien à corriger.';
-    else { var cible = x.cout / A.rep - x.ht, hEnTrop = x.h - x.ht * A.rep / (x.cout / x.h); t += ' Pour y revenir : ' + eur(arr(cible, 50)) + ' de ventes en plus avec les mêmes heures, ou environ ' + hh(arr(hEnTrop, 5)) + ' de travail en moins d’ici la fin du mois.'; }
+    else { var cible = x.cout / A.rep - x.ht, hEnTrop = x.h - x.ht * A.rep / (x.cout / x.h); t += ' Pour y revenir : environ ' + hh(arr(hEnTrop, 5)) + ' de travail en moins d’ici la fin du mois, en calant les horaires sur les ventes réelles.'; } /* C189 : jamais « vendez plus » */
     return t;
   }
   function phrase(A) {

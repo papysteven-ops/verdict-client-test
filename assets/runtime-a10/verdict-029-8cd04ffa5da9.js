@@ -4138,7 +4138,7 @@ function auCtxPourquoi(id,R){
     fournisseurs:'Vos achats pèsent '+pct(v.fc||0)+' du chiffre d’affaires. La date de négociation aide à distinguer un effet prix d’un effet de production.',
     pertes:'Le coût matière est calculé dans les comptes, mais les pertes, la casse et les offerts expliquent une partie de l’écart seulement s’ils sont suivis.',
     fiches:'Cette réponse permet de savoir si le coût matière vient des prix d’achat ou de l’application réelle des recettes et portions.',
-    planning:'Le coût humain pèse '+pct(v.ms||0)+' du chiffre d’affaires. Verdict vérifie donc d’abord si les heures suivent les ventes réelles.',
+    planning:'L’équipe coûte '+Math.round(v.ms||0)+' € pour 100 € vendus. Verdict vérifie donc d’abord si les heures suivent les ventes réelles.',
     heures:'Un coût humain incomplet peut rendre la cause trompeuse, même lorsque le total comptable est juste.',
     plateformes:'Les commissions représentent '+pct(v.com||0)+' du chiffre d’affaires. Il faut distinguer la commission affichée du coût complet du canal.',
     prix:'Votre résultat représente '+pct(v.rn||0)+' du chiffre d’affaires. La date de révision des prix aide à départager prix, mix et volume.',
@@ -8439,7 +8439,7 @@ function point11Decision(db){
     if(v.ms>ms[1]){
       var exMs=Math.max(0,v.ms-ms[1]),gMs=Math.round(ca*exMs/100/3),_trMs=p11Trend('ms',ms[1],v.ms);
       op({id:'STAFF_COST_HIGH',base:'salaires',level:v.ms>ms[1]+5?'critical':'warning',urgency:v.ms>ms[1]+5?'today':'week',difficulty:'medium',groups:['activite','salaires'],baseConfidence:.94,trend:_trMs,
-        diagnosis:'Le coût humain pèse '+p11Pct(v.ms)+' du chiffre d’affaires',
+        diagnosis:'L’équipe coûte '+Math.round(v.ms)+' € pour 100 € vendus (conseillé : '+Math.round(ms[1])+' € au plus)',
         detail:'Repère de pilotage Verdict adapté à '+(type||'votre format')+' : à surveiller au-dessus de '+p11Pct(ms[1])+', trop lourd au-delà de '+p11Pct(ms[1]+5)+'. '+_trMs.detail,
         action:p11StaffAction(type),metric:'Masse salariale / CA et contribution par heure, comparées sur quatre semaines.',
         whyFirst:'Vous êtes '+p11Pct(exMs).replace(' %',' points')+' au-dessus du conseillé pour votre type d’établissement ('+p11Pct(ms[1])+' des ventes).',

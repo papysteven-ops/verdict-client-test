@@ -159,7 +159,8 @@
        courtes — qui pèse le plus et pourquoi, pourquoi pas le service le plus cher en pourcentage, quoi faire. */
     var L = R.lourd, t = cap(le(L.nom)) + ' pèse le plus : ' + eur(L.trop) + ' de trop, car il y a trop d’heures pour les ventes faites.';
     if (R.pirePart) t += ' ' + cap(le(R.pirePart.nom)) + ' coûte cher pour ce qu’il vend, mais il vend peu : ' + eur(R.pirePart.trop) + ' de trop seulement.';
-    t += ' Pour ' + le(L.nom) + ' : ' + hh(L.heuresEnTrop) + ' de travail en moins, ou ' + eur(L.caEnPlus) + ' de ventes en plus avec les mêmes heures.';
+    /* C189 : jamais « vendez plus » (on ne fait pas venir des clients) ; le levier, ce sont les heures. */
+    t += ' Pour ' + le(L.nom) + ' : ' + hh(L.heuresEnTrop) + ' de travail en moins pour les mêmes ventes, en calant les horaires sur le vrai rush.';
     return t;
   }
   var CSS = '.sh52 table{width:100%;border-collapse:collapse;font-size:14px;margin:4px 0 10px;font-variant-numeric:tabular-nums}' +
@@ -195,7 +196,7 @@
         (x.part != null ? '<small class="sh52-s">' + Math.round(x.part * 100) + '\u00a0€ pour 100\u00a0€</small>' : '') + '</td></tr>';
     });
     h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + esc((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Conseillé pour votre type d’établissement : ' + conseil(R) + ' d’équipe (salaires + cotisations) pour 100 € vendus. « En trop » = ce que l’équipe a coûté au-delà. Ventes sans la TVA.') + '</p>' +
-      '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
+      '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-equipe="1">Voir mon équipe, salarié par salarié</button><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
     return h;
   }
   function jourSansHeuresHTML(R) {
@@ -220,7 +221,7 @@
     var a = d.createElement('article'); a.className = 'mod sh52'; a.id = id; a.setAttribute('data-etat', et); a.setAttribute('aria-label', 'Ventes et heures par service'); a.innerHTML = html; a.__html = html;
     if (vieux) vieux.replaceWith(a); else col.appendChild(a);
     if (!d.__sh52j) { d.__sh52j = true; d.addEventListener('vx46-jour', function () { try { poser(d, 'jour'); } catch (e) {} }); }
-    if (!d.__sh52) { d.__sh52 = true; d.addEventListener('click', function (ev) { if (ev.target.closest && ev.target.closest('[data-sh52-heures]')) { ev.preventDefault(); ev.stopPropagation(); try { if (w.VerdictTeam && w.VerdictTeam.open) w.VerdictTeam.open(); else w.go('sal'); w.scrollTo(0, 0); } catch (er) {} } }, true); }
+    if (!d.__sh52) { d.__sh52 = true; d.addEventListener('click', function (ev) { if (ev.target.closest && ev.target.closest('[data-sh52-equipe]')) { ev.preventDefault(); ev.stopPropagation(); try { w.go('sal'); [400, 1200].forEach(function (ms) { setTimeout(function () { var e = w.document.getElementById('me57'); if (e) e.scrollIntoView({ block: 'start' }); }, ms); }); } catch (er) {} return; } if (ev.target.closest && ev.target.closest('[data-sh52-heures]')) { ev.preventDefault(); ev.stopPropagation(); try { if (w.VerdictTeam && w.VerdictTeam.open) w.VerdictTeam.open(); else w.go('sal'); w.scrollTo(0, 0); } catch (er) {} } }, true); }
   }
   /* « À faire » : la phrase chiffrée remplace « comparez vous-même ». */
   function brancher() {
