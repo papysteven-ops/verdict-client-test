@@ -119,12 +119,17 @@
   }
   function couleur(part, rep) { return part == null ? 'info' : part <= rep + 0.005 ? 'vert' : part <= rep + 0.05 ? 'orange' : 'rouge'; }
   /* La phrase utile, la même dans la carte et dans « À faire ». */
+  /* C178 (Steven, 20/10 : « je ne veux plus réfléchir “c'est quoi ?” ») : en mots de patron — ventes hors TVA, « € pour
+     100 € vendus », conseil du type d'établissement dit comme tel ; plus de « CA HT », « repère », « à heures égales ». */
+  function s100(x) { return x == null ? '—' : Math.round(x * 100) + '\u00a0€ pour 100\u00a0€ vendus'; }
+  function conseil(R) { return Math.round(R.repere * 100) + '\u00a0€'; }
   function phrase(R) {
     if (!R || R.vide) return '';
-    if (!R.lourd) return (R.total.part != null && R.total.part > R.repere + 0.005 ? 'Aucun service ne s’écarte d’une heure ou plus du repère de ' + pc(R.repere) : 'Chaque service tient le repère de ' + pc(R.repere)) + ' : l’équipe coûte ' + eur(R.total.cout) + ' pour ' + eur(R.total.ht) + ' de CA HT (' + pc(R.total.part) + '), ' + eur(R.total.prod) + ' HT par heure travaillée.';
-    var L = R.lourd, t = L.nom + ' : l’équipe coûte ' + eur(L.cout) + ' pour ' + eur(L.ht) + ' de CA HT (' + pc(L.part) + ', repère ' + pc(R.repere) + '), ' + eur(L.prod) + ' HT par heure travaillée.';
-    if (R.meilleur && R.meilleur.nom !== L.nom) t += ' ' + R.meilleur.nom + ' : ' + eur(R.meilleur.cout) + ' pour ' + eur(R.meilleur.ht) + ' (' + pc(R.meilleur.part) + '), ' + eur(R.meilleur.prod) + ' par heure.';
-    t += ' Pour revenir au repère, il faudrait ' + eur(L.prodCible) + ' HT par heure : ' + eur(L.caEnPlus) + ' de CA HT en plus à heures égales, ou ' + hh(L.heuresEnTrop) + ' de moins à CA égal' + (R.periode === 'jour' ? ' ce jour-là' : R.periode === 'mois' ? ' ce mois-ci' : ' sur l’année') + '.';
+    var quand = R.periode === 'jour' ? ' ce jour-là' : R.periode === 'mois' ? ' ce mois-ci' : ' sur l’année';
+    if (!R.lourd) return (R.total.part != null && R.total.part > R.repere + 0.005 ? 'Aucun service ne dépasse nettement les ' + conseil(R) + ' de salaires pour 100 € vendus conseillés pour votre type d’établissement' : 'Chaque service reste sous les ' + conseil(R) + ' de salaires pour 100 € vendus conseillés pour votre type d’établissement') + ' : l’équipe coûte ' + eur(R.total.cout) + ' pour ' + eur(R.total.ht) + ' de ventes hors TVA' + quand + ' (' + s100(R.total.part) + '). Chaque heure de travail rapporte ' + eur(R.total.prod) + ' de ventes.';
+    var L = R.lourd, t = L.nom + ' : l’équipe coûte ' + eur(L.cout) + ' pour ' + eur(L.ht) + ' de ventes hors TVA' + quand + ', soit ' + s100(L.part) + ' (conseillé pour votre type d’établissement : ' + conseil(R) + ' au plus). Chaque heure de travail y rapporte ' + eur(L.prod) + ' de ventes.';
+    if (R.meilleur && R.meilleur.nom !== L.nom) t += ' ' + R.meilleur.nom + ' : ' + s100(R.meilleur.part) + ', ' + eur(R.meilleur.prod) + ' de ventes par heure.';
+    t += ' Pour revenir à ' + conseil(R) + ' : ' + eur(L.caEnPlus) + ' de ventes en plus avec les mêmes heures, ou ' + hh(L.heuresEnTrop) + ' de travail en moins pour les mêmes ventes.';
     return t;
   }
   var CSS = '.sh52 table{width:100%;border-collapse:collapse;font-size:14px;margin:4px 0 10px;font-variant-numeric:tabular-nums}' +
@@ -138,21 +143,21 @@
   function carteHTML(R) {
     var jour = R.periode === 'jour', aHab = jour && R.services.some(function (x) { return x.habituel != null; });
     var h = '<p class="kicker">Ventes et heures par service · ' + esc(libelle(R)) + (w.DB && (w.DB.demo || (w.DB.services || []).some(function (s) { return s && s.demo; })) ? ' · démonstration' : '') + '</p>' +
-      '<p class="titre">' + esc(R.lourd ? R.lourd.nom + ' : l’équipe pèse ' + pc(R.lourd.part) + ' du CA' : R.total.part != null && R.total.part > R.repere + 0.005 ? 'L’équipe pèse ' + pc(R.total.part) + ' du CA, réparti sur tous les services' : 'Équipe dans le repère, service par service') + '</p>' +
-      '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>CA HT</th><th>Heures</th><th><span class="sh52-l">€ HT / heure</span><span class="sh52-c">€/h</span></th>' + (aHab ? '<th class="sh52-hab">D’habitude</th>' : '') + '<th><span class="sh52-l">Coût équipe / CA</span><span class="sh52-c">Équipe</span></th></tr></thead><tbody>';
+      '<p class="titre">' + esc(R.lourd ? R.lourd.nom + ' : l’équipe coûte ' + s100(R.lourd.part) : R.total.part != null && R.total.part > R.repere + 0.005 ? 'L’équipe coûte ' + s100(R.total.part) + ', sur tous les services' : 'Équipe dans le conseillé, service par service') + '</p>' +
+      '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>Ventes HT</th><th>Heures</th><th><span class="sh52-l">Ventes / heure</span><span class="sh52-c">€/h</span></th>' + (aHab ? '<th class="sh52-hab">D’habitude</th>' : '') + '<th><span class="sh52-l">Équipe / ventes</span><span class="sh52-c">Équipe</span></th></tr></thead><tbody>';
     var plusieurs = R.services.length > 1;
     R.services.concat(plusieurs ? [R.total] : []).forEach(function (x) {
       var tot = x === R.total;
-      h += '<tr' + (tot ? ' class="sh52-tot"' : '') + '><td>' + esc(x.nom) + '</td><td>' + eur(x.ht) + (plusieurs && !tot && R.total.ht > 0 ? '<small class="sh52-s">' + pc(x.ht / R.total.ht) + ' du CA</small>' : '') + '</td><td>' + hh(x.h) + '</td><td>' + eur(x.prod) + '</td>' + (aHab ? '<td class="sh52-hab">' + (tot || x.habituel == null ? '' : eur(x.habituel)) + '</td>' : '') +
+      h += '<tr' + (tot ? ' class="sh52-tot"' : '') + '><td>' + esc(x.nom) + '</td><td>' + eur(x.ht) + (plusieurs && !tot && R.total.ht > 0 ? '<small class="sh52-s">' + pc(x.ht / R.total.ht) + ' des ventes</small>' : '') + '</td><td>' + hh(x.h) + '</td><td>' + eur(x.prod) + '</td>' + (aHab ? '<td class="sh52-hab">' + (tot || x.habituel == null ? '' : eur(x.habituel)) + '</td>' : '') +
         '<td><span class="sh52-p sh52-' + couleur(x.part, R.repere) + '">' + pc(x.part) + '</span>' + (x.coutConnu ? '<small class="sh52-s">' + eur(x.cout) + '</small>' : '') + '</td></tr>';
     });
-    h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + esc((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et CA par service de vos saisies. ' : '') + 'Coût d’une heure = salaire chargé. Un service lourd se vérifie (planning, polyvalence, creux) avant toute décision : ce n’est pas ce qu’on économiserait en le fermant.') + '</p>' +
+    h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + esc((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Ventes HT = sans la TVA. Coût d’une heure = salaire + cotisations patronales. Avant de réduire un service, regardez le planning (renforts, creux) : le fermer n’économiserait pas forcément ce montant.') + '</p>' +
       '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
     return h;
   }
   function videHTML(periode) {
     return '<p class="kicker">Ventes et heures par service</p><p class="titre">Combien rapporte une heure de travail, midi et soir ?</p>' +
-      '<p class="sous">Saisissez les heures de chaque service (Salaires › Équipe) : Verdict calcule le CA HT par heure travaillée et le poids de l’équipe dans le CA, service par service' + (periode === 'jour' ? '' : ', pour le mois et l’année') + '.</p>' +
+      '<p class="sous">Saisissez les heures de chaque service (Salaires › Équipe) : Verdict calcule ce que rapporte une heure de travail et ce que coûte l’équipe pour 100 € vendus, service par service' + (periode === 'jour' ? '' : ', pour le mois et l’année') + '.</p>' +
       '<div class="actions"><button class="btn prim bloc" type="button" data-sh52-heures="1">Saisir mes heures</button></div>';
   }
   var CARTES = { jour: 'modServJ', mois: 'modServM', annee: 'modServA' };

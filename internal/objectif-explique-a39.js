@@ -55,7 +55,7 @@
     var base = Number(c.base) || 0, avant = (Number(c.deficit) || 0) - (Number(c.advance) || 0), aFaire = Number(c.catchup) || base, ca = Number(jour.ca) || 0, apres = avant + base - ca;
     function pos(v, quand) { return v > 0.5 ? '<dt>Retard du mois ' + quand + '</dt><dd class="vx39-r">' + eur(v) + '</dd>' : (v < -0.5 ? '<dt>Avance du mois ' + quand + '</dt><dd class="vx39-a">+' + eur(-v) + '</dd>' : '<dt>Mois ' + quand + '</dt><dd>dans les temps</dd>'); }
     return '<div class="vx39-l" data-vx39l="' + date + '">' + pos(avant, 'avant ce jour') + '</div>' +
-      '<div class="vx39-l"><dt>À réaliser ce jour-là<small>base ' + eur(base) + ' ' + signe(aFaire - base) + ' (reste à faire du mois réparti)</small></dt><dd><b>' + eur(aFaire) + '</b></dd></div>' +
+      '<div class="vx39-l"><dt>Minimum à faire ce jour-là<small>coût du jour ' + eur(base) + ' ' + signe(aFaire - base) + ' (' + (aFaire < base ? 'part de l’avance du mois' : 'part du retard du mois') + ')</small></dt><dd><b>' + eur(aFaire) + '</b></dd></div>' +
       '<div class="vx39-l">' + pos(apres, 'après ce jour') + '</div>';
   }
   function report(input) { var g = input && input.glissant; if (!g || !g.ecartAnnee) return null; return { ecartAnnee: g.ecartAnnee, partMois: g.partMois, moisRestants: g.moisRestants }; }

@@ -8357,10 +8357,10 @@ function p11PhraseSituation(R){
   if(!R||!R.ready)return null;
   /* C40 : repère = moyenne nationale 2025 du type (Observatoire UMIH/OEC : 4,5 % traditionnel, 3,9 % rapide). */var rnRepere=(/dark|kebab|burger|food ?truck|snack|coffee|boulanger|rapide|emporter|livraison|fast/i.test(String((typeof DB!=='undefined'&&DB&&DB.etabType)||''))?3.9:4.5),rn=R.v.rn,zoneRn=rn>=rnRepere?'conforme au repère':(rn>=0?'en retrait par rapport au repère':'en perte');
   var D=null,top=null;try{D=DecisionEngine.PrioritiesEngine.decision(DB);top=D&&D.top;}catch(e){}
-  var base='Marge avant impôt '+zoneRn+' ('+p11Pct(rn)+')';
+  var base=rn<0?'Sur l’année, vous perdez '+p11Pct(-rn).replace(' %',' €')+' pour 100 € vendus, avant impôt':'Sur l’année, il vous reste '+p11Pct(rn).replace(' %',' €')+' pour 100 € vendus, avant impôt ('+(rn>=rnRepere?'au-dessus':'en dessous')+' de la moyenne du secteur : '+p11Pct(rnRepere).replace(' %',' €')+')'; /* C178 : en clair, sans « conforme… à cause de » */
   if(!top)return base+'.';
-  if(top.level==='opportunity')return base+'. Aucune alerte structurelle : la priorité du jour est une opportunité sur '+p11LibellePoste(top.base)+'.';
-  var poste=p11LibellePoste(top.base);var lien=/^(le |la |les |l’)/i.test(poste)?(poste.slice(0,1)==='l'||/^l’/i.test(poste)?'de '+poste:'de '+poste):'de '+poste;lien=poste.indexOf('le ')===0?'du '+poste.slice(3):(poste.indexOf('les ')===0?'des '+poste.slice(4):(poste.indexOf('un ')===0?'d’'+poste:'de '+poste));return base+', principalement à cause '+lien+'.'; /* R223 : « d’un écart », plus « de un » */
+  if(top.level==='opportunity')return base+'. Rien d’inquiétant ; une piste à saisir : '+p11LibellePoste(top.base)+'.';
+  var poste=p11LibellePoste(top.base);var lien=/^(le |la |les |l’)/i.test(poste)?(poste.slice(0,1)==='l'||/^l’/i.test(poste)?'de '+poste:'de '+poste):'de '+poste;lien=poste.indexOf('le ')===0?'du '+poste.slice(3):(poste.indexOf('les ')===0?'des '+poste.slice(4):(poste.indexOf('un ')===0?'d’'+poste:'de '+poste));return base+'. À surveiller en premier : '+poste+'.'; /* R223 : « d’un écart », plus « de un » */
 }
 function p11SituationCardHTML(R){
   if(!R||!R.ready){

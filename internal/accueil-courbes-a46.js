@@ -48,7 +48,7 @@
     var meilleur = null; Object.keys(parJ).forEach(function (k) { var a = parJ[k], v = a.reduce(function (t, x) { return t + x; }, 0) / a.length; if (!meilleur || v > meilleur.v) meilleur = { k: k, v: v }; });
     return {
       vue: 'cal', kicker: 'Vos journées · ' + MOIS[Number(key.slice(5)) - 1] + ' ' + key.slice(0, 4), cols: cols, sel: sel,
-      resume: reels.length ? ok + ' journée' + (ok > 1 ? 's' : '') + ' sur ' + reels.length + ' au-dessus de leur minimum · moyenne ' + pct(moy) + (meilleur && reels.length >= 5 ? ' · meilleur jour : ' + JLONG[meilleur.k] + ' (' + pct(meilleur.v) + ')' : '') : 'Aucune journée saisie ce mois-ci',
+      resume: reels.length ? ok + ' journée' + (ok > 1 ? 's' : '') + ' sur ' + reels.length + ' au-dessus de leur minimum · moyenne ' + pct(moy) + (meilleur && reels.length >= 5 ? ' · jour le plus fort : le ' + JLONG[meilleur.k] + ' (' + pct(meilleur.v) + ' en moyenne)' : '') : 'Aucune journée saisie ce mois-ci',
       unite: 'minimum du jour'
     };
   }
@@ -115,7 +115,7 @@
     var mc = Number(moisCle().slice(5)), meme = 0; (w.DB && w.DB.monthlyHistory || []).forEach(function (x) { var p = String(x.period || ''); if (Number(p.slice(0, 4)) === an - 1 && Number(p.slice(5, 7)) <= mc && x.caTTC > 0) meme += Number(x.caTTC); });
     var evo = meme > 0 && c.actual > 0 ? (c.actual - meme) / meme : null;
     return {
-      kicker: 'Vos années · comparées au minimum d’aujourd’hui', cols: cols, sel: cols.length - 1,
+      kicker: 'Vos années · comparées à leur minimum, à la même date', cols: cols, sel: cols.length - 1,
       resume: evo == null ? 'Historique en construction' : (evo >= 0 ? '+' : '−') + pct(Math.abs(evo)) + ' par rapport à ' + (an - 1) + ' à la même date (janvier → ' + MOIS[mc - 1] + ')',
       unite: 'minimum annuel'
     };
@@ -206,7 +206,7 @@
     box.innerHTML = '<p class="rx-k">' + esc(m.kicker) + '</p>' +
       '<div class="rx-hero"><b class="rx-big">' + esc(dt.big) + '</b><span class="rx-mot">' + esc(dt.mot) + '</span></div><p class="rx-lab" aria-live="polite">' + esc(dt.lab) + '</p>' +
       '<p class="rx-sub">' + esc(m.resume) + '</p>' + (m.vue === 'cal' ? calendrier(m) : svg(m, anime)) +
-      '<div class="rx-leg"><span><i style="background:#22c55e"></i>Minimum atteint</span><span><i style="background:#eab308"></i>À moins de 5 %</span><span><i style="background:#f97316"></i>5 à 10 %</span><span><i style="background:#ef4444"></i>Plus de 10 %</span>' +
+      '<div class="rx-leg"><span><i style="background:#22c55e"></i>Minimum atteint</span><span><i style="background:#eab308"></i>Il manque moins de 5 %</span><span><i style="background:#f97316"></i>Il manque 5 à 10 %</span><span><i style="background:#ef4444"></i>Il manque plus de 10 %</span>' +
       (m.vue === 'cal' ? '<span><i style="background:rgba(148,163,184,.35)"></i>Repos</span><span><i style="background:transparent;border:2px solid currentColor;border-radius:50%"></i>Aujourd’hui</span>' : '<span><i style="width:14px;height:0;border-radius:0;border-top:2px dashed #d4a017;vertical-align:3px"></i>Minimum</span>') +
       (m.cols.some(function (c) { return c.type === 'projete'; }) ? '<span><i style="background:transparent;border:1.5px dashed #94a3b8"></i>Projeté</span>' : '') +
       (m.cols.some(function (c) { return c.type === 'encours'; }) ? '<span><i style="background:transparent;border:1.5px solid currentColor"></i>En cours</span>' : '') + '</div>';

@@ -89,11 +89,11 @@
   function jaugeHTML(part, rep) {
     var min = Math.max(0, rep - 0.15), max = rep + 0.15, pos = function (v) { return Math.max(0, Math.min(100, (v - min) / (max - min) * 100)); };
     var b = [pos(rep), pos(rep + SEUILS[1]), pos(rep + SEUILS[2])], x = pos(part), st = statut(part, rep);
-    return '<div class="em54-j" role="img" aria-label="Coût de l’équipe : ' + pc(part) + ' du CA, repère ' + pc(rep) + ', ' + st.mot + '">' +
+    return '<div class="em54-j" role="img" aria-label="L’équipe coûte ' + Math.round(part * 100) + ' € pour 100 € vendus, conseillé ' + Math.round(rep * 100) + ' € au plus, ' + st.mot + '">' +
       '<div class="em54-jb"><i style="left:0;width:' + b[0] + '%;background:linear-gradient(90deg,#16a34a,#22c55e)"></i><i style="left:' + b[0] + '%;width:' + (b[1] - b[0]) + '%;background:#eab308"></i>' +
       '<i style="left:' + b[1] + '%;width:' + (b[2] - b[1]) + '%;background:#f97316"></i><i style="left:' + b[2] + '%;width:' + (100 - b[2]) + '%;background:linear-gradient(90deg,#ef4444,#b91c1c)"></i>' +
       '<span class="em54-jr" style="left:' + b[0] + '%"></span><b class="em54-jm" style="left:' + x + '%;--c:' + COUL[st.k] + '"><span>' + pc(part) + '</span></b></div>' +
-      '<div class="em54-jl"><span>' + pc(min) + '</span><span style="left:' + b[0] + '%">repère ' + pc(rep) + '</span><span>' + pc(max) + '</span></div></div>';
+      '<div class="em54-jl"><span>équipe légère</span><span style="left:' + b[0] + '%">conseillé : ' + Math.round(rep * 100) + ' €</span><span>trop lourde</span></div></div>';
   }
   function arr(x, p) { return Math.round(x / p) * p; }
   function eur(x) { return x == null ? '—' : Math.round(x).toLocaleString('fr-FR') + '\u00a0€'; }
@@ -103,9 +103,9 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   /* La phrase utile. */
   function directPhrase(A) {
-    var x = A.direct, t = 'Du 1er à aujourd’hui : l’équipe a coûté ' + eur(x.cout) + ' pour ' + eur(x.ht) + ' de CA HT (' + hh(x.h) + ', ' + eur(x.prod) + ' HT par heure). Repère ' + pc(A.rep) + '.';
+    var x = A.direct, t = 'Du 1er à aujourd’hui : l’équipe a coûté ' + eur(x.cout) + ' pour ' + eur(x.ht) + ' de ventes hors TVA (' + hh(x.h) + ' de travail, ' + eur(x.prod) + ' de ventes par heure). Conseillé pour votre type d’établissement : ' + Math.round(A.rep * 100) + ' € de salaires au plus pour 100 € vendus.';
     if (A.statut.k === 'vert') t += ' Rien à corriger.';
-    else { var cible = x.cout / A.rep - x.ht, hEnTrop = x.h - x.ht * A.rep / (x.cout / x.h); t += ' Pour revenir au repère : ' + eur(arr(cible, 50)) + ' de CA HT en plus à heures égales, ou environ ' + hh(arr(hEnTrop, 5)) + ' de moins sur la fin du mois.'; }
+    else { var cible = x.cout / A.rep - x.ht, hEnTrop = x.h - x.ht * A.rep / (x.cout / x.h); t += ' Pour y revenir : ' + eur(arr(cible, 50)) + ' de ventes en plus avec les mêmes heures, ou environ ' + hh(arr(hEnTrop, 5)) + ' de travail en moins d’ici la fin du mois.'; }
     return t;
   }
   function phrase(A) {
@@ -113,10 +113,10 @@
     var P = A.prochain, nm = MOIS[+P.m.slice(5, 7) - 1];
     if (P.h == null) return A.sansHistorique ? 'Prévision du mois prochain dès 3 mois complets saisis.' : 'Pour estimer ' + nm + ', il faut le même mois de l’an dernier et les 3 mois précédents de l’an dernier.';
     var ev = Math.round((P.evol - 1) * 100);
-    var t = nm.charAt(0).toUpperCase() + nm.slice(1) + ' : CA HT estimé ≈ ' + eur(arr(P.ht, 100)) + ' (' + (ev === 0 ? 'comme ' + nm + ' dernier' : nm + ' dernier ' + (ev > 0 ? '+' : '−') + Math.abs(ev) + ' %') + ', d’après vos 3 derniers mois).';
-    t += ' ' + nm.charAt(0).toUpperCase() + nm.slice(1) + ' dernier : ' + hh(P.n1.h) + (P.n1.prod != null ? ', ' + eur(P.n1.prod) + ' HT par heure' : '') + (P.n1.part != null ? ', l’équipe à ' + pc(P.n1.part) + ' du CA' : '') + '.';
-    if (P.hN1 != null && Math.abs(P.hHaut - P.hBas) >= 10) t += ' Pour ce CA : ≈ ' + hh(arr(P.hN1, 10)) + ' au rythme de ' + nm + ' dernier, ≈ ' + hh(arr(P.hRecent, 10)) + ' à votre rythme des 3 derniers mois (' + eur(A.prodRef) + ' par heure).';
-    else t += ' Pour ce CA : ≈ ' + hh(arr(P.h, 10)) + ' d’équipe, à votre rythme habituel (' + eur(A.prodRef) + ' par heure).';
+    var t = nm.charAt(0).toUpperCase() + nm.slice(1) + ' : ventes hors TVA estimées ≈ ' + eur(arr(P.ht, 100)) + ' (' + nm + ' ' + P.n1.m.slice(0, 4) + (ev === 0 ? '' : ' ' + (ev > 0 ? '+' : '−') + Math.abs(ev) + ' %') + ', ' + (ev === 0 ? 'vos 3 derniers mois étant au même niveau que l’an dernier' : 'comme l’évolution de vos 3 derniers mois') + ').';
+    t += ' ' + nm.charAt(0).toUpperCase() + nm.slice(1) + ' dernier : ' + hh(P.n1.h) + (P.n1.prod != null ? ', ' + eur(P.n1.prod) + ' de ventes par heure' : '') + (P.n1.part != null ? ', l’équipe à ' + Math.round(P.n1.part * 100) + ' € pour 100 € vendus' : '') + '.';
+    if (P.hN1 != null && Math.abs(P.hHaut - P.hBas) >= 10) t += ' Pour ces ventes, prévoyez ≈ ' + hh(arr(P.hN1, 10)) + ' de travail si vous tournez comme en ' + nm + ' dernier, ≈ ' + hh(arr(P.hRecent, 10)) + ' si vous tournez comme ces 3 derniers mois (' + eur(A.prodRef) + ' de ventes par heure).';
+    else t += ' Pour ces ventes, prévoyez ≈ ' + hh(arr(P.h, 10)) + ' de travail, à votre rythme habituel (' + eur(A.prodRef) + ' de ventes par heure).';
     if (P.coutBas != null) t += ' Coût estimé : ' + (Math.abs(P.coutHaut - P.coutBas) >= 100 ? '≈ ' + eur(arr(P.coutBas, 100)) + ' à ' + eur(arr(P.coutHaut, 100)) : '≈ ' + eur(arr(P.cout, 100))) + '.';
     return t;
   }
@@ -136,10 +136,10 @@
   function carteHTML(A) {
     var P = A.prochain, demo = w.DB && (w.DB.demo || (w.DB.services || []).some(function (s) { return s && s.demo; }));
     var h = '<p class="kicker">Comparer les mois · anticiper l’équipe' + (demo ? ' · démonstration' : '') + '</p>' +
-      (A.direct && A.direct.part != null ? '<p class="titre">' + esc('Équipe ce mois-ci : ' + A.statut.mot + ' — ' + pc(A.direct.part) + ' du CA à ce jour') + '</p>' + jaugeHTML(A.direct.part, A.rep) + '<p class="sous">' + esc(directPhrase(A)) + '</p><p class="kicker" style="margin-top:14px">Mois prochain</p>' : '') +
+      (A.direct && A.direct.part != null ? '<p class="titre">' + esc('Équipe ce mois-ci : ' + A.statut.mot + ' — ' + Math.round(A.direct.part * 100) + ' € pour 100 € vendus, à ce jour') + '</p>' + jaugeHTML(A.direct.part, A.rep) + '<p class="sous">' + esc(directPhrase(A)) + '</p><p class="kicker" style="margin-top:14px">Mois prochain</p>' : '') +
       '<p class="titre">' + esc(P.h != null ? nomMois(P.m).replace(/^./, function (c) { return c.toUpperCase(); }) + ' : prévoir ' + (Math.abs(P.hHaut - P.hBas) >= 10 ? 'entre ' + hh(arr(P.hBas, 10)).replace('\u00a0h', '') + ' et ' + hh(arr(P.hHaut, 10)) : 'environ ' + hh(arr(P.h, 10))) + ' d’équipe' : 'Vos mois, côte à côte') + '</p>' +
       '<p class="sous">' + esc(phrase(A)) + '</p>' +
-      '<table><thead><tr><th>Mois</th><th>CA HT</th><th>Heures</th><th><span class="em54-l">€ HT / heure</span><span class="em54-c">€/h</span></th><th><span class="em54-l">Coût équipe / CA</span><span class="em54-c">Équipe</span></th></tr></thead><tbody>';
+      '<table><thead><tr><th>Mois</th><th>Ventes HT</th><th>Heures</th><th><span class="em54-l">Ventes / heure</span><span class="em54-c">€/h</span></th><th><span class="em54-l">Équipe / ventes</span><span class="em54-c">Équipe</span></th></tr></thead><tbody>';
     A.lignes.forEach(function (x) {
       var ev = x.n1ht ? (x.ht / x.n1ht - 1) : null;
       h += '<tr' + (x.enCours ? ' class="em54-cours"' : '') + '><td>' + esc(court(x.m)) + (x.enCours ? '<small class="em54-s">en cours</small>' : x.src === 'bulletins' ? '<small class="em54-s">bulletins</small>' : '') + '</td>' +
