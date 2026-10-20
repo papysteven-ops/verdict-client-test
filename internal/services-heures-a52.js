@@ -128,7 +128,20 @@
     if (R.periode === 'mois') { var q = R.cle.split('-'); return MOIS[+q[1] - 1] + ' ' + q[0]; }
     return 'année ' + R.cle;
   }
-  function couleur(part, rep) { return part == null ? 'info' : part <= rep + 0.005 ? 'vert' : part <= rep + 0.05 ? 'orange' : 'rouge'; }
+  /* C188 : les 4 couleurs de la jauge d'équipe (C172/C180), partout pareil : vert ≤ conseillé, jaune ≤ +2 points, orange ≤ +5, rouge au-delà. */
+  function couleur(part, rep) { return part == null ? 'info' : part <= rep + 0.005 ? 'vert' : part <= rep + 0.02 ? 'jaune' : part <= rep + 0.05 ? 'orange' : 'rouge'; }
+  var COUL = { vert: '#22c55e', jaune: '#eab308', orange: '#f97316', rouge: '#ef4444', info: '#94a3b8' };
+  /* C188 (Steven : « jauge Verdict, couleur premium, effet possible ici ») : la jauge du jour / du mois / de l'année, en tête de carte. */
+  function jaugeHTML(part, rep) {
+    if (part == null || !(rep > 0)) return '';
+    var min = Math.max(0, rep - 0.15), max = rep + 0.25, pos = function (v) { return Math.max(0, Math.min(100, (v - min) / (max - min) * 100)); };
+    var b = [pos(rep), pos(rep + 0.02), pos(rep + 0.05)], x = pos(part), k = couleur(part, rep), mot = { vert: 'dans le conseillé', jaune: 'juste au-dessus', orange: 'à surveiller', rouge: 'trop lourde' }[k] || '';
+    return '<div class="sh52-j" role="img" aria-label="L’équipe coûte ' + Math.round(part * 100) + ' € pour 100 € vendus, conseillé ' + Math.round(rep * 100) + ' € au plus : ' + mot + '">' +
+      '<div class="sh52-jb"><i style="left:0;width:' + b[0] + '%;background:linear-gradient(90deg,#15803d,#22c55e)"></i><i style="left:' + b[0] + '%;width:' + (b[1] - b[0]) + '%;background:linear-gradient(90deg,#facc15,#eab308)"></i>' +
+      '<i style="left:' + b[1] + '%;width:' + (b[2] - b[1]) + '%;background:linear-gradient(90deg,#fb923c,#f97316)"></i><i style="left:' + b[2] + '%;width:' + (100 - b[2]) + '%;background:linear-gradient(90deg,#ef4444,#991b1b)"></i>' +
+      '<em class="sh52-js"></em><span class="sh52-jr" style="left:' + b[0] + '%"></span><b class="sh52-jm" style="left:' + x + '%;--c:' + COUL[k] + '"><span>' + Math.round(part * 100) + '\u00a0€ · ' + mot + '</span></b></div>' +
+      '<div class="sh52-jl"><span></span><span style="left:' + b[0] + '%">conseillé : ' + Math.round(rep * 100) + '\u00a0€</span><span>trop lourde</span></div></div>';
+  }
   /* La phrase utile, la même dans la carte et dans « À faire ». */
   /* C178 (Steven, 20/10 : « je ne veux plus réfléchir “c'est quoi ?” ») : en mots de patron — ventes hors TVA, « € pour
      100 € vendus », conseil du type d'établissement dit comme tel ; plus de « CA HT », « repère », « à heures égales ». */
@@ -154,6 +167,16 @@
     '.sh52 td{text-align:right;padding:7px 6px;border-top:1px solid rgba(148,163,184,.22);white-space:nowrap}.sh52 tr.sh52-tot td{font-weight:700}' +
     '.sh52 .sh52-p{display:inline-block;min-width:44px;padding:2px 7px;border-radius:999px;font-weight:700}' +
     '.sh52 .sh52-vert{background:rgba(34,197,94,.16);color:#15803d}.sh52 .sh52-orange{background:rgba(249,115,22,.16);color:#c2410c}.sh52 .sh52-rouge{background:rgba(239,68,68,.16);color:#b91c1c}.sh52 .sh52-info{opacity:.7}' +
+    '.sh52 .sh52-jaune{background:rgba(234,179,8,.18);color:#a16207}html.vd-workspace-dark .sh52 .sh52-jaune{color:#facc15}' +
+    '.sh52-j{margin:16px 0 12px;padding-top:30px}.sh52-jb{position:relative;height:14px;border-radius:999px;background:rgba(148,163,184,.2);box-shadow:inset 0 1px 2px rgba(15,23,42,.25),0 0 18px -6px var(--sh52-glow,transparent);overflow:visible}' +
+    '.sh52-jb>i{position:absolute;top:0;bottom:0;opacity:.95}.sh52-jb>i:first-of-type{border-radius:999px 0 0 999px}.sh52-jb>i:nth-of-type(4){border-radius:0 999px 999px 0}' +
+    '.sh52-js{position:absolute;inset:0;border-radius:999px;overflow:hidden;pointer-events:none}.sh52-js::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:sh52Shine 1.6s .3s ease-out both}' +
+    '.sh52-jr{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;background:currentColor;opacity:.55}' +
+    '.sh52-jm{position:absolute;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:#fff;border:4px solid var(--c);box-shadow:0 0 0 5px color-mix(in srgb,var(--c) 28%,transparent),0 0 22px color-mix(in srgb,var(--c) 70%,transparent),0 6px 14px rgba(15,23,42,.35);animation:sh52In 1s cubic-bezier(.2,.8,.2,1) both}' +
+    '.sh52-jm>span{position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);padding:4px 10px;border-radius:999px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 85%,#fff),var(--c));color:#fff;font:800 13px/1.2 system-ui;white-space:nowrap;box-shadow:0 4px 12px color-mix(in srgb,var(--c) 45%,transparent)}' +
+    '.sh52-jl{position:relative;display:flex;justify-content:space-between;margin-top:9px;font-size:12px;opacity:.72}.sh52-jl>span:nth-child(2){position:absolute;transform:translateX(-50%);font-weight:700;white-space:nowrap}' +
+    '@keyframes sh52In{from{left:0;opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}@keyframes sh52Shine{to{left:110%}}' +
+    '@media (prefers-reduced-motion:reduce){.sh52-jm,.sh52-js::after{animation:none}}' +
     'html.vd-workspace-dark .sh52 .sh52-vert{color:#4ade80}html.vd-workspace-dark .sh52 .sh52-orange{color:#fb923c}html.vd-workspace-dark .sh52 .sh52-rouge{color:#f87171}' +
     '.sh52 .sh52-c{display:none}.sh52 small.sh52-s{display:block;font-size:11px;font-weight:500;opacity:.7;margin-top:2px}.sh52 td{vertical-align:top}' +
     '@media (max-width:520px){.sh52 table{font-size:13px}.sh52 th,.sh52 td{padding:6px 3px}.sh52 td:first-child{white-space:normal}.sh52 .sh52-hab,.sh52 .sh52-l{display:none}.sh52 .sh52-c{display:inline}.sh52 .sh52-p{min-width:0;padding:2px 5px}}';
@@ -161,7 +184,7 @@
     var jour = R.periode === 'jour', aHab = jour && R.services.some(function (x) { return x.habituel != null; });
     var h = '<p class="kicker">Ventes et heures par service · ' + esc(libelle(R)) + (w.DB && (w.DB.demo || (w.DB.services || []).some(function (s) { return s && s.demo; })) ? ' · démonstration' : '') + '</p>' +
       '<p class="titre">' + esc(R.lourd && tropTotal(R) >= 0.5 ? 'L’équipe a coûté ' + eur(tropTotal(R)) + ' de trop' + (R.periode === 'jour' ? ' ce jour-là' : R.periode === 'mois' ? ' ce mois-ci' : ' sur l’année') : R.lourd ? cap(le(R.lourd.nom)) + ' coûte trop d’équipe' : R.total.part != null && R.total.part > R.repere + 0.005 ? 'L’équipe coûte ' + s100(R.total.part) + ', sur tous les services' : 'Équipe dans le conseillé, service par service') + '</p>' +
-      '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>Ventes</th><th>Équipe</th><th>En trop</th></tr></thead><tbody>';
+      jaugeHTML(R.total.part, R.repere) + '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>Ventes</th><th>Équipe</th><th>En trop</th></tr></thead><tbody>';
     var plusieurs = R.services.length > 1;
     R.services.concat(plusieurs ? [R.total] : []).forEach(function (x) {
       var tot = x === R.total, trop = x.coutConnu && x.ht > 0 ? x.cout - R.repere * x.ht : null, ok = trop != null && trop < 0.5;

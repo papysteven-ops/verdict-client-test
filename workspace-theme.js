@@ -33,6 +33,21 @@
   try { var cle0 = cleAppareil(), autre0 = cle0 === mobileKey ? desktopKey : mobileKey, v0 = localStorage.getItem(cle0);
     if (v0 === 'light' || v0 === 'dark') { if (localStorage.getItem(autre0) !== v0) localStorage.setItem(autre0, v0); } else if (localStorage.getItem(autre0) === 'light' || localStorage.getItem(autre0) === 'dark') localStorage.removeItem(autre0); } catch (e) {}
 
+  /* C188 (Steven, 20/10 : « le mode sombre auto ne marche pas du tout ; le bouton oui, mais pas le vrai mode sans le bouton,
+     avant ça marchait ») : un seul appui sur le bouton enregistrait le choix pour toujours, et l'appli ne suivait plus jamais
+     l'iPhone. Désormais : dès que l'apparence de l'appareil change (au coucher du soleil, ou réglée à la main), elle reprend
+     la main — même si l'appli était fermée à ce moment-là ; et choisir au bouton l'apparence de l'appareil = revenir en auto. */
+  var sysKey = 'verdict-appareil-apparence-vue';
+  function apparenceAppareil() { return system && system.matches ? 'dark' : 'light'; }
+  function suivreAppareil() {
+    try {
+      var now = apparenceAppareil(), vu = localStorage.getItem(sysKey);
+      /* vu absent = première ouverture de cette version : l'ancien choix « pour toujours » est effacé une fois, l'appli repart en auto. */
+      if (vu !== now) { localStorage.removeItem(mobileKey); localStorage.removeItem(desktopKey); }
+      if (vu !== now) localStorage.setItem(sysKey, now);
+    } catch (e) {}
+  }
+  suivreAppareil();
   function preference() {
     try {
       var saved = localStorage.getItem(cleAppareil());
@@ -202,7 +217,7 @@
   }
   button.addEventListener('click', function () {
     var next = appearance(preference()) === 'dark' ? 'light' : 'dark';
-    try { localStorage.setItem(mobileKey, next); localStorage.setItem(desktopKey, next); } catch (error) {}
+    try { if (next === apparenceAppareil()) { localStorage.removeItem(mobileKey); localStorage.removeItem(desktopKey); } else { localStorage.setItem(mobileKey, next); localStorage.setItem(desktopKey, next); } } catch (error) {}
     render();
   });
   document.addEventListener('load', function (event) {
@@ -221,7 +236,9 @@
         document.documentElement.classList.contains('vd-workspace-light') === dark) render();
   }).observe(document.documentElement, {attributes:true,attributeFilter:['class']});
   window.addEventListener('storage', function (event) { if (event.key === mobileKey || event.key === desktopKey) render(); });
-  if (system) system.addEventListener('change', render);
+  if (system) system.addEventListener('change', function () { suivreAppareil(); render(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { suivreAppareil(); render(); } });
+  window.addEventListener('pageshow', function () { suivreAppareil(); render(); });
   if (mobile) mobile.addEventListener('change', render);
   render();
 })();
