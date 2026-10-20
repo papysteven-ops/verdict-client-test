@@ -4038,7 +4038,7 @@ function auditPremiumCalc(R){
     c.carte.score=sc&&isFinite(sc.total)?sc.total:0;
     c.carte.fiables=st.fiables||0;c.carte.couverture=st.actifs?Math.round((st.fiables||0)/st.actifs*100):0;
     c.carte.theo=st.theoR||0;c.carte.marge=st.ca>0?st.margePond:null;
-    c.carte.ecart=st.theoR>0&&isFinite(v.fc)?v.fc-st.theoR:null;c.carte.perte=st.perte||0;
+    c.carte.ecart=st.theoR>0&&isFinite(v.fc)?v.fc-st.theoNourR:null;c.carte.theoNour=st.theoNourR;c.carte.perte=st.perte||0;
     c.canaux.pfN=st.pfN||0;
     (DB.plats||[]).forEach(function(p){
       var vol=+p.vol||0; if(vol<=0)return;
@@ -4382,11 +4382,11 @@ function platCalc(p){
   return VerdictFinance.dishFinancial(o,p,c,platTVA(p),DB.reg);
 }
 function carteStats(){
-  var ca=0,mat=0,vol=0,volFiable=0,marge=0,perte=0,actifs=0,pfN=0,fiables=0,comp={};
+  var ca=0,mat=0,vol=0,volFiable=0,marge=0,perte=0,actifs=0,pfN=0,fiables=0,comp={},matBar=0;
   DB.plats.forEach(function(p){
     var k=platCalc(p), v=Number(p.vol)||0;
     /* R127 : un plat à fiche incomplète n'entre ni au numérateur ni au dénominateur des moyennes (8.9) */
-    if(k.complete){ca+=k.htPond*v;mat+=k.cout*v;marge+=k.contribPond*v;fiables+=(v>0?1:0);volFiable+=v;}
+    if(k.complete){ca+=k.htPond*v;mat+=k.cout*v;marge+=k.contribPond*v;fiables+=(v>0?1:0);volFiable+=v;if(point5Family(p)==='bar')matBar+=k.cout*v;}
     vol+=v;
     if(v>0)actifs++;
     if(k.complete&&k.contribPond<0&&v>0)perte++;
@@ -4409,7 +4409,7 @@ function carteStats(){
   function med(a){var x=a.slice().sort(function(a,b){return a-b;}),n=x.length;if(!n)return 0;return n%2?x[(n-1)/2]:(x[n/2-1]+x[n/2])/2;}
   var comparables={};Object.keys(comp).forEach(function(k){comparables[k]={n:comp[k].length,med:med(comp[k])};});
   return {ca:ca,mat:mat,vol:vol,theo:ca>0?mat/ca*100:0,
-    theoR:ca>0?Math.round(mat/ca*10000)/100:0,
+    theoR:ca>0?Math.round(mat/ca*10000)/100:0,/* C192 : nourriture seule, sur toutes les ventes de la carte = même périmètre que le food cost réel (achats nourriture / CA) */theoNourR:ca>0?Math.round((mat-matBar)/ca*10000)/100:0,theoBarR:ca>0?Math.round(matBar/ca*10000)/100:0,/* C192 : nourriture seule, sur toutes les ventes de la carte = même périmètre que le food cost réel (achats nourriture / CA) */theoNourR:ca>0?Math.round((mat-matBar)/ca*10000)/100:0,theoBarR:ca>0?Math.round(matBar/ca*10000)/100:0,/* C192 : nourriture seule, sur toutes les ventes de la carte = même périmètre que le food cost réel (achats nourriture / CA) */theoNourR:ca>0?Math.round((mat-matBar)/ca*10000)/100:0,theoBarR:ca>0?Math.round(matBar/ca*10000)/100:0,/* C192 : nourriture seule, sur toutes les ventes de la carte = même périmètre que le food cost réel (achats nourriture / CA) */theoNourR:ca>0?Math.round((mat-matBar)/ca*10000)/100:0,theoBarR:ca>0?Math.round(matBar/ca*10000)/100:0,
     margeMoy:volFiable>0?marge/volFiable:0,volMoy:DB.plats.length?vol/DB.plats.length:0,
     panier:volFiable>0?ca/volFiable:0,coutMoy:volFiable>0?mat/volFiable:0,volFiable:volFiable,volIncomplet:Math.max(0,vol-volFiable),
     partFiable:vol>0?Math.round(volFiable/vol*100):null,actifs:actifs,fiables:fiables,perte:perte,pfN:pfN,
@@ -4589,7 +4589,7 @@ function cardDiagnosticStats(st,R){
   st=st||carteStats();R=R||moteur();
   var total=(DB.plats||[]).length,active=st.actifs||0,reliable=st.fiables||0;
   var coverage=active?Math.round(reliable/active*100):0,actual=R&&R.ready&&R.v?Number(R.v.fc):null;
-  var gap=(actual!=null&&isFinite(actual)&&st.theoR>0)?actual-st.theoR:null,priority=null;
+  var gap=(actual!=null&&isFinite(actual)&&st.theoR>0)?actual-st.theoNourR:null,priority=null;
   (DB.plats||[]).some(function(p){if(!(Number(p.vol)>0))return false;var z=platZone(p,st);if(z.k==='o'||z.k==='r'){priority={nom:p.nom||'Plat',action:z.act||z.lb};return true;}return false;});
   return {ready:active>0&&reliable>0,total:total,active:active,reliable:reliable,coverage:coverage,
     foodCost:st.theoR>0?st.theoR:null,margin:st.ca>0?st.margePond:null,actualFoodCost:actual,gap:gap,
@@ -4743,7 +4743,7 @@ function point5Calc(st){
 function point5ReferenceHTML(P){
   if(P.ref.demo)return (DB.modele==='FoodTruck'?'<details class="card"><summary>Food truck : hypothèses et sources</summary><p>'+esc(MODELES.FoodTruck.research.assumptions)+'</p><p>Les cartes publiques consultées servent à situer les prix ; elles ne donnent ni les charges ni les ventes de ces établissements. Les coûts, volumes et historiques de ce modèle sont fictifs.</p><a href="https://entreprendre.service-public.gouv.fr/vosdroits/F36831" target="_blank" rel="noopener">Service Public : food truck</a> · <a href="https://lacuisinedememe.fr/carte/" target="_blank" rel="noopener">La Cuisine de Mémé : prix publics</a> · <a href="https://www.nomadeburger.fr/menu" target="_blank" rel="noopener">Nomade Burger : prix publics</a></details>':'')+'<div class="card"><div class="autoline"><span class="k">'+point5T('periodSource')+'</span><b>'+point5T('demo')+'</b></div><p class="note" style="margin:8px 0 0">Les volumes et le mix de canaux sont des hypothèses de démonstration, jamais des statistiques sectorielles.</p></div>';
   var r=DB.carteRef||{},opts=['','caisse','import','manual','estimate'].map(function(x){var l=x?point5SourceLabel(x):'—';return '<option value="'+x+'"'+(r.source===x?' selected':'')+'>'+l+'</option>';}).join('');
-  return '<details class="card" id="p5-reference-card"'+(!P.ref.ready?' open':'')+'><summary style="cursor:pointer;font-weight:800">'+point5T('periodSource')+(P.ref.ready?' · '+esc(r.periode)+' · '+esc(point5SourceLabel(r.source)):'')+'</summary><div class="g2" style="margin-top:12px"><label class="f"><span>'+point5T('period')+'</span><input id="p5-period" type="month" value="'+esc(r.periode||'')+'"></label><label class="f"><span>'+point5T('source')+'</span><select id="p5-source">'+opts+'</select></label></div><label class="f"><span><input type="checkbox" id="p5-full-month"'+(r.fullMonth?' checked':'')+'> Ces volumes couvrent toute la carte, boissons et canaux compris, sur un mois complet.</span></label><button class="btn" id="p5-save-ref" onclick="saveCarteRef()">'+point5T('save')+'</button></details>';
+  return '<details class="card" id="p5-reference-card"'+(!P.ref.ready?' open':'')+'><summary style="cursor:pointer;font-weight:800">'+point5T('periodSource')+(P.ref.ready?' · '+esc(r.moyenne?'moyenne '+r.moyenne.debut+' → '+r.moyenne.fin:r.periode)+' · '+esc(point5SourceLabel(r.source)):'')+'</summary><div class="g2" style="margin-top:12px"><label class="f"><span>'+point5T('period')+'</span><input id="p5-period" type="month" value="'+esc(r.periode||'')+'"></label><label class="f"><span>'+point5T('source')+'</span><select id="p5-source">'+opts+'</select></label></div><label class="f"><span><input type="checkbox" id="p5-full-month"'+(r.fullMonth?' checked':'')+'> Ces volumes couvrent toute la carte, boissons et canaux compris, sur un mois complet.</span></label><button class="btn" id="p5-save-ref" onclick="saveCarteRef()">'+point5T('save')+'</button></details>';
 }
 function saveCarteRef(){
   var pe=document.getElementById('p5-period'),se=document.getElementById('p5-source'),period=pe?pe.value:'',source=se?se.value:'';
@@ -8486,10 +8486,10 @@ function point11Decision(db){
     }
     try{
       if(DB.plats&&DB.plats.length&&DB.carteRef&&DB.carteRef.confirmed){
-        var cs=carteStats(),gap=cs&&cs.theoR>0?v.fc-cs.theoR:0;
+        var cs=carteStats(),gap=cs&&cs.theoR>0?v.fc-cs.theoNourR:0;
         if(gap>=4){
           var gapE=Math.round(gap/100*ca);
-          op({id:'FOOD_GAP_VERIFY',base:'measurement',level:gap>=12?'critical':'warning',urgency:gap>=12?'today':'week',difficulty:'medium',groups:['activite','achats'],baseConfidence:.73,trend:p11Trend('fc',cs.theoR,v.fc),
+          op({id:'FOOD_GAP_VERIFY',base:'measurement',level:gap>=12?'critical':'warning',urgency:gap>=12?'today':'week',difficulty:'medium',groups:['activite','achats'],baseConfidence:.73,trend:p11Trend('fc',cs.theoNourR,v.fc),
             diagnosis:'Un écart matière de '+p11Pct(gap)+' reste à expliquer',detail:'La carte théorique et les achats comptables ne racontent pas encore la même chose.',
             action:'Vérifiez d’abord la même période et le même périmètre, puis portions, pertes, offerts et inventaire. Ne corrigez aucun prix avant cette preuve.',
             metric:'Écart théorique / consommation mesurée sur une période commune.',whyFirst:'L’impact potentiel est important, mais il reste une anomalie à expliquer et non un gain acquis.',
@@ -8828,7 +8828,7 @@ function drawX(){
   if(!R.ready||!DB.plats.length){
     el.innerHTML='<div class="warn on">L\&#39;\u00e9cart food cost a besoin de vos chiffres (Saisie) ET de votre carte (plats). '+(R.ready?"Ajoutez vos plats.":"Remplissez la saisie.")+'</div>';
   } else {
-    var reel=R.v.fc, theo=st.theoR, pts=reel-theo, xz=xzone(Math.abs(pts));
+    var reel=R.v.fc, theo=st.theoNourR, pts=reel-theo, xz=xzone(Math.abs(pts));
     var eurAn=Math.round((reel-theo)/100*R.d.ca);
     var h="";
 
@@ -11033,7 +11033,7 @@ function demoIntentResume(x){
       try{var a=auImpactPrioritaire(),pr=a&&a.priority,nom=pr&&(pr.diagnosis||pr.title||pr.titre)||'';return (nom?'L’action classée en premier : « '+nom+' »':'Verdict classe une action prioritaire')+(a&&a.value&&a.value!=='—'?' — '+a.title.toLowerCase()+' : '+a.value:'')+'. Verdict affiche sa raison, sa preuve et la mesure à revoir ensuite.';}catch(e){return 'Verdict classe une action prioritaire, puis affiche sa raison, sa preuve et la mesure à revoir ensuite.';}
     case 'controle': return 'La trajectoire fictive conserve '+((DB.decisions||[]).length)+' décision(s) datée(s) et '+((DB.audits||[]).length)+' audit(s). Verdict exige une nouvelle mesure comparable avant de parler de progrès et ne prétend jamais prouver seul une causalité.';
     case 'rentabilite': return 'Sur cette brasserie fictive, le résultat avant impôt est de '+eur(R.d.res)+' ('+pc(R.v.rn)+'). Verdict montre ensuite les postes qui expliquent ce résultat et le premier levier à tester.';
-    case 'food-cost': return 'Les achats nourriture représentent '+pc(R.v.fc)+' du chiffre d’affaires HT. La carte théorique'+(st&&st.actifs?' ressort à '+pc(st.theoR):' sera calculée dès que les plats seront renseignés')+' : l’écart devient une enquête, jamais une accusation.';
+    case 'food-cost': return 'Les achats nourriture représentent '+pc(R.v.fc)+' du chiffre d’affaires HT. La carte théorique'+(st&&st.actifs?' ressort à '+pc(st.theoNourR)+' pour la nourriture':' sera calculée dès que les plats seront renseignés')+' : l’écart devient une enquête, jamais une accusation.';
     case 'masse-salariale': return 'Le coût humain chargé représente '+pc(R.v.ms)+' du chiffre d’affaires HT. Verdict le relie au volume, aux heures et au point mort avant de recommander une action.';
     case 'point-mort':
       var p3=point3Calc(R),p3Label=p3.delta>=0?'Sa marge de sécurité est de ':'Son écart à combler est de ';
@@ -11629,7 +11629,7 @@ function demoPreuve(c){
     case 'cartePreps': return '<strong>'+((DB.preparations||[]).length)+'</strong> préparations communes · matière et temps répartis selon le rendement';
     case 'carteSupplements': return '<strong>'+((DB.supp||[]).length)+'</strong> suppléments · prix encaissé, TVA et matière rapprochés';
     case 'carteStress': return '<strong>'+((C&&C.actifs)||0)+'</strong> plats rejoués · volumes constants · scénarios sans modification de la base';
-    case 'food': return L('ind.fc','Food cost réel')+' <strong>'+pc(R.v.fc)+'</strong>'+(C&&C.actifs?' · théorique <strong>'+pc(C.theoR)+'</strong>':'');
+    case 'food': return L('ind.fc','Food cost réel')+' <strong>'+pc(R.v.fc)+'</strong>'+(C&&C.actifs?' · théorique <strong>'+pc(C.theoNourR)+'</strong>':'');
     case 'stock': return L('menu.achats.t','Achats')+' matière <strong>'+eur(R.d.mat)+'</strong> / an · '+L('menu.stock.t','Stock')+' + Inventaire Cuisine & Bar';
     case 'sources': try{D=auDonnees();return 'Complétude <strong>'+D.pct+' %</strong> · '+D.manque.length+' donnée(s) facultative(s) à compléter';}catch(e){return u.method;}
     case 'salary':
@@ -17027,12 +17027,12 @@ function fppUnite(u){u=String(u||'').trim().toLowerCase();var M={kgm:['m',1],kg:
 function fppPrixBase(l){if(!(l.qte>0)||!(l.pu>0))return null;var c=l.cond;if(c&&c.qte>0){var cu=fppUnite(c.unite);if(!cu)return null;return {dim:cu[0],prix:l.pu/(c.qte*cu[1])};}var u=fppUnite(l.unite);if(!u)return null;return {dim:u[0],prix:l.pu/u[1]};}
 function facPropagerPrix(lignes){var ok=[],non=[],chg=false,fmt=function(x){return fr(Math.round(x*100)/100,2);};
   (lignes||[]).forEach(function(l){var nom=l.art||l.produitId;var g=null;for(var i=0;i<(DB.ing||[]).length;i++){var x=DB.ing[i];if(x&&(achCle(x.nom)===l.produitId||achCle(x.nom)===achCle(l.art||''))){g=x;break;}}
-    if(!g){if(l.qte>0)non.push(fppT('r_pasIng',{n:nom}));return;}if(!(l.qte>0))return;var b=fppPrixBase(l);var gd=g.type==='UNITE'?'p':(/VOL|LIT/i.test(String(g.type||''))?'v':'m');
+    if(!g){if(l.qte>0)non.push(fppT('r_pasIng',{n:nom}));return;}if(!(l.qte>0))return;var b=fppPrixBase(l);var gd=g.type==='UNITE'?'p':(/^L$|VOL|LIT/i.test(String(g.type||''))?'v':'m');/* C192 : un produit au litre (type L) suit aussi ses factures */
     if(!b||(b.dim!==gd&&!(gd==='m'&&b.dim==='v'&&false))){non.push(fppT('r_unite',{n:g.nom}));return;}
     var d=String(l.d||l.dateFacture||'').slice(0,10);if(g.prixDate&&d&&d<String(g.prixDate).slice(0,10)){non.push(fppT('r_ancien',{n:g.nom}));return;}
-    var nv=Math.round(b.prix*10000)/10000,av=Number(g.prix);if(isFinite(av)&&Math.abs(av-nv)<0.00005)return;if(isFinite(av)&&av>0&&Math.abs(nv/av-1)>0.5){non.push(fppT('r_saut',{n:g.nom,p:(nv>av?'+':'−')+pc(Math.abs(nv/av-1)*100,0)}));return;}
+    var nv=Math.round(b.prix*10000)/10000,av=Number(g.prix);if(isFinite(av)&&Math.abs(av-nv)<0.00005){/* C192 : même prix = prix confirmé par la facture (un prix type devient un prix réel) */if(g.prixSource!=='facture'||g.cpPrixType){g.prixSource='facture';g.prixDate=d||g.prixDate||new Date().toISOString().slice(0,10);delete g.cpPrixType;chg=true;ok.push(g.nom+' '+fmt(nv)+' € confirmé');}return;}if(isFinite(av)&&av>0&&Math.abs(nv/av-1)>0.5){non.push(fppT('r_saut',{n:g.nom,p:(nv>av?'+':'−')+pc(Math.abs(nv/av-1)*100,0)}));return;}
     (g.prixHist=g.prixHist||[]).push({date:d||null,prix:nv,ancien:isFinite(av)?av:null,source:'facture',fournisseur:l.four||null,facture:l.facture||null,at:new Date().toISOString()});
-    g.prix=nv;g.prixDate=d||new Date().toISOString().slice(0,10);g.prixSource='facture';chg=true;var u=gd==='p'?'/pce':(gd==='v'?'/L':'/kg');ok.push(g.nom+' '+(isFinite(av)?fmt(av):'—')+' → '+fmt(nv)+' €'+u);});
+    g.prix=nv;g.prixDate=d||new Date().toISOString().slice(0,10);g.prixSource='facture';delete g.cpPrixType;chg=true;var u=gd==='p'?'/pce':(gd==='v'?'/L':'/kg');ok.push(g.nom+' '+(isFinite(av)?fmt(av):'—')+' → '+fmt(nv)+' €'+u);});
   if(chg){try{save();}catch(e){}}var t=(ok.length?fppT('maj',{l:ok.join(' · ')}):'')+(non.length?(ok.length?' ':'')+fppT('non',{l:non.join(' · ')}):'');return {propages:ok,nonPropages:non,texte:t};}
 window.facPropagerPrix=facPropagerPrix;window.fppPrixBase=fppPrixBase;
 
@@ -21066,7 +21066,7 @@ function alertesState(){
     {pref:"verdict_margin",n:"Commissions plateformes",ok:v.com<=10,warn:v.com<=15,val:pc(v.com,0),msg:v.com>15?"Part command\u00e9e lourde":(v.com>10?"\u00c0 surveiller":"Faible")}
   ];
   if(st&&st.theoR>0){
-    var pts=v.fc-st.theoR;
+    var pts=v.fc-st.theoNourR;
     checks.push({pref:"verdict_margin",n:"\u00c9cart food cost (th\u00e9orie vs r\u00e9el)",ok:pts<4,warn:pts<8,val:fr(pts,1)+" pts",msg:pts>=8?"\u00c9cart notable \u00e0 investiguer":(pts>=4?"\u00c9cart mod\u00e9r\u00e9":"Concorde")});
   }
   checks=checks.filter(function(check){return verdictAlertPreferenceOn(check.pref);});

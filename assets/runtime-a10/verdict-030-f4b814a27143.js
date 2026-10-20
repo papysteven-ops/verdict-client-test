@@ -180,11 +180,11 @@ function v5recos(){
   /* System — croisement */
   var st = DB.plats.length ? carteStats() : null;
   if(st && st.theoR>0){
-    var pts=v.fc-st.theoR, eurAn=Math.round(pts/100*ca);
+    var pts=v.fc-st.theoNourR, eurAn=Math.round(pts/100*ca);
     if(pts>=4){
       var xz=xzone(Math.abs(pts));
       list.push({id:'x',rank:pts>=12?2:3,sys:true,t:'Expliquer l\u2019\u00e9cart food cost : '+fr(pts,1)+' pts \u00b7 '+eur(eurAn)+'/an',
-        p:'La carte dit '+pc(st.theoR,1)+', les comptes disent '+pc(v.fc,1)+'. Ordre d\u2019investigation : p\u00e9rim\u00e8tre (boissons, caf\u00e9, staff meal), puis portions et pertes. Aucune conclusion avant v\u00e9rification.',
+        p:'Pour la nourriture, la carte dit '+pc(st.theoNourR,1)+', les comptes disent '+pc(v.fc,1)+'. Ordre d\u2019investigation : p\u00e9rim\u00e8tre (boissons, caf\u00e9, staff meal), puis portions et pertes. Aucune conclusion avant v\u00e9rification.',
         why:'\u00c9cart '+xz.t.toLowerCase()+' \u2014 l\u2019impact potentiel est fort mais l\u2019\u00e9cart doit d\u2019abord \u00eatre expliqu\u00e9.',
         urg:pts>=12?72:(pts>=8?62:45), imp:eurAn, fac:55, conf:confBase});
     }

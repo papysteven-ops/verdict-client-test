@@ -141,8 +141,8 @@ function plan(){
   /* matière : la carte (recettes et fuite) quand elle est fiable, sinon l'écart structurel */
   var why=null,pts=0;
   if(cf){var st=null;try{st=w.carteStats();}catch(e){}
-    if(st&&st.theoR>0){var rec=st.theoR>fam.fc[1]?(st.theoR-fam.fc[1])/3:0,fuite=(v.fc-st.theoR)>=4?(v.fc-st.theoR)/3:0;pts=rec+fuite;
-      why='Food cost théorique de la carte '+pc(st.theoR)+' (repère '+pc(fam.fc[1],0)+')'+(fuite?' ; écart réel / théorique de '+pc(v.fc-st.theoR)+' : pertes, portions ou offerts invisibles.':'.')+' Un tiers de chaque écart.';}}
+    if(st&&st.theoR>0){var tn=st.theoNourR!=null?st.theoNourR:st.theoR,rec=tn>fam.fc[1]?(tn-fam.fc[1])/3:0,fuite=(v.fc-tn)>=4?(v.fc-tn)/3:0;pts=rec+fuite;
+      why='Food cost théorique de la carte '+pc(tn)+' (repère '+pc(fam.fc[1],0)+')'+(fuite?' ; écart réel / théorique de '+pc(v.fc-tn)+' : pertes, portions ou offerts invisibles.':'.')+' Un tiers de chaque écart.';}}
   else if(v.fc>fam.fc[1]){pts=(v.fc-fam.fc[1])/3;why='Food cost à '+pc(v.fc)+' du CA ; repère médian '+pc(fam.fc[1],0)+'. Un tiers de l’écart.';}
   pts=Math.floor(pts*2)/2;if(pts>=.5)add('fc',-pts,why,'Repeser les portions clés, mettre à jour les fiches techniques, renégocier le premier fournisseur.');
   /* carte : prix des plats sous leur objectif, plafonnés */
