@@ -157,7 +157,7 @@
     h += '<div class="lc-sec"><h2>Consommation réelle · ' + esc(lib) + (E.demo ? ' · démonstration' : '') + '</h2>';
     if (!C) h += '<p class="lc-m">Pas encore de comptage ce mois-ci. Comptez votre stock dans l’Inventaire en début de mois puis en cours de mois : Verdict calcule alors la consommation réelle de chaque produit (stock de départ + livraisons − stock compté), en euros et en kg ou litres.</p>';
     else {
-      h += '<p class="lc-m">' + (C.attente ? esc(C.attente) + '.' : 'Du ' + dateFr(C.debut) + ' au ' + dateFr(C.fin || C.debut) + ' : stock compté + livraisons reçues − stock compté, d’après vos comptages d’Inventaire.') + '</p><div class="lc-zones">';
+      h += '<p class="lc-m">' + (C.attente ? esc(C.attente) + '.' : 'Du ' + dateFr(C.debut) + ' au ' + dateFr(C.fin || C.debut) + ' : stock du début + livraisons reçues − stock de fin, d’après vos comptages d’Inventaire.') + '</p><div class="lc-zones">';
       Object.keys(E.zones).sort().forEach(function (z) { var Z = E.zones[z]; h += '<div class="lc-z"><span>' + ZONE[z] + '</span><b>' + eur(Z.eur) + '</b><span>' + [Z.kg ? nb(Z.kg) + ' kg' : '', Z.L ? nb(Z.L) + ' L' : ''].filter(Boolean).join(' · ') + '</span></div>'; });
       h += '</div>';
     }

@@ -31,10 +31,14 @@
     [/\bd[’']ETP\b/g, 'de temps pleins'],
     [/(\d+(?:[,.]\d+)?)\s?ETP\b/g, function (m, n) { var v = Number(String(n).replace(',', '.')); return n + ' temps plein' + (v > 1 ? 's' : ''); }],
     [/\bCA\s?\/\s?ETP\b/g, 'Ventes par temps plein'], [/\bETP\b/g, 'temps pleins'],
+    /* C184 : marge de contribution, points, virgule française */
+    [/\bContribution % CA\b/g, 'Reste après achats (% des ventes)'], [/\b([Ll])a marge de contribution\b/g, '$1a marge après achats'], [/\b[Mm]arge de contribution\b/g, function (m) { return m.charAt(0) === 'M' ? 'Marge après achats' : 'marge après achats'; }],
+    [/(\d+(?:,\d+)?)\s?pts?\b/g, function (m, n) { var v = Math.abs(Number(String(n).replace(',', '.'))); return n + '\u00a0point' + (v > 1 ? 's' : ''); }],
+    [/(\d+)\.(\d+)\s?%/g, '$1,$2\u00a0%'],
     /* « unite » (sans accent, venu des unités de stock) */
     [/\bunite\b/g, 'unités']
   ];
-  var TEST = /co[uû]t humain|masse salariale|food cost|point mort|prime cost|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b/i;
+  var TEST = /co[uû]t humain|masse salariale|food cost|point mort|prime cost|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b|contribution|\d\s?pts?\b|\d\.\d+\s?%/i;
   var EXCLU = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, SELECT: 1, OPTION: 1, NOSCRIPT: 1, CODE: 1, PRE: 1 };
   function francais(d) { try { var l = (d.defaultView && d.defaultView.LOCALE) || w.LOCALE || d.documentElement.lang || 'fr'; return /^fr/i.test(String(l)); } catch (e) { return true; } }
   function corriger(t) {

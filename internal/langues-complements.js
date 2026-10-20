@@ -112,21 +112,21 @@
       'Verdict hält bei {a} Rentabilität an, dem Niveau der besten Betriebe Ihres Formats ({b}).',
       'Verdict stopt bij {a} rendabiliteit, het niveau van de beste zaken van uw type ({b}).',
       'O Verdict para nos {a} de rentabilidade, o nível dos melhores estabelecimentos do seu formato ({b}).'],
-    'Verdict s’arrête à {a} de rentabilité, le niveau des meilleurs établissements de votre format.': [
+    'Verdict ne propose pas d’aller au-delà de {a} de résultat : c’est ce que font les meilleurs établissements de votre type.': [
       'Verdict stops at {a} profitability, the level of the best businesses of your type.',
       'Verdict se detiene en un {a} de rentabilidad, el nivel de los mejores establecimientos de su formato.',
       'Verdict si ferma al {a} di redditività, il livello delle migliori attività del suo formato.',
       'Verdict hält bei {a} Rentabilität an, dem Niveau der besten Betriebe Ihres Formats.',
       'Verdict stopt bij {a} rendabiliteit, het niveau van de beste zaken van uw type.',
       'O Verdict para nos {a} de rentabilidade, o nível dos melhores estabelecimentos do seu formato.'],
-    'Chaque levier est borné par les repères de votre format ({b}) ; un client de plus consomme de la matière et des commissions ; tout est recalculé ensemble par le moteur, sans double comptage.': [
+    'Chaque levier est borné par les repères de votre format ({b}) ; un client de plus consomme de la matière et des commissions ; tout est recalculé ensemble, sans rien compter deux fois.': [
       'Each lever is capped by your type’s benchmarks ({b}); one more customer uses ingredients and commissions; everything is recalculated together by the engine, with no double counting.',
       'Cada palanca está limitada por las referencias de su formato ({b}); un cliente más consume materia prima y comisiones; el motor lo recalcula todo junto, sin doble cómputo.',
       'Ogni leva è limitata dai riferimenti del suo formato ({b}); un cliente in più consuma materia prima e commissioni; il motore ricalcola tutto insieme, senza doppi conteggi.',
       'Jeder Hebel ist durch die Richtwerte Ihres Formats begrenzt ({b}); ein Gast mehr verbraucht Ware und Provisionen; die Engine rechnet alles gemeinsam neu, ohne Doppelzählung.',
       'Elke hefboom is begrensd door de richtwaarden van uw type ({b}); een klant meer verbruikt grondstoffen en commissies; de engine rekent alles samen opnieuw, zonder dubbeltelling.',
       'Cada alavanca é limitada pelas referências do seu formato ({b}); um cliente a mais consome matéria-prima e comissões; o motor recalcula tudo em conjunto, sem dupla contagem.'],
-    'Chaque levier est borné par les repères de votre format ; un client de plus consomme de la matière et des commissions ; tout est recalculé ensemble par le moteur, sans double comptage.': [
+    'Chaque levier est borné par les repères de votre format ; un client de plus consomme de la matière et des commissions ; tout est recalculé ensemble, sans rien compter deux fois.': [
       'Each lever is capped by your type’s benchmarks; one more customer uses ingredients and commissions; everything is recalculated together by the engine, with no double counting.',
       'Cada palanca está limitada por las referencias de su formato; un cliente más consume materia prima y comisiones; el motor lo recalcula todo junto, sin doble cómputo.',
       'Ogni leva è limitata dai riferimenti del suo formato; un cliente in più consuma materia prima e commissioni; il motore ricalcola tutto insieme, senza doppi conteggi.',
@@ -271,7 +271,7 @@
     'Journée': ['Whole day', 'Jornada', 'Giornata', 'Ganzer Tag', 'Hele dag', 'Dia inteiro'],
     'Petit déjeuner': ['Breakfast', 'Desayuno', 'Colazione', 'Frühstück', 'Ontbijt', 'Pequeno-almoço'],
     'Fiabilité de cette lecture': ['Reliability of this reading', 'Fiabilidad de esta lectura', 'Affidabilità di questa lettura', 'Verlässlichkeit dieser Auswertung', 'Betrouwbaarheid van deze lezing', 'Fiabilidade desta leitura'],
-    '{a} service(s) comparable(s) · données fictives complètes · aucune preuve client · {b}/{c} journée(s) complète(s).': ['{a} comparable service(s) · complete fictional data · no customer proof · {b}/{c} complete day(s).', '{a} servicio(s) comparable(s) · datos ficticios completos · ninguna prueba de cliente · {b}/{c} jornada(s) completa(s).', '{a} servizio/i comparabile/i · dati fittizi completi · nessuna prova cliente · {b}/{c} giornata/e completa/e.', '{a} vergleichbare(r) Service(s) · vollständige fiktive Daten · kein Kundennachweis · {b}/{c} vollständige(r) Tag(e).', '{a} vergelijkbare dienst(en) · volledige fictieve gegevens · geen klantbewijs · {b}/{c} volledige dag(en).', '{a} serviço(s) comparável(is) · dados fictícios completos · nenhuma prova de cliente · {b}/{c} dia(s) completo(s).'],
+    '{a} service(s) comparable(s) · données d’exemple (démonstration) · {b}/{c} journée(s) complète(s).': ['{a} comparable service(s) · complete fictional data · no customer proof · {b}/{c} complete day(s).', '{a} servicio(s) comparable(s) · datos ficticios completos · ninguna prueba de cliente · {b}/{c} jornada(s) completa(s).', '{a} servizio/i comparabile/i · dati fittizi completi · nessuna prova cliente · {b}/{c} giornata/e completa/e.', '{a} vergleichbare(r) Service(s) · vollständige fiktive Daten · kein Kundennachweis · {b}/{c} vollständige(r) Tag(e).', '{a} vergelijkbare dienst(en) · volledige fictieve gegevens · geen klantbewijs · {b}/{c} volledige dag(en).', '{a} serviço(s) comparável(is) · dados fictícios completos · nenhuma prova de cliente · {b}/{c} dia(s) completo(s).'],
     'Personnes mobilisées': ['People on duty', 'Personas movilizadas', 'Persone impiegate', 'Eingesetzte Personen', 'Ingezette personen', 'Pessoas mobilizadas'],
     'CA du service (€ TTC)': ['Service revenue (€ incl. VAT)', 'Ventas del servicio (€ con IVA)', 'Fatturato del servizio (€ IVA incl.)', 'Umsatz des Service (€ brutto)', 'Omzet van de dienst (€ incl. btw)', 'Faturação do serviço (€ com IVA)'],
     'Tickets / commandes (facultatif)': ['Tickets / orders (optional)', 'Tickets / pedidos (opcional)', 'Scontrini / ordini (facoltativo)', 'Bons / Bestellungen (optional)', 'Bonnen / bestellingen (optioneel)', 'Talões / pedidos (opcional)'],

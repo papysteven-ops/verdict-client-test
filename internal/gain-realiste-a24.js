@@ -327,9 +327,9 @@ function decBest(){
     '<div class="autoline"><span class="k">'+U.result+'</span><b>'+eur(Rt.d.res)+'</b></div>'+
     '<div class="autoline"><span class="k">'+U.score+'</span><b>'+Rt.score+' /100 ('+(Rt.score-Rb.score>=0?'+':'')+(Rt.score-Rb.score)+')</b></div>'+
     '<div class="autoline"><span class="k">'+U.profit+'</span><b>'+pc(Rt.v.rn,1)+'</b></div>'+
-    (!had&&P.plafond.atteint?'<p class="note">Verdict s’arrête à '+pc(P.plafond.rn,0)+' de rentabilité, le niveau des meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+'.</p>':'')+
+    (!had&&P.plafond.atteint?'<p class="note">Verdict ne propose pas d’aller au-delà de '+pc(P.plafond.rn,0)+' de résultat, le niveau des meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+'.</p>':'')+
     (P.attente.length&&!had?'<p class="note">'+P.attente.map(function(x){return 'Coût humain : jusqu’à '+signe(x.gain)+' / an possibles, proposés seulement après une décision d’organisation mesurée (onglet Équipe).';}).join(' ')+'</p>':'')+
-    '<p class="note" style="margin:6px 0 0">Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+' ; un client de plus consomme de la matière et des commissions ; tout est recalculé ensemble par le moteur, sans double comptage.</p>'+
+    '<p class="note" style="margin:6px 0 0">Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+' ; un client de plus consomme de la matière et des commissions ; tout est recalculé ensemble, sans rien compter deux fois.</p>'+
     '<div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--line)"><div style="font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:#93c5fd">'+U.proof+'</div><p class="note" style="margin:4px 0 0">'+U.proofD+'</p></div>'+
     '<button class="btn sec" style="margin-top:10px" onclick="decApplyBest()">'+(had?U.applyAdd:U.applyStart)+'</button></div>';
   out.innerHTML=h;
@@ -350,7 +350,7 @@ function chapitreHTML(P){
     '<div class="au-card"><span class="au-k">Pas à pas</span>'+
       '<div class="au-ok"><span style="flex:1"><b>Résultat actuel</b></span><b>'+eur(P.base.res)+' · '+pc(P.base.rn)+'</b></div>'+lignes(P)+
       '<div class="au-ok"><span style="flex:1"><b>Résultat visé</b></span><b>'+eur(c.res)+' · '+pc(c.rn)+' · score '+c.score+'</b></div></div>'+
-    (P.plafond.atteint?'<p class="note">Verdict s’arrête à '+pc(P.plafond.rn,0)+' de rentabilité : c’est le niveau des meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+'. Au-delà, ce ne serait plus réaliste.</p>':'')+
+    (P.plafond.atteint?'<p class="note">Verdict ne propose pas d’aller au-delà de '+pc(P.plafond.rn,0)+' de résultat : c’est le niveau des meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+'. Au-delà, ce ne serait plus réaliste.</p>':'')+
     '<div class="au-card"><span class="au-k">Ce qui n’est pas compté</span><p class="note" style="margin:0">'+
       [P.attente.length?'Le coût humain (jusqu’à '+signe(P.attente[0].gain)+' / an) : proposé seulement après une décision d’organisation mesurée.':'',
        'Les jours et horaires d’ouverture : leur faisabilité se décide dans Équipe.',
