@@ -78,7 +78,7 @@
   function coutLigne(l) { try { var r = w.coutLignesRecette([l]); return r && isFinite(r.st) ? r.st : null; } catch (e) { return null; } }
   function vegetarien(p) { var L = lignes(p); return L.length > 0 && !L.some(function (l) { return VIANDE.test(String(l[0])); }); }
   function analyse() {
-    var GPR = prixDecisions(); /* C180 : prix conseillés de Décisions et Simuler */
+    var GPR = prixDecisions(); /* C182 : prix conseillés de Décisions et Simuler */
     var D = DB(); if (!D || typeof w.platCalc !== 'function') return null;
     var P = profil(), m = moisCourant();
     var plats = D.plats.filter(function (p) { return !p.cpArchived; }).map(function (p) {
@@ -164,7 +164,7 @@
   }
 
   /* ---------- Écran ---------- */
-  var CL = { etoile: ['#22c55e', 'Très vendu, rapporte bien'], cheval: ['#eab308', 'Très vendu, rapporte peu'], enigme: ['#f97316', 'Rapporte bien, peu vendu'], mort: ['#ef4444', 'Peu vendu, rapporte peu'] }; /* C180 : ce que les familles de la méthode Kasavana veulent dire */
+  var CL = { etoile: ['#22c55e', 'Très vendu, rapporte bien'], cheval: ['#eab308', 'Très vendu, rapporte peu'], enigme: ['#f97316', 'Rapporte bien, peu vendu'], mort: ['#ef4444', 'Peu vendu, rapporte peu'] }; /* C182 : ce que les familles de la méthode Kasavana veulent dire */
   var CSS = '#c-smart{--ci-t:#0f172a;--ci-m:#475569;--ci-b:rgba(148,163,184,.38);--ci-card:#fff}html.vd-workspace-dark #c-smart{--ci-t:#f1f5f9;--ci-m:#a8b3c4;--ci-b:rgba(148,163,184,.28);--ci-card:rgba(255,255,255,.03)}' +
     '#c-smart .ci-pro{font-size:11px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:linear-gradient(135deg,#b45309,#92400e);color:#fff;vertical-align:3px;margin-left:6px}' +
     '#c-smart h2.ci-t{font-size:26px;margin:4px 0 4px;color:var(--ci-t)}#c-smart .ci-sub{color:var(--ci-m);margin:0 0 14px;font-size:14.5px;line-height:1.45}' +
@@ -210,7 +210,7 @@
     var last = M[11]; s += '<text class="ci-v" x="' + (W - G) + '" y="12" text-anchor="end">' + signe(last.cumul) + ' en 12 mois</text>';
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Marge supplémentaire cumulée sur 12 mois : ' + signe(last.cumul) + '">' + s + '</svg>';
   }
-  /* C180 (relecture du 20/10 : l'entrecôte était « Étoile, à garder » ici et « premier problème, +2,7 % » dans Décisions ;
+  /* C182 (relecture du 20/10 : l'entrecôte était « Étoile, à garder » ici et « premier problème, +2,7 % » dans Décisions ;
      les moules à 20,60 € ici et 20,00 € dans la Carte) : un seul prix conseillé par plat, partout — celui de Décisions et
      Simuler (plats sous votre objectif de marge, même plafond de hausse). */
   function prixDecisions() {

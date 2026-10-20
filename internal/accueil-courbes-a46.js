@@ -32,7 +32,7 @@
     var V = w.VerdictPerformanceIntegrated, R = w.moteur(), key = moisCle(), m = V.buildMonth(R, key), auj = aujourdhui();
     var cols = (m.days || []).map(function (d) {
       var dt = new Date(d.date + 'T12:00:00'), lib = JOURS[dt.getDay()] + ' ' + d.day + ' ' + MOIS[dt.getMonth()];
-      var base = { lib: lib, axe: String(d.day), jour: d.day, dow: (dt.getDay() + 6) % 7, wd: dt.getDay(), auj: d.date === auj, avenir: d.date > auj };
+      var base = { lib: lib, date: d.date, axe: String(d.day), jour: d.day, dow: (dt.getDay() + 6) % 7, wd: dt.getDay(), auj: d.date === auj, avenir: d.date > auj };
       if (d.preTracking) base.type = 'avant';
       else if (d.closed) base.type = 'repos';
       else if (d.ca == null || !(d.target > 0)) { base.type = 'vide'; base.cible = d.target > 0 ? d.target : null; }
@@ -211,13 +211,37 @@
       (m.cols.some(function (c) { return c.type === 'projete'; }) ? '<span><i style="background:transparent;border:1.5px dashed #94a3b8"></i>Projeté</span>' : '') +
       (m.cols.some(function (c) { return c.type === 'encours'; }) ? '<span><i style="background:transparent;border:1.5px solid currentColor"></i>En cours</span>' : '') + '</div>';
   }
+  /* C183 (Steven, 20/10, vidéo : « de base le jour J ou le dernier jour enregistré ; mais si le client clique sur un jour,
+     il revoit son détail complet — là ça reste sur la même journée ») : un jour touché dans « Vos journées » devient le
+     jour affiché partout dans le chapitre Jour — carte de la journée, courbe des journées, ventes et heures par service. */
+  function changer(el, prop, v) { if (el && el[prop] !== v) el[prop] = v; }
+  function appliquerJour(d) {
+    var date = d.__vx46jour, box = d.querySelector('#vx40-jour section.rx'); if (!date || !box || !box.__m) return;
+    var c = box.__m.cols.filter(function (x) { return x.date === date; })[0], M = d.getElementById('modJour'); if (!c || !M) return;
+    var dt = new Date(date + 'T12:00:00'), nom = JLONG[dt.getDay()] + ' ' + dt.getDate() + ' ' + MOIS[dt.getMonth()];
+    changer(M.querySelector('.mod-h .kicker'), 'textContent', 'Journée d’exploitation du ' + nom);
+    var reel = c.type === 'reel', ca = d.getElementById('jCA'), ve = d.getElementById('jVerdict'), so = d.getElementById('jSous');
+    changer(ca, 'textContent', reel ? eur(c.valeur) : c.type === 'repos' ? 'Repos' : '—');
+    changer(ve, 'textContent', reel ? (c.valeur >= c.cible ? 'Minimum dépassé de ' + eur(c.valeur - c.cible) : 'Il manque ' + eur(c.cible - c.valeur) + ' pour couvrir le minimum') : c.type === 'repos' ? 'Jour de repos : aucun chiffre attendu' : c.avenir ? 'Journée à venir' : 'Journée pas encore saisie');
+    changer(so, 'textContent', reel ? 'Coût de cette journée : ' + eur(c.cible) + ', soit ' + pct(c.r) + ' du minimum.' : '');
+    var st = reel ? detail(c, box.__m.unite).st : 'info'; if (M.getAttribute('data-etat') !== st) M.setAttribute('data-etat', st);
+  }
   function choisir(box, m, i, focus) {
     if (i < 0 || i >= m.cols.length) return; m.sel = i; box.__sel = i;
+    if (box.getAttribute('data-chap') === 'jour' && m.cols[i] && m.cols[i].date) {
+      var d = box.ownerDocument, c = m.cols[i], reels = m.cols.filter(function (x) { return x.type === 'reel'; }), defaut = reels.length ? reels[reels.length - 1].date : null;
+      d.__vx46jour = c.date === defaut ? null : c.date;
+      var hit = d.querySelector('.jscroll .hit[data-n="' + c.jour + '"]'); if (hit) try { hit.dispatchEvent(new d.defaultView.MouseEvent('click', { bubbles: true })); } catch (e) {}
+      appliquerJour(d); if (c.date === defaut) appliquerDefaut(d, c, m);
+      try { d.dispatchEvent(new d.defaultView.CustomEvent('vx46-jour', { detail: { date: c.date } })); } catch (e) {}
+    }
     var dt = detail(m.cols[i], m.unite);
     box.setAttribute('data-st', dt.st); box.style.setProperty('--rx-c', COUL[dt.st]);
     box.querySelector('.rx-big').textContent = dt.big; box.querySelector('.rx-lab').textContent = dt.lab; box.querySelector('.rx-mot').textContent = dt.mot;
     [].forEach.call(box.querySelectorAll('g.col,.rx-j'), function (g) { var on = Number(g.getAttribute('data-i')) === i; g.classList.toggle('sel', on); g.setAttribute('tabindex', on ? '0' : '-1'); if (g.tagName === 'BUTTON') g.setAttribute('aria-pressed', String(on)); if (on && focus) g.focus(); });
   }
+  /* Revenir au dernier jour enregistré : mêmes champs, mêmes mots (la page le remet aussi à sa prochaine mise à jour). */
+  function appliquerDefaut(d, c, m) { d.__vx46jour = c.date; appliquerJour(d); d.__vx46jour = null; }
   function poser(d, chap, m) {
     var ch = d.getElementById('vx40-' + chap), col = ch && ch.querySelector('.vx40-p'); if (!col || !m || !m.cols.length) return;
     var box = col.querySelector(':scope > section.rx'), sig = JSON.stringify(m.cols.map(function (c) { return [c.type, Math.round((c.valeur || 0)), Math.round((c.cible || 0))]; }));
@@ -251,6 +275,7 @@
     var R = null; try { R = w.moteur(); } catch (e) {} if (!R || !R.ready || !w.VerdictPerformanceIntegrated || !w.VerdictAnnualProjection) return;
     if (!d.getElementById('rx-css')) { var s = d.createElement('style'); s.id = 'rx-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
     [['jour', jours], ['mois', moisAnnee], ['annee', annees]].forEach(function (p) { try { poser(d, p[0], p[1]()); } catch (e) {} });
+    try { appliquerJour(d); } catch (e) {} /* C183 : le jour choisi reste affiché si la page se redessine */
   }
   setInterval(tour, 2000);
   w.addEventListener('load', function () { setTimeout(tour, 1500); });

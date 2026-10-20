@@ -44,12 +44,15 @@
   }
 
   /* Cœur pur : services = DB.services ; periode = 'jour' | 'mois' | 'annee' ; aujourdhui = 'AAAA-MM-JJ' ; repere = part (0,36). */
-  function analyser(services, periode, aujourdhui, tva, repere, secours) {
+  function analyser(services, periode, aujourdhui, tva, repere, secours, choisi) {
     var toutes = (services || []).map(function (s) { return ligne(s, tva); }).filter(function (l) { return l && l.d <= aujourdhui; });
     var cle, lignes;
     if (periode === 'jour') {
-      var dates = toutes.map(function (l) { return l.d; }).sort(); cle = dates[dates.length - 1] || null;
+      /* C183 (Steven, 20/10, vidéo : « de base le jour J ou le dernier jour enregistré ; mais si le client clique sur un
+         jour, il revoit son détail complet — là ça reste sur la même journée ») : le jour choisi dans le calendrier. */
+      var dates = toutes.map(function (l) { return l.d; }).sort(); cle = choisi || dates[dates.length - 1] || null;
       lignes = toutes.filter(function (l) { return l.d === cle; });
+      if (choisi && !lignes.length) return { periode: periode, cle: choisi, vide: true, jourChoisi: true };
     } else {
       cle = periode === 'mois' ? aujourdhui.slice(0, 7) : aujourdhui.slice(0, 4);
       lignes = toutes.filter(function (l) { return l.d.slice(0, cle.length) === cle; });
@@ -111,7 +114,9 @@
     if (!auj) { var n = new Date(); auj = n.getFullYear() + '-' + ('0' + (n.getMonth() + 1)).slice(-2) + '-' + ('0' + n.getDate()).slice(-2); }
     return { D: D, tva: tva, auj: auj, rep: repere() };
   }
-  function etat(periode) { var C = contexte(); if (!C) return null; return analyser(C.D.services, periode, C.auj, C.tva, C.rep, secoursMois(C.D, C.tva)); }
+  function etat(periode, choisi) { var C = contexte(); if (!C) return null; return analyser(C.D.services, periode, C.auj, C.tva, C.rep, secoursMois(C.D, C.tva), choisi); }
+  /* Jour choisi dans « Vos journées » (accueil-courbes-a46.js, C183) : AAAA-MM-JJ, ou null pour le dernier jour saisi. */
+  function jourChoisi(d) { return (d && d.__vx46jour) || null; }
   function libelle(R) {
     if (R.periode === 'jour') { var p = R.cle.split('-'); return JOURS[jourSemaine(R.cle)] + ' ' + (+p[2]) + ' ' + MOIS[+p[1] - 1]; }
     if (R.periode === 'mois') { var q = R.cle.split('-'); return MOIS[+q[1] - 1] + ' ' + q[0]; }
@@ -155,6 +160,11 @@
       '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
     return h;
   }
+  function jourSansHeuresHTML(R) {
+    return '<p class="kicker">Ventes et heures par service · ' + esc(libelle(R)) + '</p><p class="titre">Pas d’heures saisies pour ce jour</p>' +
+      '<p class="sous">Les heures de chaque service de ce jour n’ont pas été saisies (ou c’était un jour de repos) : touchez une autre journée du calendrier, ou saisissez ses heures.</p>' +
+      '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
+  }
   function videHTML(periode) {
     return '<p class="kicker">Ventes et heures par service</p><p class="titre">Combien rapporte une heure de travail, midi et soir ?</p>' +
       '<p class="sous">Saisissez les heures de chaque service (Salaires › Équipe) : Verdict calcule ce que rapporte une heure de travail et ce que coûte l’équipe pour 100 € vendus, service par service' + (periode === 'jour' ? '' : ', pour le mois et l’année') + '.</p>' +
@@ -164,13 +174,14 @@
   function poser(d, periode) {
     var col = d.querySelector('#vx40-' + periode + ' .vx40-b') || d.querySelector('#vx40-' + periode + ' .vx40-s'); if (!col) return;
     if (!d.getElementById('sh52-css')) { var s = d.createElement('style'); s.id = 'sh52-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
-    var R = etat(periode), id = CARTES[periode], vieux = d.getElementById(id);
+    var R = etat(periode, periode === 'jour' ? jourChoisi(d) : null), id = CARTES[periode], vieux = d.getElementById(id);
     /* Sans aucune donnée : la carte d'invitation n'apparaît que dans Jour (pas trois fois la même). */
     if (R && R.vide && periode !== 'jour') { if (vieux) vieux.remove(); return; }
-    var html = !R || R.vide ? videHTML(periode) : carteHTML(R), et = !R || R.vide ? 'info' : couleur(R.lourd ? R.lourd.part : R.total.part, R.repere);
+    var html = R && R.jourChoisi ? jourSansHeuresHTML(R) : !R || R.vide ? videHTML(periode) : carteHTML(R), et = !R || R.vide ? 'info' : couleur(R.lourd ? R.lourd.part : R.total.part, R.repere);
     if (vieux && vieux.__html === html) return;
     var a = d.createElement('article'); a.className = 'mod sh52'; a.id = id; a.setAttribute('data-etat', et); a.setAttribute('aria-label', 'Ventes et heures par service'); a.innerHTML = html; a.__html = html;
     if (vieux) vieux.replaceWith(a); else col.appendChild(a);
+    if (!d.__sh52j) { d.__sh52j = true; d.addEventListener('vx46-jour', function () { try { poser(d, 'jour'); } catch (e) {} }); }
     if (!d.__sh52) { d.__sh52 = true; d.addEventListener('click', function (ev) { if (ev.target.closest && ev.target.closest('[data-sh52-heures]')) { ev.preventDefault(); ev.stopPropagation(); try { if (w.VerdictTeam && w.VerdictTeam.open) w.VerdictTeam.open(); else w.go('sal'); w.scrollTo(0, 0); } catch (er) {} } }, true); }
   }
   /* « À faire » : la phrase chiffrée remplace « comparez vous-même ». */

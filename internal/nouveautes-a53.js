@@ -11,6 +11,8 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C183', date: '2026-10-20', titre: 'Accueil › Jour : touchez un jour de « Vos journées » pour revoir tout son détail (journée, courbe, ventes et heures par service)' },
+    { id: 'C182', date: '2026-10-20', titre: 'Carte et Inventaire en mots simples : un seul prix conseillé par plat, familles de plats en clair, stock et commandes lisibles' },
     { id: 'C180', date: '2026-10-20', titre: 'Coût de l’équipe : les mêmes seuils partout (Priorités, Simuler, score, alertes) — conseillé pour votre type d’établissement, à surveiller jusqu’à +5 points' },
     { id: 'C179', date: '2026-10-20', titre: 'Un seul nom partout : coût de l’équipe, coût de la marchandise, seuil de rentabilité, temps pleins — et les mêmes seuils sur tous les écrans' },
     { id: 'C178', date: '2026-10-20', titre: 'Accueil en mots simples : « il vous reste X € pour 100 € vendus », ventes hors TVA, salaires conseillés pour votre type d’établissement' },
