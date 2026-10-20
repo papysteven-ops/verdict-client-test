@@ -68,7 +68,7 @@
     if (P.habitants === 'village' && P.tourisme === 'non') { pos -= 0.25; raisons.push('petite commune hors tourisme : clientèle d’habitués, carte courte et renouvelée'); }
     pos = Math.max(0, Math.min(1, pos));
     var n = Math.round(R[0] + (R[1] - R[0]) * pos), min = R[0], max = R[1];
-    if (P.tourisme !== 'non') { if (hauteSaison(P, m)) { n += 1; max += 1; raisons.push('haute saison touristique : un plat de plus, de passage et rapide'); } else { n = Math.max(R[0] - 1, n - 1); min = Math.max(2, R[0] - 1); raisons.push('hors saison : carte resserrée sur la clientèle locale'); } }
+    if (P.tourisme !== 'non') { if (hauteSaison(P, m)) { n += 1; max += 1; raisons.push('haute saison touristique : un plat de plus, de passage et rapide'); } else { n = Math.max(R[0] - 1, n - 1); min = Math.max(2, R[0] - 1); raisons.push('hors saison : clientèle surtout locale, un plat de moins qu’en saison'); } }
     return { n: Math.max(min, Math.min(max, n)), min: min, max: max, raisons: raisons };
   }
 
@@ -78,6 +78,7 @@
   function coutLigne(l) { try { var r = w.coutLignesRecette([l]); return r && isFinite(r.st) ? r.st : null; } catch (e) { return null; } }
   function vegetarien(p) { var L = lignes(p); return L.length > 0 && !L.some(function (l) { return VIANDE.test(String(l[0])); }); }
   function analyse() {
+    var GPR = prixDecisions(); /* C180 : prix conseillés de Décisions et Simuler */
     var D = DB(); if (!D || typeof w.platCalc !== 'function') return null;
     var P = profil(), m = moisCourant();
     var plats = D.plats.filter(function (p) { return !p.cpArchived; }).map(function (p) {
@@ -100,13 +101,20 @@
         x.part = x.vol / sv; x.pop = x.part >= seuil; x.rent = x.marge >= mMoy;
         x.classe = x.pop && x.rent ? 'etoile' : x.pop ? 'cheval' : x.rent ? 'enigme' : 'mort';
         x.gain = 0;
-        if (x.classe === 'etoile') { x.action = 'Garder et placer en tête de la catégorie'; }
+        var pr = GPR[x.nom];
+        if (pr && (x.classe === 'etoile' || x.classe === 'cheval')) {
+          var hp = pr.apres / x.ttc - 1, nhp = x.ht * (1 + hp); x.prix = pr.apres;
+          x.gain = x.vol * (1 - 0.5 * hp) * (x.marge + (nhp - x.ht)) - x.vol * x.marge;
+          x.action = (x.classe === 'etoile' ? 'Garder en tête de catégorie, et passer' : 'Passer') + ' de ' + eur2(x.ttc) + ' à ' + eur2(pr.apres) + ' (+' + Math.round(hp * 100) + ' %) : sa marge est sous votre objectif (même prix que Décisions et Simuler)';
+        }
+        else if (x.classe === 'etoile') { x.action = 'Garder et placer en tête de la catégorie'; }
+        else if (x.classe === 'cheval' && Object.keys(GPR).length > 0) { x.action = 'Garder le prix : sa marge atteint votre objectif ; mettez plutôt en avant les plats qui rapportent plus'; }
         else if (x.classe === 'cheval') {
           var hausse = Math.min(0.08, Math.max(0.03, (mMoy - x.marge) / Math.max(1, x.ht)));
           var nouveau = Math.floor(x.ttc * (1 + hausse) * 10) / 10; if (nouveau <= x.ttc) nouveau = Math.round((x.ttc + 0.1) * 10) / 10; var h = nouveau / x.ttc - 1, nhT = x.ht * (1 + h); /* arrondi au dixième vers le bas : jamais plus de 8 % */
           x.prix = nouveau; x.gain = x.vol * (1 - 0.5 * h) * (x.marge + (nhT - x.ht)) - x.vol * x.marge;
           x.action = 'Passer de ' + eur2(x.ttc) + ' à ' + eur2(nouveau) + ' (+' + Math.round(h * 100) + ' %), ou réduire légèrement la portion';
-        } else if (x.classe === 'enigme') { x.gain = 0.10 * x.vol * (x.marge - mMoy); x.action = 'Mettre en avant : suggestion du serveur, haut de catégorie, nom et description plus parlants'; }
+        } else if (x.classe === 'enigme') { x.gain = 0.10 * x.vol * (x.marge - mMoy); x.action = 'Mettre en avant : suggestion du serveur, haut de catégorie, nom et description plus parlants' + (pr ? ' ; et passer de ' + eur2(x.ttc) + ' à ' + eur2(pr.apres) + ' (marge sous votre objectif)' : ''); }
         else {
           var autres = L.filter(function (y) { return y !== x; }), mAutres = autres.length ? autres.reduce(function (t, y) { return t + y.marge * y.vol; }, 0) / Math.max(1, autres.reduce(function (t, y) { return t + y.vol; }, 0)) : 0;
           var g = x.vol * (0.7 * mAutres - x.marge);
@@ -156,7 +164,7 @@
   }
 
   /* ---------- Écran ---------- */
-  var CL = { etoile: ['#22c55e', 'Étoile'], cheval: ['#eab308', 'Cheval de labour'], enigme: ['#f97316', 'Énigme'], mort: ['#ef4444', 'Poids mort'] };
+  var CL = { etoile: ['#22c55e', 'Très vendu, rapporte bien'], cheval: ['#eab308', 'Très vendu, rapporte peu'], enigme: ['#f97316', 'Rapporte bien, peu vendu'], mort: ['#ef4444', 'Peu vendu, rapporte peu'] }; /* C180 : ce que les familles de la méthode Kasavana veulent dire */
   var CSS = '#c-smart{--ci-t:#0f172a;--ci-m:#475569;--ci-b:rgba(148,163,184,.38);--ci-card:#fff}html.vd-workspace-dark #c-smart{--ci-t:#f1f5f9;--ci-m:#a8b3c4;--ci-b:rgba(148,163,184,.28);--ci-card:rgba(255,255,255,.03)}' +
     '#c-smart .ci-pro{font-size:11px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:linear-gradient(135deg,#b45309,#92400e);color:#fff;vertical-align:3px;margin-left:6px}' +
     '#c-smart h2.ci-t{font-size:26px;margin:4px 0 4px;color:var(--ci-t)}#c-smart .ci-sub{color:var(--ci-m);margin:0 0 14px;font-size:14.5px;line-height:1.45}' +
@@ -202,16 +210,30 @@
     var last = M[11]; s += '<text class="ci-v" x="' + (W - G) + '" y="12" text-anchor="end">' + signe(last.cumul) + ' en 12 mois</text>';
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Marge supplémentaire cumulée sur 12 mois : ' + signe(last.cumul) + '">' + s + '</svg>';
   }
+  /* C180 (relecture du 20/10 : l'entrecôte était « Étoile, à garder » ici et « premier problème, +2,7 % » dans Décisions ;
+     les moules à 20,60 € ici et 20,00 € dans la Carte) : un seul prix conseillé par plat, partout — celui de Décisions et
+     Simuler (plats sous votre objectif de marge, même plafond de hausse). */
+  function prixDecisions() {
+    var M = {};
+    try {
+      var GR = w.VerdictGainRealiste; if (!GR || !GR.carteFiable()) return M;
+      var lev = null; try { lev = (w.potentiel().leviers || []).filter(function (l) { return l.id === 'carte' || /prix de la carte/i.test(l.n || ''); })[0]; } catch (e) {}
+      var cap = (lev && lev.over && Number(lev.over.carte)) || 8, cp = GR.cartePlan(cap);
+      (cp && cp.rows || []).forEach(function (r) { if (r && r.nom && r.apres > r.avant) M[r.nom] = r; });
+    } catch (e) {}
+    return M;
+  }
+  function motCat(c) { return /boisson|bière|biere|vin|cocktail|café|cafe|soft|apéritif|aperitif|digestif/i.test(String(c || '')) ? 'boisson' : 'plat'; }
   function plat(x) {
     var c = CL[x.classe], h = '<div class="ci-pl" style="--ci-c:' + c[0] + '"><div class="h"><span class="n">' + esc(x.nom) + '</span><span class="ci-tag">' + c[1] + '</span></div>';
-    h += '<p class="d">' + eur2(x.ttc) + ' · marge ' + eur2(x.marge) + ' par plat · ' + Math.round(x.vol) + ' vendus par mois (' + pct(x.part) + ' de la catégorie)' + (x.veg ? ' · végétarien' : '') + '</p>';
+    h += '<p class="d">' + eur2(x.ttc) + ' · marge ' + eur2(x.marge) + ' par ' + motCat(x.cat) + ' · ' + Math.round(x.vol) + ' vendus par mois (' + pct(x.part) + ' de la catégorie)' + (x.veg && motCat(x.cat) === 'plat' ? ' · végétarien' : '') + '</p>';
     h += '<p class="x">' + esc(x.action) + (x.gain > 0.5 ? ' · <span class="g">' + signe(x.gain) + ' par mois</span>' : '') + '</p>';
     if (x.ingSeuls && x.ingSeuls.length) h += '<p class="d">Argent investi pour ce seul plat : ' + esc(x.ingSeuls.slice(0, 3).join(', ')) + (x.stock > 0 ? ' (≈ ' + eur(x.stock) + ' de stock)' : '') + '</p>';
     return h + '<div class="ci-a"><button type="button" class="ci-b" data-cp-dish="' + esc(x.id) + '">Ouvrir le plat</button></div></div>';
   }
   function dessiner() {
     var host = doc.getElementById('c-smart'); if (!host) return; css();
-    var R = analyse(), h = '<p class="ci-sub" style="margin:0;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">Carte · analyse</p><h2 class="ci-t" data-cp-title tabindex="-1">Carte intelligente<span class="ci-pro">PRO</span></h2>' +
+    var R = analyse(), h = '<p class="ci-sub" style="margin:0;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">Carte · analyse</p><h2 class="ci-t" data-cp-title tabindex="-1">Carte intelligente <span class="ci-pro">PRO</span></h2>' +
       '<p class="ci-sub">La carte la plus rentable pour votre établissement : chaque plat pesé, le bon nombre de plats pour votre salle et votre saison, l’argent investi dans le stock, et ce que cela vous rapporte mois après mois.</p>';
     if (!R) { host.innerHTML = h + '<p class="ci-m">Chargement…</p>'; return; }
     var P = R.profil;
@@ -235,9 +257,9 @@
       '<div class="ci-a"><button type="button" class="ci-b" data-ci="profil">Modifier</button></div></div>';
     R.cats.forEach(function (C) {
       var ci = C.cible, o = C.omnes;
-      h += '<div class="ci-sec"><div class="ci-cat"><b>' + esc(C.cat) + (C.regroupe && C.regroupe.length ? ' <small style="font-weight:600;color:var(--ci-m);font-size:13px">(' + esc(C.regroupe.join(', ')) + ')</small>' : '') + '</b><span class="ci-cnt">' + C.n + ' plat' + (C.n > 1 ? 's' : '') + (C.apres !== C.n ? ' → ' + C.apres : '') + (ci ? ' · visé ' + ci.n + ' (' + ci.min + ' à ' + ci.max + ')' : '') + '</span></div>';
-      if (ci) h += '<p class="ci-m">' + esc(ci.raisons.join(' · ')) + '.' + (C.ajouter ? ' <b>Ajouter ' + C.ajouter + ' plat' + (C.ajouter > 1 ? 's' : '') + '</b> (Vera peut en proposer de saison).' : '') + (C.enlever ? ' <b>Encore ' + C.enlever + ' plat' + (C.enlever > 1 ? 's' : '') + ' de trop</b> : la carte est trop longue pour votre salle.' : '') + '</p>';
-      h += '<p class="ci-m">Prix de ' + eur2(o.pmin) + ' à ' + eur2(o.pmax) + ' : ouverture ' + o.ouverture.toFixed(1).replace('.', ',') + ' ' + (o.okOuverture ? '<span class="ci-ok">équilibrée</span>' : '<span class="ci-ko">trop large (repère ≤ ' + String(o.limite).replace('.', ',') + ')</span>') + ' · ' + (o.okDispersion ? '<span class="ci-ok">assez de plats au prix du milieu</span>' : '<span class="ci-ko">trop peu de plats au prix du milieu (' + o.zones[1] + ' contre ' + (o.zones[0] + o.zones[2]) + ')</span>') +
+      h += '<div class="ci-sec"><div class="ci-cat"><b>' + esc(C.cat) + (C.regroupe && C.regroupe.length ? ' <small style="font-weight:600;color:var(--ci-m);font-size:13px">(' + esc(C.regroupe.join(', ')) + ')</small>' : '') + '</b><span class="ci-cnt">' + C.n + ' ' + motCat(C.cat) + (C.n > 1 ? 's' : '') + (C.apres !== C.n ? ' → ' + C.apres : '') + (ci ? ' · visé ' + ci.n + ' (' + ci.min + ' à ' + ci.max + ')' : '') + '</span></div>';
+      if (ci) h += '<p class="ci-m">' + esc(ci.raisons.join(' · ')) + '.' + (C.ajouter ? ' <b>Ajouter ' + C.ajouter + ' ' + motCat(C.cat) + (C.ajouter > 1 ? 's' : '') + '</b> (Vera peut en proposer de saison).' : '') + (C.enlever ? ' <b>Encore ' + C.enlever + ' ' + motCat(C.cat) + (C.enlever > 1 ? 's' : '') + ' de trop</b> : la carte est trop longue pour votre salle.' : '') + '</p>';
+      h += '<p class="ci-m">Prix de ' + eur2(o.pmin) + ' à ' + eur2(o.pmax) + ' : le plus cher vaut ' + o.ouverture.toFixed(1).replace('.', ',') + ' fois le moins cher, ' + (o.okOuverture ? '<span class="ci-ok">c’est équilibré</span>' : '<span class="ci-ko">écart trop grand (conseillé : ' + String(o.limite).replace('.', ',') + ' fois au plus)</span>') + ' · ' + (o.okDispersion ? '<span class="ci-ok">assez de prix moyens</span>' : '<span class="ci-ko">trop peu de prix moyens (' + o.zones[1] + ', pour ' + (o.zones[0] + o.zones[2]) + ' moins chers ou plus chers)</span>') +
         (C.role === 'e' || C.role === 'p' ? ' · ' + (C.vegManque ? '<span class="ci-ko">aucun plat végétarien</span>' : '<span class="ci-ok">' + C.vegs + ' végétarien' + (C.vegs > 1 ? 's' : '') + '</span>') : '') + '</p>';
       C.plats.forEach(function (x) { h += plat(x); });
       if (C.ajouter && w.VerdictVeraCarte) h += '<div class="ci-a"><button type="button" class="ci-b" data-ci="vera">Vera propose des plats de saison</button></div>';

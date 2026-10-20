@@ -183,7 +183,7 @@
     var days=Math.max(0,Math.floor((new Date(n.getFullYear(),n.getMonth(),n.getDate())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/DAY_MS));
     if(days<=7)return {key:'fresh',days:days,label:'Prix observé il y a '+days+' j'};
     if(days<=30)return {key:'aging',days:days,label:'Prix observé il y a '+days+' j'};
-    return {key:'stale',days:days,label:'Prix ancien · '+days+' j'};
+    return {key:'stale',days:days,label:'Prix à confirmer ('+days+' j)'};
   }
   /* Un besoin saisi est un total à couvrir pour une date, pas une quantité
      aveuglément ajoutée au manque de stock. Le premier besoin daté absorbe donc

@@ -38,7 +38,7 @@
     /* 1 · Indice Carte */
     t.push('<section class="cr-card cr-c1" data-cr="1"><span class="cr-k">1 · Votre carte</span><h2>' + (pret ? (e.value >= 75 ? 'Une carte qui tient ses marges' : e.value >= 60 ? 'Une carte correcte, à affiner' : e.value >= 31 ? 'Une carte fragile' : 'Une carte qui perd de l’argent') : 'Indice Carte en construction') + '</h2>' +
       '<div class="cr-dial">' + anneau(pret ? e.value : Math.round(num(D.st.partFiable)), col) + '<div class="cr-dial-n"><b data-cr-count="' + (pret ? e.value : Math.round(num(D.st.partFiable))) + '">0</b><small>' + (pret ? '/100' : '%') + '</small></div></div>' +
-      '<p class="cr-big"><b>' + pct1(D.marge) + '</b><small>de marge matière pondérée · objectif ' + pct1(D.obj) + '</small></p>' +
+      '<p class="cr-big"><b>' + pct1(D.marge) + '</b><small>de vos ventes vous restent une fois les produits payés · objectif ' + pct1(D.obj) + '</small></p>' +
       '<p class="cr-p">' + (pret ? 'Indice Carte, calculé avec vos fiches et vos ventes.' : D.st.fiables + ' plats exploitables sur ' + D.st.actifs + ' · l’indice s’affiche à 100 % des fiches et un mois complet.') + '</p><span class="cr-suite">Où va chaque 100 € ↓</span></section>');
     /* 2 · 100 € */
     t.push('<section class="cr-card cr-c2" data-cr="2"><span class="cr-k">2 · Sur chaque 100 € de carte</span><h2>Ce que vos plats gardent</h2>' +

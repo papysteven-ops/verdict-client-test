@@ -4,7 +4,7 @@
    Ces mots sont dans des centaines de textes (et dans les traductions) : plutôt que de les réécrire un à un, ce glossaire
    remplace, à l'affichage et en français seulement, le mot technique par le mot du patron, avec la bonne grammaire :
      coût humain / masse salariale → coût de l'équipe   ·   food cost → coût de la marchandise
-     point mort → seuil de rentabilité   ·   7,0 ETP → 7,0 temps pleins   ·   prime cost → marchandise + équipe
+     point mort → chiffre minimum (le nom déjà employé partout)   ·   7,0 ETP → 7,0 temps pleins   ·   prime cost → marchandise + équipe
    Jamais dans un champ de saisie, un script ou un texte modifiable ; un texte corrigé ne contient plus le mot, donc il
    n'est jamais retouché (0 changement au repos). Les calculs ne lisent pas ces mots. */
 (function () {
@@ -24,15 +24,17 @@
     /* food cost */
     [/\bFood cost\b/g, 'Coût de la marchandise'], [/\bfood cost\b/gi, 'coût de la marchandise'],
     /* point mort */
-    [/\bPoint mort\b/g, 'Seuil de rentabilité'], [/\bpoint mort\b/g, 'seuil de rentabilité'], [/\bPOINT MORT\b/g, 'SEUIL DE RENTABILITÉ'],
+    [/\bPoints morts\b/g, 'Chiffres minimums'], [/\bpoints morts\b/g, 'chiffres minimums'], [/\bPoint mort\b/g, 'Chiffre minimum'], [/\bpoint mort\b/g, 'chiffre minimum'], [/\bPOINT MORT\b/g, 'CHIFFRE MINIMUM'], /* le nom déjà employé partout dans l'appli */
     /* prime cost */
     [/\bPrime cost\b/g, 'Total marchandise + équipe'], [/\bprime cost\b/g, 'total marchandise + équipe'],
     /* ETP : avec un nombre devant, puis seul */
     [/\bd[’']ETP\b/g, 'de temps pleins'],
     [/(\d+(?:[,.]\d+)?)\s?ETP\b/g, function (m, n) { var v = Number(String(n).replace(',', '.')); return n + ' temps plein' + (v > 1 ? 's' : ''); }],
-    [/\bCA\s?\/\s?ETP\b/g, 'Ventes par temps plein'], [/\bETP\b/g, 'temps pleins']
+    [/\bCA\s?\/\s?ETP\b/g, 'Ventes par temps plein'], [/\bETP\b/g, 'temps pleins'],
+    /* « unite » (sans accent, venu des unités de stock) */
+    [/\bunite\b/g, 'unités']
   ];
-  var TEST = /co[uû]t humain|masse salariale|food cost|point mort|prime cost|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT/i;
+  var TEST = /co[uû]t humain|masse salariale|food cost|point mort|prime cost|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b/i;
   var EXCLU = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, SELECT: 1, OPTION: 1, NOSCRIPT: 1, CODE: 1, PRE: 1 };
   function francais(d) { try { var l = (d.defaultView && d.defaultView.LOCALE) || w.LOCALE || d.documentElement.lang || 'fr'; return /^fr/i.test(String(l)); } catch (e) { return true; } }
   function corriger(t) {

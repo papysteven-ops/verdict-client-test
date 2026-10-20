@@ -128,17 +128,18 @@ function v5recos(){
       why:'Rentabilit\u00e9 n\u00e9gative = rang critique \u2014 le score est plafonn\u00e9 tant que la perte dure.',
       urg:95, imp:Math.abs(Math.round(d.res)), fac:30, conf:confBase});
   }
-  if(v.ms>38){
-    var gMS=Math.round((v.ms-38)/100*ca);
+  var msC=(typeof repereMS==='function'?repereMS().sec:36), msH=msC+5; /* C180 : conseill\u00e9 du type d\u2019\u00e9tablissement, trop lourd au-del\u00e0 de +5 points (comme la jauge) */
+  if(v.ms>msH){
+    var gMS=Math.round((v.ms-msH)/100*ca);
     list.push({id:'ms',rank:2,t:'Masse salariale critique : '+pc(v.ms,0)+' du CA',
-      p:'Au-dessus de 38 % des ventes : trop lourd. Revenir \u00e0 ce rep\u00e8re repr\u00e9sente \u2248 '+eur(gMS)+'/an. '+srvT('leviersMs'),
-      why:'MS > 38 % du CA = rang critique dans la grille Verdict \u2014 ce n\u2019est pas une moyenne sectorielle officielle.',
+      p:'Au-dessus de '+msH+' % des ventes : trop lourd. Revenir \u00e0 ce seuil repr\u00e9sente \u2248 '+eur(gMS)+'/an. '+srvT('leviersMs'),
+      why:'Plus de '+msH+' % des ventes (conseill\u00e9 pour votre type d\u2019\u00e9tablissement : '+msC+' %, plus 5 points) = trop lourd \u2014 ce n\u2019est pas une moyenne sectorielle officielle.',
       urg:80, imp:gMS, fac:30, conf:confBase});
-  } else if(v.ms>35){
-    var gMS2=Math.round((v.ms-35)/100*ca);
+  } else if(v.ms>msC){
+    var gMS2=Math.round((v.ms-msC)/100*ca);
     list.push({id:'ms2',rank:4,t:'Masse salariale en vigilance : '+pc(v.ms,0)+' du CA',
-      p:'Entre les deux rep\u00e8res internes Verdict (35 % et 38 %). Ramener vers 35 % repr\u00e9sente \u2248 '+eur(gMS2)+'/an \u2014 avant toute action, v\u00e9rifiez planning, heures et organisation.',
-      why:'Zone 35\u201338 % = vigilance dans la grille Verdict, pas une norme sectorielle.',
+      p:'Au-dessus des '+msC+' % conseill\u00e9s pour votre type d\u2019\u00e9tablissement, sous les '+msH+' % (trop lourd). Ramener vers '+msC+' % repr\u00e9sente \u2248 '+eur(gMS2)+'/an \u2014 avant toute action, v\u00e9rifiez planning, heures et organisation.',
+      why:'Entre '+msC+' et '+msH+' % des ventes = \u00e0 surveiller, comme la jauge de l\u2019\u00e9quipe \u2014 pas une norme sectorielle.',
       urg:40, imp:gMS2, fac:35, conf:confBase});
   }
   if(v.fc>40){
