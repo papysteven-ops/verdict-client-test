@@ -187,5 +187,7 @@
     ['jour', 'mois', 'annee'].forEach(function (p) { try { poser(d, p); } catch (e) {} });
   }
   var t = setInterval(tour, 3000); if (t && t.unref) t.unref(); setTimeout(tour, 1500);
+  /* C179 : le même conseil partout (Alertes, jauge, cartes) : salaires conseillés pour le type d'établissement, en %. */
+  w.vdRepMs = function () { return Math.round(repere() * 100); };
   w.VerdictServicesHeures = { analyser: analyser, etat: etat, phrase: phrase, tour: tour, secoursMois: secoursMois };
 })();

@@ -211,7 +211,7 @@
     var mod = doc.getElementById('vtModule'); if (!mod || mod.querySelector('.vx43-lien')) return;
     var masse = '', part = '';
     [].forEach.call(doc.querySelectorAll('#v-sal .kpi'), function (k) { var l = (k.querySelector('.k') || {}).textContent || ''; if (/Masse salariale \/ an/.test(l)) masse = ((k.querySelector('.v') || {}).textContent || '').trim(); });
-    [].forEach.call(doc.querySelectorAll('#v-sal .jauge .jt'), function (j) { if (/Masse salariale % CA/.test(j.textContent || '')) { var m = /(\d+(?:,\d+)?)\s*%/.exec(j.parentElement.textContent || ''); if (m) part = m[1] + ' %'; } });
+    [].forEach.call(doc.querySelectorAll('#v-sal .jauge .jt'), function (j) { if (/(Masse salariale|Coût de l’équipe) % CA/.test(j.textContent || '')) /* C179 : glossaire */ { var m = /(\d+(?:,\d+)?)\s*%/.exec(j.parentElement.textContent || ''); if (m) part = m[1] + ' %'; } });
     if (!masse) return;
     var chips = mod.querySelector('.vt-chips'); if (!chips) return;
     var p = doc.createElement('p'); p.className = 'vt-note vx43-lien'; p.style.margin = '6px 0 10px';

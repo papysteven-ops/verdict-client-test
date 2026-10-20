@@ -35,7 +35,7 @@
   function groupes() {
     var g = [
       { t: 'Piloter', l: [['equipe', 'Équipe & services', 'Coût humain, planning et rentabilité des services'], ['budget', 'Budget de ventes', 'Objectifs datés, comparés à vos ventes réelles']] },
-      { t: 'Données', l: [['caisse', 'Connexion de la caisse', 'Vos ventes arrivent seules, sans saisie'], ['importer', 'Importer mes chiffres', 'Document comptable, saisie ou mise à jour']] },
+      { t: 'Données', l: [['caisse', 'Connexion de la caisse', 'Bientôt : vos ventes arriveront seules, sans saisie'], ['importer', 'Importer mes chiffres', 'Document comptable, saisie ou mise à jour']] },
       { t: 'Établissement & compte', l: [['etabs', 'Établissements', 'Ajouter, renommer ou changer d’établissement']] }
     ];
     if (demo() || portail) g[2].l.push(['acces', 'Accès du personnel', 'Inventaire pour votre équipe, droits choisis par vous']);
