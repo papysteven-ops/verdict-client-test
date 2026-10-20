@@ -1072,7 +1072,7 @@ function drawProd(){
   var all=SP().products,query=(document.getElementById("prodQ")||{}).value||"";
   if(!all.length){ el.innerHTML='<div class="empty">Aucun produit.</div>'; if(status)status.textContent=""; return; }
   var list=all.filter(function(p){return catalogMatches(p,query);});
-  if(status)status.textContent=query.trim()?(list.length+" r\u00e9sultat"+(list.length>1?"s":"")+" sur "+all.length):(all.length+" produit"+(all.length>1?"s":""));
+  if(status)status.textContent=(query.trim()?(list.length+" r\u00e9sultat"+(list.length>1?"s":"")+" sur "+all.length):(all.length+" produit"+(all.length>1?"s":"")))+" \u00b7 espace "+spName(DB.space);
   if(!list.length){el.innerHTML='<div class="empty">Aucun produit ne correspond.<br><button class="btn ghost" style="margin-top:12px" onclick="document.getElementById(\'prodQ\').value=\'\';drawProd();document.getElementById(\'prodQ\').focus()">Effacer la recherche</button></div>';return;}
   var groups=bySup(list),i,h="";
   for(i=0;i<groups.length;i++){

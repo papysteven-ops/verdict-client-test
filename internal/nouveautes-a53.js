@@ -11,6 +11,7 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C185', date: '2026-10-21', titre: 'Accueil › Jour : les repères suivent aussi le jour touché ; chiffres recoupés (ventes au même jour du mois précédent, plus de dates futures), démonstration et Aide corrigées' },
     { id: 'C184', date: '2026-10-21', titre: 'Salaires, Alertes, Simuler, Structure, Organisation et Recommandations en mots simples, sans jargon' },
     { id: 'C183', date: '2026-10-20', titre: 'Accueil › Jour : touchez un jour de « Vos journées » pour revoir tout son détail (journée, courbe, ventes et heures par service)' },
     { id: 'C182', date: '2026-10-20', titre: 'Carte et Inventaire en mots simples : un seul prix conseillé par plat, familles de plats en clair, stock et commandes lisibles' },
