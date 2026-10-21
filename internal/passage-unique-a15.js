@@ -340,8 +340,12 @@ function preview(){
   [].forEach.call(out.querySelectorAll('[data-a15-cat]'),function(s){s.addEventListener('change',function(){S.unknown[+s.getAttribute('data-a15-cat')].cat=s.value;});});
   [].forEach.call(out.querySelectorAll('[data-a15-price]'),function(s){s.addEventListener('input',function(){S.unknown[+s.getAttribute('data-a15-price')].price=num(s.value);});});
   [].forEach.call(out.querySelectorAll('[data-a15-portion]'),function(s){s.addEventListener('input',function(){var v=num(s.value);S.unknown[+s.getAttribute('data-a15-portion')].portion=v!=null&&v>0&&v<1000?v:null;});});
+  /* C228 (X21) : le contrôle commun des champs décimaux (verdict-034) réécrit « 4,20 » en « 4.20 » à la sortie du champ. Ces champs
+     sont lus avec la virgule (num) : on leur rend l'écriture de la langue juste après ce contrôle. */
+  [].forEach.call(out.querySelectorAll('input[inputmode=decimal]'),function(s){s.addEventListener('blur',virgule);});
   bind(c);
 }
+function virgule(ev){var el=ev&&ev.target;if(!el)return;var sep=(1.5).toLocaleString(tag()).charAt(1);if(sep!==',')return;var v=String(el.value||'');if(/^-?\d+\.\d+$/.test(v))el.value=v.replace('.',',');}
 function catOptions(sel){var base=['Entrées','Salades','Plat du jour','Plats','Menus','Accompagnements','Fromages','Desserts','Boissons','Boissons alcoolisées','Suppléments'],all=cats();base.forEach(function(b){if(!all.some(function(x){return norm(x).replace(/s$/,'')===norm(b).replace(/s$/,'');}))all.push(b);});if(all.indexOf(sel)<0)all.unshift(sel);return all.map(function(x){return '<option'+(x===sel?' selected':'')+'>'+esc(x)+'</option>';}).join('');}
 function toast(m){try{if(typeof root.toast==='function')root.toast(m);}catch(e){}}
 /* C192 — produits de la fiche type : on reprend ceux du catalogue (même nom), sinon on les ajoute avec un prix type signalé. */

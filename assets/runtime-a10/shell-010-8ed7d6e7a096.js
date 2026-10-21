@@ -26,6 +26,12 @@
   /* C217 W61 : le site écrit ?module=inventaire (français) ; c'est le même module que ?module=inventory. L'adresse est
      corrigée avant toute lecture (démarrage, historique, rechargement). */
   (function(){var m=String(params.get('module')||'').toLowerCase();if(m!=='inventory'&&/^(inventaire|inventario|inventar|stocks?|voorraad)$/.test(m)){params.set('module','inventory');try{var u=new URL(location.href);u.searchParams.set('module','inventory');history.replaceState(history.state,'',u.pathname+u.search+u.hash);}catch(e){}}})();
+  /* C229 (X36) : lien donné par le patron à son équipe (?equipe=<établissement>). Inventaire seul : les onglets Pilotage et Carte
+     n'existent pas, leur cadre n'est jamais chargé (aucune donnée du patron dans la page), l'Inventaire est celui du compte
+     de l'établissement, lu selon les droits donnés par le patron (serveur). Gardé pour l'onglet (sessionStorage). */
+  var EQUIPE=(function(){var e=String(params.get('equipe')||'').replace(/[^A-Za-z0-9._:-]/g,'').slice(0,96);try{if(e)sessionStorage.setItem('verdict:equipe:v1',e);else e=String(sessionStorage.getItem('verdict:equipe:v1')||'');}catch(x){}return e;})();
+  if(EQUIPE){params.set('module','inventory');document.documentElement.classList.add('vd-equipe');(function(){var st=document.createElement('style');st.id='equipe-c229';st.textContent='html.vd-equipe .module-tabs,html.vd-equipe #tab-verdict,html.vd-equipe #tab-carte,html.vd-equipe #panel-verdict,html.vd-equipe #frame-verdict,html.vd-equipe #vdDock,html.vd-equipe #vdPlanBadge,html.vd-equipe #vdOffre,html.vd-equipe [data-module="verdict"],html.vd-equipe [data-module="carte"],html.vd-equipe [data-capability="pilotage"],html.vd-equipe [data-capability="carte"]{display:none!important}html.vd-equipe #panel-inventory{display:block!important}';(document.head||document.documentElement).appendChild(st);})();}
+  window.VERDICT_EQUIPE=EQUIPE||'';
   var stored={};
   try{stored=JSON.parse(localStorage.getItem(cfg.storageKey)||'{}')||{};}catch(e){stored={};}
   var startupUnlocked=false,startupVisualReady=false;
@@ -217,9 +223,10 @@
       if(demo)q.set('demo','1');
       if(demo&&(bool(options.guide)||params.get('guide')==='1'))q.set('guide','1');
       if(options.incidentId)q.set('incident',cleanId(options.incidentId));
-      if(!demo&&cfg.openAccess)q.set('openAccess','1');
-      if(!demo){try{var sharedLink=JSON.parse(localStorage.getItem('verdict:inventory:link:'+cleanId(options.siteId||state.context&&state.context.siteId))||'null');if(sharedLink&&sharedLink.id){q.delete('openAccess');q.set('shared','1');q.set('sharedId',sharedLink.id);}}catch(e){}}
-      if(!demo&&cfg.edition==='client'&&!cfg.openAccess)q.set('ownerTeam','1');
+      /* C229 (X36) : en équipe, jamais l'inventaire ouvert de cet appareil ni un lien partagé : celui de l'établissement, selon les droits. */
+      if(!demo&&EQUIPE)q.set('equipe',EQUIPE);else if(!demo&&cfg.openAccess)q.set('openAccess','1');
+      if(!demo&&!EQUIPE){try{var sharedLink=JSON.parse(localStorage.getItem('verdict:inventory:link:'+cleanId(options.siteId||state.context&&state.context.siteId))||'null');if(sharedLink&&sharedLink.id){q.delete('openAccess');q.set('shared','1');q.set('sharedId',sharedLink.id);}}catch(e){}}
+      if(!demo&&!EQUIPE&&cfg.edition==='client'&&!cfg.openAccess)q.set('ownerTeam','1');
       var teamEstablishment=cleanId(options.teamEstablishment||params.get('teamEstablishment'));
       if(!demo&&teamEstablishment)q.set('teamEstablishment',teamEstablishment);
     }else{
@@ -298,7 +305,7 @@
      formule Inventaire gratuite. L'Inventaire est prévenu quand Pilotage est prêt. */
   var verdictForInventoryAsked=false;
   function prepareVerdictForInventory(){
-    if(verdictForInventoryAsked||demoRequested())return false;
+    if(verdictForInventoryAsked||demoRequested()||EQUIPE)return false;
     try{var P=window.VerdictPlan;if(P&&typeof P.actif==='function'&&P.actif()&&P.etat().niveau==='inventaire')return false;}catch(e){}
     try{var A=window.VerdictWorkspaceAccess,R=A&&A.getPreferredTarget?A.getPreferredTarget():null;/* le serveur décide (espace connecté) : Pilotage seulement s'il l'ouvre */if(window.VERDICT_WORKSPACE_CONNECTED===true&&window.VERDICT_OPEN_ACCESS!==true&&!(R&&R.modules&&R.modules.pilotage&&R.modules.pilotage.view))return false;}catch(e){}
     verdictForInventoryAsked=true;
@@ -307,6 +314,7 @@
     ensureFrame('verdict',{profile:state.profile||'pilotage',preload:true});notify();return true;
   }
   function ensureFrame(module,options){
+    if(EQUIPE&&module!=='inventory')return false;/* C229 (X36) */
     var frame=els[module],key=modeKey(module,options);
     if(!frame)return false;
     /* Pilotage et Carte vivent dans une frame résidente qui sait elle-même
@@ -498,6 +506,7 @@
   function activate(module,options,historyMode){
     options=options||{};
     if(!modules[module])module='verdict';
+    if(EQUIPE&&module!=='inventory')return false;/* C229 (X36) : jamais Pilotage ni Carte par le lien de l'équipe */
     if(!startupUnlocked&&module!=='verdict'&&!options.authorizedStartup)return false;
     var currentModule=state.module;
     if(state.pendingModuleSwitch&&state.pendingModuleSwitch.module!==module)state.pendingModuleSwitch=null;
@@ -580,9 +589,9 @@
     var serial=++networkCheckSerial;
     if(navigator.onLine===false){networkState('Hors ligne','offline','Aucun réseau détecté sur cet appareil');return;}
     var connection=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
-    var declaredWeak=!!connection&&(/^(slow-2g|2g|3g)$/.test(connection.effectiveType||'')||
-      (typeof connection.rtt==='number'&&connection.rtt>=800)||
-      false);/* C217 W69 : le débit estimé par le navigateur (downlink) est faux en local et sur les petits échanges : seule la mesure réelle compte */
+    /* C229 (X30) : l'estimation du navigateur (3g, rtt) se trompe en local et après un gros chargement : seule une connexion
+       déclarée 2G reste « faible » d'emblée ; le reste se mesure. */
+    var declaredWeak=!!connection&&/^(slow-2g|2g)$/.test(connection.effectiveType||'');/* C217 W69 : le débit estimé par le navigateur (downlink) est faux en local et sur les petits échanges : seule la mesure réelle compte */
     if(!window.fetch){networkState(declaredWeak?'Réseau faible':'En ligne',declaredWeak?'weak':'online','État estimé par le navigateur');return;}
     var controller=typeof AbortController==='function'?new AbortController():null;
     var timeout=setTimeout(function(){if(controller)controller.abort();},5000);
@@ -591,8 +600,10 @@
       if(serial!==networkCheckSerial)return;
       if(!response.ok)throw new Error('network_check_failed');
       /* C217 W69 : durée réseau réelle (Resource Timing), pas le temps d'attente d'une page encore occupée à démarrer ; deux mesures lentes de suite avant de dire « Réseau faible ». */
-      var duree=Date.now()-started;try{var ent=performance.getEntriesByName(response.url||'');if(ent&&ent.length){var en=ent[ent.length-1];if(en.responseEnd>0)duree=Math.min(duree,en.responseEnd-(en.fetchStart||en.startTime));}}catch(e){}
-      networkSlowCount=duree>=1200?networkSlowCount+1:0;
+      var duree=Date.now()-started;try{var ent=performance.getEntriesByName(response.url||'');if(ent&&ent.length){var en=ent[ent.length-1];if(en.responseEnd>0)duree=Math.min(duree,en.responseEnd-(en.requestStart||en.fetchStart||en.startTime));}}catch(e){}
+      /* C229 (X30) : l'attente dans la file du navigateur (chargement de Pilotage, ajout d'un établissement) n'est pas le réseau ;
+         les 20 premières secondes, la page charge : aucune mesure lente n'y compte. */
+      networkSlowCount=(duree>=1200&&performance.now()>20000)?networkSlowCount+1:0;
       var weak=declaredWeak||networkSlowCount>=2;
       networkState(weak?'Réseau faible':'En ligne',weak?'weak':'online',weak?'Connexion lente vers Verdict':'Connexion à Verdict disponible');
     }).catch(function(){

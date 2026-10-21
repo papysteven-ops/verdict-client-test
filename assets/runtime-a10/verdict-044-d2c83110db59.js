@@ -238,7 +238,7 @@
     var beforeAmortization=round2(t.revenue-t.food-t.beverage-t.packaging-t.payroll-t.rent-t.commissions-t.other_fixed);
     root.DB.fecImport={schema:"verdict-fec-import-proof/v1",version:VERSION,monthly:result.monthly||null,monthlyFlux:result.monthlyFlux||null,appliedAt:new Date().toISOString(),hash:rawHash,period:result.period,lineCount:result.lineCount,duplicates:result.duplicates,ambiguousConfirmed:mapped.ambiguous.length,totals:{revenue:round2(t.revenue),food:round2(t.food),beverage:round2(t.beverage),packaging:round2(t.packaging),payroll:round2(t.payroll),payrollOwner:round2(Number(result.payrollOwner)||0),rent:round2(t.rent),commissions:round2(t.commissions),otherFixed:round2(t.other_fixed),amortization:round2(t.amortization)},accounting:{operatingBeforeAmortization:beforeAmortization,preTaxResult:round2(beforeAmortization-t.amortization)},cashTreatment:{fixedChargesExclude68:true,dailySafetyMinimumExclude68:true,estimatedBankBalanceExclude68:true},rawFilePersisted:false};
     try{var tvaLu=tvaRegimeFromFec(result,context.fichier);root.DB.fecImport.tvaRegime=tvaLu;if(tvaLu){var TP=root.DB.tresoParams=root.DB.tresoParams||{},cur=TP.tva&&typeof TP.tva==="object"?TP.tva:{},nv={regime:cur.regime||null,periodicite:cur.periodicite||null,cloture:cur.cloture||null,montants:cur.montants||{},sources:Object.assign({},cur.sources||{})};["regime","periodicite","cloture"].forEach(function(k){if(tvaLu[k]){nv[k]=tvaLu[k];nv.sources[k]=tvaLu.sources[k];}});nv.lu=new Date().toISOString().slice(0,10);TP.tva=nv;}}catch(_t){}
-    root.DB.exempleCharge=false;root.DB.userMode="existing";root.DB.onboardingDone=true;
+    root.DB.exempleCharge=false;root.DB.userMode="existing";root.DB.onboardingDone=true;try{delete root.DB.entreeDocument;}catch(_p){}
     try{if(typeof root.lsSet==="function")root.lsSet("verdict_ref_asked","1");}catch(e){}
     if(typeof root.save==="function")root.save("fec-import");if(typeof root.fillInputs==="function")root.fillInputs();if(typeof root.readInputs==="function")root.readInputs();if(typeof root.refreshAll==="function")root.refreshAll();
     try{root.dispatchEvent(new CustomEvent("verdict:fec-applied",{detail:{period:result.period,lineCount:result.lineCount,hash:rawHash}}));}catch(e){}
@@ -256,6 +256,21 @@
     return true;
   }
 
-  return Object.freeze({VERSION:VERSION,UI:UI,CATEGORY_LABELS:CATEGORY_LABELS,parseNumber:parseNumber,splitDelimited:splitDelimited,detectDelimiter:detectDelimiter,decodeBytes:decodeBytes,parse:parse,classify:classify,map:map,memoriser:memoriser,aggregate:aggregate,tvaRegimeFromFec:tvaRegimeFromFec,stableHash:stableHash,periodMonthCount:periodMonthCount,mount:mount,relabel:relabel,humanError:humanError,majJours:majJours,exercicePeriod:exercicePeriod,periodTexte:periodTexte});
+  /* C228 (X20, re-test T1-N1) : la porte « J’ai mon document comptable (FEC) » enregistre le même mode que « J’ai un exercice
+     clôturé » (existing). Après la création du compte, le retour dans l’appli (rechargement) reprenait donc l’accueil par
+     l’assistant de saisie en 3 étapes. La porte choisie est gardée dans le dossier ; tant qu’aucun FEC n’est appliqué, la
+     reprise revient sur l’import du FEC, sans saisie. Choisir une autre porte l’oublie. */
+  function porteFEC(){try{var D=root.DB;return !!(D&&D.entreeDocument&&D.entreeDocument.porte==="fec"&&!(D.fecImport&&D.fecImport.totals)&&D.onboardingDone!==true);}catch(e){return false;}}
+  function installerReprise(){
+    if(!root.document||root.__c228Reprise)return;var cf=root.choisirFEC,cm=root.choisirMode,ro=root.reprendreOnboarding;
+    if(typeof cf!=="function"||typeof ro!=="function")return;root.__c228Reprise=true;
+    root.choisirFEC=function(){try{if(root.DB)root.DB.entreeDocument={porte:"fec",at:new Date().toISOString()};}catch(e){}return cf.apply(this,arguments);};
+    if(typeof cm==="function")root.choisirMode=function(m){try{if(m!=="fec"&&root.DB&&root.DB.entreeDocument)delete root.DB.entreeDocument;}catch(e){}return cm.apply(this,arguments);};
+    var ci=root.choisirInventaireGratuit;if(typeof ci==="function")root.choisirInventaireGratuit=function(){var self=this,args=arguments,suite=function(){return ci.apply(self,args);};try{if(root.DB&&root.DB.entreeDocument){delete root.DB.entreeDocument;var r=typeof root.save==="function"?root.save("porte-inventaire"):null;/* la porte quitte la page : l’oubli est écrit avant (save répond après IndexedDB) */if(r&&typeof r.then==="function"){var fait=false,une=function(){if(!fait){fait=true;suite();}};r.then(une,une);setTimeout(une,1500);return true;}}}catch(e){}return suite();};
+    root.reprendreOnboarding=function(){try{if(porteFEC()){var sh=root.document.getElementById("refSh");if(!(sh&&sh.classList.contains("on"))&&!root.document.querySelector(".modal.on")){root.choisirFEC();return;}}}catch(e){}return ro.apply(this,arguments);};
+  }
+  if(root.document)installerReprise();
+
+  return Object.freeze({VERSION:VERSION,UI:UI,installerReprise:installerReprise,porteFEC:porteFEC,CATEGORY_LABELS:CATEGORY_LABELS,parseNumber:parseNumber,splitDelimited:splitDelimited,detectDelimiter:detectDelimiter,decodeBytes:decodeBytes,parse:parse,classify:classify,map:map,memoriser:memoriser,aggregate:aggregate,tvaRegimeFromFec:tvaRegimeFromFec,stableHash:stableHash,periodMonthCount:periodMonthCount,mount:mount,relabel:relabel,humanError:humanError,majJours:majJours,exercicePeriod:exercicePeriod,periodTexte:periodTexte});
 });
 

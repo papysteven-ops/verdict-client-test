@@ -1611,7 +1611,22 @@ function verdictAccountServiceMessage(){
 var VERDICT_ACCOUNT_STATE=verdictAccountDefaultState('checking');
 /* V44.42 — accès public assumé pour la phase de lancement. La coque reste
    l'autorité de configuration ; l'URL seule ne suffit jamais à ouvrir Pro. */
+/* C226 (X10) — décision W38 de Steven : l'appli lit l'état du compte (essai, Pilotage, Pro) ; sans compte, découverte.
+   L'accès ouvert du lancement ne vaut donc que sans compte ou pendant l'essai : un compte Pilotage a Pilotage, un compte Pro a
+   Pro, un compte revenu à l'Inventaire n'a l'Inventaire que lorsque le paiement est ouvert (sinon le lancement reste ouvert).
+   window.__verdictNiveauMax reste disponible pour les tests (il ne peut que baisser le niveau). */
+function verdictCompteCourant(){try{var c=window.VERDICT_COMPTE;if(c===undefined&&window.parent&&window.parent!==window)c=window.parent.VERDICT_COMPTE;return c&&c.connecte?c:null;}catch(e){return null;}}
+function verdictCompteFixe(){var c=verdictCompteCourant();if(!c||c.essai)return null;if(c.formule==='pilotage'||c.formule==='pro')return c.formule;if(c.formule==='inventaire'&&window.VERDICT_PAIEMENT_ACTIF===true)return 'inventaire';return null;}
+function verdictEtatDepuisCompte(c,f){var s=verdictAccountDefaultState('available');s.loaded=true;s.auth=true;s.tier=f==='pro'||f==='pilotage'?f:(c.essai?'pro':'verdict');s.access_state=c.etat||'';s.email=c.email||'';
+  s.trial=!!c.essai;s.paid=c.etat==='paid';s.trial_days_left=Number(c.joursRestants)||0;s.trial_ends_at=Number(c.essaiFin)||0;s.current_period_end=Number(c.echeance)||0;s.cancel_at_period_end=c.resiliationPrevue===true;
+  s.has_subscription=!!c.abonnement;s.subscription_period=c.periode||'';s.active_establishments=Math.max(1,Number(c.etablissements)||1);s.establishment_limit=100;s.founder_price_lock=!!c.fondateur;s.compte=true;return s;}
+/* C226 (X17) : au chargement, l'ancienne vue de l'Accueil (« Objectif de CA TTC … pas encore intégrés ») ne se montre plus
+   avant la lecture premium : l'Accueil reste blanc le temps qu'elle arrive (5 s au plus, puis l'ancienne vue reste le secours). */
+(function(){try{var h=document.documentElement;h.classList.add('vd-pil-attente');var fin=function(){h.classList.remove('vd-pil-attente');};
+  var t=setInterval(function(){var p=document.getElementById('v-pil');if(p&&p.classList.contains('p41-on')){clearInterval(t);fin();}},150);
+  setTimeout(function(){clearInterval(t);fin();},5000);}catch(e){}})();
 var VERDICT_PUBLIC_OPEN=(function(){
+  try{if(verdictCompteFixe())return false;}catch(e){}
   try{return window.VERDICT_OPEN_ACCESS===true||(window.parent!==window&&window.parent.VERDICT_UNIFIED_CONFIG&&window.parent.VERDICT_UNIFIED_CONFIG.openAccess===true);}
   catch(e){return false;}
 })();
@@ -1795,6 +1810,7 @@ function revoirVeraTour(){return verdictCommitUnderOverlay('mVeraReplay',functio
 try{veraApplySeason(document);}catch(e){}
 var VERDICT_DEMO_STARTED=false;
 var TIER=(function(){
+  try{var _cf=verdictCompteFixe();if(_cf)return _cf==='inventaire'?'verdict':_cf;}catch(e){}/* C226 (X10) */
   if(VERDICT_PUBLIC_OPEN)return 'pro';
   if(typeof VERDICT_TIER==='string'&&VERDICT_TIER==='pro')return 'pro';   /* serveur */
   return 'verdict';
@@ -1901,10 +1917,19 @@ function verdictGoAccount(mode,retour){
   try{(window.top&&window.top!==window?window.top:window).location.href=verdictAccountUrl(mode,retour);}catch(e){location.href=verdictAccountUrl(mode,retour);}return true;
 }
 function verdictAccountRefresh(){
+  /* C226 (X10) : un compte à formule fixe (Pilotage, Pro) donne son niveau, même pendant l'accès ouvert du lancement. */
+  var _cc=verdictCompteCourant(),_cf=verdictCompteFixe();
+  if(_cf&&!VERDICT_TEST_SESSION&&!VERDICT_PRESENTATION_PROFILE&&!VERDICT_DEMO_SESSION){
+    VERDICT_ACCOUNT_STATE=verdictEtatDepuisCompte(_cc,_cf);setTier(VERDICT_ACCOUNT_STATE.tier);
+    try{refreshLocks();}catch(e){}
+    return Promise.resolve(VERDICT_ACCOUNT_STATE);
+  }
   if(VERDICT_PUBLIC_OPEN){
     VERDICT_ACCOUNT_STATE=verdictAccountDefaultState('test');VERDICT_ACCOUNT_STATE.loaded=true;
     VERDICT_ACCOUNT_STATE.tier='pro';VERDICT_ACCOUNT_STATE.access_state='public_open';
     VERDICT_ACCOUNT_STATE.establishment_limit=100;setTier('pro');
+    /* C226 (X11) : pendant l'essai (ou sans paiement ouvert), le compte connecté reste connu de l'écran Abonnement. */
+    if(_cc){var _e=verdictEtatDepuisCompte(_cc,null);_e.tier='pro';_e.access_state=_cc.etat||'public_open';VERDICT_ACCOUNT_STATE=_e;}
     try{refreshLocks();}catch(e){}
     return Promise.resolve(VERDICT_ACCOUNT_STATE);
   }
@@ -2059,6 +2084,18 @@ function aboActionsInject(){
   if(!pret)h+='<p class="note" style="margin:8px 0 0">Le serveur de comptes ne répond pas sur cet appareil pour l’instant : la page Compte s’ouvrira, la connexion se fera dès qu’il sera joignable.</p>';
   sub.insertAdjacentHTML('afterend',h+'</div>');
 }
+function aboDateTxt(sec){var n=Number(sec);if(!(n>0))return '';var d=new Date(n*1000);return (d.getDate()===1?'1er':String(d.getDate()))+' '+['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'][d.getMonth()]+' '+d.getFullYear();}
+function aboFormuleTxt(c){return {essai:'Essai de Verdict Pro',pilotage:'Verdict Pilotage',pro:'Verdict Pro',inventaire:'Inventaire gratuit',activation:'Abonnement en cours d’activation'}[c.formule]||(c.essai?'Essai de Verdict Pro':'Votre compte');}
+function aboEtatTxt(c){
+  var ouvert=VERDICT_PUBLIC_OPEN?' Pendant le lancement, toutes les fonctions restent ouvertes.':'',per=c.periode==='annual'?'Paiement annuel':(c.periode==='monthly'?'Paiement mensuel':'');
+  if(c.essai){var n=Number(c.joursRestants)||0;return 'Essai de 14 jours : encore '+n+' jour'+(n>1?'s':'')+(c.essaiFin?', jusqu’au '+aboDateTxt(c.essaiFin):'')+'. Tout est ouvert pendant l’essai, sans carte.';}
+  if(c.formule==='pilotage'||c.formule==='pro'){
+    if(c.resiliationPrevue)return (per?per+' · ':'')+'Résiliation prévue : vous gardez l’accès jusqu’au '+(aboDateTxt(c.echeance)||'terme de la période')+'.';
+    return (per?per+' · ':'')+(c.echeance?'Prochaine échéance le '+aboDateTxt(c.echeance)+'.':'Abonnement actif.');}
+  if(c.formule==='activation')return 'Paiement reçu : votre abonnement s’active.'+ouvert;
+  if(c.formule==='inventaire')return 'Votre abonnement est terminé : l’Inventaire reste gratuit et vos données restent à vous.'+ouvert;
+  return 'Compte connecté.'+ouvert;
+}
 function drawAbonnement(){
   var pro=isPro(),demo=estDemo(),demoCopy=verdictDemoSubscriptionCopy();
   function set(id,txt){ var e=document.getElementById(id); if(e)e.textContent=txt; }
@@ -2082,6 +2119,9 @@ function drawAbonnement(){
   else if(!demo&&accountContract==='grace') accessDesc=t('abo.grace');
   else if(!demo&&accountContract==='billing_issue') accessDesc=t('abo.issue');
   else if(!demo&&VERDICT_ACCOUNT_STATE.auth) accessDesc=t('abo.expired.safe');
+  /* C226 (X11) : le compte connecté fait foi (formule, essai, échéance, résiliation) ; l'accès ouvert du lancement n'est dit qu'en plus. */
+  var _C=demo?null:verdictCompteCourant();
+  if(_C){set('aboTierLabel',aboFormuleTxt(_C));accessDesc=aboEtatTxt(_C);}
   set('aboTierDesc',accessDesc);
   set('aboInclH',t('abo.included'));
   var il=document.getElementById('aboInclList');
@@ -2099,17 +2139,17 @@ function drawAbonnement(){
     I18N_LANGS.forEach(function(L){ var o=document.createElement('option');o.value=L;o.textContent=names[L];if(L===LOCALE)o.selected=true;sel.appendChild(o); });
   }
   var u=document.getElementById('aboUpgrade'); if(u)u.style.display=(pro||VERDICT_PUBLIC_OPEN)?'none':'';
-  var d=document.getElementById('aboDowngrade'); if(d)d.style.display=(pro&&!VERDICT_PUBLIC_OPEN)?'':'none';
+  var d=document.getElementById('aboDowngrade'); if(d)d.style.display=(pro&&!VERDICT_PUBLIC_OPEN&&!_C)?'':'none';/* C226 (X11) : avec un compte, « Gérer mon abonnement » est dans la carte du compte ; plus de « Verdict Pro actif » pour une formule Pilotage */
   var multi=document.getElementById('aboMultisiteText');
   if(multi){
     if(demo){multi.textContent=demoCopy.multi;return;}
     try{aboActionsInject();}catch(e){}
     /* C214 (W28) : le total pour vos établissements est toujours donné, aux deux formules, au mois et à l'an. */
     var count=Math.max(1,Number(VERDICT_PENDING_MULTISITE_COUNT)||Number(window.VERDICT_COMPTE&&window.VERDICT_COMPTE.etablissements)||Number(VERDICT_ACCOUNT_STATE.active_establishments)||0,(function(){try{return etabBillableList().length;}catch(e){return 1;}})());
-    if(VERDICT_PUBLIC_OPEN){var _x=count-1;multi.textContent=publicCopy[1]+' '+(count>1?count+' établissements actifs : '+fr(69+_x*39,0)+' € HT/mois ou '+fr(690+_x*390,0)+' € HT/an en Pilotage, '+fr(129+_x*69,0)+' € HT/mois ou '+fr(1290+_x*690,0)+' € HT/an en Pro.':'Un établissement : 69 € HT/mois ou 690 € HT/an en Pilotage, 129 € HT/mois ou 1 290 € HT/an en Pro. Chaque établissement réel en plus : +39 € HT/mois (+390 € HT/an) en Pilotage, +69 € HT/mois (+690 € HT/an) en Pro.');return;}
+    if(VERDICT_PUBLIC_OPEN){var _x=count-1;multi.textContent=(verdictCompteCourant()?'':publicCopy[1]+' ')+(count>1?count+' établissements actifs : '+fr(69+_x*39,0)+' € HT/mois ou '+fr(690+_x*390,0)+' € HT/an en Pilotage, '+fr(129+_x*69,0)+' € HT/mois ou '+fr(1290+_x*690,0)+' € HT/an en Pro.':'Un établissement : 69 € HT/mois ou 690 € HT/an en Pilotage, 129 € HT/mois ou 1 290 € HT/an en Pro. Chaque établissement réel en plus : +39 € HT/mois (+390 € HT/an) en Pilotage, +69 € HT/mois (+690 € HT/an) en Pro.');return;}
     var _vo=(window.verdictOffrePourTier?window.verdictOffrePourTier():{m:129,a:1290,xm:69,xa:690}),totalM=_vo.m+(count-1)*_vo.xm,totalA=_vo.a+(count-1)*_vo.xa;
     multi.textContent=(count>1?
-      count+' établissements actifs : '+totalM+' € HT/mois ou '+totalA+' € HT/an. ':
+      count+' établissements actifs : '+fr(totalM,0)+' € HT/mois ou '+fr(totalA,0)+' € HT/an. ':/* C226 (X11) : « 1 980 € », jamais « 1980 € » */
       'Un établissement réel est inclus : 69 € HT/mois ou 690 € HT/an en Pilotage, 129 € HT/mois ou 1 290 € HT/an en Pro. ')+
       'Chaque établissement réel supplémentaire coûte 39 € HT/mois en Pilotage ou 69 € HT/mois en Pro. Les modèles fictifs de démonstration sont gratuits et ne créent jamais un établissement facturé.';
   }
@@ -2926,6 +2966,18 @@ function verdictSafetyInit(){
   }).catch(function(){VERDICT_SAFETY_READY=false;save("startup-no-idb");drawDataSafety();return false;}).then(function(x){setTimeout(verdictMaybeRemindBackup,3600);return x;});
 }
 function verdictUsageDays(){var u={};etabList().forEach(function(k){var d=STORE.etabs[k];(d.histJour||[]).forEach(function(x){if(x&&x.date)u[x.date]=1;});(d.services||[]).forEach(function(x){if(x&&x.date)u[x.date]=1;});});return Object.keys(u).length;}
+/* C226 (X15) : un import, une facture, une saisie ou une feuille ouverte = un parcours en cours ; le rappel attend. */
+function verdictParcoursEnCours(){
+  try{
+    if(typeof VIEW!=='undefined'&&VIEW==='in')return true;
+    if(window.__factureEnCours||(typeof DAILY_CSV_LOT!=='undefined'&&DAILY_CSV_LOT))return true;
+    var a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return true;
+    if(document.querySelector('.sheet.on,.modal.on,#refSh.on,[role="dialog"][open]'))return true;
+  }catch(e){}
+  return false;
+}
+function verdictBackupReminderClose(){var L=document.querySelectorAll('#mBackupReminder');for(var i=0;i<L.length;i++)L[i].remove();}
+window.verdictBackupReminderClose=verdictBackupReminderClose;
 function verdictMaybeRemindBackup(){
   /* Une sauvegarde est importante, mais son rappel ne doit jamais interrompre
      la démonstration, la visite guidée ou l'entrée client. La visite n'est pas
@@ -2934,11 +2986,13 @@ function verdictMaybeRemindBackup(){
   if(VERDICT_DEMO_SESSION||(typeof getMode==='function'&&getMode()==='demo')||
      (typeof DEMO_I==='number'&&DEMO_I>=0)||document.querySelector('#demoBar.on')||
      document.querySelector(".modal.on")||document.querySelector('#refSh.on')||
-     document.getElementById('splash')){setTimeout(verdictMaybeRemindBackup,4000);return;}
+     document.getElementById('splash')||verdictParcoursEnCours()){setTimeout(verdictMaybeRemindBackup,4000);return;}
+  if(document.getElementById('mBackupReminder'))return;
   var s=verdictSafetyMeta(),created=Date.parse(s.createdAt)||Date.now(),last=Date.parse(s.manualBackupAt)||0,rem=Date.parse(s.lastReminderAt)||0;
   if(!(verdictUsageDays()>=15||Date.now()-created>=30*86400000)||Date.now()-last<30*86400000||Date.now()-rem<7*86400000)return;
   s.lastReminderAt=new Date().toISOString();try{localStorage.setItem(SKEY,JSON.stringify(STORE));}catch(e){}
-  var m=document.createElement("div");m.className="modal on";m.id="mBackupReminder";m.innerHTML='<div class="sheet"><div class="grab"></div><h3>Protégez votre historique</h3><p class="sub">Une copie automatique existe dans ce navigateur. Téléchargez aussi un fichier pour pouvoir récupérer Verdict si cet appareil est perdu ou remplacé.</p><button class="btn" onclick="backup();this.closest(\'.modal\').remove()">Télécharger ma sauvegarde</button><button class="btn sec" onclick="this.closest(\'.modal\').remove()">Plus tard</button></div>';document.body.appendChild(m);
+  var m=document.createElement("div");m.className="modal on";m.id="mBackupReminder";m.innerHTML='<div class="sheet"><div class="grab"></div><h3>Protégez votre historique</h3><p class="sub">Une copie automatique existe dans ce navigateur. Téléchargez aussi un fichier pour pouvoir récupérer Verdict si cet appareil est perdu ou remplacé.</p><button class="btn" onclick="backup();verdictBackupReminderClose()">Télécharger ma sauvegarde</button><button class="btn sec" onclick="verdictBackupReminderClose()">Plus tard</button></div>';m.addEventListener('click',function(e){if(e.target===m)verdictBackupReminderClose();});/* C226 (X15) : un appui à côté ferme aussi le rappel */
+  document.body.appendChild(m);
 }
 function verdictStoreHasBusinessData(){
   return etabList().some(function(k){var d=STORE.etabs[k],i=d&&d.in||{};return !!((d.etab&&d.etab!=="Mon établissement"&&d.etab!=="Nouvel établissement")||Number(i.ca)>0||(d.histJour||[]).length||(d.services||[]).length||(d.posImports||[]).length||(d.reconciliations||[]).length);});
@@ -5098,6 +5152,7 @@ function saveIdentite(){
   try{ if(typeof majBandeauDemo==='function')majBandeauDemo(); }catch(e){}
   drawEtabs();
   if(VIEW==="pil")drawPil();
+  try{fillFormats();if(VIEW==='in')typeEtabInject();}catch(e){}/* C226 (X16) : le contrôle panier ↔ type suit le changement, sans rechargement */
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -6598,9 +6653,9 @@ function mainNavView(v){
 function go(v){
   var target=document.getElementById("v-"+v);
   if(!target){ try{toast('Écran indisponible');}catch(e){} return false; }
-  if(typeof estModeRecent==='function'&&estModeRecent()&&typeof recentRestrictedView==='function'&&recentRestrictedView(v)){
+  if(typeof estModeRecent==='function'&&estModeRecent()&&typeof recentRestrictedView==='function'&&recentRestrictedView(v)&&!(VIEW===v&&target.classList.contains('on'))){
     recentFeatureGate(v);return false;
-  }
+  }/* C226 (X17) : redessiner l'écran déjà ouvert (import en cours) n'ouvre jamais la fenêtre « exercice clôturé » */
   var previousView=VIEW,current=document.querySelector('.view.on');
   var revision=String(VERDICT_VIEW_REVISION);
   var reuse=target.getAttribute('data-verdict-render-revision')===revision&&v!=='abo';/* C214 (W28) : Abonnement suit toujours l'établissement actif */
@@ -10538,6 +10593,7 @@ function uxAlerte(mode,cle,titre,lignes,vals,continuer){
 }
 
 function refSheet(){
+  try{verdictBackupReminderClose();}catch(e){}/* C226 (X15) : un parcours qui s'ouvre ferme le rappel de sauvegarde, jamais l'inverse */
   var el=document.getElementById('refSh');
   if(!el){ el=document.createElement('div'); el.id='refSh';
     el.innerHTML='<div class="bgd" onclick="refRetourSecurise()"></div><div class="p" id="refP"></div>';
@@ -10725,7 +10781,7 @@ var ENTRY_TEXT={
   closedTitle:["J’ai un exercice clôturé","I have a closed financial year","Tengo un ejercicio cerrado","Ho un esercizio chiuso","Ich habe einen Jahresabschluss","Ik heb een afgesloten boekjaar","Tenho um exercício encerrado"],
   closedDesc:["Je saisis mon compte de résultat pour obtenir un diagnostic complet.","I enter my income statement to obtain a full diagnostic.","Introduzco mi cuenta de resultados para obtener un diagnóstico completo.","Inserisco il conto economico per ottenere una diagnosi completa.","Ich erfasse meine Gewinn- und Verlustrechnung für eine vollständige Diagnose.","Ik voer mijn resultatenrekening in voor een volledige diagnose.","Introduzo a demonstração de resultados para obter um diagnóstico completo."],
   closedYear:["Année de clôture de l’exercice","Financial year closing year","Año de cierre del ejercicio","Anno di chiusura dell’esercizio","Abschlussjahr","Afsluitjaar van het boekjaar","Ano de encerramento do exercício"],
-  closedYearHelp:["Exemple : bilan du 1er février au 31 décembre 2025 → 2025.","Example: accounts from 1 February to 31 December 2025 → 2025.","Ejemplo: cuentas del 1 de febrero al 31 de diciembre de 2025 → 2025.","Esempio: esercizio dal 1° febbraio al 31 dicembre 2025 → 2025.","Beispiel: Abschluss vom 1. Februar bis 31. Dezember 2025 → 2025.","Voorbeeld: boekjaar van 1 februari tot 31 december 2025 → 2025.","Exemplo: exercício de 1 de fevereiro a 31 de dezembro de 2025 → 2025."],
+  closedYearHelp:["Exemple : exercice du 1er juillet 2024 au 30 juin 2025 → 2025.","Example: financial year from 1 July 2024 to 30 June 2025 → 2025.","Ejemplo: ejercicio del 1 de julio de 2024 al 30 de junio de 2025 → 2025.","Esempio: esercizio dal 1° luglio 2024 al 30 giugno 2025 → 2025.","Beispiel: Geschäftsjahr vom 1. Juli 2024 bis 30. Juni 2025 → 2025.","Voorbeeld: boekjaar van 1 juli 2024 tot 30 juni 2025 → 2025.","Exemplo: exercício de 1 de julho de 2024 a 30 de junho de 2025 → 2025."],
   closedKicker:["Exercice clôturé","Closed financial year","Ejercicio cerrado","Esercizio chiuso","Abgeschlossenes Geschäftsjahr","Afgesloten boekjaar","Exercício encerrado"],
   closedBridge:["Le bilan {year} devient votre référence économique. L’activité {current} reste une période en cours, suivie séparément dans Accueil.","The {year} accounts become your economic baseline. Activity in {current} remains a current period, tracked separately on Home.","Las cuentas de {year} se convierten en su referencia económica. La actividad de {current} sigue siendo un período en curso, controlado por separado en Inicio.","Il bilancio {year} diventa il riferimento economico. L’attività {current} resta un periodo in corso, seguito separatamente nella Home.","Der Abschluss {year} wird zur wirtschaftlichen Referenz. Die Aktivität {current} bleibt eine laufende Periode und wird auf Start getrennt geführt.","De jaarrekening {year} wordt uw economische referentie. De activiteit van {current} blijft een lopende periode en wordt apart gevolgd op Home.","O exercício {year} torna-se a referência económica. A atividade de {current} continua a ser um período em curso, acompanhado separadamente no Início."],
   closedMonths:["Mois réellement travaillés sur cet exercice","Months actually operated during this financial year","Meses realmente trabajados en este ejercicio","Mesi effettivamente lavorati in questo esercizio","Tatsächlich betriebene Monate in diesem Geschäftsjahr","Werkelijk actieve maanden in dit boekjaar","Meses efetivamente trabalhados neste exercício"],
@@ -10869,7 +10925,7 @@ var V10140_TEXT={
   en:{
     qrKicker:"Answer before setup",qrTitle:"Six amounts. An immediate first reading.",qrIntro:"Copy the totals excluding tax for the same year. Nothing is sent and no account is required.",
     qrFields:[["Revenue excl. tax (€ / year)","The total for the financial year."],["Total ingredient purchases (€ / year)","Food, drinks and packaging combined."],["Total payroll cost (€ / year)","Owner, employees and contributions included."],["Rent (€ / year)","Enter 0 if you own the premises."],["Other fixed costs (€ / year)","Energy, insurance, accountant, subscriptions…"],["Platform commissions (€ / year)","Enter 0 if you do not use a platform."]],
-    qrEmptyTitle:"Partial first reading",qrEmpty:"Complete all six amounts. Enter 0 when an item is truly nil; an empty field remains unknown.",qrPartial:"Partial first reading · no score calculated",qrShows:"What your six figures already show",qrResult:"Reconstructed profit before tax",qrMaterial:"Ingredient purchases / revenue",qrPayroll:"Payroll / revenue",qrMargin:"Reconstructed margin",qrThreshold:"Preliminary estimated coverage threshold",qrImpossible:"Impossible with a variable-cost rate ≥ 100%",qrNote:"Arithmetic reading over the same period: revenue − ingredients − commissions − payroll − rent − other costs. VAT, opening pattern and covers/average spend are still required for the full diagnostic and operational indicators.",qrBack:"Back",qrComplete:"Complete my diagnostic",qrSave:"Save this first reading",qrClose:"Close — my draft stays here",qrSplit:"Your total ingredient purchases are {amount}. Split them between food and drinks in the next step: Verdict never guesses that allocation.",
+    qrEmptyTitle:"Partial first reading",qrEmpty:"Complete all six amounts. Enter 0 when an item is truly nil; an empty field remains unknown.",qrPartial:"Partial first reading · no score calculated",qrShows:"What your six figures already show",qrResult:"Reconstructed profit before tax",qrMaterial:"Ingredient purchases / revenue",qrPayroll:"Payroll / revenue",qrMargin:"Reconstructed margin",qrThreshold:"Preliminary estimated coverage threshold",qrImpossible:"Impossible with a variable-cost rate ≥ 100%",qrNote:"Arithmetic reading over the same period: revenue − ingredients − commissions − payroll − rent − other costs. VAT, opening pattern and covers/average spend are still required for the full diagnostic and operational indicators.",qrBack:"Back",qrComplete:"Complete my diagnostic",qrSave:"Save this first reading",qrClose:"Close — my draft stays here",qrSplit:"Your total ingredient purchases are {amount}. Split them between “Food purchases” and “Drink purchases”: as soon as you type one, Verdict puts the rest in the other (correct it if there is packaging too).",
     demoKicker:"Targeted demo",demoTitle:"Which problem would you like to test?",demoLead:"Verdict answers first using the same fictional business.",demoItems:["Why am I not making enough profit?","What minimum revenue must I reach?","Is my food cost drifting?","Is my payroll too heavy?","Which dishes make me money?"],demoFull:"See one complete decision",close:"Close",
     veraReplayTitle:"Vera is always available",veraReplayNote:"She explains the current screen and the figures for the active business. She never changes data and never replaces Verdict’s deterministic calculation.",veraAsk:"Ask Vera a question",veraTour:"Replay the full tour",veraContinue:"Continue where I was",
     pjFirst:"First answer",pjMissing:"Complete the five activity assumptions: your projected annual revenue will appear here.",pjKicker:"First answer · activity only",pjAnnual:"excl. tax per year",pjNote:"Calculation: {covers} covers × {basket} incl. tax × {days} opening days, then average VAT is removed. This is not yet profit or a score: costs come next.",pjSave:"Save this first forecast"
@@ -10877,7 +10933,7 @@ var V10140_TEXT={
   es:{
     qrKicker:"Respuesta antes de configurar",qrTitle:"Seis importes. Una primera lectura inmediata.",qrIntro:"Copie los totales sin IVA del mismo año. No se envía nada ni se solicita una cuenta.",
     qrFields:[["Facturación sin IVA (€ / año)","Total del ejercicio."],["Compras totales de materia (€ / año)","Alimentos, bebidas y envases."],["Coste salarial total (€ / año)","Dirección, empleados y cotizaciones."],["Alquiler (€ / año)","0 si posee el local."],["Otros gastos fijos (€ / año)","Energía, seguros, gestoría, suscripciones…"],["Comisiones de plataformas (€ / año)","0 si no utiliza plataformas."]],
-    qrEmptyTitle:"Primera lectura parcial",qrEmpty:"Complete los seis importes. Escriba 0 cuando una partida sea realmente nula; un campo vacío sigue siendo desconocido.",qrPartial:"Primera lectura parcial · sin puntuación",qrShows:"Lo que ya muestran sus seis cifras",qrResult:"Resultado reconstruido antes de impuestos",qrMaterial:"Compras de materia / facturación",qrPayroll:"Coste salarial / facturación",qrMargin:"Margen reconstruido",qrThreshold:"Primer umbral de cobertura estimado",qrImpossible:"Imposible con costes variables ≥ 100 %",qrNote:"Lectura aritmética del mismo período: facturación − materia − comisiones − salarios − alquiler − otros gastos. El IVA, los días de apertura y cubiertos/ticket siguen siendo necesarios para el diagnóstico completo.",qrBack:"Volver",qrComplete:"Completar mi diagnóstico",qrSave:"Guardar esta primera lectura",qrClose:"Cerrar — mi borrador permanece",qrSplit:"Sus compras totales de materia son {amount}. Repártalas entre alimentos y bebidas en el siguiente paso: Verdict no inventa esa distribución.",
+    qrEmptyTitle:"Primera lectura parcial",qrEmpty:"Complete los seis importes. Escriba 0 cuando una partida sea realmente nula; un campo vacío sigue siendo desconocido.",qrPartial:"Primera lectura parcial · sin puntuación",qrShows:"Lo que ya muestran sus seis cifras",qrResult:"Resultado reconstruido antes de impuestos",qrMaterial:"Compras de materia / facturación",qrPayroll:"Coste salarial / facturación",qrMargin:"Margen reconstruido",qrThreshold:"Primer umbral de cobertura estimado",qrImpossible:"Imposible con costes variables ≥ 100 %",qrNote:"Lectura aritmética del mismo período: facturación − materia − comisiones − salarios − alquiler − otros gastos. El IVA, los días de apertura y cubiertos/ticket siguen siendo necesarios para el diagnóstico completo.",qrBack:"Volver",qrComplete:"Completar mi diagnóstico",qrSave:"Guardar esta primera lectura",qrClose:"Cerrar — mi borrador permanece",qrSplit:"Sus compras totales de materia son {amount}. Repártalas entre «Compras de comida» y «Compras de bebidas»: en cuanto escribe una, Verdict pone el resto en la otra (corrija si también hay envases).",
     demoKicker:"Demostración dirigida",demoTitle:"¿Qué problema quiere probar?",demoLead:"Verdict responde primero con el mismo establecimiento ficticio.",demoItems:["¿Por qué no gano lo suficiente?","¿Qué facturación mínima debo alcanzar?","¿Se desvía mi coste de materia?","¿Mi coste salarial es demasiado alto?","¿Qué platos me generan beneficio?"],demoFull:"Ver una decisión completa",close:"Cerrar",
     veraReplayTitle:"Vera siempre está disponible",veraReplayNote:"Explica la pantalla y las cifras del establecimiento activo. Nunca modifica datos ni sustituye el cálculo determinista de Verdict.",veraAsk:"Preguntar a Vera",veraTour:"Repetir el recorrido completo",veraContinue:"Continuar donde estaba",
     pjFirst:"Primera respuesta",pjMissing:"Complete las cinco hipótesis de actividad: aquí aparecerá su facturación anual prevista.",pjKicker:"Primera respuesta · solo actividad",pjAnnual:"sin IVA al año",pjNote:"Cálculo: {covers} cubiertos × {basket} con IVA × {days} días, y se retira el IVA medio. Aún no es un resultado ni una puntuación: faltan los gastos.",pjSave:"Guardar esta primera previsión"
@@ -10885,7 +10941,7 @@ var V10140_TEXT={
   it:{
     qrKicker:"Risposta prima della configurazione",qrTitle:"Sei importi. Una prima lettura immediata.",qrIntro:"Copia i totali IVA esclusa dello stesso anno. Nulla viene inviato e non serve un account.",
     qrFields:[["Ricavi IVA esclusa (€ / anno)","Totale dell’esercizio."],["Acquisti totali di materie (€ / anno)","Alimenti, bevande e imballaggi."],["Costo totale del personale (€ / anno)","Titolare, dipendenti e contributi."],["Affitto (€ / anno)","0 se possiedi i locali."],["Altri costi fissi (€ / anno)","Energia, assicurazioni, commercialista, abbonamenti…"],["Commissioni piattaforme (€ / anno)","0 se non usi piattaforme."]],
-    qrEmptyTitle:"Prima lettura parziale",qrEmpty:"Completa i sei importi. Inserisci 0 se una voce è davvero nulla; un campo vuoto resta sconosciuto.",qrPartial:"Prima lettura parziale · nessun punteggio",qrShows:"Cosa mostrano già i sei dati",qrResult:"Risultato ricostruito ante imposte",qrMaterial:"Acquisti materie / ricavi",qrPayroll:"Personale / ricavi",qrMargin:"Margine ricostruito",qrThreshold:"Prima soglia di copertura stimata",qrImpossible:"Impossibile con costi variabili ≥ 100%",qrNote:"Lettura aritmetica dello stesso periodo: ricavi − materie − commissioni − personale − affitto − altri costi. IVA, giorni di apertura e coperti/scontrino servono ancora per la diagnosi completa.",qrBack:"Indietro",qrComplete:"Completa la diagnosi",qrSave:"Salva questa prima lettura",qrClose:"Chiudi — la bozza resta qui",qrSplit:"Gli acquisti totali di materie sono {amount}. Separali tra alimenti e bevande nel passaggio successivo: Verdict non inventa la ripartizione.",
+    qrEmptyTitle:"Prima lettura parziale",qrEmpty:"Completa i sei importi. Inserisci 0 se una voce è davvero nulla; un campo vuoto resta sconosciuto.",qrPartial:"Prima lettura parziale · nessun punteggio",qrShows:"Cosa mostrano già i sei dati",qrResult:"Risultato ricostruito ante imposte",qrMaterial:"Acquisti materie / ricavi",qrPayroll:"Personale / ricavi",qrMargin:"Margine ricostruito",qrThreshold:"Prima soglia di copertura stimata",qrImpossible:"Impossibile con costi variabili ≥ 100%",qrNote:"Lettura aritmetica dello stesso periodo: ricavi − materie − commissioni − personale − affitto − altri costi. IVA, giorni di apertura e coperti/scontrino servono ancora per la diagnosi completa.",qrBack:"Indietro",qrComplete:"Completa la diagnosi",qrSave:"Salva questa prima lettura",qrClose:"Chiudi — la bozza resta qui",qrSplit:"Gli acquisti totali di materie sono {amount}. Li ripartisca tra «Acquisti cibo» e «Acquisti bevande»: appena ne scrive uno, Verdict mette il resto nell’altro (corregga se ci sono anche imballaggi).",
     demoKicker:"Dimostrazione mirata",demoTitle:"Quale problema vuoi testare?",demoLead:"Verdict risponde prima usando la stessa attività fittizia.",demoItems:["Perché non guadagno abbastanza?","Quale fatturato minimo devo raggiungere?","Il costo materia sta aumentando?","Il costo del personale è troppo alto?","Quali piatti mi fanno guadagnare?"],demoFull:"Vedi una decisione completa",close:"Chiudi",
     veraReplayTitle:"Vera è sempre disponibile",veraReplayNote:"Spiega la schermata e i dati dell’attività attiva. Non modifica mai i dati e non sostituisce il calcolo deterministico di Verdict.",veraAsk:"Fai una domanda a Vera",veraTour:"Ripeti il percorso completo",veraContinue:"Continua da dove ero",
     pjFirst:"Prima risposta",pjMissing:"Completa le cinque ipotesi di attività: qui appariranno i ricavi annui previsti.",pjKicker:"Prima risposta · solo attività",pjAnnual:"IVA esclusa all’anno",pjNote:"Calcolo: {covers} coperti × {basket} IVA inclusa × {days} giorni, poi viene rimossa l’IVA media. Non è ancora un risultato né un punteggio: mancano i costi.",pjSave:"Salva questa prima previsione"
@@ -10893,7 +10949,7 @@ var V10140_TEXT={
   de:{
     qrKicker:"Antwort vor der Einrichtung",qrTitle:"Sechs Beträge. Eine sofortige erste Auswertung.",qrIntro:"Übertragen Sie die Nettosummen desselben Jahres. Nichts wird gesendet und kein Konto verlangt.",
     qrFields:[["Nettoumsatz (€ / Jahr)","Gesamtsumme des Geschäftsjahres."],["Gesamter Wareneinkauf (€ / Jahr)","Speisen, Getränke und Verpackung."],["Gesamte Personalkosten (€ / Jahr)","Inhaber, Beschäftigte und Abgaben."],["Miete (€ / Jahr)","0, wenn Ihnen die Räume gehören."],["Sonstige Fixkosten (€ / Jahr)","Energie, Versicherung, Steuerberatung, Abos…"],["Plattformprovisionen (€ / Jahr)","0, wenn Sie keine Plattform nutzen."]],
-    qrEmptyTitle:"Teilweise erste Auswertung",qrEmpty:"Füllen Sie alle sechs Beträge aus. Geben Sie 0 ein, wenn ein Posten wirklich null ist; ein leeres Feld bleibt unbekannt.",qrPartial:"Teilweise erste Auswertung · kein Score",qrShows:"Was Ihre sechs Zahlen bereits zeigen",qrResult:"Rekonstruiertes Ergebnis vor Steuern",qrMaterial:"Wareneinkauf / Umsatz",qrPayroll:"Personalkosten / Umsatz",qrMargin:"Rekonstruierte Marge",qrThreshold:"Erste geschätzte Deckungsschwelle",qrImpossible:"Bei variablen Kosten ≥ 100 % nicht möglich",qrNote:"Arithmetische Auswertung desselben Zeitraums: Umsatz − Ware − Provisionen − Personal − Miete − sonstige Kosten. MwSt., Öffnungstage und Gäste/Durchschnittsbon sind für die vollständige Diagnose weiter nötig.",qrBack:"Zurück",qrComplete:"Diagnose vervollständigen",qrSave:"Erste Auswertung speichern",qrClose:"Schließen — Entwurf bleibt erhalten",qrSplit:"Ihr gesamter Wareneinkauf beträgt {amount}. Teilen Sie ihn im nächsten Schritt in Speisen und Getränke auf: Verdict schätzt diese Verteilung nie.",
+    qrEmptyTitle:"Teilweise erste Auswertung",qrEmpty:"Füllen Sie alle sechs Beträge aus. Geben Sie 0 ein, wenn ein Posten wirklich null ist; ein leeres Feld bleibt unbekannt.",qrPartial:"Teilweise erste Auswertung · kein Score",qrShows:"Was Ihre sechs Zahlen bereits zeigen",qrResult:"Rekonstruiertes Ergebnis vor Steuern",qrMaterial:"Wareneinkauf / Umsatz",qrPayroll:"Personalkosten / Umsatz",qrMargin:"Rekonstruierte Marge",qrThreshold:"Erste geschätzte Deckungsschwelle",qrImpossible:"Bei variablen Kosten ≥ 100 % nicht möglich",qrNote:"Arithmetische Auswertung desselben Zeitraums: Umsatz − Ware − Provisionen − Personal − Miete − sonstige Kosten. MwSt., Öffnungstage und Gäste/Durchschnittsbon sind für die vollständige Diagnose weiter nötig.",qrBack:"Zurück",qrComplete:"Diagnose vervollständigen",qrSave:"Erste Auswertung speichern",qrClose:"Schließen — Entwurf bleibt erhalten",qrSplit:"Ihr gesamter Wareneinkauf beträgt {amount}. Teilen Sie ihn auf „Einkauf Speisen“ und „Einkauf Getränke“ auf: Sobald Sie einen Wert eingeben, setzt Verdict den Rest in das andere Feld (korrigieren Sie, falls auch Verpackungen dabei sind).",
     demoKicker:"Gezielte Demo",demoTitle:"Welches Problem möchten Sie testen?",demoLead:"Verdict antwortet zuerst mit demselben fiktiven Betrieb.",demoItems:["Warum verdiene ich nicht genug?","Welchen Mindestumsatz muss ich erreichen?","Driften meine Warenkosten ab?","Sind meine Personalkosten zu hoch?","Welche Gerichte bringen Geld?"],demoFull:"Eine vollständige Entscheidung ansehen",close:"Schließen",
     veraReplayTitle:"Vera ist immer erreichbar",veraReplayNote:"Sie erklärt den aktuellen Bildschirm und die Zahlen des aktiven Betriebs. Sie ändert keine Daten und ersetzt nie die deterministische Berechnung von Verdict.",veraAsk:"Vera eine Frage stellen",veraTour:"Vollständige Tour wiederholen",veraContinue:"Dort weitermachen, wo ich war",
     pjFirst:"Erste Antwort",pjMissing:"Vervollständigen Sie die fünf Aktivitätsannahmen; dann erscheint hier Ihr geplanter Jahresumsatz.",pjKicker:"Erste Antwort · nur Aktivität",pjAnnual:"netto pro Jahr",pjNote:"Berechnung: {covers} Gäste × {basket} brutto × {days} Öffnungstage, danach wird die durchschnittliche MwSt. abgezogen. Das ist noch kein Ergebnis und kein Score: die Kosten folgen.",pjSave:"Erste Prognose speichern"
@@ -10901,7 +10957,7 @@ var V10140_TEXT={
   nl:{
     qrKicker:"Antwoord vóór configuratie",qrTitle:"Zes bedragen. Meteen een eerste lezing.",qrIntro:"Neem de bedragen exclusief btw van hetzelfde jaar over. Er wordt niets verzonden en geen account gevraagd.",
     qrFields:[["Omzet excl. btw (€ / jaar)","Totaal van het boekjaar."],["Totale productinkoop (€ / jaar)","Eten, dranken en verpakkingen."],["Totale loonkosten (€ / jaar)","Eigenaar, personeel en bijdragen."],["Huur (€ / jaar)","0 als het pand van u is."],["Andere vaste kosten (€ / jaar)","Energie, verzekeringen, accountant, abonnementen…"],["Platformcommissies (€ / jaar)","0 als u geen platform gebruikt."]],
-    qrEmptyTitle:"Gedeeltelijke eerste lezing",qrEmpty:"Vul de zes bedragen in. Vul 0 in als een post echt nul is; een leeg veld blijft onbekend.",qrPartial:"Gedeeltelijke eerste lezing · geen score",qrShows:"Wat uw zes cijfers al tonen",qrResult:"Gereconstrueerd resultaat vóór belasting",qrMaterial:"Productinkoop / omzet",qrPayroll:"Loonkosten / omzet",qrMargin:"Gereconstrueerde marge",qrThreshold:"Eerste geschatte dekkingsdrempel",qrImpossible:"Onmogelijk bij variabele kosten ≥ 100%",qrNote:"Rekenkundige lezing over dezelfde periode: omzet − producten − commissies − lonen − huur − andere kosten. Btw, openingsdagen en gasten/gemiddelde besteding blijven nodig voor de volledige diagnose.",qrBack:"Terug",qrComplete:"Mijn diagnose afronden",qrSave:"Deze eerste lezing opslaan",qrClose:"Sluiten — mijn concept blijft",qrSplit:"Uw totale productinkoop is {amount}. Verdeel die in de volgende stap over eten en dranken: Verdict raadt die verdeling nooit.",
+    qrEmptyTitle:"Gedeeltelijke eerste lezing",qrEmpty:"Vul de zes bedragen in. Vul 0 in als een post echt nul is; een leeg veld blijft onbekend.",qrPartial:"Gedeeltelijke eerste lezing · geen score",qrShows:"Wat uw zes cijfers al tonen",qrResult:"Gereconstrueerd resultaat vóór belasting",qrMaterial:"Productinkoop / omzet",qrPayroll:"Loonkosten / omzet",qrMargin:"Gereconstrueerde marge",qrThreshold:"Eerste geschatte dekkingsdrempel",qrImpossible:"Onmogelijk bij variabele kosten ≥ 100%",qrNote:"Rekenkundige lezing over dezelfde periode: omzet − producten − commissies − lonen − huur − andere kosten. Btw, openingsdagen en gasten/gemiddelde besteding blijven nodig voor de volledige diagnose.",qrBack:"Terug",qrComplete:"Mijn diagnose afronden",qrSave:"Deze eerste lezing opslaan",qrClose:"Sluiten — mijn concept blijft",qrSplit:"Uw totale productinkoop is {amount}. Verdeel die over „Inkoop eten” en „Inkoop dranken”: zodra u er één invult, zet Verdict de rest in het andere veld (corrigeer als er ook verpakkingen zijn).",
     demoKicker:"Gerichte demo",demoTitle:"Welk probleem wilt u testen?",demoLead:"Verdict antwoordt eerst met dezelfde fictieve vestiging.",demoItems:["Waarom verdien ik niet genoeg?","Welke minimale omzet moet ik halen?","Lopen mijn productkosten op?","Zijn mijn loonkosten te zwaar?","Welke gerechten leveren geld op?"],demoFull:"Bekijk één volledige beslissing",close:"Sluiten",
     veraReplayTitle:"Vera blijft altijd bereikbaar",veraReplayNote:"Ze legt het scherm en de cijfers van de actieve zaak uit. Ze wijzigt nooit gegevens en vervangt nooit de deterministische berekening van Verdict.",veraAsk:"Stel Vera een vraag",veraTour:"Volledige rondleiding opnieuw afspelen",veraContinue:"Doorgaan waar ik was",
     pjFirst:"Eerste antwoord",pjMissing:"Vul de vijf activiteitsaannames in; uw verwachte jaaromzet verschijnt hier.",pjKicker:"Eerste antwoord · alleen activiteit",pjAnnual:"excl. btw per jaar",pjNote:"Berekening: {covers} gasten × {basket} incl. btw × {days} dagen, daarna wordt de gemiddelde btw verwijderd. Dit is nog geen resultaat of score: de kosten volgen.",pjSave:"Deze eerste prognose opslaan"
@@ -10909,7 +10965,7 @@ var V10140_TEXT={
   pt:{
     qrKicker:"Resposta antes da configuração",qrTitle:"Seis valores. Uma primeira leitura imediata.",qrIntro:"Copie os totais sem imposto do mesmo ano. Nada é enviado e nenhuma conta é exigida.",
     qrFields:[["Receita sem imposto (€ / ano)","Total do exercício."],["Compras totais de matérias (€ / ano)","Alimentos, bebidas e embalagens."],["Custo total da equipa (€ / ano)","Direção, funcionários e contribuições."],["Renda (€ / ano)","0 se o imóvel for seu."],["Outros custos fixos (€ / ano)","Energia, seguros, contabilista, subscrições…"],["Comissões de plataformas (€ / ano)","0 se não usar plataformas."]],
-    qrEmptyTitle:"Primeira leitura parcial",qrEmpty:"Preencha os seis valores. Introduza 0 quando um item for realmente nulo; um campo vazio continua desconhecido.",qrPartial:"Primeira leitura parcial · sem pontuação",qrShows:"O que os seis números já mostram",qrResult:"Resultado reconstruído antes de impostos",qrMaterial:"Compras de matérias / receita",qrPayroll:"Custo da equipa / receita",qrMargin:"Margem reconstruída",qrThreshold:"Primeiro limiar de cobertura estimado",qrImpossible:"Impossível com custos variáveis ≥ 100%",qrNote:"Leitura aritmética do mesmo período: receita − matérias − comissões − equipa − renda − outros custos. IVA, dias de abertura e clientes/ticket continuam necessários para o diagnóstico completo.",qrBack:"Voltar",qrComplete:"Completar o diagnóstico",qrSave:"Guardar esta primeira leitura",qrClose:"Fechar — o rascunho permanece",qrSplit:"As compras totais de matérias são {amount}. Separe alimentos e bebidas no passo seguinte: o Verdict nunca adivinha essa divisão.",
+    qrEmptyTitle:"Primeira leitura parcial",qrEmpty:"Preencha os seis valores. Introduza 0 quando um item for realmente nulo; um campo vazio continua desconhecido.",qrPartial:"Primeira leitura parcial · sem pontuação",qrShows:"O que os seis números já mostram",qrResult:"Resultado reconstruído antes de impostos",qrMaterial:"Compras de matérias / receita",qrPayroll:"Custo da equipa / receita",qrMargin:"Margem reconstruída",qrThreshold:"Primeiro limiar de cobertura estimado",qrImpossible:"Impossível com custos variáveis ≥ 100%",qrNote:"Leitura aritmética do mesmo período: receita − matérias − comissões − equipa − renda − outros custos. IVA, dias de abertura e clientes/ticket continuam necessários para o diagnóstico completo.",qrBack:"Voltar",qrComplete:"Completar o diagnóstico",qrSave:"Guardar esta primeira leitura",qrClose:"Fechar — o rascunho permanece",qrSplit:"As compras totais de matérias são {amount}. Reparta-as entre «Compras de comida» e «Compras de bebidas»: assim que escreve uma, o Verdict põe o resto na outra (corrija se também houver embalagens).",
     demoKicker:"Demonstração direcionada",demoTitle:"Que problema pretende testar?",demoLead:"O Verdict responde primeiro com o mesmo estabelecimento fictício.",demoItems:["Porque não ganho o suficiente?","Que receita mínima devo atingir?","O meu custo de matérias está a aumentar?","O custo da equipa é demasiado alto?","Que pratos me dão lucro?"],demoFull:"Ver uma decisão completa",close:"Fechar",
     veraReplayTitle:"A Vera está sempre disponível",veraReplayNote:"Explica o ecrã e os números do estabelecimento ativo. Nunca altera dados nem substitui o cálculo determinístico do Verdict.",veraAsk:"Fazer uma pergunta à Vera",veraTour:"Repetir o percurso completo",veraContinue:"Continuar onde estava",
     pjFirst:"Primeira resposta",pjMissing:"Complete as cinco hipóteses de atividade: a receita anual prevista aparecerá aqui.",pjKicker:"Primeira resposta · apenas atividade",pjAnnual:"sem imposto por ano",pjNote:"Cálculo: {covers} clientes × {basket} com IVA × {days} dias, depois retira-se o IVA médio. Ainda não é um resultado nem uma pontuação: os custos vêm a seguir.",pjSave:"Guardar esta primeira previsão"
@@ -11022,12 +11078,15 @@ function qrVersCompte(){
 function qrContinuer(){
   if(!qrValide())return;var r=qrLire(),z=v10140Text();qrSauver();refFormulaire();
   setTimeout(function(){
-    /* C214 (W34) : le total matière de la lecture rapide est repris (en nourriture) au lieu d'être redemandé ; seule la part
-       boissons, que la lecture rapide ne donne pas, reste à déplacer si on la connaît. */
-    var vals={'rf-ca':r.ca,'rf-ms':r.ms,'rf-loy':r.loy,'rf-cf':r.cf,'rf-com':r.com,'rf-nour':r.mat,'rf-boi':0};
+    /* C226 (X14) : le total matière de la lecture rapide est repris tel quel ; nourriture et boissons restent vides (un 0 serait
+       une réponse inventée). Dès que le patron tape l'une, Verdict met le reste du total dans l'autre, qu'il peut corriger. */
+    var vals={'rf-ca':r.ca,'rf-ms':r.ms,'rf-loy':r.loy,'rf-cf':r.cf,'rf-com':r.com};
     Object.keys(vals).forEach(function(id){var e=document.getElementById(id);if(e)e.value=String(vals[id]).replace('.',',');});
+    window.__qrMatTotal=r.mat>0?r.mat:null;
+    var _en=document.getElementById('rf-nour'),_eb=document.getElementById('rf-boi');
+    if(_en&&_eb&&r.mat>0){var _lie=function(a,b){a.addEventListener('input',function(){a.removeAttribute('data-qr-auto');var v=num(a.value);if(v!=null&&v>=0&&v<=r.mat&&(b.getAttribute('data-qr-auto')==='1'||String(b.value).trim()==='')){b.value=String(Math.round((r.mat-v)*100)/100).replace('.',',');b.setAttribute('data-qr-auto','1');try{refApercu();}catch(e){}}});};_lie(_en,_eb);_lie(_eb,_en);}
     var p=document.querySelector('#refP .ux-step[data-step="2"] .note');
-    var _qrT=(typeof LOCALE==='undefined'||LOCALE==='fr')?'Vos achats matière ({amount}) sont repris en « Achats nourriture ». Si une part concerne les boissons, déplacez-la dans « Achats boissons » : le total doit rester {amount}.':z.qrSplit;
+    var _qrT=(typeof LOCALE==='undefined'||LOCALE==='fr')?'Vos achats matière totaux : {amount}. Répartissez-les entre « Achats nourriture » et « Achats boissons » : dès que vous tapez l’un, Verdict met le reste dans l’autre (corrigez s’il y a aussi des emballages).':z.qrSplit;
     if(p)p.insertAdjacentHTML('afterend','<div class="ux-zero">'+v10140Fill(_qrT,{amount:'<b>'+eur(r.mat)+'</b>'})+'</div>');
     try{sauverBrouillon('existing',1);}catch(e){}
   },0);
@@ -13183,7 +13242,10 @@ function refApercu(){
    ['loy','loyer'],['cf','autres charges fixes']].forEach(function(p){
     if(r[p[0]]==null)abs.push(p[1]);
   });
-  var cvT=n(r.nour)+n(r.boi)+n(r.emb)+n(r.com), fixe=n(r.ms)+n(r.loy)+n(r.cf), res=r.ca-cvT-fixe;
+  /* C226 (X14) : tant que le total de la lecture rapide n'est pas réparti, il compte en entier dans l'aperçu. */
+  var _qt=(r.nour==null&&r.boi==null&&window.__qrMatTotal>0)?window.__qrMatTotal:0;
+  if(_qt)abs=abs.filter(function(x){return x!=='achats nourriture'&&x!=='achats boissons';});
+  var cvT=n(r.nour)+n(r.boi)+_qt+n(r.emb)+n(r.com), fixe=n(r.ms)+n(r.loy)+n(r.cf), res=r.ca-cvT-fixe;
   var mn=r.ca>0?res/r.ca*100:0;
   /* V8.6 — Steven : « j'écris 1500 en loyer et ça me sort 125, il change mes
      valeurs à sa sauce ». La conversion était juste (annuel → mensuel) mais
@@ -13194,7 +13256,8 @@ function refApercu(){
   if(r.ms!=null)  tr.push('Masse salariale <b>'+eur(r.ms)+'/an</b> \u2192 <b>'+eur2(r.ms/12)+'/mois</b>');
   if(r.cf!=null)  tr.push('Autres charges fixes <b>'+eur(r.cf)+'/an</b> \u2192 <b>'+eur2(r.cf/12)+'/mois</b>');
   tr.push('Panier moyen <b>'+eur2(r.pm)+' TTC</b>'+(num((document.getElementById('rf-pm')||{}).value)>0?' (celui que vous avez saisi)':' (calcul\u00e9 : chiffre d\u2019affaires TTC \u00f7 couverts)'));
-  tr.push('Commandes par jour <b>'+fr(r.cmdj,2)+'</b> (couverts \u00f7 jours ouverts dans l\u2019ann\u00e9e)');
+  if(_qt)tr.push('Achats mati\u00e8re <b>'+eur(_qt)+'</b> \u00e0 r\u00e9partir entre nourriture et boissons');
+  tr.push('Commandes par jour <b>'+fr(r.cmdj,1)+'</b> (couverts \u00f7 jours ouverts dans l\u2019ann\u00e9e)');/* C226 (X17) : « 74,7 », jamais « 74,70 » */
   var rec=null; try{ rec=refRecoupement(); }catch(e){}
   box.innerHTML='<b>Aper\u00e7u de votre exercice</b>'+
     (rec?'<span style="color:#f87171">'+refRecoupementMsg(rec)+'</span><br>':'')+

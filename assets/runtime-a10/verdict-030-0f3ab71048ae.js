@@ -20,8 +20,10 @@ css.textContent =
 '#v-pil,#v-data,#v-carte,#v-priorities,#v-x,#v-hist,#v-dec,#v-ca,#v-sal,#v-achats,#v-obj,#v-alertes,#v-sante,#v-stock,#v-planning,#v-audit,#v-reco{position:relative}'+
 '.v5lock{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:90px 24px 24px;text-align:center;background:rgba(5,5,6,.55);backdrop-filter:blur(14px) saturate(.8);-webkit-backdrop-filter:blur(14px) saturate(.8);border-radius:0}'+
 '.v5lock .li{font-size:34px;margin-bottom:12px}'+
-'.v5lock p{max-width:430px;font-weight:800;font-size:16px;line-height:1.45}'+
-'.v5lock small{display:block;color:#8b8b98;font-weight:500;font-size:13px;margin-top:8px;line-height:1.55}'+
+'html.vd-pil-attente #v-pil.on:not(.p41-on){visibility:hidden}'+
+'.v5lock p{max-width:430px;font-weight:800;font-size:16px;line-height:1.45;color:#f4f6f8!important;background:rgba(12,14,18,.94);padding:16px 18px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.28)}'+/* C226 (X12) : lisible en thème clair comme en sombre */
+'.v5lock small{display:block;color:#d4dae2!important;font-weight:500;font-size:13px;margin-top:8px;line-height:1.55}'+
+'.v5lock .v5btn.v5sec{background:#fff;color:#14161a;box-shadow:0 4px 18px rgba(0,0,0,.18)}'+
 '.v5btn{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:13px 22px;border-radius:11px;font-weight:800;font-size:14px;background:#10b981;color:#03140d;box-shadow:0 6px 26px rgba(16,185,129,.3)}'+
 '.v5note{font-size:12px;color:#8b8b98;margin-top:9px}'+
 '.v5conf{display:flex;align-items:center;gap:12px;background:#0d0d10;border:1px solid #1d1d24;border-radius:13px;padding:13px 16px;margin-bottom:14px;font-size:13px}'+
@@ -76,7 +78,10 @@ function navLocks(){
 function lockHTML(kind){
   var info=lockInfo(kind);
   var txt='<p>'+info.t+'<small>'+info.d+'</small></p>';
+  /* C226 (X13) : sous Pilotage, le verrou « Coût par service » mène aussi à l'écran Équipe, compris dans la formule. */
+  var equipe=false;try{equipe=kind==='planning'&&typeof window.verdictNiveau==='function'&&window.verdictNiveau()==='pilotage';}catch(e){}
   return '<div class="li">\uD83D\uDD12</div>'+txt+
+    (equipe?'<button class="v5btn v5sec" onclick="go(\'sal\')">Voir mon équipe (comprise dans Pilotage)</button>':'')+
     '<button class="v5btn" onclick="v5upgrade()">'+t('pro.cta')+'</button>';
 }
 window._navLocks=navLocks;

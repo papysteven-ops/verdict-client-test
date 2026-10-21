@@ -459,6 +459,10 @@ html,body{max-width:100%;overflow-x:hidden}
 #countList .step{flex:1;max-width:236px;min-width:0}
 /* C217 W67 : à partir de 768 px la ligne ne s'étire pas : le pas garde la place de « − », du champ, de « + » et de sa bordure. */
 #countList .step{min-width:152px}
+/* C229 (X28) : le pas garde sa place sans écraser « à commander » (coupé « à / comma / nder » à 1 024 px). */
+#countList .need{white-space:nowrap;flex:0 0 auto}
+/* C229 (X36) : en équipe, ni Vera, ni pont vers Verdict, ni factures, ni reprise de la Carte. */
+html.staff-mode #vInvBtn,html.staff-mode #inventoryVerdictBridge,html.staff-mode #facturesInv,html.staff-mode #facturesCarte,html.staff-mode [id^="repriseVerdict"],html.staff-mode #shared-r32{display:none!important}
 #countList .step input{flex:1;width:0;min-width:70px;font-size:16px;font-variant-numeric:tabular-nums}
 #countList .step button{flex:0 0 40px;width:40px}
 #countList .count-clear{flex:0 0 40px;width:40px;height:44px;border-radius:10px;color:var(--mut);font-size:24px;background:transparent}
@@ -701,9 +705,9 @@ html,body{max-width:100%;overflow-x:hidden}
 html[data-inventory-share-role] #siteSeg .add{display:none!important}
 
 </style>
-<script data-mono="./shared-inventory-r32.js" src="../../assets/runtime-a10/inventory-010-6ed511ceeed6.js"></script>
+<script data-mono="./shared-inventory-r32.js" src="../../assets/runtime-a10/inventory-010-aec23afa60af.js"></script>
 <script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/inventory-011-b00023ca8807.js"></script>
-<script src="../../assets/runtime-a10/inventory-012-927b4e7d576e.js"></script>
+<script src="../../assets/runtime-a10/inventory-012-b240f745070c.js"></script>
 <script data-mono="./supplier-ordering-v1.js" src="../../assets/runtime-a10/inventory-013-679a03798c7f.js"></script>
 <script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-aa8c37adba3f.js"></script>
 <script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-236122e8e39f.js"></script>
@@ -1563,7 +1567,7 @@ html.p40.p40-inv.vd-workspace-light .kpi .v{color:#173d76!important}
 html.p40.p40-inv.vd-workspace-light .v451-inv-state{background:#eef5fc!important;border-color:#b9d5ed!important;color:#17212b!important}
 </style>
 <script id="p40-js" data-mono="../../premium-r40.js" src="../../assets/runtime-a10/inventory-025-24da5cc61376.js"></script>
-<script id="pinv-js" data-mono="../../premium-inv-r74.js" src="../../assets/runtime-a10/inventory-026-771c4ea451e9.js"></script>
+<script id="pinv-js" data-mono="../../premium-inv-r74.js" src="../../assets/runtime-a10/inventory-026-dac679aee4ba.js"></script>
 <style  data-mono="../../control-ecarts-v1.css">
 .vc{margin:22px 0;color:var(--text,#edf0f3);font-size:16px;line-height:1.5}.vc h3{font-size:24px;margin:5px 0 12px}.vc p{color:var(--muted,#adb5bf)}.vc-eyebrow{font-size:13px;font-weight:800;letter-spacing:.08em}.vc-panel{border:1px solid #394048;border-radius:24px;background:linear-gradient(135deg,#1c252a,#101418 72%);padding:20px;margin:16px 0;overflow:hidden}.vc-panel summary{cursor:pointer;font-weight:750;font-size:18px;min-height:44px;align-content:center}.vc form{margin-top:16px}.vc label{display:block;margin:12px 0}.vc label>span{display:block;font-size:14px;margin-bottom:6px;color:#c3cbd2}.vc input:not([type=checkbox]){display:block;width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #485360;border-radius:12px;background:#090d10;color:#fff;font-size:16px;min-height:46px}.vc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.vc-grid strong{display:block;font-size:24px;margin-top:6px}.vc fieldset{border:1px solid #42494f;border-radius:16px;min-width:0;margin:14px 0}.vc button{border:1px solid #55745f;border-radius:14px;background:linear-gradient(135deg,#233c31,#17251f);color:#edf8f0;padding:13px 17px;font-size:16px;font-weight:700;min-height:46px;cursor:pointer;white-space:normal}.vc button:hover{border-color:#36ca77;box-shadow:0 0 18px #22c55e20}.vc button:focus-visible,.vc input:focus-visible{outline:3px solid #99b9ed;outline-offset:3px}.vc-confirm{display:flex!important;gap:12px;align-items:flex-start;font-size:14px}.vc-confirm input{margin-top:5px;min-width:20px;height:20px}.vc-result{border-left:4px solid #eab308;background:#eab30809;border-radius:16px;padding:16px;margin:16px 0}.vc-result>strong{display:block;font-size:30px;margin-top:12px}.vc-badge{display:inline-block;font-size:14px;border:1px solid #67737f;border-radius:18px;padding:5px 10px;color:#cad2da}.vc-badge[data-tone=green]{color:#3ade84;border-color:#268a51;background:#22c55e15}.vc-badge[data-tone=yellow]{color:#f6d858;border-color:#ab8526;background:#eab30815}.vc-priorities button{display:block;width:100%;text-align:left;margin:12px 0;border-left:4px solid #ef4444}.vc-priorities strong,.vc-priorities span{display:block}.vc [data-vc-error]{color:#ff9c91}.vc details[open]{animation:vc-reveal .22s ease-out}@keyframes vc-reveal{from{opacity:.6;transform:translateY(5px)}to{opacity:1;transform:none}}@media(max-width:380px){.vc-grid{grid-template-columns:1fr}.vc-panel{padding:16px}.vc h3{font-size:22px}}@media(prefers-reduced-motion:reduce){.vc details[open]{animation:none}}
 html.p40-app #v-pil.on.p41-on > #vc-main{display:block!important;order:2;scroll-margin-top:150px}#vc-entry{margin:8px 0 14px}#vc-entry button{width:100%}.vc-panel form{scroll-margin-top:150px}

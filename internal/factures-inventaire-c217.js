@@ -183,6 +183,8 @@
   function nbFr(n, d) { if (n == null || !isFinite(n)) return '—'; return Number(n).toLocaleString('fr-FR', { minimumFractionDigits: d == null ? 2 : d, maximumFractionDigits: d == null ? 2 : d }); }
   function jj(d) { d = String(d || '').slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d.split('-').reverse().join('/') : ''; }
   function demo() { try { return !!g('DEMO'); } catch (e) { return false; } }
+  /* C229 (X36) : en équipe (lien du patron) ou en inventaire partagé, rien de Verdict ni des factures du patron. */
+  function equipe() { try { return !!g('STAFF') || !!g('SHARED'); } catch (e) { return true; } }
   function verdictF() { try { return typeof w.matiereVerdictFrame === 'function' ? w.matiereVerdictFrame() : null; } catch (e) { return null; } }
   function planInventaire() { try { var P = w.top && w.top.VerdictPlan; return !!(P && typeof P.actif === 'function' && P.actif() && P.etat().niveau === 'inventaire'); } catch (e) { return false; } }
   function rows() { try { return w.siteRows(DBi().site) || []; } catch (e) { return []; } }
@@ -216,7 +218,7 @@
     if (esp === 'bar' || (!esp && BOISSON.test(norm(nom)))) return bar || cui || D.space;
     return cui || D.space;
   }
-  function produitParNom(nom) { var k = norm(nom), r = rows(); for (var i = 0; i < r.length; i++) if (norm(r[i].p.name) === k) return r[i]; return null; }
+  function produitParNom(nom) { var k = norm(nom), r = rows(); for (var i = 0; i < r.length; i++) if (norm(r[i].p.name) === k) return r[i]; for (var j = 0; j < r.length; j++) if (r[j].p.ingredient && norm(r[j].p.ingredient) === k) return r[j]; return null; }
   function produitParId(id) { var r = rows(); for (var i = 0; i < r.length; i++) if (r[i].p.id === id) return r[i]; return null; }
   function creerProduit(o) {
     var D = DBi(), z = zonePour(o.name, o.esp); if (!D.spaces[z]) return null;
@@ -250,7 +252,8 @@
       var av = Number(p.price) > 0 ? Number(p.price) : null;
       if (av != null && Math.abs(av - r.prix) < 0.00005) { if (d) p.priceDate = d; res.confirmes.push(p.name); return; }
       p.price = r.prix; if (d) p.priceDate = d; journal(D, cible, av, r.prix, l);
-      res.maj.push(p.name + ' ' + (av == null ? '—' : nbFr(av)) + ' → ' + nbFr(r.prix) + ' € / ' + (p.unit || 'unité'));
+      /* C229 (X30) : sans ancien prix, pas de « — → » : « premier prix ». */
+      res.maj.push(av == null ? p.name + ' : ' + nbFr(r.prix) + ' € / ' + (p.unit || 'unité') + ' (premier prix)' : p.name + ' ' + nbFr(av) + ' → ' + nbFr(r.prix) + ' € / ' + (p.unit || 'unité'));
     });
     if (res.maj.length || res.ajoutes.length || res.confirmes.length) { if (D.priceHistory && D.priceHistory.length > 200) D.priceHistory = D.priceHistory.slice(-200); sauver(); }
     return res;
@@ -336,7 +339,7 @@
     return '<select class="fi-prod" style="min-height:44px;width:100%;font:inherit;font-size:15px;padding:8px 10px;border-radius:12px;border:1px solid var(--line,#cbd5dc);background:var(--card,#fff);color:inherit" aria-label="Produit de l’Inventaire pour ' + esc(l.libelle) + '"><option value="__nouveau__"' + (def === '__nouveau__' ? ' selected' : '') + '>➕ Nouveau produit « ' + esc(l.libelle) + ' »</option>' + opts + '<option value="__ignorer__">Ignorer cette ligne</option></select>' + (c.statut === 'probable' ? '<small class="fi-a">proposition à confirmer</small>' : '');
   }
   function carteNative() {
-    if (demo() || !w.VerdictFacturesXML) return '';
+    if (demo() || equipe() || !w.VerdictFacturesXML) return '';
     var D = DBi(), f = EN_COURS, h = '<div class="card" id="facturesInv"><h3>Factures fournisseurs<span class="n">prix de vos produits</span></h3>';
     h += '<p class="sub" style="margin:0 0 10px">Déposez la facture électronique de votre fournisseur (XML Factur-X, UBL ou PDF Factur-X)&nbsp;: ses prix mettent à jour vos produits, donc la valeur du stock et vos commandes. Rien n’est enregistré sans votre validation.</p>';
     if (!f) h += '<label class="btn ghost fi-depot" style="display:block;text-align:center;cursor:pointer">Déposer une facture<input type="file" accept=".xml,.pdf,application/xml,text/xml,application/pdf" onchange="invFacLire(this)" style="display:none"></label>';
@@ -363,7 +366,7 @@
   /* ── W63 · Pilotage préparé à la demande quand l'Inventaire est ouvert seul (essai, Pilotage, Pro) ── */
   var demande = 0;
   function verdictDemande() {
-    if (verdictF() || planInventaire() || demo()) return false;
+    if (verdictF() || planInventaire() || demo() || equipe()) return false;
     try { if (w.parent === w || !w.parent.VerdictUnifiedShell) return false; } catch (e) { return false; }
     if (Date.now() - demande < 20000) return true;
     demande = Date.now();
@@ -377,33 +380,73 @@
 
   /* ── W58 · ingrédients des fiches → produits (une seule question) ; ventes × fiches → commande intelligente ── */
   var CLE_IGN = 'verdict:inv:reprise-verdict-ignoree:v1';
+  /* C229 (X25) : ce qui n'est pas un produit qu'on compte (plat du jour, marchandise par assiette) n'est jamais proposé. */
+  var NON_COMPTABLE = /plat du jour|marchandise par assiette|par assiette/i;
+  function premierMot(n) { var m = norm(n).split(' ').filter(function (x) { return x.length >= 4 && !/^(avec|sans|pour|frais|fraiche|maison)$/.test(x); })[0] || ''; return m.replace(/(s|x)$/, ''); }
+  function dimIngredient(i) { var t = String(i && i.type || '').toUpperCase(); return t === 'KG' ? 'm' : (t === 'L' || /VOL|LIT/.test(t)) ? 'v' : 'p'; }
   function ingredientsAbsents(F) {
     var V = F && F.DB; if (!V || !Array.isArray(V.ing)) return [];
-    var deja = {}; rows().forEach(function (x) { deja[norm(x.p.name)] = 1; });
+    var deja = {}; rows().forEach(function (x) { deja[norm(x.p.name)] = 1; if (x.p.ingredient) deja[norm(x.p.ingredient)] = 1; });
     var esp = {}; (V.plats || []).forEach(function (p) { (p.rec || []).forEach(function (r) { var k = norm(Array.isArray(r) ? r[0] : r && (r.nom || r.name)); if (k) { esp[k] = esp[k] || {}; esp[k][p.esp || 'cuisine'] = (esp[k][p.esp || 'cuisine'] || 0) + 1; } }); });
-    return V.ing.filter(function (i) { return i && i.nom && !deja[norm(i.nom)]; }).map(function (i) { var e = esp[norm(i.nom)] || {}; return { ing: i, esp: (e.bar || 0) > (e.cuisine || 0) ? 'bar' : (e.cuisine ? 'cuisine' : null) }; });
+    return V.ing.filter(function (i) { return i && i.nom && !deja[norm(i.nom)] && !NON_COMPTABLE.test(i.nom); }).map(function (i) { var e = esp[norm(i.nom)] || {}; return { ing: i, esp: (e.bar || 0) > (e.cuisine || 0) ? 'bar' : (e.cuisine ? 'cuisine' : null) }; });
   }
-  function empreinte(list) { return list.map(function (x) { return norm(x.ing.nom); }).sort().join('|'); }
+  /* C229 (X24) : un produit déjà compté sous un autre nom (« Entrecote VBF ») est proposé pour l'ingrédient de la fiche
+     (« Entrecôte de bœuf ») : même premier mot, même grandeur (kg, litre ou pièce), un seul candidat. Relié = pas de doublon,
+     et le prix de ses factures va dans la fiche. */
+  function propositions(list) {
+    var nomsIng = {}; list.forEach(function (x) { nomsIng[norm(x.ing.nom)] = 1; });
+    /* un produit qui porte déjà le nom exact d'un ingrédient de la Carte y est relié par son nom : jamais proposé pour un autre */
+    var tous = {}; try { (verdictF().DB.ing || []).forEach(function (g) { tous[norm(g.nom)] = 1; }); } catch (e) {}
+    var libres = rows().filter(function (x) { return !x.p.ingredient && !tous[norm(x.p.name)]; }), pris = {};
+    return list.map(function (x) {
+      var mot = premierMot(x.ing.nom); if (!mot) return null;
+      var c = libres.filter(function (r) { if (pris[r.p.id] || nomsIng[norm(r.p.name)]) return false; var d = dim(r.p.unit); return premierMot(r.p.name) === mot && (!d || d[0] === dimIngredient(x.ing)); });
+      if (c.length !== 1) return null; pris[c[0].p.id] = 1; return { ing: x.ing, produit: c[0].p };
+    }).filter(Boolean);
+  }
+  /* C229 (X25) : un prix n'est repris que s'il est réel (facture, saisi par le patron) ; un prix du catalogue de départ
+     (SEED_CAT, prix type) ou proposé par Vera reste vide, comme le dit l'Inventaire. */
+  function prixReel(i, F) {
+    var pr = Number(i.prix); if (!(pr > 0)) return null;
+    if (i.prixSource === 'facture' || i.prixSource === 'patron') return Math.round(pr * 10000) / 10000;
+    if (i.cpPrixType || i.prixSource === 'type') return null;
+    var seed = null; try { seed = F.SEED_CAT; } catch (e) {}
+    if (Array.isArray(seed) && seed.some(function (s) { return norm(s[0]) === norm(i.nom) && Math.abs(Number(s[2]) - pr) < 0.00005; })) return null;
+    return Math.round(pr * 10000) / 10000;
+  }
+  function empreinte(list, props) { return list.map(function (x) { return norm(x.ing.nom); }).sort().join('|') + '#' + (props || []).map(function (p) { return p.produit.id + '=' + norm(p.ing.nom); }).join('|'); }
   function dernierFournisseur(V, nom) { var k = norm(nom), a = (V.achats || []).filter(function (x) { return norm(x.art) === k || norm(x.produitId) === k; }); a.sort(function (x, y) { return String(x.d || '').localeCompare(String(y.d || '')); }); return a.length ? a[a.length - 1].four || '' : ''; }
+  function texteBouton(n, m) { return (n - m > 0 ? 'Ajouter les ' + (n - m) + ' produit' + (n - m > 1 ? 's' : '') : 'Valider') + (m ? (n - m > 0 ? ' et relier ' : ' : relier ') + m + ' produit' + (m > 1 ? 's' : '') + ' déjà compté' + (m > 1 ? 's' : '') : ''); }
   function carteReprise() {
-    if (demo()) return '';
+    if (demo() || equipe()) return '';
     var F = verdictF(); if (!F) return '';
     var list = ingredientsAbsents(F); if (!list.length) return '';
+    var props = propositions(list), emp = empreinte(list, props);
     var ign = ''; try { ign = localStorage.getItem(CLE_IGN + ':' + DBi().site) || ''; } catch (e) {}
-    if (ign === empreinte(list)) return '';
-    var n = list.length, ex = list.slice(0, 4).map(function (x) { return x.ing.nom; }).join(', ') + (n > 4 ? '…' : '.');
-    return '<div class="card" id="repriseVerdict" style="border-color:rgba(34,197,94,.45)"><h3>Votre Carte connaît ' + n + ' ingrédient' + (n > 1 ? 's' : '') + ' absent' + (n > 1 ? 's' : '') + ' de l’Inventaire</h3>' +
-      '<p class="sub" style="margin:0 0 10px">' + esc(ex) + ' Ajoutez-les en un geste&nbsp;: nom, unité, fournisseur et prix d’achat sont repris de vos fiches et de vos factures. Le stock idéal et le minimum restent à vous.</p>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="inventaireRepriseVerdict()">Ajouter les ' + n + ' produits</button><button class="btn ghost" onclick="inventaireRepriseIgnorer()">Plus tard</button></div></div>';
+    if (ign === emp) return '';
+    var n = list.length, ex = list.filter(function (x) { return !props.some(function (p) { return p.ing === x.ing; }); }).slice(0, 4).map(function (x) { return x.ing.nom; }).join(', ');
+    var h = '<div class="card" id="repriseVerdict" data-empreinte="' + esc(emp) + '" style="border-color:rgba(34,197,94,.45)"><h3>Votre Carte connaît ' + n + ' ingrédient' + (n > 1 ? 's' : '') + ' absent' + (n > 1 ? 's' : '') + ' de l’Inventaire</h3>' +
+      (ex ? '<p class="sub" style="margin:0 0 8px">' + esc(ex) + (n - props.length > 4 ? '…' : '.') + ' Nom, unité et fournisseur sont repris de vos fiches et de vos factures ; seul un prix réel (facture, saisi par vous) est repris, jamais un prix type. Le stock idéal et le minimum restent à vous.</p>' : '');
+    if (props.length) h += '<p class="sub" style="margin:0 0 6px"><b>Déjà dans votre Inventaire sous un autre nom&nbsp;?</b> Relié, le produit garde son nom et ses comptages, et le prix de ses factures va dans la fiche.</p>' + props.map(function (p, k) { return '<label style="display:flex;gap:8px;align-items:center;margin:0 0 6px"><input type="checkbox" class="c229-lien" data-k="' + k + '" checked onchange="inventaireRepriseLibelle()"> <span>« ' + esc(p.produit.name) + ' » = « ' + esc(p.ing.nom) + ' » de vos fiches</span></label>'; }).join('');
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn c229-go" onclick="inventaireRepriseVerdict()">' + esc(texteBouton(n, props.length)) + '</button><button class="btn ghost" onclick="inventaireRepriseIgnorer()">Plus tard</button></div></div>';
+    return h;
   }
-  w.inventaireRepriseVerdict = function () {
+  w.__inventaireC229 = { propositions: propositions, ingredientsAbsents: ingredientsAbsents, prixReel: prixReel }; /* pour les tests (08-TESTS/consolidation/c229) */
+  w.inventaireRepriseLibelle = function () { var n = ingredientsAbsents(verdictF()).length; [].forEach.call(doc.querySelectorAll('[id^="repriseVerdict"]'), function (c) { var m = c.querySelectorAll('.c229-lien:checked').length, b = c.querySelector('.c229-go'); if (b) b.textContent = texteBouton(n, m); }); };
+  w.inventaireRepriseVerdict = function (ev) {
     var F = verdictF(), V = F && F.DB; if (!V) return;
-    var list = ingredientsAbsents(F), n = 0;
-    list.forEach(function (x) { var i = x.ing, t = String(i.type || '').toUpperCase(); var c = creerProduit({ name: i.nom, unit: t === 'KG' ? 'kg' : t === 'L' ? 'L' : 'pièce', price: i.cpPrixType || i.prixSource === 'type' ? null : (Number(i.prix) > 0 ? Math.round(Number(i.prix) * 10000) / 10000 : null), priceDate: i.prixDate || '', sup: dernierFournisseur(V, i.nom), esp: x.esp, origine: 'fiche' }); if (c) n++; });
-    if (n) { sauver(); try { w.toast(n + (n > 1 ? ' produits ajoutés' : ' produit ajouté') + ' depuis votre Carte ✓'); } catch (e) {} }
+    var list = ingredientsAbsents(F), props = propositions(list), emp = empreinte(list, props);
+    var carte = null; [].forEach.call(doc.querySelectorAll('[id^="repriseVerdict"]'), function (c) { if (c.getClientRects().length) carte = c; }); carte = carte || doc.getElementById('repriseVerdict');
+    /* X25 : on ajoute exactement ce qui est affiché ; si la Carte a changé depuis, la carte est redessinée d'abord. */
+    if (carte && carte.getAttribute('data-empreinte') !== emp) { redessiner(); try { w.toast('Votre Carte a changé : vérifiez la liste, puis validez.'); } catch (e) {} return; }
+    var coches = {}; if (carte) [].forEach.call(carte.querySelectorAll('.c229-lien'), function (cb) { if (cb.checked) coches[cb.getAttribute('data-k')] = 1; });
+    var relies = 0, n = 0, lies = {};
+    props.forEach(function (p, k) { if (!coches[k]) return; p.produit.ingredient = p.ing.nom; lies[norm(p.ing.nom)] = 1; relies++; });
+    list.forEach(function (x) { var i = x.ing; if (lies[norm(i.nom)]) return; var t = String(i.type || '').toUpperCase(); var c = creerProduit({ name: i.nom, unit: t === 'KG' ? 'kg' : t === 'L' ? 'L' : 'pièce', price: prixReel(i, F), priceDate: i.prixSource === 'facture' ? (i.prixDate || '') : '', sup: dernierFournisseur(V, i.nom), esp: x.esp, origine: 'fiche' }); if (c) { c.p.ingredient = i.nom; n++; } });
+    if (n || relies) { sauver(); try { w.toast((n ? n + (n > 1 ? ' produits ajoutés' : ' produit ajouté') : '') + (n && relies ? ', ' : '') + (relies ? relies + (relies > 1 ? ' produits reliés' : ' produit relié') : '') + ' depuis votre Carte ✓'); } catch (e) {} }
     calculerDemande(true); redessiner();
   };
-  w.inventaireRepriseIgnorer = function () { try { localStorage.setItem(CLE_IGN + ':' + DBi().site, empreinte(ingredientsAbsents(verdictF()))); } catch (e) {} redessiner(); };
+  w.inventaireRepriseIgnorer = function () { var F = verdictF(), l = ingredientsAbsents(F); try { localStorage.setItem(CLE_IGN + ':' + DBi().site, empreinte(l, propositions(l))); } catch (e) {} redessiner(); };
 
   /* Ventes par plat (caisse) × fiches → consommation par jour de chaque produit relié. Période : les 8 dernières
      semaines si la caisse les couvre, sinon les mêmes semaines de l'an passé, sinon les 8 dernières semaines connues. */
@@ -416,9 +459,9 @@
     var last = dates[dates.length - 1]; return last ? { de: ajoute(last, -55), a: last, nature: 'dernières connues' } : null;
   }
   function calculerDemande(force) {
-    var F = verdictF(), V = F && F.DB, D = DBi(); if (!V || !D || demo()) return false;
+    var F = verdictF(), V = F && F.DB, D = DBi(); if (!V || !D || demo() || equipe()) return false;
     var ventes = Array.isArray(V.dishSales) ? V.dishSales : []; if (!ventes.length) return false;
-    var prods = rows(), byNom = {}; prods.forEach(function (x) { byNom[norm(x.p.name)] = x.p; }); if (!prods.length) return false;
+    var prods = rows(), byNom = {}; prods.forEach(function (x) { byNom[norm(x.p.name)] = x.p; if (x.p.ingredient) byNom[norm(x.p.ingredient)] = x.p; }); if (!prods.length) return false;
     var dates = ventes.map(function (s) { return String(s.date || '').slice(0, 10); }).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); }); dates = Array.from(new Set(dates)).sort();
     var P = choisirPeriode(dates); if (!P) return false;
     var plats = {}; (V.plats || []).forEach(function (p) { if (p && p.nom) plats[norm(p.nom)] = p; });
@@ -489,6 +532,45 @@
   w.inventaireRemplirRapprochement = function (id) { var f = doc.querySelector('#vc-main form[data-vc-form="check"]'); if (f) remplirRapprochement(f, id); };
   try { new MutationObserver(function () { if (doc.getElementById('vc-main') && !doc.querySelector('#vc-main .c217-choix')) aideRapprocher(); }).observe(doc.body || doc.documentElement, { childList: true, subtree: true }); } catch (e) {}
 
+  /* ── C229 (X36) · « Le même inventaire pour votre équipe » : le vrai lien, par le compte (le portail R32 n'existe plus) ── */
+  w.inventairePartagerEquipe = function () {
+    var old = doc.getElementById('equipeSheet'); if (old) old.remove();
+    var etab = ''; try { if (w.VerdictSyncEspaceInv && w.VerdictSyncEspaceInv.actif()) etab = w.VerdictSyncEspaceInv.ancre() || ''; } catch (e) {}
+    var racine = new URL('../../', location.href), lien = etab ? new URL('?module=inventory&equipe=' + encodeURIComponent(etab), racine).href : '';
+    var o = doc.createElement('div'); o.id = 'equipeSheet'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
+    o.style.cssText = 'position:fixed;inset:0;z-index:2147482500;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,14,20,.5);padding:12px;box-sizing:border-box';
+    var s = 'width:min(560px,100%);max-height:calc(100vh - 24px);overflow:auto;background:var(--card,#fff);color:inherit;border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35);font:inherit';
+    var b = 'display:block;width:100%;margin-top:8px;padding:13px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;';
+    var h = '<div style="' + s + '"><h3 style="margin:0 0 8px">Le même inventaire pour votre équipe</h3><p class="sub" style="margin:0 0 10px">Votre équipe compte avec son propre compte Verdict, gratuit. Elle ne voit que l’Inventaire : jamais Pilotage, la Carte ni vos chiffres ; les prix et les fournisseurs seulement si vous le décidez.</p>';
+    if (lien) h += '<ol style="margin:0 0 10px;padding-left:20px;line-height:1.5"><li>Votre employé crée son compte Verdict.</li><li>Dans <b>Compte › Équipe et établissements</b>, ajoutez son adresse et choisissez son rôle : <b>Employé de comptage</b> (voit ce qu’il y a à compter, sans prix) ou <b>Chef</b> / <b>Responsable bar</b> (compte et enregistre dans votre inventaire).</li><li>Donnez-lui ce lien : il ouvre l’Inventaire seul.</li></ol><input id="equipeLien" readonly value="' + esc(lien) + '" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--line,#cbd5dc);font:inherit;font-size:13px"><button type="button" id="equipeCopier" class="btn" style="' + b + '">Copier le lien</button><button type="button" id="equipeCompte" class="btn ghost" style="' + b + '">Ouvrir Compte › Équipe</button>';
+    else h += '<p class="sub" style="margin:0 0 10px">Créez d’abord votre compte : votre Inventaire y est rattaché, et le lien de l’équipe s’en sert. Rien n’est perdu sur cet appareil.</p><button type="button" id="equipeCreer" class="btn" style="' + b + '">Créer mon compte</button>';
+    h += '<button type="button" id="equipeFermer" class="btn ghost" style="' + b + '">Fermer</button></div>';
+    o.innerHTML = h; doc.body.appendChild(o);
+    var fermer = function () { o.remove(); };
+    o.addEventListener('click', function (e) { if (e.target === o) fermer(); });
+    doc.getElementById('equipeFermer').onclick = fermer;
+    var cp = doc.getElementById('equipeCopier'); if (cp) cp.onclick = function () { var v = doc.getElementById('equipeLien').value; var ok = function () { cp.textContent = 'Lien copié ✓'; }; try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(ok, function () { doc.getElementById('equipeLien').select(); }); else { doc.getElementById('equipeLien').select(); doc.execCommand('copy'); ok(); } } catch (e) { doc.getElementById('equipeLien').select(); } };
+    var ac = doc.getElementById('equipeCompte'); if (ac) ac.onclick = function () { try { (w.top || w).location.href = new URL('account.html#workspace-panel', racine).href; } catch (e) {} };
+    var cr = doc.getElementById('equipeCreer'); if (cr) cr.onclick = function () { try { (w.top || w).location.href = new URL('account.html?mode=register&return=app', racine).href; } catch (e) {} };
+  };
+
+  /* ── C229 (X36) · comptage de l'équipe : « Terminer le comptage » l'envoie au compte de l'établissement ; d'ici là, les
+     quantités saisies restent sur cet onglet (rien n'est perdu au rechargement, rien n'est écrit sur l'appareil au-delà de l'onglet). ── */
+  function equipeLien() { return !!g('EQUIPE_ETAB'); }
+  function cleComptage() { return 'verdict:equipe:comptage:' + (g('EQUIPE_ETAB') || ''); }
+  function noterComptage() { if (!equipeLien()) return; var m = {}; rows().forEach(function (x) { if (x.p.stock != null && x.p.stock !== '') m[x.p.id] = [x.p.stock, x.p.countedAt || '']; }); try { sessionStorage.setItem(cleComptage(), JSON.stringify(m)); } catch (e) {} }
+  function reprendreComptage() { if (!equipeLien() || !g('AUTHED')) return; var m = null; try { m = JSON.parse(sessionStorage.getItem(cleComptage()) || 'null'); } catch (e) {} if (!m) return; var n = 0; rows().forEach(function (x) { var v = m[x.p.id]; if (v && x.p.stock !== v[0]) { x.p.stock = v[0]; x.p.countedAt = v[1] || new Date().toISOString(); n++; } }); if (n) redessiner(); }
+  function envoyerComptage() {
+    if (!equipeLien() || typeof w.staffSubmitForReview !== 'function') return;
+    var D = DBi(), avant = (D && D.snapshots || []).length, essais = 0;
+    (function attendre() { var apres = (DBi().snapshots || []).length; if (apres > avant) { w.staffSubmitForReview(0); return; } if (essais++ < 100) setTimeout(attendre, 300); })();
+  }
+  function equipeResultat() {
+    var o = w.staffSubmissionResult; if (typeof o !== 'function' || o.__c229) return;
+    var f = function (r) { try { o.apply(this, arguments); } catch (e) {} if (!equipeLien()) return; if (r && r.ok) { try { sessionStorage.removeItem(cleComptage()); } catch (e) {} try { w.toast('Comptage envoyé à votre responsable ✓'); } catch (e) {} } else if (!w.__equipeAvis) { try { w.toast((r && r.error) || 'Envoi impossible pour l’instant : votre comptage reste sur cet appareil.'); } catch (e) {} } };
+    f.__c229 = true; w.staffSubmissionResult = f;
+  }
+
   /* ── Branchements : Compter (reprise), Analyse (factures, Pilotage à la demande), rien d'autre ── */
   function envelopper(nom, apres) { var o = w[nom]; if (typeof o !== 'function' || o.__c217) return; var f = function () { var r = o.apply(this, arguments); try { apres(); } catch (e) {} return r; }; f.__c217 = true; w[nom] = f; }
   /* La carte se pose en tête de Compter (sous « Que faut-il faire maintenant ? ») et de Plus (la liste des produits). */
@@ -507,8 +589,9 @@
     envelopperFactures(); envelopperValidation();
     envelopper('drawCount', poserReprise); envelopper('drawProd', poserReprise);
     envelopper('drawStats', function () { if (!verdictF()) verdictDemande(); });
+    envelopper('setStock', noterComptage); envelopper('commitStockEdit', noterComptage); envelopper('firstRun', reprendreComptage); envelopper('finishCount', envoyerComptage); equipeResultat();
   }
-  installer(); w.addEventListener('load', function () { installer(); setTimeout(function () { try { poserReprise(); repriseEtDemande(); } catch (e) {} }, 1500); setTimeout(function () { try { verdictDemande(); } catch (e) {} }, 3000); });
+  installer(); w.addEventListener('load', function () { installer(); setTimeout(function () { try { poserReprise(); repriseEtDemande(); } catch (e) {} }, 1500); /* C229 (X31) : Pilotage n'est préparé qu'une fois l'Inventaire affiché et l'appareil au repos (jamais pendant l'ouverture). */ var auRepos = w.requestIdleCallback || function (f) { return setTimeout(f, 1); }; setTimeout(function () { auRepos(function () { try { verdictDemande(); } catch (e) {} }, { timeout: 15000 }); }, 6000); });
   /* Le cadre Pilotage peut arriver après l'Inventaire : on vérifie quelques fois, sans boucle permanente. */
   var essais = 0; (function attendre() { if (verdictF()) { envelopperValidation(); try { poserReprise(); repriseEtDemande(); } catch (e) {} return; } if (essais++ < 20) setTimeout(attendre, 1500); })();
 })(window);

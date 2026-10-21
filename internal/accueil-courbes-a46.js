@@ -251,7 +251,7 @@
     var haut = Math.max(1.2, Math.min(2, Math.max.apply(null, rs.concat([1])) * 1.06)), bas = Math.min(0.6, Math.max(0, Math.min.apply(null, rs.concat([1])) - 0.08));
     var y = function (r) { return B - (Math.max(bas, Math.min(haut, r)) - bas) / (haut - bas) * (B - T); };
     var pas = (W - G - D) / n, larg = Math.max(3, Math.min(34, pas * 0.62)), s = '';
-    [0.8, 1.2, 1.4, 1.6].forEach(function (g) { if (g > bas && g < haut) s += '<line class="g" x1="' + G + '" x2="' + (W - D) + '" y1="' + y(g).toFixed(1) + '" y2="' + y(g).toFixed(1) + '"/><text class="ax" x="' + (G - 6) + '" y="' + (y(g) + 3).toFixed(1) + '" text-anchor="end">' + Math.round(g * 100) + ' %</text>'; });
+    [0.8, 1.2, 1.4, 1.6, 1.8, 2].forEach(function (g) { if (g > bas && g <= haut + 1e-9) s += '<line class="g" x1="' + G + '" x2="' + (W - D) + '" y1="' + y(g).toFixed(1) + '" y2="' + y(g).toFixed(1) + '"/><text class="ax" x="' + (G - 6) + '" y="' + (y(g) + 3).toFixed(1) + '" text-anchor="end">' + Math.round(g * 100) + ' %</text>'; });
     var yo = y(1);
     s += '<line class="obj" x1="' + G + '" x2="' + (W - D) + '" y1="' + yo.toFixed(1) + '" y2="' + yo.toFixed(1) + '"/><text class="obj" x="' + (G - 6) + '" y="' + (yo + 3).toFixed(1) + '" text-anchor="end">100 %</text>';
     var pasLib = n <= 13 ? 1 : Math.ceil(n / 7);

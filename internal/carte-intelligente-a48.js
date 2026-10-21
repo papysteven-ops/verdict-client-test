@@ -70,6 +70,8 @@
     if (H.length >= 20) { H.forEach(function (x) { t += Number(x.tkJ); }); return Math.round(t / H.length); }
     var c = Math.round(Number(D.in && D.in.cmdj)); return c > 0 ? c : null;
   }
+  /* C230 (X18, avec L3) : des journées de caisse sans aucun ticket (export « ventes par article » seul) : on dit quoi déposer. */
+  function sansTickets(D) { var H = D.histJour || []; return H.length > 0 && !H.some(function (x) { return x && Number(x.tkJ) > 0; }) && !(Number(D.in && D.in.cmdj) > 0); }
   /* Saison lue dans la caisse : mois forts et creux d'une année complète. */
   function saisonCaisse(D) {
     var S = saison(D); if (!S.annees.length) return null;
@@ -242,7 +244,7 @@
       '<label>Habitants de la commune<select name="habitants"><option value="">Choisir…</option>' + opt(HAB, P.habitants) + '</select></label>' +
       '<label>Saison<select name="tourisme"><option value="">Choisir…</option>' + opt(TOUR, P.tourisme) + '</select>' + (P.saisonCaisse ? '<small class="ci-lu">Lue dans votre caisse : ' + esc(P.saisonCaisse) + '</small>' : '') + '</label>' +
       '<label>Places assises<input name="places" type="number" inputmode="numeric" min="1" step="1" value="' + (P.places || '') + '"></label>' +
-      '<label>Couverts par jour en moyenne<input name="couverts" type="number" inputmode="numeric" min="1" step="1" value="' + (P.couverts || '') + '">' + (P.couvertsCaisse || couvertsCaisse(DB() || {}) === Number(P.couverts) ? '<small class="ci-lu">Lus dans votre caisse</small>' : '') + '</label>' +
+      '<label>Couverts par jour en moyenne<input name="couverts" type="number" inputmode="numeric" min="1" step="1" value="' + (P.couverts || '') + '">' + (P.couvertsCaisse || couvertsCaisse(DB() || {}) === Number(P.couverts) ? '<small class="ci-lu">Lus dans votre caisse</small>' : (!(Number(P.couverts) > 0) && sansTickets(DB() || {}) ? '<small class="ci-lu">Votre export de caisse ne donne pas les tickets : déposez vos journées de caisse (CA et nombre de tickets) pour le remplir sans saisie.</small>' : '')) + '</label>' +
       '<label>Services<select name="services">' + opt(SERV, P.services) + '</select></label>' +
       '<div class="ci-a" style="grid-column:1/-1"><button type="submit" class="ci-b ci-p">Lancer l’analyse</button>' + (profilComplet(P) ? '<button type="button" class="ci-b" data-ci="annuler">Annuler</button>' : '') + '</div></form>';
   }

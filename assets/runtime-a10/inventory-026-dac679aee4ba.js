@@ -34,6 +34,8 @@
       (st.rows||[]).forEach(function(r){var p=r.p||{};if(global.goalOf(p)===null||global.VerdictFinance.parseInput(p.min,{nonnegative:true}).state!=='known')out.unknownThresholds++;if(p.stock==null||String(p.stock).trim()===""||!Number.isFinite(Number(p.stock)))return;var stock=Number(p.stock),min=Number(p.min)||0;if(stock<=0||(min>0&&stock<min))out.ruptures.push({nom:p.name,stock:stock,min:min,unit:p.unit||"",vide:stock<=0});});
       out.ruptures.sort(function(a,b){return (a.vide===b.vide)?(a.min>0&&b.min>0?(a.stock/a.min)-(b.stock/b.min):0):(a.vide?-1:1);});}catch(e){}
     try{var pl=global.inventoryOrderPlanSummary();if(pl){out.valeur=pl.roundedValue!=null?pl.roundedValue:pl.rawValue;out.fournisseurs=pl.suppliers;if(pl.rows!=null)out.cmd=pl.rows;out.inconnus=Number(pl.unknownPrices)||0;}}catch(e){}
+    /* C229 (X36) : sans le droit aux prix, l'équipe ne voit aucun montant de commande. */
+    try{if(global.STAFF&&typeof global.staffCan==='function'&&!global.staffCan('view_prices'))out.valeur=null;}catch(e){}
     return out;}
   function etat(d){if(!d.ready||!d.n)return "info";var vides=d.ruptures.filter(function(r){return r.vide;}).length;if(vides>0)return "rouge";if(d.ruptures.length>0)return "orange";if(d.cmd>0||d.aCompter>0)return "jaune";if(d.unknownThresholds>0)return "info";return "vert";}
   function bouton(txt){var bs=doc.querySelectorAll("nav button, .dock button, .tabbar button, [role=tablist] button");for(var i=0;i<bs.length;i++){if((bs[i].textContent||"").toLowerCase().indexOf(txt)>=0)return bs[i];}return null;}

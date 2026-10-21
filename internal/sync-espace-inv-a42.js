@@ -17,7 +17,9 @@
 
   function eva(n) { try { return w.eval(n); } catch (e) { return undefined; } }
   function drapeau(n) { return !!eva('typeof ' + n + '!=="undefined"&&' + n); }
-  function compteEnLigne() { var t = w.top || w; try { return t.VERDICT_WORKSPACE_CONNECTED === true && t.VERDICT_ACCOUNT_AUTH_READY === true; } catch (e) { return false; } }
+  /* C229 (X23) : le serveur de comptes ne pose VERDICT_WORKSPACE_CONNECTED que dans le cadre Verdict (contrat L4, C215) ; un compte
+     connecté (VERDICT_COMPTE.connecte) suffit pour rattacher l'Inventaire au compte, comme le promet W38 (« rien n'est perdu »). */
+  function compteEnLigne() { var t = w.top || w; try { return t.VERDICT_ACCOUNT_AUTH_READY === true && (t.VERDICT_WORKSPACE_CONNECTED === true || !!(t.VERDICT_COMPTE && t.VERDICT_COMPTE.connecte === true)); } catch (e) { return false; } }
   function horsJeu() { return drapeau('DEMO') || drapeau('SHARED') || drapeau('STAFF') || drapeau('OWNER_TEAM') || /[?&]demo=1/.test(location.search); }
   function idOk(id) { return /^[A-Za-z0-9._-]{1,120}$/.test(id || '') && id !== 'demo-brasserie' && String(id).indexOf('perso-') !== 0 && String(id).indexOf('demo') !== 0; }
   function DB() { return eva('DB'); }
@@ -52,6 +54,8 @@
         var rev = Number(j.rev) || 0, cloud = Number(eva('CLOUD_REV')) || 0;
         if (rev <= cloud) return false;
         var meta = eva('readSyncMeta(false)') || {}, d = DB();
+        /* C229 (X23) : la révision locale (_safety) reste celle de cet appareil, jamais celle de la copie reçue. */
+        try { if (d && d._safety && j.data && typeof j.data === 'object') j.data._safety = JSON.parse(JSON.stringify(d._safety)); } catch (e) {}
         var ok = w.applyCloud({ ok: true, data: j.data, rev: rev }, eva('ACCOUNT_ID'), !!(meta.dirty && aDesDonnees(d)));
         if (ok && (eva('readSyncMeta(false)') || {}).dirty) planifier(); /* la fusion a gardé des saisies locales : on les renvoie */
         return ok;

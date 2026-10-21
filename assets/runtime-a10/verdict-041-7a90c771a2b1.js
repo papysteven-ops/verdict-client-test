@@ -66,12 +66,32 @@
   function closureRanges(){return (data().operatingClosures||[]).filter(function(item){return item&&validDateKey(item.start)&&validDateKey(item.end)&&item.start<=item.end;});}
   function operatingClosureFor(key){return closureRanges().filter(function(item){return item.start<=key&&item.end>=key;})[0]||null;}
   function monthInactive(key){var d=data(),month=String(key).slice(0,7);return !!(d.moisPilotage&&Object.prototype.hasOwnProperty.call(d.moisPilotage,month)&&d.moisPilotage[month]===false);}
+  /* C225 (X04) : jours de fermeture de la semaine. Ceux déclarés (caisse, Mes services, calendrier) priment ; à défaut, le
+     nombre de jours d'ouverture déclaré (« 6 par semaine ») ferme les jours dans l'ordre du métier : dimanche, samedi, puis
+     lundi… (même règle que le moteur à la saisie, verdict-029). Un « 6 jours » n'est donc plus un calendrier de 7 jours. */
+  function weeklyClosed(){var d=data();if(d.fermes&&d.fermes.length)return d.fermes;var n=Math.round(Number(d.in&&d.in.jsem));if(!(n>=1&&n<7))return [];return [6,5,0,1,2,3].slice(0,7-n);}
+  /* C225 (X05) : mois fermés par saison. Un mois est fermé quand chaque fois qu'il a été observé dans les documents
+     (journées de caisse sur toute la période couverte, mois du FEC), il n'a rien vendu, alors que d'autres mois ont vendu.
+     Ses charges restent dans le minimum de l'année : elles sont portées par les mois ouverts. */
+  var seasonClosedMemo=null;
+  function documentClosedMonths(){
+    var d=data(),rows=d.histJour||[],f=d.fecImport,fm=f&&f.monthly||{},sig=rows.length+"|"+(rows.length?String(rows[0]&&rows[0].date)+String(rows[rows.length-1]&&rows[rows.length-1].date):"")+"|"+(f&&(f.hash||f.appliedAt)||"")+"|"+Object.keys(fm).length;
+    if(seasonClosedMemo&&seasonClosedMemo.sig===sig)return seasonClosedMemo.set;
+    var count={},first=null,last=null,obs={},set={},i;for(i=1;i<=12;i++)obs[i]={zero:0,open:0};
+    rows.forEach(function(r){var k=String(r&&r.date||"").slice(0,10);if(!validDateKey(k)||!(hasNumber(r.caJ)||hasNumber(r.ca)))return;var ym=k.slice(0,7);count[ym]=(count[ym]||0)+1;if(!first||k<first)first=k;if(!last||k>last)last=k;});
+    if(first){var y=Number(first.slice(0,4)),mo=Number(first.slice(5,7)),end=last.slice(0,7);for(var guard=0;guard<240;guard++){var ym=y+"-"+pad(mo);if(ym>end)break;if(count[ym])obs[mo].open++;else obs[mo].zero++;mo++;if(mo>12){mo=1;y++;}}}
+    Object.keys(fm).forEach(function(k){if(!/^\d{4}-\d{2}$/.test(k))return;var v=Number(fm[k]&&fm[k].revenue),m=Number(k.slice(5,7));if(!Number.isFinite(v))return;if(v>0)obs[m].open++;else obs[m].zero++;});
+    var anyOpen=false;for(i=1;i<=12;i++)if(obs[i].open)anyOpen=true;
+    if(anyOpen)for(i=1;i<=12;i++)if(obs[i].zero>0&&!obs[i].open)set[i]=true;
+    seasonClosedMemo={sig:sig,set:set};return set;
+  }
+  function seasonClosedMonth(key){return !!documentClosedMonths()[Number(String(key).slice(5,7))];}
   function isClosed(key){
     var d=data(),closed=d.fermesJours||[],opened=d.ouvertsJours||[];
     if(opened.indexOf(key)>=0)return false;
     if(closed.indexOf(key)>=0)return true;
-    if(monthInactive(key)||operatingClosureFor(key))return true;
-    return (d.fermes||[]).indexOf(weekday(key))>=0;
+    if(monthInactive(key)||seasonClosedMonth(key)||operatingClosureFor(key))return true;
+    return weeklyClosed().indexOf(weekday(key))>=0;
   }
   function isIgnored(key){
     try{if(global.VerdictDailyValidation)return global.VerdictDailyValidation.isIgnoredKey(key);}catch(_){ }
@@ -813,7 +833,7 @@
 @media(max-width:820px){.vp-annual-close,.vp-accounting-chain{grid-template-columns:1fr}}@media(max-width:520px){.vp-annual-close-stats{grid-template-columns:1fr}.vp-accounting-action{display:grid}.vp-accounting-action label,.vp-accounting-action select,.vp-accounting-action .btn{width:100%}}';document.head.appendChild(lifecycleStyle);
 
   try{seedPersonalReviewScenario(global.moteur());}catch(_){ }
-  global.VerdictPerformanceIntegrated={knownYear:function(year){var R=null;try{R=global.moteur();}catch(_){}return knownYear(year,R);},knownYearMonths:function(year){var R=null;try{R=global.moteur();}catch(_){}return knownYearMonths(year,R);},weekdayHistorySource:weekdayHistorySource,claimAnimation:claimSessionAnimation,rulesVersion:RULES,trajectoryRulesVersion:TRAJECTORY_RULES,seasonRulesVersion:SEASON_RULES,annualRulesVersion:ANNUAL_RULES,accountingRulesVersion:ACCOUNTING_RULES,motionRulesVersion:MOTION_RULES,demoScenarioVersion:DEMO_SCENARIO,operationalDate:operationalDate,ratioStatus:ratioStatus,performanceStatus:performanceStatus,statusFor:statusFor,statusColor:statusColor,createPlan:createPlan,buildMonth:buildMonth,createSeasonPlan:createSeasonPlan,seasonState:seasonState,seasonEvidence:seasonEvidence,accountingBasis:accountingBasis,accountingFingerprint:accountingFingerprint,createAccountingAnchor:createAccountingAnchor,accountingAnchorFor:accountingAnchorFor,annualCloseState:annualCloseState,makeAnnualSnapshot:makeAnnualSnapshot,yearSummary:yearSummary,annualChart:annualChart,isClosed:isClosed,closureRanges:closureRanges,trajectoryModel:trajectoryModel,trajectoryBounds:trajectoryBounds,chart:chart,homeMonthSummary:homeMonthSummary,homeMonthImpact:homeMonthImpact,homeBrief:homeBrief,motionState:motionState,motionTransitions:motionTransitions,motionPresentation:motionPresentation,seedPersonalReviewScenario:seedPersonalReviewScenario,comparable:comparable,comparablePeriod:comparablePeriod,explain:explain,daysDataHash:daysDataHash};
+  global.VerdictPerformanceIntegrated={weeklyClosed:weeklyClosed,seasonClosedMonths:function(){return Object.keys(documentClosedMonths()).map(Number);},knownYear:function(year){var R=null;try{R=global.moteur();}catch(_){}return knownYear(year,R);},knownYearMonths:function(year){var R=null;try{R=global.moteur();}catch(_){}return knownYearMonths(year,R);},weekdayHistorySource:weekdayHistorySource,claimAnimation:claimSessionAnimation,rulesVersion:RULES,trajectoryRulesVersion:TRAJECTORY_RULES,seasonRulesVersion:SEASON_RULES,annualRulesVersion:ANNUAL_RULES,accountingRulesVersion:ACCOUNTING_RULES,motionRulesVersion:MOTION_RULES,demoScenarioVersion:DEMO_SCENARIO,operationalDate:operationalDate,ratioStatus:ratioStatus,performanceStatus:performanceStatus,statusFor:statusFor,statusColor:statusColor,createPlan:createPlan,buildMonth:buildMonth,createSeasonPlan:createSeasonPlan,seasonState:seasonState,seasonEvidence:seasonEvidence,accountingBasis:accountingBasis,accountingFingerprint:accountingFingerprint,createAccountingAnchor:createAccountingAnchor,accountingAnchorFor:accountingAnchorFor,annualCloseState:annualCloseState,makeAnnualSnapshot:makeAnnualSnapshot,yearSummary:yearSummary,annualChart:annualChart,isClosed:isClosed,closureRanges:closureRanges,trajectoryModel:trajectoryModel,trajectoryBounds:trajectoryBounds,chart:chart,homeMonthSummary:homeMonthSummary,homeMonthImpact:homeMonthImpact,homeBrief:homeBrief,motionState:motionState,motionTransitions:motionTransitions,motionPresentation:motionPresentation,seedPersonalReviewScenario:seedPersonalReviewScenario,comparable:comparable,comparablePeriod:comparablePeriod,explain:explain,daysDataHash:daysDataHash};
   function renameTab(){var button=document.querySelector('[onclick*="dsub(\'carnet\'"]');if(button){var names={fr:"Performances",en:"Performance",es:"Rendimiento",it:"Prestazioni",de:"Leistung",nl:"Prestaties",pt:"Desempenho"};button.removeAttribute("data-i18n");button.textContent=names[global.LOCALE]||names.fr;}}
   renameTab();setTimeout(function(){renameTab();if(global.VIEW==="pil"){var _d=function(){global.drawPil();};if(typeof global.verdictApresIntro==='function')global.verdictApresIntro(_d);else _d();}/* C103 */if(new URLSearchParams(location.search+(self.__vdq||"")).get("performance")==="1")global.goPerformance();},350);
 })(window);

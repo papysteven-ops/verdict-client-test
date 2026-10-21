@@ -17,6 +17,11 @@ try{
   OPEN_ACCESS=staffParams.get("openAccess")==="1";
   STAFF_PROFILE_INCOMPLETE=!!(STAFF&&(!STAFF_ROLE||!STAFF_ZONES.length||!STAFF_PERMISSIONS.length||(!DEMO&&!STAFF_ESTABLISHMENT)));
 }catch(e){STAFF_PROFILE_INCOMPLETE=STAFF;}
+/* C229 (X36) : lien de l'équipe (?equipe=<établissement>, posé par la coque). Mode personnel, tout refusé par défaut ; les droits
+   viennent du serveur (rôle donné par le patron dans Compte › Équipe) ; jamais l'inventaire ouvert de cet appareil. */
+var EQUIPE_ETAB="",EQUIPE_ORG="",EQUIPE_CSRF="";
+try{EQUIPE_ETAB=String(new URLSearchParams(location.search+(self.__vdq||"")).get("equipe")||"").replace(/[^A-Za-z0-9._:-]/g,"").slice(0,96);}catch(e){EQUIPE_ETAB="";}
+if(EQUIPE_ETAB){STAFF=true;STAFF_ESTABLISHMENT=EQUIPE_ETAB;STAFF_ROLE="equipe";STAFF_ZONES=["kitchen","bar"];STAFF_PERMISSIONS=["count_stock"];OPEN_ACCESS=false;OWNER_TEAM=false;STAFF_PROFILE_INCOMPLETE=false;}
 try{ localStorage.setItem("t","1"); localStorage.removeItem("t"); }catch(e){ SAVE=false; }
 
 function staffCan(permission){return !STAFF||STAFF_PERMISSIONS.indexOf(permission)>=0;}
@@ -37,7 +42,8 @@ function staffAllowedInventoryZones(){
   return allowed;
 }
 function applyStaffZoneScope(){
-  if(!STAFF||!DB||!DB.spaces)return;
+  /* C229 (X36) : en équipe, les zones viennent du serveur ; rien n'est retiré du document (il repart au compte du patron). */
+  if(!STAFF||!DB||!DB.spaces||EQUIPE_ETAB)return;
   var allowed=staffAllowedInventoryZones();if(!allowed.length)allowed=["cuisine"];
   Object.keys(DB.spaces).forEach(function(key){
     var kind=DB.meta&&DB.meta[key]&&DB.meta[key].kind;
@@ -253,7 +259,42 @@ function flushInventoryFastSave(){
 window.addEventListener('pagehide',flushInventoryFastSave,{passive:true});
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')flushInventoryFastSave();});
 var API=STAFF?"/api/team/inventory":(OWNER_TEAM?"/api/team/owner-inventory":(typeof window.VERDICT_INVENTORY_API==='string'&&window.VERDICT_INVENTORY_API.trim()?window.VERDICT_INVENTORY_API.trim():"/inventaire/api.php")), AUTHED=false, ACCOUNT_ID=null, ACCOUNT_USER=null, ACCOUNT_CSRF="", CLOUD_REV=0, saveT=null, syncRetryT=null, syncRetryDelay=1200, SYNCING=false, SYNC_DIRTY=false;
-function api(a,body){ var payload=Object.assign({},body||{});if(OWNER_TEAM&&OWNER_TEAM_EST)payload.establishmentId=OWNER_TEAM_EST;if(ACCOUNT_CSRF&&!payload.csrf)payload.csrf=ACCOUNT_CSRF;return fetch(API+"?a="+a,{method:"POST",credentials:"same-origin",
+/* C229 (X36) : en équipe, l'Inventaire de l'établissement passe par le compte (/api/workspace), selon les droits du serveur. */
+function equipePost(p,body,avecJeton){var h={'Content-Type':'application/json'};if(avecJeton&&EQUIPE_CSRF)h['X-CSRF-Token']=EQUIPE_CSRF;return fetch(new URL('../../api/'+p,location.href).pathname,{method:'POST',credentials:'same-origin',cache:'no-store',headers:h,body:JSON.stringify(body||{})}).then(function(r){return r.json().catch(function(){return {};}).then(function(j){j=j||{};j._status=r.status;return j;});});}
+function equipeDroits(perms){var P=Array.isArray(perms)?perms:[],has=function(x){return P.indexOf('*')>=0||P.indexOf(x)>=0;},out=['count_stock'];if(has('inventory.edit'))out.push('edit_catalog');if(has('inventory.prices')||has('suppliers.view'))out.push('view_prices');if(has('suppliers.view'))out.push('view_suppliers');if(has('inventory.order')){out.push('view_orders');out.push('edit_orders');}return out;}
+/* Ce qui n'est pas utile pour compter ne reste pas dans la page : factures du patron (montants, fournisseurs) et lignes de valeur envoyées à Verdict. */
+function equipeNettoyer(d){if(!d||typeof d!=='object')return d;/* un rôle qui enregistre renvoie le document entier : rien n'y est retiré (sinon le serveur l'effacerait) */if(!staffCan('edit_catalog'))['facturesInventaire','vdLignesBySite'].forEach(function(k){delete d[k];});if(!staffCan('view_prices'))delete d.priceHistory;
+  /* Un rôle qui ne modifie rien (il n'envoie jamais le document) ne garde ni fournisseurs, ni commandes, ni consommation tirée des ventes. */
+  if(!staffCan('edit_catalog')){if(!staffCan('view_suppliers')){delete d.suppliersBySite;delete d.lastSup;Object.keys(d.spaces||{}).forEach(function(k){((d.spaces[k]||{}).products||[]).forEach(function(p){if(p){p.sup='';delete p.offers;delete p.sku;}});});}if(!staffCan('view_orders')){['demandBridge','needs','purchaseOrders','orderingSettings','supplyIncidents','operationsBySite'].forEach(function(k){delete d[k];});}if(d.profile&&typeof d.profile==='object')d.profile=Object.assign({},d.profile,{prenom:''});}
+  return d;}
+var equipeBrut=(function(){var b=null;return function(x){if(arguments.length)b=x;return b;};})();
+var EQUIPE_MONTANTS=['price','priceDate','unitPrice','purchasePrice','priceHistory','estimatedTotal','deliveryFee','minValue','freeShippingFrom','eur','previousEur','stockFinalHT','previousStockHT','amountHT','amountCents','unitPriceCents','totalHT','prix','pu','cost','costHT','materialCost','valuation','netCents','ttc','ht','facturesInventaire','factureMemoireInv','demandBridge','vdLignesBySite'];
+function equipeSansMontant(x){if(Array.isArray(x))return x.map(equipeSansMontant);if(!x||typeof x!=='object')return x;var o={};Object.keys(x).forEach(function(k){if(EQUIPE_MONTANTS.indexOf(k)<0)o[k]=equipeSansMontant(x[k]);});return o;}
+function equipeEnvoi(d){var b=equipeBrut();if(staffCan('edit_catalog')||!b||!d)return d;var out=JSON.parse(JSON.stringify(b)),compte={};
+  Object.keys(d.spaces||{}).forEach(function(z){((d.spaces[z]||{}).products||[]).forEach(function(p){if(p&&p.id)compte[z+'|'+p.id]=p;});});
+  Object.keys(out.spaces||{}).forEach(function(z){((out.spaces[z]||{}).products||[]).forEach(function(p){var c=p&&compte[z+'|'+p.id];if(!c)return;['stock','countedAt','countedBy'].forEach(function(k){if(c[k]!==undefined)p[k]=c[k];});});});
+  var vus={};(b.snapshots||[]).forEach(function(s){if(s&&s.id)vus[s.id]=1;});out.snapshots=(b.snapshots||[]).concat((d.snapshots||[]).filter(function(s){return s&&s.id&&!vus[s.id];}).map(equipeSansMontant));
+  return out;}
+function apiEquipe(a,body){
+  if(a==='me')return equipePost('account',{action:'me'}).then(function(j){if(!j.authenticated||!j.user)return {ok:true,auth:false,equipe:'connexion'};EQUIPE_CSRF=String(j.csrf||'');
+    return equipePost('workspace',{action:'bootstrap'}).then(function(w){var orgs=(w.workspace&&w.workspace.organisations)||[],site=null,org=null;orgs.forEach(function(o){(o.sites||[]).forEach(function(x){if(!site&&x&&x.id===STAFF_ESTABLISHMENT){site=x;org=o;}});});
+      if(!site)return {ok:true,auth:false,equipe:'acces'};if(org.owner)return {ok:true,auth:false,equipe:'patron'};
+      if(!(site.modules&&site.modules.inventory&&site.modules.inventory.view))return {ok:true,auth:false,equipe:'acces'};
+      EQUIPE_ORG=String(org.id);STAFF_ROLE=String(site.role||'equipe').slice(0,32);STAFF_PERMISSIONS=equipeDroits(site.permissions);try{applyStaffPermissions();}catch(e){}
+      return {ok:true,auth:true,account_id:'equipe:'+STAFF_ESTABLISHMENT,email:j.user.email||'',user:{email:j.user.email||''}};});});
+  if(a==='load')return equipePost('workspace',{action:'sync_pull',organisationId:EQUIPE_ORG,etabId:STAFF_ESTABLISHMENT,module:'inventory'}).then(function(j){if(j._status!==200||!j.data||!j.data.spaces)return {ok:false,error:j.code||'vide'};equipeBrut(JSON.parse(JSON.stringify(j.data)));return {ok:true,data:equipeNettoyer(j.data),rev:Number(j.rev)||0};});
+  if(a==='save'||a==='submit'){var envoi=equipeEnvoi(body&&body.data);return equipePost('workspace',{action:'sync_push',organisationId:EQUIPE_ORG,etabId:STAFF_ESTABLISHMENT,module:'inventory',mutationId:'equipe-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),rev:Number(body&&body.rev)||0,data:envoi},true).then(function(j){if(j.ok){if(!staffCan('edit_catalog'))equipeBrut(envoi);return {ok:true,rev:j.rev,submission:{at:new Date().toISOString()}};}if(j._status===409)return {ok:false,conflict:true};if(j._status===403){if(!window.__equipeAvis){window.__equipeAvis=1;try{toast('Comptage noté sur cet appareil, pas encore envoyé : demandez à votre responsable de vérifier votre accès à l’Inventaire (Compte › Équipe).');}catch(e){}}return {ok:false,error:'envoi_refuse'};}return {ok:false,error:j.code||'refuse'};});}
+  return Promise.resolve({ok:false,error:'non_pris_en_charge'});
+}
+function equipeRefus(cas){
+  var top=window.top||window;if(cas==='patron'){try{top.sessionStorage.removeItem('verdict:equipe:v1');var u=new URL(top.location.href);u.searchParams.delete('equipe');top.location.replace(u.href);}catch(e){}return;}
+  var splash=document.getElementById('splash');if(splash)splash.style.display='none';staffSetVisible('.top,.seg,.demo-banner,.lvl,.view,nav,#welcome,.modal,#shared-r32',false);
+  var gate=document.getElementById('authGate');if(!gate)return;gate.style.display='flex';gate.setAttribute('role','alert');
+  var t={connexion:['Connectez-vous à votre compte Verdict','Ce lien ouvre l’inventaire de votre établissement. Connectez-vous avec le compte que votre responsable a ajouté à son équipe.','Me connecter'],acces:['Accès pas encore ouvert','Votre responsable doit ajouter votre compte dans Compte › Équipe et établissements, avec un rôle pour l’Inventaire.',''],vide:['Inventaire pas encore partagé','Votre responsable doit d’abord ouvrir son Inventaire avec son compte : il sera alors disponible ici.','']}[cas]||['Accès indisponible','Réessayez dans un instant.',''];
+  gate.innerHTML='<div style="max-width:420px;width:100%;padding:24px;border:1px solid #262c34;border-radius:18px;background:#111418;color:#eef1f4"><div style="color:#a7c7b6;font:800 11px/1.2 var(--mono);letter-spacing:.12em;text-transform:uppercase">Inventaire de l’équipe</div><h1 style="margin:12px 0 8px;font-size:22px">'+t[0]+'</h1><p style="color:#c7cbd1;line-height:1.55">'+t[1]+'</p>'+(t[2]?'<button type="button" id="equipeLogin" style="width:100%;margin-top:10px;background:#22c55e;color:#04120a;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer">'+t[2]+'</button>':'')+'</div>';
+  var b=document.getElementById('equipeLogin');if(b)b.onclick=function(){try{top.location.href=new URL('../../account.html?mode=login&return=app',location.href).href;}catch(e){}};
+}
+function api(a,body){ if(EQUIPE_ETAB)return apiEquipe(a,body); var payload=Object.assign({},body||{});if(OWNER_TEAM&&OWNER_TEAM_EST)payload.establishmentId=OWNER_TEAM_EST;if(ACCOUNT_CSRF&&!payload.csrf)payload.csrf=ACCOUNT_CSRF;return fetch(API+"?a="+a,{method:"POST",credentials:"same-origin",
   headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).then(function(r){ return r.json().then(function(j){j._status=r.status;if(j.csrf)ACCOUNT_CSRF=j.csrf;return j;}); }); }
 function syncBadge(t,ok){ var e=document.getElementById("whoami"); if(e&&t){ e.textContent=t; e.style.color=ok?"#4ade80":"#f97316"; } }
 function scheduleCloudRetry(){ if(!AUTHED||DEMO||!ACCOUNT_ID||syncRetryT)return;syncRetryT=setTimeout(function(){syncRetryT=null;flushCloud();},syncRetryDelay);syncRetryDelay=Math.min(60000,Math.round(syncRetryDelay*1.8)); }
@@ -329,6 +370,8 @@ function startAccount(r){
   var hadLocal=loadAccount(ACCOUNT_ID);AUTHED=true; authHide(); syncBadge(r.email||"\u2713 sync",true);
   api("load").then(function(l){
     if(!applyCloud(l,ACCOUNT_ID,hadLocal)){
+      /* C229 (X36) : en équipe, jamais d'inventaire vide renvoyé à la place de celui du patron. */
+      if(EQUIPE_ETAB){AUTHED=false;equipeRefus(l&&l.error==='forbidden'?'acces':'vide');return;}
       /* Un serveur vide ne remplace jamais une base locale existante. */
       CLOUD_REV=(l&&l.rev!=null)?Math.max(0,+l.rev||0):0;if(!hadLocal)DB=blankDB(false);cleanDB();saveLocal();writeSyncMeta({dirty:true,baseRev:CLOUD_REV,baseData:null,changedAt:new Date().toISOString()});drawSpaces();setLevel(DB.level||"normale",true);setSite(DB.site,true);cloudSave();firstRun();
     }else firstRun();
@@ -396,6 +439,7 @@ function authBoot(){
   }catch(e){}
   api("me").then(function(r){
     if(r.ok&&r.auth){ startAccount(r); }
+    else if(EQUIPE_ETAB)equipeRefus(r.equipe||"connexion");/* C229 (X36) */
     else if(OWNER_TEAM)ownerTeamAuthRequired();else authShow();
   }).catch(function(){ if(OWNER_TEAM)ownerTeamAuthRequired();else authShow("Serveur injoignable \u2014 connexion au compte indisponible. R\u00e9essayez avec du r\u00e9seau."); });
 }
@@ -503,7 +547,9 @@ function toOrder(){
 }
 function bySup(list){
   var g={},i,k,keys=[],out=[];
-  for(i=0;i<list.length;i++){ k=((list[i].sup||"").trim())||"Sans fournisseur"; if(!g[k]){g[k]=[];keys.push(k);} g[k].push(list[i]); }
+  /* C229 (X36) : sans le droit de voir les fournisseurs, l'équipe compte par zone, sans nom de fournisseur. */
+  var cacheSup=STAFF&&!staffCan("view_suppliers");
+  for(i=0;i<list.length;i++){ k=cacheSup?"\u00c0 compter":(((list[i].sup||"").trim())||"Sans fournisseur"); if(!g[k]){g[k]=[];keys.push(k);} g[k].push(list[i]); }
   keys.sort(function(a,b){return a.localeCompare(b);});
   for(i=0;i<keys.length;i++) out.push([keys[i],g[keys[i]]]);
   return out;
@@ -562,7 +608,7 @@ function drawCount(){
           '<span class="tag '+st.t+'">'+st.lb+'</span></div>'+
         '<div class="l2"><div class="step">'+
           '<button data-id="'+esc(p.id)+'" onclick="bump(this.dataset.id,-1)">&minus;</button>'+
-          '<input data-id="'+esc(p.id)+'" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" aria-label="Quantité restante : '+esc(p.name)+' ('+esc(p.unit||'unité')+')" value="'+stockText(p.stock)+'" placeholder="&mdash;" onfocus="beginStockEdit(this)" oninput="setStock(this.dataset.id,this.value,true)" onblur="commitStockEdit(this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur()}">'+
+          '<input data-id="'+esc(p.id)+'" data-guard-ignore="comptage-auto" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" aria-label="Quantité restante : '+esc(p.name)+' ('+esc(p.unit||'unité')+')" value="'+stockText(p.stock)+'" placeholder="&mdash;" onfocus="beginStockEdit(this)" oninput="setStock(this.dataset.id,this.value,true)" onblur="commitStockEdit(this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur()}">'+
           '<button data-id="'+esc(p.id)+'" onclick="bump(this.dataset.id,1)">+</button></div>'+
           '<button type="button" class="count-clear" data-id="'+esc(p.id)+'" onclick="clearStock(this.dataset.id)" aria-label="Effacer la quantité : '+esc(p.name)+'" title="Effacer la quantité">×</button>'+
           '<div class="need">'+(st.need?('&agrave; commander<b>'+nb(st.need)+'</b>'):(st.k==="ok"?'<b style="color:var(--green)">&#10003;</b>':''))+'</div>'+
@@ -600,6 +646,8 @@ function refreshCountProgress(){
   var autres=spList().filter(function(k){return k!==DB.space&&((DB.spaces[k]||{}).products||[]).length;}).map(spName);
   if(el)el.textContent=autres.length&&zone.length?zoneDone+' / '+zone.length+' · '+spName(DB.space)+' · '+done+' / '+rows.length+' avec '+autres.join(', '):done+' / '+rows.length;
   if(button)button.disabled=!done;
+  /* C229 (X29) : la carte « Bonjour » suivait le comptage seulement au changement d'écran (« 2/5 comptés » figé). */
+  try{renderGreet();}catch(e){}
 }
 function beginStockEdit(input){
   var p=find(input.dataset.id);if(p&&!Object.prototype.hasOwnProperty.call(input,'__stockBefore'))input.__stockBefore=p.stock;
@@ -997,7 +1045,8 @@ function drawStats(){
   }
   var money=val.priced>0;
   var valueLabel=val.exact?"Valeur du stock":"Valeur connue";
-  var valueDetail=val.exact?"comptage + prix complets":(val.total?(val.priced+"/"+val.total+" r\u00e9f. chiffr\u00e9es \u00b7 valeur partielle"):"ajoutez vos produits");
+  /* C229 (X26) : « 0/42 réf. chiffrées » alors que 33 prix sont connus : la valeur attend un comptage, les prix sont dits à part. */
+  var valueDetail=val.exact?"comptage + prix complets":(val.total?(val.counted?(val.priced+"/"+val.total+" r\u00e9f. chiffr\u00e9es \u00b7 valeur partielle"+(val.pricedRefs>val.priced?" \u00b7 prix connus "+val.pricedRefs+"/"+val.total:"")):("prix connus "+val.pricedRefs+"/"+val.total+" \u00b7 valeur apr\u00e8s votre premier comptage")):"ajoutez vos produits");
   var h='<div class="kpis">'+
     '<div class="kpi"><div class="k">'+valueLabel+'</div><div class="v" style="color:#60a5fa">'+(money?eur(stockV):"\u2014")+'</div><div class="d">'+valueDetail+'</div></div>'+
     '<div class="kpi"><div class="k">Besoin brut</div><div class="v" style="color:var(--green)">'+(ordPriced?eur(ordV):nb(ord))+'</div><div class="d">'+ord+' produit'+(ord>1?"s":"")+' \u00e0 commander · avant arrondi aux colis'+(ordPriced&&ordPriced<ord?" \u00b7 valeur partielle":"")+'</div></div>'+
@@ -1009,6 +1058,9 @@ function drawStats(){
     h+='<div class="card"><h3>Valeur du stock par fournisseur</h3>'+bars(keys,sv,"#60a5fa")+'</div>';
     var ko=keys.slice().sort(function(x,y){ return ov[y]-ov[x]; });
     h+='<div class="card"><h3>&Agrave; commander par fournisseur</h3>'+bars(ko,ov,"var(--green)")+'</div>';
+  }else if(val.pricedRefs){
+    /* C229 (X26) : des prix sont connus : on ne demande pas de les ajouter, la valeur arrive avec le comptage. */
+    h+='<div class="card"><h3>Prix connus : '+val.pricedRefs+'/'+val.total+' produits</h3><p class="sub" style="margin:0">La valeur de votre stock appara&icirc;t d&egrave;s votre premier comptage'+(val.pricedRefs<val.total?' ; un produit sans prix reste hors du total, jamais compt&eacute; &agrave; 0':'')+'.</p></div>';
   }else{
     h+='<div class="card"><h3>D&eacute;bloquez la valeur de votre stock</h3>'+
       '<p class="sub" style="margin:0">Ajoutez le <b>prix d&rsquo;achat</b> de vos produits (fiche produit, champ facultatif) : '+

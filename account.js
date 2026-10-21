@@ -7,7 +7,7 @@
   const byId=id=>document.getElementById(id),params=new URLSearchParams(location.search);
   const state={mode:"login",csrf:"",user:null,workspace:null,mfaPending:false,emailDelivery:"",authReady:window.VERDICT_ACCOUNT_AUTH_READY===true||window.VERDICT_ACCOUNT_PORTAL_READY===true,billingReady:window.VERDICT_ACCOUNT_PORTAL_READY===true};
   /* Offre validée le 05/10/2026 (05-BACKEND-API/src/offre.js), en centimes HT. */
-  const OFFRE={pilotage:{monthly:6900,annual:69000,extraMonthly:3900,extraAnnual:39000},pro:{monthly:12900,annual:129000,extraMonthly:6900,extraAnnual:69000}};
+  const OFFRE={pilotage:{monthly:6900,annual:69000,extraMonthly:3900,extraAnnual:39000},pro:{monthly:12900,annual:129000,extraMonthly:6900,extraAnnual:69000},founder:{monthly:9900,annual:99000,firstYearMonthly:6900,firstYearAnnual:69000}};
   const MESSAGES={
     invalid_credentials:"Adresse ou mot de passe incorrect.",
     email_exists:"Un compte existe déjà avec cette adresse. Connectez-vous, ou choisissez « Mot de passe oublié ».",
@@ -37,6 +37,8 @@
   function euros(cents){const value=Math.round(Number(cents)||0)/100;return value.toLocaleString("fr-FR",{minimumFractionDigits:value%1?2:0,maximumFractionDigits:2}).replace(/[  ]/g," ")+" €";}
   function jour(seconds){const n=Number(seconds)||0;if(!n)return "";const d=new Date(n*1000),day=Number(d.toLocaleDateString("fr-FR",{day:"numeric",timeZone:"Europe/Paris"}));return (day===1?"1er":String(day))+" "+d.toLocaleDateString("fr-FR",{month:"long",year:"numeric",timeZone:"Europe/Paris"});}
   const pluriel=(n,mot)=>n+" "+mot+(n>1?"s":"");
+  /* C227 (X19) : Pro fondateur = offre.amounts : 69 € (690 €) la première année puis 99 € (990 €), + 69 € (690 €) par établissement en plus. */
+  function totalFondateur(period,count,premiereAnnee){const F=OFFRE.founder,P=OFFRE.pro,annual=period==="annual";return (annual?(premiereAnnee?F.firstYearAnnual:F.annual):(premiereAnnee?F.firstYearMonthly:F.monthly))+Math.max(0,count-1)*(annual?P.extraAnnual:P.extraMonthly);}
   function total(offre,period,count){const P=OFFRE[offre==="pilotage"?"pilotage":"pro"],annual=period==="annual";return (annual?P.annual:P.monthly)+Math.max(0,count-1)*(annual?P.extraAnnual:P.extraMonthly);}
   async function call(endpoint,action,data={}){const headers={"Content-Type":"application/json"};if(state.csrf)headers["X-CSRF-Token"]=state.csrf;const response=await fetch(endpoint,{method:"POST",credentials:"same-origin",headers,body:JSON.stringify({action,...data})}),json=await response.json().catch(()=>({}));if(!response.ok||json.ok===false){const error=new Error(json.error||json.code||"service_unavailable");error.status=response.status;throw error;}if(json.csrf)state.csrf=json.csrf;if(json.user)state.user=json.user;return json;}
   const request=(action,data)=>call(window.VERDICT_ACCOUNT_API||"/api/account",action,data);
@@ -54,7 +56,9 @@
     let detail="",deadline="";
     if(f==="essai"){const n=Math.max(0,Number(user.trial_days_left)||0);detail="Tout Verdict est ouvert : Pilotage, Carte, Audit, Simuler, Vera et l’Inventaire. "+(n?"Encore "+pluriel(n,"jour")+".":"Dernier jour.");deadline="Fin de l’essai : "+jour(user.trial_ends_at)+". À la fin, rien n’est prélevé ; sans formule choisie, vous gardez l’Inventaire gratuit.";}
     else if(f==="activation"){detail="Stripe confirme votre abonnement : l’accès s’ouvre dès cette confirmation, en général en quelques secondes. Rechargez la page si besoin.";}
-    else if(f==="pilotage"||f==="pro"){detail=(period==="annual"?"Paiement annuel":"Paiement mensuel")+" · "+pluriel(sites,"établissement")+" "+(sites>1?"actifs":"actif")+" · "+euros(total(f,period,sites))+" HT"+(period==="annual"?"/an":"/mois")+(user.founder_price_lock?" (avant remise fondateur)":"")+".";
+    else if(f==="pilotage"||f==="pro"){detail=(period==="annual"?"Paiement annuel":"Paiement mensuel")+" · "+pluriel(sites,"établissement")+" "+(sites>1?"actifs":"actif")+" · ";const unite=period==="annual"?"/an":"/mois";
+      if(f==="pro"&&user.founder_price_lock){const debut=Number(user.first_charge_at)||0,finPremiere=debut?debut+365*86400:0,enPremiere=!finPremiere||finPremiere>Date.now()/1000;detail+=enPremiere?euros(totalFondateur(period,sites,true))+" HT"+unite+(finPremiere?" jusqu’au "+jour(finPremiere):" la première année")+", puis "+euros(totalFondateur(period,sites,false))+" HT"+unite+" (prix fondateur).":euros(totalFondateur(period,sites,false))+" HT"+unite+" (prix fondateur).";}
+      else detail+=euros(total(f,period,sites))+" HT"+unite+".";
       if(s==="grace")detail+=" Le dernier paiement n’est pas passé : mettez à jour votre moyen de paiement dans « Gérer ou résilier ». Vos données restent lisibles.";
       deadline=user.cancel_at_period_end===true?"Résiliation prévue : accès jusqu’au "+jour(user.current_period_end)+", puis Inventaire gratuit. Aucun autre prélèvement.":user.current_period_end?"Prochaine échéance : "+jour(user.current_period_end)+".":"";}
     else if(s==="expired"&&Number(user.trial_ends_at)>0&&!user.has_subscription){detail="Votre essai s’est terminé le "+jour(user.trial_ends_at)+". Vos données sont conservées et l’Inventaire reste gratuit. Pour retrouver Pilotage ou Pro, choisissez une formule ci-dessous.";}
@@ -78,7 +82,8 @@
     const count=Math.max(1,Math.min(500,Math.floor(Number(byId("active-sites").value)||1)));
     document.querySelectorAll("[data-checkout]").forEach(button=>{const node=typeof button.querySelector==="function"?button.querySelector("[data-total]"):null;if(!node)return;const period=button.dataset.checkout==="annual"?"annual":"monthly";node.textContent="Total : "+euros(total(button.dataset.offre,period,count))+" HT"+(period==="annual"?"/an":"/mois")+" pour "+pluriel(count,"établissement");});
   }
-  function renderOffers(){document.querySelectorAll("[data-checkout]").forEach(button=>button.disabled=!state.billingReady);byId("offers-state").textContent=state.billingReady?"":"Le paiement en ligne n’est pas encore ouvert : ces formules pourront être choisies ici dès son ouverture."+(state.user&&formule(state.user)==="essai"?" Votre essai continue d’ici là.":"");renderTotals();}
+  /* C227 (X19) : une formule payée se change ou se résilie dans « Gérer ou résilier » ; « Choisir une formule » n'est plus proposé. */
+  function renderOffers(){show("offers",!(state.user&&["paid","grace","activation_pending"].includes(state.user.access_state)));document.querySelectorAll("[data-checkout]").forEach(button=>button.disabled=!state.billingReady);byId("offers-state").textContent=state.billingReady?"":"Le paiement en ligne n’est pas encore ouvert : ces formules pourront être choisies ici dès son ouverture."+(state.user&&formule(state.user)==="essai"?" Votre essai continue d’ici là.":"");renderTotals();}
 
   /* ── Équipe ── */
   function renderWorkspace(workspace){
@@ -124,7 +129,7 @@
     if(!state.authReady){service.textContent="Le serveur de comptes n’est pas encore en ligne sur ce domaine : Verdict s’utilise en découverte et vos données restent sur cet appareil.";service.className="service-state blocked";document.querySelectorAll("form button,form input,form select").forEach(node=>node.disabled=true);return;}
     service.textContent=state.billingReady?"Compte et abonnement disponibles.":"Comptes disponibles · paiement en ligne pas encore ouvert.";service.className="service-state "+(state.billingReady?"ready":"blocked");
     await verifyFromLink();
-    try{const result=await request("me");state.emailDelivery=result.emailDelivery||"";if(result.authenticated&&result.user)showAccount(result.user,result.mfaRequired===true);else showAuth();}catch(error){feedback(texte("service_unavailable"),"error");}
+    try{const result=await request("me");state.emailDelivery=result.emailDelivery||"";/* C227 (X19) : un lien de nouveau mot de passe ouvert en étant connecté garde son formulaire et dit ce qui va se passer. */if(params.get("reset")){showAuth();if(result.authenticated&&result.user)feedback("Vous êtes connecté avec "+(result.user.email||"un compte")+". Ce lien choisit un nouveau mot de passe pour "+(params.get("email")||"l’adresse du lien")+" : saisissez-le ci-dessous. Toutes les sessions de ce compte seront ensuite fermées et vous vous reconnecterez. Pour garder votre session, fermez simplement cette page.","ok");}else if(result.authenticated&&result.user)showAccount(result.user,result.mfaRequired===true);else showAuth();}catch(error){feedback(texte("service_unavailable"),"error");}
   }
   document.querySelectorAll("[data-mode]").forEach(button=>button.addEventListener("click",()=>mode(button.dataset.mode)));
   document.querySelectorAll("[data-checkout]").forEach(button=>button.addEventListener("click",()=>checkout(button.dataset.checkout,button.dataset.offre)));

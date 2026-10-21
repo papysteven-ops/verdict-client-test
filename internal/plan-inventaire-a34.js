@@ -8,7 +8,11 @@
    Le navigateur ne peut que RÉDUIRE ce qui est ouvert : la formule locale n'agit que pendant la phase d'accès ouvert
    (VERDICT_OPEN_ACCESS) ; dès que le serveur des comptes décide (espace connecté), il a le dernier mot et ce fichier
    s'efface. Les prix viennent de l'offre validée (05-BACKEND-API/src/offre.js : Inventaire 0 €, Pilotage 69 €,
-   Pro 129 €, essai 14 jours). Perso, atelier et démo ne sont jamais concernés. */
+   Pro 129 €, essai 14 jours). Perso, atelier et démo ne sont jamais concernés.
+   C224 (Steven, 21/10, X34 et X35) : un client qui a choisi l'Inventaire gratuit ne voit aucun message d'essai dans
+   l'Inventaire (plus de pastille). Pilotage et Carte restent visibles mais entièrement floutés : l'appli tourne, aucun clic
+   n'est possible dedans, et une seule proposition est posée hors du flou : « Essayer 14 jours ». S'il l'accepte, tout se
+   débloque. X03 : plus de fenêtre « Que venez-vous faire ? » ; l'écran Bienvenue de Pilotage est la seule question. */
 (function () {
   'use strict';
   var w = window, doc = document; if (w.VerdictPlan) return;
@@ -56,8 +60,10 @@
     if (c) {
       if (c.formule === 'essai') return { niveau: 'essai', jours: Math.max(1, Number(c.joursRestants) || 1), termine: false, compte: true };
       if (c.formule === 'pilotage' || c.formule === 'pro' || c.formule === 'activation') return { niveau: 'complet', jours: 0, termine: false, compte: true, abonne: true };
-      if (!ferme) return { niveau: 'essai', jours: 0, termine: false, attente: true, compte: true };
-      return { niveau: 'inventaire', jours: 0, termine: true, compte: true };
+      /* C224 (X01) : un abonnement payé qui a pris fin n'est pas un essai terminé (échéance, période ou abonnement connus). */
+      var paye = Number(c.echeance) > 0 || !!c.periode || c.abonnement === true;
+      if (!ferme) return { niveau: 'essai', jours: 0, termine: false, attente: true, compte: true, abonnementFini: paye };
+      return { niveau: 'inventaire', jours: 0, termine: true, compte: true, abonnementFini: paye };
     }
     if (p && p.niveau === 'inventaire') return { niveau: 'inventaire', jours: 0, termine: false, decouverte: true };
     return { niveau: 'complet', jours: 0, termine: false, decouverte: true };
@@ -75,17 +81,24 @@
   /* ── Styles : rien de Pilotage/Carte n'existe sous la formule Inventaire ── */
   var css = doc.createElement('style'); css.id = 'plan-inventaire-a34';
   css.textContent =
-    'html.vd-plan-inventaire .module-tabs,html.vd-plan-inventaire #tab-verdict,html.vd-plan-inventaire #tab-carte,html.vd-plan-inventaire #panel-verdict,html.vd-plan-inventaire #vdDock{display:none!important}' +
-    'html.vd-plan-inventaire #panel-inventory{display:block!important}body.shell-startup-locked #vdPlanBadge,#vr16~#vdPlanBadge{display:none!important}' +
+    /* C224 (X35) : sous la formule Inventaire, Pilotage et Carte restent dans les onglets ; leur cadre est flouté, inerte, et
+       couvert par une seule proposition. Le dock du Pilotage reste caché. */
+    'html.vd-plan-inventaire #vdDock{display:none!important}' +
+    'html.vd-plan-inventaire #panel-verdict iframe{filter:blur(16px) saturate(.6);pointer-events:none!important;user-select:none;-webkit-user-select:none}' +
+    '#vdFlou{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:rgba(2,8,23,.22)}' +
+    '#vdFlou .vf-card{width:min(100%,380px);padding:26px 22px 22px;border-radius:26px;background:#0a0a0a;color:#f8fafc;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.45);font-family:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif}' +
+    '#vdFlou .vf-k{display:block;font:800 11.5px/1 -apple-system,system-ui;letter-spacing:.16em;text-transform:uppercase;color:#e3b341;margin-bottom:10px}#vdFlou h2{margin:0 0 8px;font:900 23px/1.15 -apple-system,system-ui;color:#fff;letter-spacing:-.02em}#vdFlou p{margin:0 0 18px;color:rgba(248,250,252,.78);font-size:14.5px;line-height:1.45}' +
+    '#vdFlou button{width:100%;min-height:56px;border:0;border-radius:18px;background:linear-gradient(90deg,#b8860b,#e3b341);color:#1a1200;font:900 17px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 14px 34px rgba(212,167,44,.4)}' +
+    'body.shell-startup-locked #vdPlanBadge,#vr16~#vdPlanBadge{display:none!important}' +
     /* C212 (W02) : la pastille n'est plus posée par-dessus l'en-tête (elle couvrait l'onglet Inventaire à 375 px, les boutons
        verrou, thème et notifications, Vera et la croix des fenêtres). Elle prend sa propre place dans l'en-tête de la coquille :
        une ligne à elle sur téléphone, une case avant les boutons sur tablette, sous les onglets dans la barre latérale. */
     '#vdPlanBadge{position:relative;z-index:1;justify-self:end;align-self:center;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:34px;box-sizing:border-box;padding:0 12px;border-radius:999px;border:1px solid rgba(212,167,44,.5);background:linear-gradient(90deg,rgba(184,134,11,.18),rgba(227,179,65,.22));color:#8a5a00;font:800 12.5px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:.02em;cursor:pointer;white-space:nowrap}' +
-    '#vdPlanBadge i{flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#e3b341;box-shadow:0 0 0 3px rgba(227,179,65,.25)}#vdPlanBadge .vpb-c{display:none}#vdPlanBadge .vpb-l{overflow:hidden;text-overflow:ellipsis}#vdPlanBadge:active{opacity:.6}' +
+    '#vdPlanBadge i{flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#e3b341;box-shadow:0 0 0 3px rgba(227,179,65,.25)}#vdPlanBadge .vpb-l{overflow:hidden;text-overflow:ellipsis}#vdPlanBadge:active{opacity:.6}' +
     'body>#vdPlanBadge{position:fixed;z-index:61;top:calc(env(safe-area-inset-top,0px) + 10px);right:14px}' +
     '@media (max-width:720px){html.vd-plan-pastille .app-shell-header{grid-template-areas:"brand context actions" "tabs tabs tabs" "plan plan plan"}.app-shell-header>#vdPlanBadge{grid-area:plan;justify-self:stretch;min-height:30px;font-size:12px}}' +
-    '@media (min-width:721px) and (max-width:1099px) and (min-height:501px){html.vd-plan-pastille .app-shell-header{grid-template-columns:auto minmax(0,1fr) auto auto}html.vd-plan-pastille .app-shell-brand>span{display:none}.app-shell-header>#vdPlanBadge{grid-row:1;grid-column:3}html.vd-plan-pastille .app-shell-header>.shell-actions{grid-row:1;grid-column:4}.app-shell-header>#vdPlanBadge .vpb-l{display:none}.app-shell-header>#vdPlanBadge .vpb-c{display:inline}}' +
-    '@media (orientation:landscape) and (max-height:500px) and (min-width:600px),(min-width:860px) and (max-width:1099px){html.vd-plan-pastille .app-shell-header{grid-template-columns:auto minmax(0,18vw) minmax(0,1fr) auto auto!important;grid-template-areas:"brand context tabs plan actions"!important}html.vd-plan-pastille .app-shell-brand>span{display:none}html.vd-plan-pastille .app-shell-header .module-tabs button{min-width:0!important}.app-shell-header>#vdPlanBadge{grid-area:plan;grid-row:auto;grid-column:auto}html.vd-plan-pastille .app-shell-header>.shell-actions{grid-area:actions;grid-row:auto;grid-column:auto}.app-shell-header>#vdPlanBadge .vpb-l{display:none}.app-shell-header>#vdPlanBadge .vpb-c{display:inline}}' +
+    '@media (min-width:721px) and (max-width:1099px) and (min-height:501px){html.vd-plan-pastille .app-shell-header{grid-template-columns:auto minmax(0,1fr) auto auto}html.vd-plan-pastille .app-shell-brand>span{display:none}.app-shell-header>#vdPlanBadge{grid-row:1;grid-column:3}html.vd-plan-pastille .app-shell-header>.shell-actions{grid-row:1;grid-column:4}.app-shell-header>#vdPlanBadge .vpb-l{display:none}.app-shell-header>#vdPlanBadge::after{content:attr(data-court)}}' +
+    '@media (orientation:landscape) and (max-height:500px) and (min-width:600px),(min-width:860px) and (max-width:1099px){html.vd-plan-pastille .app-shell-header{grid-template-columns:auto minmax(0,18vw) minmax(0,1fr) auto auto!important;grid-template-areas:"brand context tabs plan actions"!important}html.vd-plan-pastille .app-shell-brand>span{display:none}html.vd-plan-pastille .app-shell-header .module-tabs button{min-width:0!important}.app-shell-header>#vdPlanBadge{grid-area:plan;grid-row:auto;grid-column:auto}html.vd-plan-pastille .app-shell-header>.shell-actions{grid-area:actions;grid-row:auto;grid-column:auto}.app-shell-header>#vdPlanBadge .vpb-l{display:none}.app-shell-header>#vdPlanBadge::after{content:attr(data-court)}}' +
     '@media (min-width:1100px){.app-shell-header>#vdPlanBadge{order:2;align-self:stretch;white-space:normal;text-align:center;line-height:1.25;padding:8px 12px}}' +
     'html.vd-workspace-dark #vdPlanBadge,html[data-theme="dark"] #vdPlanBadge,.dark #vdPlanBadge{color:#fde68a}' +
     '#vdOffre{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center;background:rgba(2,8,23,.78);opacity:1;transition:opacity .16s}#vdOffre.ferme{opacity:0;pointer-events:none}' +
@@ -124,10 +137,8 @@
     fermer();
     var o = doc.createElement('div'); o.id = 'vdOffre'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
     var h = '<div class="vo-card"><button type="button" class="vo-x" aria-label="Fermer">×</button>';
-    if (mode === 'choix') h = '<div class="vo-card"><span class="vo-k">Bienvenue sur Verdict</span><h1>Que venez-vous faire ?</h1><p>Choisissez votre départ : l’appli ne vous montre que ce qui vous sert. Vous pourrez changer d’avis à tout moment.</p>' +
-      '<button type="button" class="vo-choix" data-vo="choix-inventaire"><span class="ic">📦</span><span><b>Gérer mon inventaire</b><small>Gratuit, pour toujours. Compter, commander, suivre vos stocks, cuisine et bar.</small></span></button>' +
-      '<button type="button" class="vo-choix or" data-vo="choix-complet"><span class="ic">📈</span><span><b>Piloter tout mon restaurant</b><small>' + (parCompte() ? 'Pilotage, Carte, Audit, Simuler, Vera et l’Inventaire. L’essai de 14 jours, sans carte, démarre avec votre compte.' : '14 jours gratuits, sans carte : Pilotage, Carte, Audit, Simuler, Vera, et l’Inventaire.') + '</small></span></button>' +
-      '<p class="vo-note">Après l’essai : Pilotage 69 € HT par mois (690 € HT par an) ou Pro 129 € HT par mois (1 290 € HT par an), ou retour à l’Inventaire gratuit. Rien n’est jamais supprimé.</p>';
+    if (mode === 'attente' && E.abonnementFini) h += '<span class="vo-k">Abonnement terminé</span><h1>Vos données sont conservées.</h1><p>Votre abonnement a pris fin : rien n’est supprimé. Tant que les abonnements Pilotage et Pro ne sont pas ouverts, tout reste ouvert.</p>' + LIGNES +
+      '<button type="button" class="vo-cta" data-vo="continuer">Continuer</button>' + ABO;
     else if (mode === 'attente') h += '<span class="vo-k">Essai terminé</span><h1>Tout reste ouvert, pour l’instant.</h1><p>Vos 14 jours d’essai sont passés. Les abonnements Pilotage et Pro ouvrent très bientôt : d’ici là, rien ne se ferme et rien n’est supprimé.</p>' + LIGNES +
       '<button type="button" class="vo-cta" data-vo="continuer">Continuer</button>' + ABO;
     else if (mode === 'essai' && E.compte) h += '<span class="vo-k">Essai · encore ' + E.jours + ' jour' + (E.jours > 1 ? 's' : '') + '</span><h1>Tout Verdict est ouvert</h1><p>Pilotage, Carte, Audit, Simuler et Vera, avec vos vrais chiffres. Votre essai est porté par votre compte : un seul essai de 14 jours, sans carte bancaire. À la fin, rien n’est supprimé : l’Inventaire reste gratuit.</p>' + LIGNES +
@@ -135,6 +146,8 @@
     else if (mode === 'essai') h += '<span class="vo-k">Essai · encore ' + E.jours + ' jour' + (E.jours > 1 ? 's' : '') + '</span><h1>Tout Verdict est ouvert</h1><p>Pilotage, Carte, Audit, Simuler et Vera, avec vos vrais chiffres. Vous pouvez arrêter quand vous voulez : rien n’est supprimé, l’Inventaire reste gratuit.</p>' + LIGNES +
       '<button type="button" class="vo-cta" data-vo="continuer">Continuer l’essai</button>' + ABO + '<button type="button" class="vo-stop" data-vo="arreter">Arrêter l’essai maintenant</button><p class="vo-note">À la fin de l’essai, aucun prélèvement : vous choisissez vous-même de passer à Pilotage ou Pro.</p>';
     else if (mode === 'compte') h += '<span class="vo-k">Découverte</span><h1>Essayez tout Verdict 14 jours</h1><p>' + ESSAI_COMPTE + '</p>' + LIGNES + CREER + '<button type="button" class="vo-sec" data-vo="continuer">Continuer la découverte</button>';
+    else if (mode === 'termine' && E.abonnementFini) h += '<span class="vo-k">Abonnement terminé</span><h1>Vos données sont conservées.</h1><p>Votre abonnement a pris fin. Vos fiches, vos ventes et vos stocks sont conservés. L’Inventaire reste gratuit, pour toujours. Pour retrouver Pilotage, Carte, Audit, Simuler et Vera :</p>' + LIGNES +
+      '<button type="button" class="vo-cta" data-vo="passer">Reprendre Pilotage ou Pro</button><button type="button" class="vo-sec" data-vo="rester">Rester sur l’Inventaire gratuit</button>';
     else if (mode === 'termine') h += '<span class="vo-k">Essai terminé</span><h1>Rien n’est supprimé.</h1><p>Vos fiches, vos ventes et vos stocks sont conservés. L’Inventaire reste gratuit, pour toujours. Pour retrouver Pilotage, Carte, Audit, Simuler et Vera :</p>' + LIGNES +
       '<button type="button" class="vo-cta" data-vo="passer">Passer à Pilotage ou Pro</button><button type="button" class="vo-sec" data-vo="rester">Rester sur l’Inventaire gratuit</button>';
     else if (E.decouverte) h += '<span class="vo-k">Verdict · Inventaire gratuit</span><h1>Vos stocks sont gratuits. Et tout le reste ?</h1><p>' + ESSAI_COMPTE + '</p>' + LIGNES + CREER + '<button type="button" class="vo-sec" data-vo="rester">Rester sur l’Inventaire</button>';
@@ -145,11 +158,8 @@
        à l'ouverture (le fil principal de la coquille est chargé ; T3 mesurait 3 s). Seule la fermeture s'estompe. */
     o.classList.add('on');
     o.addEventListener('click', function (ev) {
-      var b = ev.target.closest('[data-vo],.vo-x'); if (!b) { if (ev.target === o && mode !== 'choix') fermer(); return; }
+      var b = ev.target.closest('[data-vo],.vo-x'); if (!b) { if (ev.target === o) fermer(); return; }
       var a = b.getAttribute('data-vo');
-      if (a === 'choix-inventaire') { ecrire({ niveau: 'inventaire', depuis: Date.now(), choix: 'inventaire' }); fermer(); setTimeout(function () { location.replace(urlAvec('inventory')); }, 60); return; }
-      if (a === 'choix-complet' && parCompte()) { ecrire({ niveau: 'decouverte', depuis: Date.now(), choix: 'complet' }); fermer(); appliquer(); try { w.VerdictUnifiedShell && w.VerdictUnifiedShell.activateModule('pilotage', {}); } catch (e) {} if (!compte()) setTimeout(function () { ouvrirOffre('compte'); }, 250); return; }
-      if (a === 'choix-complet') { var t1 = Date.now(); ecrire({ niveau: 'essai', depuis: t1, fin: t1 + JOURS * JOUR, essaiUtilise: true, choix: 'complet' }); fermer(); appliquer(); try { w.VerdictUnifiedShell && w.VerdictUnifiedShell.activateModule('pilotage', {}); } catch (e) {} return; }
       if (a === 'creer' || (a === 'essayer' && parCompte())) { try { location.href = URL_CREER; } catch (e) {} return; }
       if (a === 'connexion') { try { location.href = URL_CONNEXION; } catch (e) {} return; }
       if (a === 'essayer') demarrerEssai();
@@ -173,53 +183,77 @@
   function urlAvec(module) { var u = new URL(location.href); u.searchParams.set('module', module); u.searchParams.delete('plan'); u.searchParams.delete('profile'); return u.pathname + u.search + u.hash; }
 
   /* ── Application du verrou et de la pastille ── */
-  var dejaTermine = false;
   function badge() {
     var acts = doc.body; if (!acts) return;
     var b = doc.getElementById('vdPlanBadge'), E = etat();
-    var texte = !actif() || E.abonne ? '' : (E.attente ? 'Essai terminé · tout reste ouvert' : E.niveau === 'essai' ? 'Essai · J-' + E.jours : (E.niveau === 'inventaire' ? (E.termine || (!E.decouverte && (lire() || {}).essaiUtilise) ? 'Passer à Pilotage ou Pro' : 'Tout Verdict · 14 j gratuits') : (E.decouverte ? 'Découverte · essai de 14 j avec un compte' : '')));
-    /* C212 : libellé court pour la case de l'en-tête sur tablette. */
-    var court = E.attente ? 'Essai terminé' : E.niveau === 'essai' ? 'J-' + E.jours : E.decouverte && E.niveau === 'complet' ? 'Essai 14 j' : texte ? 'Offres' : '';
+    /* C224 (X34) : sous la formule Inventaire, aucune pastille ni message d'essai ; la proposition n'existe que sur Pilotage
+       et Carte floutés. (X01) Un abonnement payé qui a pris fin se dit « Abonnement terminé », jamais « Essai terminé ». */
+    var fin = E.abonnementFini ? 'Abonnement terminé' : 'Essai terminé';
+    var texte = !actif() || E.abonne || E.niveau === 'inventaire' ? '' : (E.attente ? fin + ' · tout reste ouvert' : E.niveau === 'essai' ? 'Essai · J-' + E.jours : (E.decouverte ? 'Découverte · essai de 14 j avec un compte' : ''));
+    /* C212 : libellé court pour la case de l'en-tête sur tablette ; C224 (X02) : posé en pseudo-élément (data-court), le texte
+       du bouton n'a donc qu'un libellé, et son nom accessible est le libellé complet. */
+    var court = E.attente ? fin : E.niveau === 'essai' ? 'J-' + E.jours : E.decouverte ? 'Essai 14 j' : '';
     var tete = doc.querySelector('header.app-shell-header');
-    if (!texte) { if (b) b.remove(); doc.documentElement.classList.remove('vd-plan-pastille'); return; }
+    /* C224 : classList.remove() réécrit l'attribut même sans la classe ; on ne touche à rien au repos. */
+    if (!texte) { if (b) b.remove(); if (doc.documentElement.classList.contains('vd-plan-pastille')) doc.documentElement.classList.remove('vd-plan-pastille'); return; }
     if (!b) { b = doc.createElement('button'); b.id = 'vdPlanBadge'; b.type = 'button'; b.onclick = function () { ouvrirOffre(); }; }
     /* C212 (W02) : dans l'en-tête quand il existe (jamais par-dessus) ; sinon, en dernier recours, en haut à droite. */
     var parent = tete || acts; if (b.parentNode !== parent) parent.appendChild(b);
     if (!doc.documentElement.classList.contains('vd-plan-pastille')) doc.documentElement.classList.add('vd-plan-pastille');
     /* C194 : appliquer() tourne toutes les 400 ms ; la pastille n'est réécrite que si son texte change (0 changement au repos) */
-    if (b.__vdTexte !== texte) { b.__vdTexte = texte; b.innerHTML = '<i></i><span class="vpb-l">' + texte + '</span><span class="vpb-c">' + court + '</span>'; b.setAttribute('aria-label', texte); b.title = texte; }
+    if (b.__vdTexte !== texte) { b.__vdTexte = texte; b.innerHTML = '<i aria-hidden="true"></i><span class="vpb-l">' + texte + '</span>'; b.setAttribute('data-court', court); b.setAttribute('aria-label', texte); b.title = texte; }
+  }
+  /* C224 (X35) : Pilotage et Carte floutés pour le client de l'Inventaire gratuit. Le cadre tourne normalement mais il est
+     inerte (ni clic, ni clavier, ni lecteur d'écran) ; une seule proposition, hors du flou. Rien n'est réécrit au repos. */
+  function flou(v) {
+    var panel = doc.getElementById('panel-verdict'), f = panel && panel.querySelector('iframe'), c = doc.getElementById('vdFlou');
+    if (f && f.inert !== v) { f.inert = v; if (!v) { f.removeAttribute('aria-hidden'); f.removeAttribute('tabindex'); } }
+    if (f && v) { if (f.getAttribute('aria-hidden') !== 'true') f.setAttribute('aria-hidden', 'true'); if (f.getAttribute('tabindex') !== '-1') f.setAttribute('tabindex', '-1'); }
+    if (!v || !panel) { if (c) c.remove(); return; }
+    /* La porte d'entrée du Pilotage (jamais configuré chez ce client) demande à la coque de cacher l'en-tête (p40-gate) :
+       sous le flou, l'en-tête reste, pour revenir à l'Inventaire d'un geste. */
+    if (panel.classList.contains('active') && doc.documentElement.classList.contains('p40-gate')) doc.documentElement.classList.remove('p40-gate');
+    var E = etat(), P = lire() || {}, reste = !parCompte() && P.essaiUtilise && P.fin > Date.now() ? Math.ceil((P.fin - Date.now()) / JOUR) : 0;
+    var usee = E.termine || (!parCompte() && P.essaiUtilise && !reste) || (E.compte && !E.decouverte);
+    var action = usee ? 'passer' : 'essayer', sig = action + '|' + reste + '|' + !!E.abonnementFini;
+    if (c && c.__sig === sig && c.parentNode === panel) return;
+    if (!c) { c = doc.createElement('div'); c.id = 'vdFlou'; c.setAttribute('role', 'region'); c.setAttribute('aria-label', 'Pilotage et Carte');
+      c.addEventListener('click', function (ev) { var b = ev.target.closest('[data-vf]'); if (!b) return; var a = b.getAttribute('data-vf');
+        if (a === 'passer') { try { location.href = URL_ABO; } catch (e) {} } else if (parCompte()) { try { location.href = URL_CREER; } catch (e) {} } else demarrerEssai(); }); }
+    c.__sig = sig;
+    c.innerHTML = '<div class="vf-card"><span class="vf-k">Pilotage et Carte</span>' + (usee
+      ? '<h2>' + (E.abonnementFini ? 'Abonnement terminé' : 'Essai terminé') + '</h2><p>Vos données sont conservées. Votre Inventaire reste gratuit.</p><button type="button" data-vf="passer">Choisir Pilotage ou Pro</button>'
+      : '<h2>Vos chiffres, votre carte, vos décisions</h2><p>14 jours, sans carte bancaire. Votre Inventaire reste gratuit.</p><button type="button" data-vf="essayer">' + (reste ? 'Reprendre mon essai · encore ' + reste + ' jour' + (reste > 1 ? 's' : '') : 'Essayer 14 jours') + '</button>') + '</div>';
+    if (c.parentNode !== panel) panel.appendChild(c);
   }
   function appliquer() {
-    if (actif() && !lire() && !doc.getElementById('vdOffre') && doc.body) { ouvrirOffre('choix'); }
-    var v = verrou(); doc.documentElement.classList.toggle('vd-plan-inventaire', v); badge();
-    if (!v) return;
-    /* Le cadre Pilotage ne doit jamais être le module courant : on ramène sur Inventaire et on ouvre l'offre. */
-    var sh = w.VerdictUnifiedShell;
-    var panel = doc.getElementById('panel-verdict'), pilotageActif = panel && panel.classList.contains('active');
-    if (sh && sh.hasStarted && sh.hasStarted() && (sh.getActiveModule() !== 'inventory' || pilotageActif)) {
-      try { sh.activateModule('inventory', {}); } catch (e) {}
-      if (!doc.getElementById('vdOffre')) ouvrirOffre('inviter');
-    }
-    var E = etat(); if (E.termine && !dejaTermine && !(lire() || {}).vuTermine) { dejaTermine = true; var p = lire() || {}; p.vuTermine = true; ecrire(p); setTimeout(function () { ouvrirOffre('termine'); }, 900); }
+    var v = verrou();
+    if (doc.documentElement.classList.contains('vd-plan-inventaire') !== v) doc.documentElement.classList.toggle('vd-plan-inventaire', v);
+    badge(); flou(v);
   }
 
   if (actif()) {
     /* C119 : un client déjà installé (dossier Verdict rempli) entre directement dans son essai de 14 jours ; un nouveau
-       venu choisit d'abord ce qu'il vient faire (Inventaire gratuit ou tout Verdict) et ne voit que ce parcours. */
+       venu répond à la seule question de l'écran Bienvenue (C224, X03), dont la porte « Inventaire gratuit ». */
     if (!lire() && dejaInstalle()) { if (parCompte()) ecrire({ niveau: 'decouverte', depuis: Date.now(), auto: true }); else { var t0 = Date.now(); ecrire({ niveau: 'essai', depuis: t0, fin: t0 + JOURS * JOUR, essaiUtilise: true, auto: true }); } }
     /* C212 : un compte connecté a déjà sa formule ; pas de choix de départ à lui reposer. */
     if (!lire() && compte()) ecrire({ niveau: 'compte', depuis: Date.now() });
     /* Avant le démarrage de la coquille : la formule Inventaire entre toujours par ?module=inventory. */
     if (verrou() && params.get('module') !== 'inventory') { location.replace(urlAvec('inventory')); return; }
-    /* Les appels publics vers Pilotage/Carte sont refusés sous la formule Inventaire. */
-    function garder() {
-      var sh = w.VerdictUnifiedShell; if (!sh || sh.__vdPlan) return !!sh; sh.__vdPlan = true;
-      var am = sh.activateModule, a = sh.activate;
-      sh.activateModule = function (cap, options, hm) { if (verrou() && cap !== 'inventory' && !(options && options.authorizedStartup)) { ouvrirOffre('inviter'); return false; } return am.apply(this, arguments); };
-      sh.activate = function (module, options, hm) { if (verrou() && module === 'verdict' && !(options && options.authorizedStartup)) { ouvrirOffre('inviter'); return false; } return a.apply(this, arguments); };
-      return true;
-    }
-    (function boot(n) { if (garder()) return; if (n > 0) setTimeout(function () { boot(n - 1); }, 200); })(50);
+    /* C224 (X35) : Pilotage et Carte s'ouvrent normalement sous la formule Inventaire (floutés, voir flou()).
+       C224 (X34) : la porte « Je veux seulement l'Inventaire (gratuit) » de l'écran Bienvenue (029, C214) demande à la coque
+       d'aller sur l'Inventaire ; c'est le choix de la formule. La coque ignore ce message tant que le démarrage est verrouillé
+       (profil vierge) : le choix était perdu et l'essai démarrait seul. On l'enregistre ici et l'on entre par ?module=inventory. */
+    w.addEventListener('message', function (ev) {
+      var d = ev.data; if (d && d.p41 === 'gate' && d.open && verrou()) { setTimeout(function () { flou(true); }, 0); return; }
+      if (!d || d.type !== 'verdict-unified-switch' || d.module !== 'inventory') return;
+      var f = doc.getElementById('frame-verdict'); if (!f || ev.source !== f.contentWindow) return;
+      var porte = null; try { porte = f.contentDocument.querySelector('[data-entry-door="inventaire"]'); } catch (e) {}
+      if (!porte || !porte.getClientRects().length) return;
+      ecrire({ niveau: 'inventaire', depuis: Date.now(), choix: 'inventaire' }); appliquer();
+      /* Le Pilotage enregistre le dossier juste avant (C228 : la marque « FEC choisi » est effacée) : on lui laisse le temps. */
+      if (doc.body && doc.body.classList.contains('shell-startup-locked')) setTimeout(function () { location.replace(urlAvec('inventory')); }, 900);
+    });
     appliquer();
     doc.addEventListener('DOMContentLoaded', appliquer);
     w.addEventListener('load', function () { appliquer(); setTimeout(appliquer, 800); });

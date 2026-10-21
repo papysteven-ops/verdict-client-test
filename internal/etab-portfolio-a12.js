@@ -232,6 +232,10 @@ function duplicate(srcId,nom,ville,network,opts){
   try{var req=JSON.parse(root.localStorage.getItem(DUP_KEY)||'{}');req[id]=srcId;root.localStorage.setItem(DUP_KEY,JSON.stringify(req));}catch(e){}
   if(!opts.silent){
     try{root.save&&root.save('duplicate-establishment');}catch(e){}
+    /* C230 (X32) : les écrans déjà dessinés pour la référence sont périmés. Sans cette invalidation, une création lancée
+       depuis la Carte (ou tout écran autre que l'Accueil) rouvrait l'Accueil de la référence : son nom, sa journée à
+       compléter, ses chiffres, sous le seul bandeau du nouvel établissement. */
+    try{if(typeof root.verdictInvalidateViews==='function')root.verdictInvalidateViews();}catch(e){}
     try{root.fillInputs();root.readInputs();root.drawEtabs();root.refreshAll();root.go('pil');}catch(e){}
     publierContexte();
     try{root.toast&&root.toast(T().done.replace('{name}',d.etab).replace('{src}',nameOf(srcId)));}catch(e){}
@@ -300,7 +304,7 @@ function hook(){
     if(typeof root.verdictEtabCapacityAvailable==='function'&&typeof root.etabBillableList==='function'&&!root.verdictEtabCapacityAvailable(root.etabBillableList().length+1))return originalOpenNew.apply(this,arguments);
     return openChooser();};wn.__etab12=true;root.openNewEtab=wn;}
   /* C218 (W71) : le parcours d'origine « Nouveau concept » (createEtab) publie lui aussi le nouvel établissement à la coquille. */
-  if(typeof root.createEtab==='function'&&!root.createEtab.__etab12){var oce=root.createEtab,wce=function(){var avant=S()&&S().actif,r=oce.apply(this,arguments);try{if(S()&&S().actif!==avant)publierContexte();}catch(e){}return r;};wce.__etab12=true;root.createEtab=wce;}
+  if(typeof root.createEtab==='function'&&!root.createEtab.__etab12){var oce=root.createEtab,wce=function(){var avant=S()&&S().actif,r=oce.apply(this,arguments);try{if(S()&&S().actif!==avant){/* C230 (X32) : même invalidation que « Même concept » */if(typeof root.verdictInvalidateViews==='function'){root.verdictInvalidateViews();root.refreshAll();}publierContexte();}}catch(e){}return r;};wce.__etab12=true;root.createEtab=wce;}
   if(!root.refreshAll.__etab12){var orf=root.refreshAll,wr=function(){var r=orf.apply(this,arguments);try{ensureStyle();banner();districtField();placeUnderTitle();}catch(e){}return r;};wr.__etab12=true;root.refreshAll=wr;}
   try{ensureStyle();decorateBar();banner();districtField();placeUnderTitle();}catch(e){}
   /* Le titre de l'accueil est redessiné après un changement d'établissement : la ligne ville · quartier suit chaque rendu. */
