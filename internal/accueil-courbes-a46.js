@@ -62,8 +62,8 @@
     m.cols.forEach(function (c, i) {
       var st = c.type === 'reel' ? etat(c.r) : c.type, v = c.type === 'reel' ? court(c.r) : c.type === 'repos' ? 'Repos' : c.type === 'avant' ? '' : c.avenir ? '' : '—';
       var al = c.type === 'reel' ? c.lib + ' : ' + pct(c.r) : c.lib + (c.type === 'repos' ? ' : repos' : c.type === 'avant' ? ' : avant le début du suivi' : c.avenir ? ' : à venir' : ' : sans chiffre');
-      var niv = c.type === 'reel' ? ' style="--h:' + Math.round(Math.max(0.04, Math.min(1, 0.5 + (c.r - 1) * 2)) * 100) + '%"' : ''; /* C222 : minimum = trait au milieu ; C222 bis (Steven : « si ça dépasse 100, ça doit dépasser le trait, je ne le vois jamais ») : échelle resserrée autour du minimum, chaque point compte double (110 % → 70 % de la case, 95 % → 40 %, pleine à 125 %) */
-      h += '<button type="button" class="rx-j st-' + st + (c.type === 'reel' ? ' niv' : '') + (i === m.sel ? ' sel' : '') + (c.auj ? ' auj' : '') + '"' + niv + ' data-i="' + i + '" tabindex="' + (i === m.sel ? 0 : -1) + '" aria-label="' + esc(al) + '" aria-pressed="' + (i === m.sel) + '"><b>' + c.jour + '</b><span>' + (c.type === 'reel' ? v : esc(v)) + '</span></button>';
+      var jg = c.type === 'reel' ? '<i class="rx-g" aria-hidden="true"><i style="width:' + Math.round(Math.max(0.04, Math.min(1, 0.5 + (c.r - 1) * 2)) * 100) + '%"></i></i>' : ''; /* C222 ter (Steven : « j’aime la fonction de la jauge, mais clair ; à 150 % ça ne doit pas déborder ») : fine jauge en bas de la case, trait du minimum au milieu, chaque point compte double autour du minimum, pleine à 125 % et au-delà, jamais hors de la case */
+      h += '<button type="button" class="rx-j st-' + st + (c.type === 'reel' ? ' niv' : '') + (i === m.sel ? ' sel' : '') + (c.auj ? ' auj' : '') + '" data-i="' + i + '" tabindex="' + (i === m.sel ? 0 : -1) + '" aria-label="' + esc(al) + '" aria-pressed="' + (i === m.sel) + '"><b>' + c.jour + '</b><span>' + (c.type === 'reel' ? v : esc(v)) + '</span>' + jg + '</button>';
     });
     return h + '</div>';
   }
@@ -223,14 +223,11 @@
     '.rx line.obj{stroke:#d4a017;stroke-width:1.2;stroke-dasharray:5 4}.rx text.obj{font-size:10px;font-weight:800;fill:#b7860b}' +
     '.rx line.g{stroke:var(--line,rgba(148,163,184,.25));stroke-width:1}' +
     '.rx .repos{fill:var(--mut,#94a3b8);opacity:.55}.rx .vide{fill:var(--mut,#94a3b8);opacity:.3}' +
-    /* C222 (Steven, 21/10 : « fusionner les journées en restant premium : un visuel, mais utile, le %, toujours les couleurs Verdict ») */
-    '.rx-j{position:relative;overflow:hidden;isolation:isolate}.rx-j>b,.rx-j>span{position:relative;z-index:2}.rx-j.niv{justify-content:space-between!important;min-height:58px;padding:5px 2px 6px}' + /* numéro au-dessus du trait, % dessous */
-    '.rx-j.niv:before{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--h,0);z-index:0;background:linear-gradient(180deg,color-mix(in srgb,var(--rx-n) 70%,transparent),color-mix(in srgb,var(--rx-n) 92%,transparent));box-shadow:inset 0 2px 0 color-mix(in srgb,var(--rx-n) 100%,#000 18%);transition:height .6s cubic-bezier(.2,.8,.2,1)}' +
-    '.rx-j.niv:after{content:"";position:absolute;left:4%;right:4%;bottom:50%;height:2px;border-radius:2px;z-index:1;background:rgba(15,23,42,.75);box-shadow:0 0 0 1px rgba(255,255,255,.55)}html.vd-workspace-dark .rx-j.niv:after{background:rgba(255,255,255,.88)}' +
-    '.rx-j.st-vert{--rx-n:#22c55e}.rx-j.st-jaune{--rx-n:#eab308}.rx-j.st-orange{--rx-n:#f97316}.rx-j.st-rouge{--rx-n:#ef4444}' +
-    '.rx-j.niv.st-vert,.rx-j.niv.st-jaune,.rx-j.niv.st-orange,.rx-j.niv.st-rouge{background:rgba(148,163,184,.10)}.rx-j.niv span{font-weight:800}' +
-    '.rx-j.st-repos{background:repeating-linear-gradient(135deg,rgba(148,163,184,.22) 0 5px,transparent 5px 11px)!important}' +
-    '@media (prefers-reduced-motion:reduce){.rx-j.niv:before{transition:none}}' +
+    /* C222 : une seule grille des journées ; C222 ter (Steven : « je préfère cette version plus claire ; j’aime la fonction de la jauge ») : la case claire d’origine (fond teinté, numéro, %), plus une fine jauge en bas */
+    '.rx-j{position:relative}.rx-j.niv{padding-bottom:13px}.rx-j.st-vert{--rx-n:#22c55e}.rx-j.st-jaune{--rx-n:#eab308}.rx-j.st-orange{--rx-n:#f97316}.rx-j.st-rouge{--rx-n:#ef4444}' +
+    '.rx-g{position:absolute;left:16%;right:16%;bottom:6px;height:4px;border-radius:3px;background:rgba(148,163,184,.32)}.rx-g>i{position:absolute;left:0;top:0;bottom:0;max-width:100%;border-radius:3px;background:var(--rx-n);transition:width .6s cubic-bezier(.2,.8,.2,1)}' +
+    '.rx-g:after{content:"";position:absolute;left:50%;top:-3px;width:2px;height:10px;margin-left:-1px;border-radius:1px;background:rgba(15,23,42,.78)}html.vd-workspace-dark .rx-g:after{background:rgba(255,255,255,.9)}' +
+    '@media (prefers-reduced-motion:reduce){.rx-g>i{transition:none}}' +
     '.rx-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:14px 0 2px;max-width:560px}' +
     '.rx-cj{text-align:center;font-size:11px;font-weight:800;color:var(--mut,#64748b);letter-spacing:.04em;padding-bottom:2px}' +
     '.rx-j{appearance:none;-webkit-appearance:none;font:inherit;margin:0;min-width:0;min-height:50px;padding:5px 2px;border-radius:12px;border:1.5px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;color:var(--txt,#0f172a);background:rgba(148,163,184,.10);transition:transform .12s ease,box-shadow .2s ease;-webkit-tap-highlight-color:transparent}' +
