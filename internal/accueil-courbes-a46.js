@@ -62,7 +62,7 @@
     m.cols.forEach(function (c, i) {
       var st = c.type === 'reel' ? etat(c.r) : c.type, v = c.type === 'reel' ? court(c.r) : c.type === 'repos' ? 'Repos' : c.type === 'avant' ? '' : c.avenir ? '' : '—';
       var al = c.type === 'reel' ? c.lib + ' : ' + pct(c.r) : c.lib + (c.type === 'repos' ? ' : repos' : c.type === 'avant' ? ' : avant le début du suivi' : c.avenir ? ' : à venir' : ' : sans chiffre');
-      var niv = c.type === 'reel' ? ' style="--h:' + Math.round(Math.max(0.04, Math.min(1, c.r / 2)) * 100) + '%"' : ''; /* C222 (Steven : « 100 doit être à la moitié ») : minimum = trait au milieu de la case ; au-dessus du trait = dépassé, en dessous = manque */
+      var niv = c.type === 'reel' ? ' style="--h:' + Math.round(Math.max(0.04, Math.min(1, 0.5 + (c.r - 1) * 2)) * 100) + '%"' : ''; /* C222 : minimum = trait au milieu ; C222 bis (Steven : « si ça dépasse 100, ça doit dépasser le trait, je ne le vois jamais ») : échelle resserrée autour du minimum, chaque point compte double (110 % → 70 % de la case, 95 % → 40 %, pleine à 125 %) */
       h += '<button type="button" class="rx-j st-' + st + (c.type === 'reel' ? ' niv' : '') + (i === m.sel ? ' sel' : '') + (c.auj ? ' auj' : '') + '"' + niv + ' data-i="' + i + '" tabindex="' + (i === m.sel ? 0 : -1) + '" aria-label="' + esc(al) + '" aria-pressed="' + (i === m.sel) + '"><b>' + c.jour + '</b><span>' + (c.type === 'reel' ? v : esc(v)) + '</span></button>';
     });
     return h + '</div>';
@@ -225,8 +225,8 @@
     '.rx .repos{fill:var(--mut,#94a3b8);opacity:.55}.rx .vide{fill:var(--mut,#94a3b8);opacity:.3}' +
     /* C222 (Steven, 21/10 : « fusionner les journées en restant premium : un visuel, mais utile, le %, toujours les couleurs Verdict ») */
     '.rx-j{position:relative;overflow:hidden;isolation:isolate}.rx-j>b,.rx-j>span{position:relative;z-index:2}.rx-j.niv{justify-content:space-between!important;min-height:58px;padding:5px 2px 6px}' + /* numéro au-dessus du trait, % dessous */
-    '.rx-j.niv:before{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--h,0);z-index:0;background:linear-gradient(180deg,color-mix(in srgb,var(--rx-n) 55%,transparent),color-mix(in srgb,var(--rx-n) 85%,transparent));transition:height .6s cubic-bezier(.2,.8,.2,1)}' +
-    '.rx-j.niv:after{content:"";position:absolute;left:7%;right:7%;bottom:50%;height:2px;border-radius:2px;z-index:1;background:rgba(15,23,42,.55)}html.vd-workspace-dark .rx-j.niv:after{background:rgba(255,255,255,.88)}' +
+    '.rx-j.niv:before{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--h,0);z-index:0;background:linear-gradient(180deg,color-mix(in srgb,var(--rx-n) 70%,transparent),color-mix(in srgb,var(--rx-n) 92%,transparent));box-shadow:inset 0 2px 0 color-mix(in srgb,var(--rx-n) 100%,#000 18%);transition:height .6s cubic-bezier(.2,.8,.2,1)}' +
+    '.rx-j.niv:after{content:"";position:absolute;left:4%;right:4%;bottom:50%;height:2px;border-radius:2px;z-index:1;background:rgba(15,23,42,.75);box-shadow:0 0 0 1px rgba(255,255,255,.55)}html.vd-workspace-dark .rx-j.niv:after{background:rgba(255,255,255,.88)}' +
     '.rx-j.st-vert{--rx-n:#22c55e}.rx-j.st-jaune{--rx-n:#eab308}.rx-j.st-orange{--rx-n:#f97316}.rx-j.st-rouge{--rx-n:#ef4444}' +
     '.rx-j.niv.st-vert,.rx-j.niv.st-jaune,.rx-j.niv.st-orange,.rx-j.niv.st-rouge{background:rgba(148,163,184,.10)}.rx-j.niv span{font-weight:800}' +
     '.rx-j.st-repos{background:repeating-linear-gradient(135deg,rgba(148,163,184,.22) 0 5px,transparent 5px 11px)!important}' +
