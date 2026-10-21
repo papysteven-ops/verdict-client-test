@@ -35,7 +35,7 @@
     var cols = (m.days || []).map(function (d) {
       var dt = new Date(d.date + 'T12:00:00'), lib = JOURS[dt.getDay()] + ' ' + d.day + ' ' + MOIS[dt.getMonth()];
       var base = { lib: lib, date: d.date, axe: String(d.day), jour: d.day, dow: (dt.getDay() + 6) % 7, wd: dt.getDay(), auj: d.date === auj, avenir: d.date > auj };
-      if (d.preTracking) base.type = 'avant';
+      if (d.preTracking) base.type = typeof w.verdictIsOperatingClosed === 'function' && w.verdictIsOperatingClosed(d.date) ? 'repos' : 'avant'; /* C213 (W08) : avant le suivi, un jour fermé reste « Repos », un jour ouvert n'est ni repos ni manqué */
       else if (d.closed) base.type = 'repos';
       else if (d.ca == null || !(d.target > 0)) { base.type = 'vide'; base.cible = d.target > 0 ? d.target : null; }
       else { base.type = 'reel'; base.valeur = d.ca; base.cible = d.target; base.r = Math.round(d.ca) / Math.round(d.target); } /* C205 (V42) : le taux se lit sur les montants affichés */
@@ -61,7 +61,7 @@
     var prem = m.cols[0] ? m.cols[0].dow : 0; for (var k = 0; k < prem; k++) h += '<span class="rx-c0"></span>';
     m.cols.forEach(function (c, i) {
       var st = c.type === 'reel' ? etat(c.r) : c.type, v = c.type === 'reel' ? court(c.r) : c.type === 'repos' ? 'Repos' : c.type === 'avant' ? '' : c.avenir ? '' : '—';
-      var al = c.type === 'reel' ? c.lib + ' : ' + pct(c.r) : c.lib + (c.type === 'repos' ? ' : repos' : c.avenir ? ' : à venir' : ' : sans chiffre');
+      var al = c.type === 'reel' ? c.lib + ' : ' + pct(c.r) : c.lib + (c.type === 'repos' ? ' : repos' : c.type === 'avant' ? ' : avant le début du suivi' : c.avenir ? ' : à venir' : ' : sans chiffre');
       h += '<button type="button" class="rx-j st-' + st + (i === m.sel ? ' sel' : '') + (c.auj ? ' auj' : '') + '" data-i="' + i + '" tabindex="' + (i === m.sel ? 0 : -1) + '" aria-label="' + esc(al) + '" aria-pressed="' + (i === m.sel) + '"><b>' + c.jour + '</b><span>' + (c.type === 'reel' ? v : esc(v)) + '</span></button>';
     });
     return h + '</div>';
@@ -75,44 +75,54 @@
   }
   /* C157 — Projection annuelle indisponible (ex. Saisonnier mer : historique incomplet) : les mois sont repris du plan
      mensuel (minimum de chaque mois) et de l'historique, au lieu de laisser le chapitre Mois sans graphique. */
+  /* C213 (W10, W11) : le minimum de chaque mois vient du plan de l'année, comme le Jour et la carte Année ; un mois sans
+     chiffre n'est jamais compté « 0 € », et un mois avant le début du suivi n'a ni minimum ni échec. */
   function moisDuPlan(c, an) {
-    var cur = Number(moisCle().slice(5)), plans = w.DB && w.DB.performancePlans || {}, hist = {};
+    var cur = Number(moisCle().slice(5)), plans = w.DB && w.DB.performancePlans || {}, yp = w.DB && w.DB.performanceYearPlans && w.DB.performanceYearPlans[an], hist = {}, jour = {};
     (w.DB && w.DB.monthlyHistory || []).forEach(function (x) { hist[String(x.period).slice(0, 7)] = x; });
-    var parMois = Number(c && c.minimum) > 0 ? Number(c.minimum) / 12 : 0;
+    (w.DB && w.DB.histJour || []).forEach(function (r) { var k = String(r && r.date || '').slice(0, 7); if (k.slice(0, 4) === an && typeof r.caJ === 'number') jour[k] = (jour[k] || 0) + r.caJ; });
     return MOIS.map(function (_, i) {
-      var k = an + '-' + String(i + 1).padStart(2, '0'), h = hist[k], pl = plans[k], t = pl && Number(pl.minimum) > 0 ? Number(pl.minimum) : parMois;
+      var k = an + '-' + String(i + 1).padStart(2, '0'), h = hist[k], pl = plans[k], t = pl && Number(pl.minimum) > 0 ? Number(pl.minimum) : yp && Number(yp.monthlyTargets && yp.monthlyTargets[k]) > 0 ? Number(yp.monthlyTargets[k]) : 0;
       if (h && (h.seasonClosed || Number(h.openDays) === 0)) t = 0;
-      return { kind: i + 1 < cur ? 'past' : i + 1 === cur ? 'current' : 'future', target: t, actual: h ? Number(h.caTTC) || 0 : 0, value: null };
+      return { kind: i + 1 < cur ? 'past' : i + 1 === cur ? 'current' : 'future', target: t, actual: h ? Number(h.caTTC) || 0 : jour[k] != null ? jour[k] : null, value: null };
     });
   }
+  /* C213 (W11) : le mois où commence le suivi n'a pour minimum que la part de ses jours suivis ; on le dit, avec le mois entier. */
+  function partSuivie(an, i, dm) { if (i !== dm) return ''; try { var s = String(w.DB.performanceTrackingStartedAt || ''), yp = w.DB.performanceYearPlans[an], full = yp && yp.fullMonthlyTargets && Number(yp.fullMonthlyTargets[an + '-' + String(i + 1).padStart(2, '0')]); return ' · part des jours suivis depuis le ' + jourLong(s) + (full > 0 ? ' (mois entier : ' + eur(full) + ')' : ''); } catch (e) { return ''; } }
+  /* Mois du début du suivi dans l'année affichée (−1 si le suivi a commencé avant). */
+  function moisDebut(inp, an) { var s = String(inp && inp.trackingStart || (w.DB && w.DB.performanceTrackingStartedAt) || ''); return /^\d{4}-\d{2}/.test(s) && s.slice(0, 4) === an ? Number(s.slice(5, 7)) - 1 : (s.slice(0, 4) > an ? 12 : -1); }
   function moisAnnee() {
-    var A = w.VerdictAnnualProjection, c = A.coreN1(A.input(w.moteur())), an = moisCle().slice(0, 4), ad = aDate(); /* C204 : mêmes mois que la carte Année */
-    var mois = c && c.months && c.months.length ? c.months : moisDuPlan(c, an);
+    var A = w.VerdictAnnualProjection, inp = A.input(w.moteur()), c = A.coreN1(inp), an = moisCle().slice(0, 4), ad = aDate(); /* C204 : mêmes mois que la carte Année */
+    var mois = c && c.months && c.months.length ? c.months : moisDuPlan(c, an), dm = moisDebut(inp, an);
     var cols = mois.map(function (m, i) {
       var lib = MOIS[i] + ' ' + an;
+      if (i < dm) return { lib: lib, axe: INIT[i], type: 'avant' }; /* C213 (W10) : avant le début du suivi, rien n'est attendu */
       if (!(m.target > 0)) return { lib: lib, axe: INIT[i], type: 'repos' };
-      if (m.kind === 'past') return { lib: lib, axe: INIT[i], type: 'reel', valeur: m.actual, cible: m.target, r: m.actual / m.target };
-      if (m.kind === 'current') return ad.attendu > 0 ? { lib: lib + ' (en cours)', axe: INIT[i], type: 'encours', encours: true, valeur: ad.encaisse, cible: ad.attendu, r: ad.encaisse / ad.attendu } : { lib: lib, axe: INIT[i], type: 'vide' };
+      if (m.kind === 'past') return m.actual == null ? { lib: lib, axe: INIT[i], type: 'vide', cible: m.target } : { lib: lib, axe: INIT[i], type: 'reel', valeur: m.actual, cible: m.target, r: m.actual / m.target };
+      if (m.kind === 'current') return ad.attendu > 0 ? { lib: lib + ' (en cours)', axe: INIT[i], type: 'encours', encours: true, valeur: ad.encaisse, cible: ad.attendu, r: ad.encaisse / ad.attendu } : { lib: lib + ' (en cours)' + partSuivie(an, i, dm), axe: INIT[i], type: 'vide', encours: true, auj: true, cible: m.target };
       if (m.value == null) return { lib: lib, axe: INIT[i], type: 'vide', cible: m.target, avenir: true };
       return { lib: lib, axe: INIT[i], type: 'projete', valeur: m.value, cible: m.target, r: m.value / m.target };
     });
     var passes = cols.filter(function (x) { return x.type === 'reel'; }), ok = passes.filter(function (x) { return x.r >= 1; }).length;
-    var sel = cols.findIndex(function (x) { return x.encours; }); if (sel < 0) sel = cols.length - 1;
+    var sel = cols.findIndex(function (x) { return x.encours; }); if (sel < 0) sel = Math.min(cols.length - 1, Number(moisCle().slice(5)) - 1); /* C213 (W17) : le mois en cours, pas décembre */
     return {
       kicker: 'Vos mois · ' + an, cols: cols, sel: sel,
-      resume: passes.length ? ok + ' mois sur ' + passes.length + ' terminés au-dessus de leur minimum' : 'Premier mois en cours',
+      resume: passes.length ? ok + ' mois sur ' + passes.length + ' terminés au-dessus de leur minimum' : dm > 0 && dm < 12 ? 'Suivi depuis ' + MOIS[dm] + ' : les mois d’avant ne sont pas comptés' : 'Premier mois en cours',
       unite: 'minimum du mois'
     };
   }
   function annees() {
-    var A = w.VerdictAnnualProjection, c = A.coreN1(A.input(w.moteur())), an = Number(moisCle().slice(0, 4)), cible = Number(c.minimum) || 0;
+    var A = w.VerdictAnnualProjection, inpA = A.input(w.moteur()), c = A.coreN1(inpA), an = Number(moisCle().slice(0, 4)), cible = Number(inpA && inpA.fullYearMinimum) || Number(c.minimum) || 0; /* C213 (W16) : une année entière face au minimum d'une année entière */
     var par = {}; (w.DB && w.DB.monthlyHistory || []).forEach(function (x) { var y = Number(String(x.period || '').slice(0, 4)); if (y && y < an && x.caTTC > 0) par[y] = (par[y] || 0) + Number(x.caTTC); });
+    /* C213 (W16) : sans historique mensuel, une année passée vient de la caisse ou du FEC quand chacun de ses 12 mois est connu. */
+    for (var yy = an - 6; yy < an; yy++) { if (par[yy] > 0) continue; try { var ky = w.VerdictPerformanceIntegrated.knownYear(yy); if (ky && ky.total > 0) par[yy] = ky.total; } catch (e) {} }
     var cols = Object.keys(par).map(Number).sort().slice(-6).map(function (y) { return { lib: 'Année ' + y, axe: String(y), type: 'reel', valeur: par[y], cible: cible, r: cible > 0 ? par[y] / cible : null }; });
     if (!(c.expected > 0)) { /* C157 : projection indisponible → année à date reprise du plan mensuel et de l'historique. */
-      var ad = aDate(), ac = ad.encaisse, ex = ad.attendu; moisDuPlan(c, String(an)).forEach(function (m) { if (m.kind === 'past' && m.target > 0) { ac += m.actual; ex += m.target; } });
+      var ad = aDate(), ac = ad.encaisse, ex = ad.attendu, dm = moisDebut(A.input(w.moteur()), String(an)); moisDuPlan(c, String(an)).forEach(function (m, i) { if (m.kind === 'past' && m.target > 0 && i >= dm && m.actual != null) { ac += m.actual; ex += m.target; } }); /* C213 (W10) : seuls les mois suivis et chiffrés comptent */
       c = Object.assign({}, c, { actual: ac, expected: ex });
     }
     if (c.expected > 0) cols.push({ lib: 'Année ' + an + ' (en cours)', axe: String(an), type: 'encours', encours: true, valeur: c.actual, cible: c.expected, r: c.actual / c.expected });
+    else cols.push({ lib: 'Année ' + an + ' (en cours)', axe: String(an), type: 'vide', encours: true }); /* C213 (W10) : aucun chiffre attendu à cette date, aucun échec */
     /* Évolution : même période de l'année précédente (janvier → mois en cours), à périmètre comparable. */
     var cmp = memeDate(an), evo = cmp && cmp.avant > 0 && cmp.maintenant > 0 ? (cmp.maintenant - cmp.avant) / cmp.avant : null;
     return {
@@ -145,7 +155,7 @@
     if (!c) return { big: '—', lab: '', st: 'vide' };
     if (c.type === 'repos') return { big: 'Repos', lab: c.lib + ' · fermé, aucun chiffre attendu', st: 'vide', mot: '' };
     if (c.type === 'avant') return { big: '—', lab: c.lib + ' · avant le début du suivi', st: 'vide', mot: '' };
-    if (c.type === 'vide') return { big: c.cible ? eur(c.cible) : '—', lab: c.lib + (c.cible ? (c.avenir || c.auj ? ' · minimum du jour à réaliser' : ' · minimum du jour, chiffre à saisir') : ' · pas encore de chiffre'), st: 'vide', mot: c.cible ? (c.avenir ? 'À venir' : 'À saisir') : '' };
+    if (c.type === 'vide') return { big: c.cible ? eur(c.cible) : '—', lab: c.lib + (c.cible ? (c.avenir || c.auj ? ' · ' + unite + ' à réaliser' : ' · ' + unite + ', chiffre à saisir') : ' · pas encore de chiffre'), st: 'vide', mot: c.cible ? (c.avenir ? 'À venir' : c.auj && c.encours ? 'En cours' : 'À saisir') : '' }; /* C213 (W17) : l'unité du chapitre, jamais « du jour » sur un mois */
     var lab = c.type === 'encours' ? c.lib + ' · ' + eur(c.valeur) + ' encaissés pour ' + eur(c.cible) + ' attendus à cette date'
       : c.lib + ' · ' + (c.type === 'projete' ? eur(c.valeur) + ' projetés' : eur(c.valeur)) + ' pour ' + eur(c.cible) + ' (' + unite + ')';
     /* La couleur n'est jamais seule (WCAG 1.4.1) : un mot dit l'état. */
@@ -207,10 +217,11 @@
     var pasLib = n <= 13 ? 1 : Math.ceil(n / 7);
     m.cols.forEach(function (c, i) {
       var cx = G + pas * (i + 0.5), x = cx - larg / 2, cl = 'col' + (c.type === 'projete' ? ' proj' : '') + (c.type === 'encours' ? ' cours' : '') + (i === m.sel ? ' sel' : '');
-      var lab = c.r != null ? c.lib + ' : ' + pct(c.r) : c.lib + (c.type === 'repos' ? ' : repos' : ' : sans chiffre');
+      var lab = c.r != null ? c.lib + ' : ' + pct(c.r) : c.lib + (c.type === 'repos' ? ' : repos' : c.type === 'avant' ? ' : avant le début du suivi' : ' : sans chiffre');
       s += '<g class="' + cl + '" data-i="' + i + '" tabindex="' + (i === m.sel ? 0 : -1) + '" role="button" aria-label="' + esc(lab) + '">';
       s += '<rect class="hit" x="' + (cx - pas / 2).toFixed(1) + '" y="' + T + '" width="' + pas.toFixed(1) + '" height="' + (B - T + 16) + '" fill="transparent" rx="6"/>';
       if (c.type === 'repos') s += '<circle class="repos" cx="' + cx.toFixed(1) + '" cy="' + (B - 4) + '" r="2.6"><title>Repos</title></circle>';
+      else if (c.type === 'avant') s += '';
       else if (c.type === 'vide') s += '<rect class="vide" x="' + x.toFixed(1) + '" y="' + (B - 3) + '" width="' + larg.toFixed(1) + '" height="3" rx="1.5"/>';
       else {
         var col = COUL[etat(c.r)], yt = y(c.r), hgt = Math.max(2, B - yt);

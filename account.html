@@ -18,7 +18,7 @@
     <a class="brand" href="./" aria-label="Retour à Verdict">VERDICT<sup>®</sup></a>
     <section class="account-card" aria-labelledby="account-title">
       <p class="kicker">COMPTE SÉCURISÉ</p>
-      <h1 id="account-title">Votre accès Verdict Pro</h1>
+      <h1 id="account-title">Votre compte Verdict</h1>
       <p id="service-state" class="service-state" role="status">Vérification du service…</p>
 
       <div id="auth-tabs" class="tabs" role="tablist" aria-label="Accès au compte">
@@ -28,47 +28,71 @@
       </div>
 
       <form id="auth-form" novalidate>
+        <p id="auth-intro" class="service-state"></p>
         <label>E-mail<input id="email" name="email" type="email" autocomplete="email" required></label>
         <label id="password-row">Mot de passe<input id="password" name="password" type="password" autocomplete="current-password" minlength="12"></label>
+        <p id="password-hint" class="service-state" hidden>12 caractères au moins, avec une majuscule, une minuscule et un chiffre.</p>
         <label id="confirm-row" hidden>Confirmer le mot de passe<input id="confirm" name="confirm" type="password" autocomplete="new-password" minlength="12"></label>
-        <label id="token-row" hidden>Jeton de réinitialisation<input id="reset-token" name="token" autocomplete="one-time-code"></label>
+        <label id="token-row" hidden>Code reçu par e-mail<input id="reset-token" name="token" autocomplete="one-time-code"></label>
         <button id="auth-submit" class="primary" type="submit">Se connecter</button>
       </form>
 
       <section id="account-panel" hidden>
-        <p>Connecté : <strong id="account-email"></strong></p>
-        <p>Accès : <strong id="account-access"></strong></p>
-        <label>Nombre d’établissements actifs<input id="active-sites" type="number" min="1" max="500" value="1"></label>
-        <div class="prices" aria-label="Choix de formule">
-          <button type="button" data-checkout="monthly" data-offre="pilotage"><b>Pilotage — 69 € HT/mois</b><span>+39 € HT/mois par établissement actif supplémentaire</span></button>
-          <button type="button" data-checkout="annual" data-offre="pilotage"><b>Pilotage — 690 € HT/an</b><span>+390 € HT/an par établissement actif supplémentaire</span></button>
-          <button type="button" data-checkout="monthly" data-offre="pro"><b>Pro — 129 € HT/mois</b><span>+69 € HT/mois par établissement actif supplémentaire</span></button>
-          <button type="button" data-checkout="annual" data-offre="pro"><b>Pro — 1 290 € HT/an</b><span>+690 € HT/an par établissement actif supplémentaire</span></button>
+        <p id="account-who" class="service-state">Connecté : <strong id="account-email"></strong></p>
+        <p id="mfa-pending" class="service-state" role="status" hidden></p>
+
+        <div id="account-main">
+          <section id="plan-card" class="workspace-card" aria-labelledby="plan-name">
+            <p class="kicker">VOTRE FORMULE</p>
+            <h2 id="plan-name">—</h2>
+            <p id="plan-detail" class="service-state"></p>
+            <p id="plan-deadline" class="service-state"></p>
+            <p id="plan-founder" class="service-state" hidden></p>
+            <button id="start-trial" class="primary" type="button" hidden>Commencer mes 14 jours d’essai, sans carte</button>
+            <button id="billing-portal" type="button">Gérer ou résilier</button>
+            <p id="billing-note" class="service-state"></p>
+            <p id="email-state" class="service-state"></p>
+            <button id="resend-verification" class="account-link" type="button" hidden>Renvoyer le lien de confirmation</button>
+            <p id="data-note" class="service-state">Vos données : en ouvrant Verdict sur cet appareil, connecté à ce compte, ses établissements sont envoyés dans votre compte. Rien n’est effacé de l’appareil.</p>
+          </section>
+
+          <section id="offers" aria-labelledby="offers-title">
+            <h2 id="offers-title">Choisir une formule</h2>
+            <label>Nombre d’établissements actifs<input id="active-sites" type="number" min="1" max="500" value="1"></label>
+            <div class="prices" aria-label="Choix de formule">
+              <button type="button" data-checkout="monthly" data-offre="pilotage"><b>Pilotage — 69 € HT/mois</b><span>+39 € HT/mois par établissement actif supplémentaire</span><span data-total></span></button>
+              <button type="button" data-checkout="annual" data-offre="pilotage"><b>Pilotage — 690 € HT/an</b><span>+390 € HT/an par établissement actif supplémentaire</span><span data-total></span></button>
+              <button type="button" data-checkout="monthly" data-offre="pro"><b>Pro — 129 € HT/mois</b><span>+69 € HT/mois par établissement actif supplémentaire</span><span data-total></span></button>
+              <button type="button" data-checkout="annual" data-offre="pro"><b>Pro — 1 290 € HT/an</b><span>+690 € HT/an par établissement actif supplémentaire</span><span data-total></span></button>
+            </div>
+            <p class="service-state">Inventaire reste gratuit. Offre fondateurs (50 places, Pro) : 69 € HT/mois ou 690 € HT la première année, puis 99 € HT/mois ou 990 € HT/an tant que l’abonnement reste actif ; appliquée automatiquement si une place est disponible. Le montant exact est confirmé par la page de paiement Stripe.</p>
+            <p id="offers-state" class="service-state"></p>
+          </section>
+
+          <a id="open-app" class="account-link" href="./">Ouvrir Verdict</a>
+          <section id="workspace-panel" class="workspace-card" hidden aria-labelledby="workspace-title">
+            <p class="kicker">ACCÈS PAR MÉTIER</p>
+            <h2 id="workspace-title">Équipe et établissements</h2>
+            <p id="workspace-summary" class="service-state"></p>
+            <div id="workspace-manager" hidden>
+              <form id="member-form" class="compact-form">
+                <label>E-mail d’un compte Verdict existant<input id="member-email" type="email" autocomplete="email" required></label>
+                <button class="primary" type="submit">Ajouter à l’équipe</button>
+              </form>
+              <form id="access-form" class="compact-form">
+                <label>Membre<select id="access-member" required></select></label>
+                <label>Établissement<select id="access-site" required></select></label>
+                <label>Rôle<select id="access-role" required>
+                  <option value="manager">Directeur / manager</option><option value="chef">Chef</option><option value="second">Second de cuisine</option><option value="bar">Responsable bar</option><option value="buyer">Économe / acheteur</option><option value="accountant">Comptable</option><option value="consultant">Consultant</option><option value="counter">Employé de comptage</option>
+                </select></label>
+                <label>Page d’arrivée<select id="access-landing"><option value="pilotage">Pilotage</option><option value="carte">Carte</option><option value="inventory">Inventaire</option></select></label>
+                <button class="primary" type="submit">Appliquer les droits</button>
+              </form>
+            </div>
+            <ul id="workspace-access-list" class="access-list"></ul>
+          </section>
         </div>
-        <p class="service-state">Inventaire reste gratuit. Offre fondateurs (50 places, Pro) : 69 € HT/mois ou 690 € HT la première année, puis 99 € HT/mois ou 990 € HT/an ; appliquée automatiquement si une place est disponible. Le montant exact est confirmé par la page de paiement Stripe.</p>
-        <button id="billing-portal" type="button">Gérer la facturation</button>
-        <a id="open-app" class="account-link" href="./">Ouvrir Verdict</a>
-        <section id="workspace-panel" class="workspace-card" hidden aria-labelledby="workspace-title">
-          <p class="kicker">ACCÈS PAR MÉTIER</p>
-          <h2 id="workspace-title">Équipe et établissements</h2>
-          <p id="workspace-summary" class="service-state"></p>
-          <div id="workspace-manager" hidden>
-            <form id="member-form" class="compact-form">
-              <label>E-mail d’un compte Verdict existant<input id="member-email" type="email" autocomplete="email" required></label>
-              <button class="primary" type="submit">Ajouter à l’équipe</button>
-            </form>
-            <form id="access-form" class="compact-form">
-              <label>Membre<select id="access-member" required></select></label>
-              <label>Établissement<select id="access-site" required></select></label>
-              <label>Rôle<select id="access-role" required>
-                <option value="manager">Directeur / manager</option><option value="chef">Chef</option><option value="second">Second de cuisine</option><option value="bar">Responsable bar</option><option value="buyer">Économe / acheteur</option><option value="accountant">Comptable</option><option value="consultant">Consultant</option><option value="counter">Employé de comptage</option>
-              </select></label>
-              <label>Page d’arrivée<select id="access-landing"><option value="pilotage">Pilotage</option><option value="carte">Carte</option><option value="inventory">Inventaire</option></select></label>
-              <button class="primary" type="submit">Appliquer les droits</button>
-            </form>
-          </div>
-          <ul id="workspace-access-list" class="access-list"></ul>
-        </section>
+
         <section id="client-mfa" class="client-mfa" hidden aria-labelledby="client-mfa-title">
           <p class="kicker">SÉCURITÉ DU COMPTE</p>
           <h2 id="client-mfa-title">Double authentification</h2>
@@ -92,7 +116,7 @@
         <button id="logout" type="button">Se déconnecter</button>
       </section>
       <p id="feedback" class="feedback" aria-live="polite"></p>
-      <p class="truth">L’essai de 14 jours et les paiements ne deviennent actifs qu’après réponse du serveur et validation Stripe. Aucun bouton local n’accorde un droit Pro.</p>
+      <p class="truth">Essai de 14 jours de Verdict Pro dès la création du compte, sans carte bancaire. À la fin, rien n’est prélevé : vous choisissez la suite, ou vous gardez l’Inventaire gratuit. Les droits viennent toujours du serveur ; les paiements passent par Stripe.</p>
     </section>
   </main>
 </body>

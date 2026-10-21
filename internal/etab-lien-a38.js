@@ -68,9 +68,32 @@
       try {
         if (!relie()) return; var c = d.context, base = db(); if (!base || !base.sites || c.demo) return;
         var id = String(c.siteId || ''), nom = String(c.name || '').trim().slice(0, 100); if (!id || !nom || !base.sites[id]) return;
+        /* C218 (W75) : le nom par défaut de Verdict n'écrase jamais le vrai nom choisi dans l'Inventaire ; c'est l'inverse qui se fait. */
+        if (parDefaut(nom) && !parDefaut(base.sites[id].name)) { versVerdict(); return; }
         if (base.sites[id].name !== nom) { base.sites[id].name = nom; try { w.save('etab-lien'); } catch (e) {} try { w.drawSpaces(); } catch (e) {} }
       } catch (e) {}
     }, 0);
   });
-  w.VerdictEtabLien = { relie: relie };
+  /* C218 (W75) : un établissement nommé dans l'Inventaire (formule gratuite, avant l'essai) garde son nom dans Pilotage.
+     Quand l'établissement actif de Verdict n'a encore que le nom par défaut et aucun inventaire relié, il reçoit le nom du
+     site de l'Inventaire et lui est relié. Rien ne change si le patron a déjà nommé son établissement dans Verdict. */
+  function parDefaut(n) { n = String(n || '').trim(); return !n || /^(mon|nouvel) établissement$/i.test(n); }
+  function versVerdict() {
+    try {
+      if (!relie()) return false; var base = db(); if (!base || !base.sites || !base.site) return false;
+      var site = base.sites[base.site], nom = String(site && site.name || '').trim().slice(0, 100); if (parDefaut(nom)) return false;
+      var f = w.parent.document.getElementById('frame-verdict'), V = f && f.contentWindow; if (!V || !V.STORE || !V.STORE.etabs) return false;
+      var S = V.STORE, D = S.etabs[S.actif]; if (!D || D._demo && D._demo.active) return false;
+      var lien = D.inventoryLink && D.inventoryLink.siteId; if (lien && lien !== base.site) return false;
+      if (!parDefaut(D.etab)) return true;
+      var deja = (S.ordre || []).some(function (id) { return id !== S.actif && String(S.etabs[id] && S.etabs[id].etab || '').trim() === nom; }); if (deja) return false;
+      D.etab = nom; D.inventoryLink = Object.assign({}, D.inventoryLink || {}, { siteId: base.site, siteName: nom });
+      try { V.save('etab-lien-nom'); } catch (e) {}
+      try { if (V.fillInputs) V.fillInputs(); } catch (e) {} try { if (V.drawEtabs) V.drawEtabs(); } catch (e) {} try { if (V.refreshAll) V.refreshAll(); } catch (e) {}
+      try { if (V.VerdictUnified && V.VerdictUnified.publishContext) V.VerdictUnified.publishContext(); } catch (e) {}
+      return true;
+    } catch (e) { return false; }
+  }
+  var essaisNom = 0, minuteurNom = setInterval(function () { if (versVerdict() || ++essaisNom > 40) clearInterval(minuteurNom); }, 1500);
+  w.VerdictEtabLien = { relie: relie, versVerdict: versVerdict };
 })();

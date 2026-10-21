@@ -207,7 +207,7 @@
   if(lire()==='off'){root.classList.remove('p40','p40-'+surface);return;}
   root.classList.add('p40','p40-'+surface);root.setAttribute('data-p40-surface',surface);
   if(surface==='shell'){
-    global.addEventListener('message',function(ev){var d=ev.data;if(!d||d.p41!=='gate')return;lastGateShell=!!d.open;root.classList.toggle('p40-gate',!!d.open);});
+    global.addEventListener('message',function(ev){var d=ev.data;if(!d||d.p41!=='gate')return;/* C217 W63 : un cadre caché (Pilotage préparé pendant l'Inventaire) ne masque pas l'en-tête */try{if(d.open){var fr=[].filter.call(doc.querySelectorAll('iframe'),function(f){return f.contentWindow===ev.source;})[0];if(fr&&!fr.getClientRects().length)return;}}catch(e){}lastGateShell=!!d.open;root.classList.toggle('p40-gate',!!d.open);});
     root.classList.add('p40-gate');global.setTimeout(function(){if(lastGateShell==null)root.classList.remove('p40-gate');},20000);
     return;}
 

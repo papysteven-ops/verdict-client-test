@@ -9,7 +9,9 @@
    - Couleurs Verdict, toujours avec un mot : vert « Sous la limite », jaune « Proche » (≥ 80 %), orange « Dépassement
      prévu » (au rythme mesuré), rouge « Limite dépassée ».
    - Alertes : carte dans l'Accueil (chapitre Jour), lignes dans Alertes, signal « risque » pour les notifications.
-   Le blocage gratuit / Pro sera décidé plus tard (Steven) : le module est marqué Pro, sans verrou pour l'instant. */
+   Le blocage gratuit / Pro sera décidé plus tard (Steven) : le module est marqué Pro, sans verrou pour l'instant.
+   C212 (W03) : la grille de l'offre (verdict-048, VO_ACCES) le range en Pro. Sous Pilotage, l'écran montre le verrou Pro
+   et « Voir les offres » ; on ne peut ni fixer ni modifier une limite, et aucune alerte de limite n'est émise. */
 (function () {
   'use strict';
   var w = window, doc = document; if (w.__vdLimitesPilotage) return; w.__vdLimitesPilotage = true;
@@ -23,6 +25,8 @@
   function moisCourant() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
   function qteTxt(q, u) { return u === 'unité' ? nb(q) + ' unité' + (q >= 2 ? 's' : '') : nb(q) + ' ' + u; }
   function dateFr(s) { return String(s || '').slice(0, 10).split('-').reverse().join('/'); }
+  /* C212 : niveau lu dans l'offre appliquée (démonstration et accès ouvert = Pro ; sans grille, rien n'est fermé). */
+  function pro() { try { return typeof w.verdictNiveau !== 'function' || w.verdictNiveau() === 'pro'; } catch (e) { return true; } }
 
   /* ---------- Consommation réelle (fournie par l'Inventaire) ---------- */
   var DEMO_P = [['Entrecôte VBF', 'cuisine', 'kg', 22.5, 2016], ['Filet de saumon frais', 'cuisine', 'kg', 15.5, 817], ['Café en grains', 'bar', 'kg', 14.5, 160], ['Bière blonde fût 30 L', 'bar', 'L', 2.55, 611],
@@ -100,7 +104,7 @@
     var ordre = { rouge: 0, orange: 1, jaune: 2, vert: 3, vide: 4 };
     items.sort(function (a, b) { return ordre[a.etat] - ordre[b.etat] || (b.pct || 0) - (a.pct || 0); });
     var zones = {}; (C ? C.produits : []).forEach(function (p) { if (p.statut !== 'ok') return; var z = zones[p.zone] = zones[p.zone] || { eur: 0, kg: 0, L: 0 }; if (p.valeur != null) z.eur += p.valeur; if (p.unite === 'kg' || p.unite === 'L') z[p.unite] += p.qte; if (p.unite === 'g') z.kg += p.qte / 1000; });
-    return { conso: C, libMois: lib, mois: moisCourant(), demo: !!(C && C.demo) || demo(), items: items, zones: zones };
+    return { conso: C, libMois: lib, mois: moisCourant(), demo: !!(C && C.demo) || demo(), items: pro() ? items : [], zones: zones, verrou: !pro() };
   }
   function phrase(it, lib) {
     if (it.etat === 'rouge') return it.nom + ' : ' + eur(it.valeur) + ' consommés pour ' + eur(it.limite) + ' fixés en ' + lib + ' (' + ZONE[it.zone].toLowerCase() + ', ' + qteTxt(it.qte, it.unite) + '), dépassement de ' + eur(it.valeur - it.limite) + '.';
@@ -154,6 +158,7 @@
   function dessiner() {
     var body = doc.getElementById('consoBody'); if (!body) return; css();
     var E = etat(), C = E.conso, lib = E.libMois, h = '';
+    if (E.verrou) { ouvert = null; body.innerHTML = '<div class="lc-sec" data-vo-lock="conso"><h2>Verdict Pro</h2><p class="lc-m">Limites par produit, consommation réelle en euros et en kg ou litres, alertes avant le dépassement : avec Pro. Le comptage reste gratuit dans l’Inventaire.</p><div class="lc-a"><button type="button" class="lc-b lc-p" data-lc-offres="1">Voir les offres</button></div></div>'; return; }
     h += '<div class="lc-sec"><h2>Consommation réelle · ' + esc(lib) + (E.demo ? ' · démonstration' : '') + '</h2>';
     if (!C) h += '<p class="lc-m">Pas encore de comptage ce mois-ci. Comptez votre stock dans l’Inventaire en début de mois puis en cours de mois : Verdict calcule alors la consommation réelle de chaque produit (stock de départ + livraisons − stock compté), en euros et en kg ou litres.</p>';
     else {
@@ -186,7 +191,9 @@
   doc.addEventListener('input', function (e) { var f = e.target.closest && e.target.closest('#v-conso form'); if (f) majEquivalent(f); });
   doc.addEventListener('change', function (e) { var f = e.target.closest && e.target.closest('#v-conso form'); if (f) majEquivalent(f); });
   doc.addEventListener('click', function (e) {
+    var o = e.target.closest && e.target.closest('#v-conso [data-lc-offres]'); if (o) { try { w.go('abo'); w.scrollTo(0, 0); } catch (er) {} return; }
     var b = e.target.closest && e.target.closest('#v-conso [data-lc]'); if (!b) return;
+    if (!pro()) { ouvert = null; dessiner(); return; }
     var a = b.getAttribute('data-lc'), id = b.getAttribute('data-id');
     presel = null;
     if (a === 'nouveau') ouvert = 'nouveau'; else if (a === 'annuler') ouvert = null; else if (a === 'modifier') ouvert = id;
@@ -197,6 +204,7 @@
   });
   doc.addEventListener('submit', function (e) {
     var f = e.target.closest && e.target.closest('#v-conso form'); if (!f) return; e.preventDefault();
+    if (!pro()) { ouvert = null; dessiner(); return; }
     var s = f.querySelector('select'), o = s.options[s.selectedIndex], v = Math.round(+f.querySelector('input').value); if (!o || !o.value || !(v > 0)) return;
     var C = conso(), p = C && C.produits.filter(function (x) { return x.id === o.value; })[0] || {};
     var L = limites(), id = f.getAttribute('data-lc-form'), ex = id ? L.filter(function (l) { return l.id === id; })[0] : L.filter(function (l) { return l.productId === o.value || l.nom === p.nom; })[0];

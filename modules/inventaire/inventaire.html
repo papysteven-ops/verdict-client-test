@@ -457,6 +457,8 @@ html,body{max-width:100%;overflow-x:hidden}
 <style id="inventory-count-r234">
 /* R235: readable quantities and explicit clearing, including narrow phones. */
 #countList .step{flex:1;max-width:236px;min-width:0}
+/* C217 W67 : à partir de 768 px la ligne ne s'étire pas : le pas garde la place de « − », du champ, de « + » et de sa bordure. */
+#countList .step{min-width:152px}
 #countList .step input{flex:1;width:0;min-width:70px;font-size:16px;font-variant-numeric:tabular-nums}
 #countList .step button{flex:0 0 40px;width:40px}
 #countList .count-clear{flex:0 0 40px;width:40px;height:44px;border-radius:10px;color:var(--mut);font-size:24px;background:transparent}
@@ -515,7 +517,7 @@ html,body{max-width:100%;overflow-x:hidden}
     <div class="wl">VERDICT<i>&reg;</i></div>
     <h2>Faisons<br>connaissance.</h2>
     <p class="w">Deux champs suffisent pour personnaliser l&rsquo;application. Modifiable &agrave; tout moment.</p>
-    <label class="f"><span>Votre pr&eacute;nom</span><input id="wPrenom" type="text" placeholder="ex. Steven" autocomplete="given-name"></label>
+    <label class="f"><span>Votre pr&eacute;nom</span><input id="wPrenom" type="text" placeholder="ex. Camille" autocomplete="given-name"></label>
     <label class="f"><span>Votre &eacute;tablissement</span><input id="wResto" type="text" placeholder="ex. Brasserie du Port"></label>
     <span class="lb" style="display:block;font-size:12px;color:var(--mut);margin-bottom:6px">Son ic&ocirc;ne</span>
     <div class="emo" id="wEmo"></div>
@@ -525,9 +527,9 @@ html,body{max-width:100%;overflow-x:hidden}
     <div class="wl">VERDICT<i>&reg;</i></div>
     <h2 id="w2t">C&rsquo;est pr&ecirc;t.</h2>
     <p class="w" id="w2s"></p>
-    <div class="wrow"><div class="wi">&#127859;</div><div><b>Plusieurs &eacute;tablissements&nbsp;?</b><span>Le bouton <b>+</b> en haut en ajoute autant que vous le souhaitez &mdash; et vos commandes peuvent se grouper par fournisseur.</span></div></div>
+    <div class="wrow"><div class="wi">&#127859;</div><div><b>Plusieurs &eacute;tablissements&nbsp;?</b><span>Le bouton &laquo;&nbsp;+&nbsp;&raquo; en haut en ajoute autant que vous le souhaitez &mdash; et vos commandes peuvent se grouper par fournisseur.</span></div></div>
     <div class="wrow"><div class="wi">&#128176;</div><div><b>Le prix d&rsquo;achat est facultatif</b><span>Ajoutez-le quand vous le souhaitez&nbsp;: l&rsquo;appli chiffre alors la valeur de votre stock.</span></div></div>
-    <div class="wrow"><div class="wi">&#128273;</div><div><b>Verdict Pro, c&rsquo;est pour le patron</b><span>Pilotage et Carte sont r&eacute;serv&eacute;s au propri&eacute;taire de l&rsquo;&eacute;tablissement. Un cuisinier ou un membre de l&rsquo;&eacute;quipe qui t&eacute;l&eacute;charge l&rsquo;appli garde l&rsquo;Inventaire, gratuit, mais n&rsquo;a pas acc&egrave;s aux chiffres, &agrave; la carte ni au score.</span></div></div>
+    <div class="wrow"><div class="wi">&#128273;</div><div><b>Les chiffres restent au patron</b><span>Pilotage et la Carte s&rsquo;ouvrent au propri&eacute;taire de l&rsquo;&eacute;tablissement, avec les formules Pilotage ou Pro. Un cuisinier ou un membre de l&rsquo;&eacute;quipe qui t&eacute;l&eacute;charge l&rsquo;appli garde l&rsquo;Inventaire, gratuit, sans acc&egrave;s aux chiffres, &agrave; la carte ni au score.</span></div></div>
     <button class="go" onclick="wDone()">Entrer</button>
   </div>
 </div>
@@ -701,7 +703,7 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
 </style>
 <script data-mono="./shared-inventory-r32.js" src="../../assets/runtime-a10/inventory-010-6ed511ceeed6.js"></script>
 <script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/inventory-011-b00023ca8807.js"></script>
-<script src="../../assets/runtime-a10/inventory-012-f812663014aa.js"></script>
+<script src="../../assets/runtime-a10/inventory-012-927b4e7d576e.js"></script>
 <script data-mono="./supplier-ordering-v1.js" src="../../assets/runtime-a10/inventory-013-679a03798c7f.js"></script>
 <script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-aa8c37adba3f.js"></script>
 <script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-236122e8e39f.js"></script>
@@ -1561,12 +1563,12 @@ html.p40.p40-inv.vd-workspace-light .kpi .v{color:#173d76!important}
 html.p40.p40-inv.vd-workspace-light .v451-inv-state{background:#eef5fc!important;border-color:#b9d5ed!important;color:#17212b!important}
 </style>
 <script id="p40-js" data-mono="../../premium-r40.js" src="../../assets/runtime-a10/inventory-025-24da5cc61376.js"></script>
-<script id="pinv-js" data-mono="../../premium-inv-r74.js" src="../../assets/runtime-a10/inventory-026-ebffa541af5e.js"></script>
+<script id="pinv-js" data-mono="../../premium-inv-r74.js" src="../../assets/runtime-a10/inventory-026-771c4ea451e9.js"></script>
 <style  data-mono="../../control-ecarts-v1.css">
 .vc{margin:22px 0;color:var(--text,#edf0f3);font-size:16px;line-height:1.5}.vc h3{font-size:24px;margin:5px 0 12px}.vc p{color:var(--muted,#adb5bf)}.vc-eyebrow{font-size:13px;font-weight:800;letter-spacing:.08em}.vc-panel{border:1px solid #394048;border-radius:24px;background:linear-gradient(135deg,#1c252a,#101418 72%);padding:20px;margin:16px 0;overflow:hidden}.vc-panel summary{cursor:pointer;font-weight:750;font-size:18px;min-height:44px;align-content:center}.vc form{margin-top:16px}.vc label{display:block;margin:12px 0}.vc label>span{display:block;font-size:14px;margin-bottom:6px;color:#c3cbd2}.vc input:not([type=checkbox]){display:block;width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #485360;border-radius:12px;background:#090d10;color:#fff;font-size:16px;min-height:46px}.vc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.vc-grid strong{display:block;font-size:24px;margin-top:6px}.vc fieldset{border:1px solid #42494f;border-radius:16px;min-width:0;margin:14px 0}.vc button{border:1px solid #55745f;border-radius:14px;background:linear-gradient(135deg,#233c31,#17251f);color:#edf8f0;padding:13px 17px;font-size:16px;font-weight:700;min-height:46px;cursor:pointer;white-space:normal}.vc button:hover{border-color:#36ca77;box-shadow:0 0 18px #22c55e20}.vc button:focus-visible,.vc input:focus-visible{outline:3px solid #99b9ed;outline-offset:3px}.vc-confirm{display:flex!important;gap:12px;align-items:flex-start;font-size:14px}.vc-confirm input{margin-top:5px;min-width:20px;height:20px}.vc-result{border-left:4px solid #eab308;background:#eab30809;border-radius:16px;padding:16px;margin:16px 0}.vc-result>strong{display:block;font-size:30px;margin-top:12px}.vc-badge{display:inline-block;font-size:14px;border:1px solid #67737f;border-radius:18px;padding:5px 10px;color:#cad2da}.vc-badge[data-tone=green]{color:#3ade84;border-color:#268a51;background:#22c55e15}.vc-badge[data-tone=yellow]{color:#f6d858;border-color:#ab8526;background:#eab30815}.vc-priorities button{display:block;width:100%;text-align:left;margin:12px 0;border-left:4px solid #ef4444}.vc-priorities strong,.vc-priorities span{display:block}.vc [data-vc-error]{color:#ff9c91}.vc details[open]{animation:vc-reveal .22s ease-out}@keyframes vc-reveal{from{opacity:.6;transform:translateY(5px)}to{opacity:1;transform:none}}@media(max-width:380px){.vc-grid{grid-template-columns:1fr}.vc-panel{padding:16px}.vc h3{font-size:22px}}@media(prefers-reduced-motion:reduce){.vc details[open]{animation:none}}
 html.p40-app #v-pil.on.p41-on > #vc-main{display:block!important;order:2;scroll-margin-top:150px}#vc-entry{margin:8px 0 14px}#vc-entry button{width:100%}.vc-panel form{scroll-margin-top:150px}
 
-</style><script data-mono="../../control-ecarts-v1.js" src="../../assets/runtime-a10/inventory-027-0635fd18763d.js"></script><script data-mono="assets/vera/vera-life-5.2.0.js" src="../../assets/runtime-a10/inventory-028-8fdcc2ee508b.js"></script>
+</style><script data-mono="../../control-ecarts-v1.js" src="../../assets/runtime-a10/inventory-027-96827dce18e7.js"></script><script data-mono="assets/vera/vera-life-5.2.0.js" src="../../assets/runtime-a10/inventory-028-8fdcc2ee508b.js"></script>
 <!-- VERDICT_SUPPLIER_COMPARE_R246 -->
 <style>.vcmp[hidden]{display:none!important}.vcmp{position:fixed;inset:0;z-index:2147481000;background:#090d12;color:#f2f5f9;overflow:auto;padding:clamp(14px,3vw,32px);font:16px/1.5 system-ui,sans-serif;box-sizing:border-box}.vcmp *{box-sizing:border-box}.vcmp .vc-wrap{max-width:1150px;margin:auto;padding-bottom:calc(28px + env(safe-area-inset-bottom))}.vcmp header{display:flex;gap:16px;justify-content:space-between;align-items:center;position:sticky;top:-32px;background:#090d12;z-index:2;padding:14px 0}.vcmp h2{font-size:clamp(24px,4vw,34px);margin:0}.vcmp h3{margin:0 0 12px}.vcmp p{margin:10px 0}.vcmp .vc-muted{color:#aebdcc;font-size:14px}.vcmp .vc-box{border:1px solid #33414e;border-radius:18px;background:#131b24;padding:18px;margin:18px 0}.vcmp .vc-result{border-left:4px solid #53d8aa}.vcmp .vc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.vcmp label{display:flex;flex-direction:column;gap:6px;font-size:14px}.vcmp input:not([type=checkbox]),.vcmp select,.vcmp textarea{width:100%;min-height:44px;border:1px solid #506172;background:#090f16;color:#f2f5f9;border-radius:9px;padding:10px;font:16px system-ui}.vcmp textarea{min-height:100px}.vcmp button,.vcmp-entry{min-height:44px;border-radius:10px;padding:10px 16px;border:1px solid #536575;background:#202e3b;color:#f2f5f9;font:600 15px system-ui;cursor:pointer}.vcmp button:disabled{opacity:.45;cursor:default}.vcmp .vc-primary{background:#62ddb0;color:#07271e;border-color:#62ddb0}.vcmp .vc-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.vcmp .vc-scroll{overflow:auto}.vcmp table{border-collapse:collapse;width:100%;font-size:14px}.vcmp th,.vcmp td{text-align:left;padding:12px 8px;border-bottom:1px solid #33414e;vertical-align:top}.vcmp td select{min-width:190px}.vcmp input[type=checkbox]{width:20px;height:20px;accent-color:#62ddb0}.vcmp .vc-check{display:flex;flex-direction:row;align-items:flex-start;gap:10px;margin-top:12px}.vcmp .vc-warn{color:#ffd08a}.vcmp [role=alert]{white-space:pre-wrap;border-left:3px solid #ffb768;padding-left:12px}.vcmp summary{cursor:pointer;padding:8px 0;font-weight:650}.vcmp .vc-big{font-size:30px;font-weight:750}.vcmp-entry{margin:10px 0;width:auto}.vcmp :focus-visible{outline:3px solid #85baff;outline-offset:3px}@media(max-width:600px){.vcmp header{top:-14px}.vcmp .vc-grid{grid-template-columns:1fr}.vcmp .vc-box{padding:14px}.vcmp .vc-actions button{flex:1 1 145px}}
 </style>
@@ -1588,5 +1590,6 @@ html.p40-app #v-pil.on.p41-on > #vc-main{display:block!important;order:2;scroll-
 <script src="../../internal/contraste-a44.js"></script>
 <script src="../../internal/retour-verdict-a61.js"></script>
 <script src="../../internal/theme-auto-c209.js"></script>
+<script src="../../internal/factures-inventaire-c217.js"></script>
 </body>
 </html>

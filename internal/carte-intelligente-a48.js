@@ -25,11 +25,13 @@
   var w = window, doc = document; if (w.__vdCarteIntelligente) return; w.__vdCarteIntelligente = true;
   var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   var MC = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-  function eur(v) { return Math.round(Number(v) || 0).toLocaleString('fr-FR') + ' €'; }
+  /* C218 : espace insécable visible entre les milliers (l'espace fine disparaissait dans les gros chiffres : « +16473 € »). */
+  function eur(v) { return Math.round(Number(v) || 0).toLocaleString('fr-FR').replace(/[\u202f\s]/g, '\u00a0') + '\u00a0€'; }
   function eur2(v) { return (Math.round((Number(v) || 0) * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; }
   function signe(v) { return (v >= 0 ? '+' : '−') + eur(Math.abs(v)); }
   function pct(v) { return Math.round(v * 100) + ' %'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function pro() { try { return demo() || typeof w.verdictNiveau !== 'function' || w.verdictNiveau() === 'pro'; } catch (e) { return true; } }
   function demo() { return /[?&](demo=1|presentation=)/.test(location.search + (self.__vdq || '')); }
   function DB() { try { return w.DB && Array.isArray(w.DB.plats) ? w.DB : null; } catch (e) { return null; } }
   function moisCourant() { try { return Number(String(w.verdictOperationalClock().key).slice(5, 7)) || (new Date().getMonth() + 1); } catch (e) { return new Date().getMonth() + 1; } }
@@ -39,8 +41,9 @@
   var HAB = { village: 'Moins de 2 000 habitants', bourg: '2 000 à 20 000 habitants', ville: '20 000 à 100 000 habitants', grande: 'Plus de 100 000 habitants' };
   var TOUR = { non: 'Pas de saison touristique', ete: 'Haute saison l’été (juin à septembre)', hiver: 'Haute saison l’hiver (décembre à mars)', annee: 'Touristique toute l’année' };
   var SERV = { deux: 'Midi et soir', midi: 'Midi seulement', soir: 'Soir seulement' };
-  function familleDe(t) { t = String(t || '').toLowerCase(); return /gastro|étoil|etoil|fine/.test(t) ? 'gastro' : /pizz/.test(t) ? 'pizzeria' : /snack|fast|burger|kebab|sandwich|rapide|boulang|dark|livraison/.test(t) ? 'rapide' : /bistro|ardoise|bouchon/.test(t) ? 'bistrot' : /\bbar\b|café|cafe|pub|tapas/.test(t) ? 'bar' : /tradition|italien|asiat|traiteur|bistro/.test(t) ? 'traditionnel' : /coffee|truck/.test(t) ? 'rapide' : 'brasserie'; }
-  function profil() {
+  /* C218 (W77) : sans type précisé, aucun type n'est choisi à la place du patron (avant : « Brasserie » par défaut). */
+  function familleDe(t) { t = String(t || '').toLowerCase(); if (!t.trim()) return ''; return /gastro|étoil|etoil|fine/.test(t) ? 'gastro' : /pizz/.test(t) ? 'pizzeria' : /snack|fast|burger|kebab|sandwich|rapide|boulang|dark|livraison/.test(t) ? 'rapide' : /bistro|ardoise|bouchon/.test(t) ? 'bistrot' : /\bbar\b|café|cafe|pub|tapas/.test(t) ? 'bar' : /tradition|italien|asiat|traiteur|bistro/.test(t) ? 'traditionnel' : /coffee|truck/.test(t) ? 'rapide' : 'brasserie'; }
+  function profilBrut() {
     var D = DB(); if (!D) return null;
     if (!D.carteProfil || typeof D.carteProfil !== 'object') {
       var cmd = Math.round(Number(D.in && D.in.cmdj)) || null;
@@ -49,6 +52,35 @@
       D.carteProfil = demo() ? { type: EX ? EX[0] : familleDe(D.etabType), habitants: EX ? EX[1] : 'ville', tourisme: EX ? EX[2] : 'ete', places: EX ? EX[3] : 80, couverts: cmd || 110, services: 'deux', demo: true } : { type: familleDe(D.etabType), habitants: '', tourisme: '', places: null, couverts: cmd, services: 'deux' };
     }
     return D.carteProfil;
+  }
+  /* C218 (W77) : le profil affiché complète le profil enregistré avec ce que la caisse donne (couverts, saison), sans rien
+     écrire à l'affichage (0 changement au repos) ; il n'est enregistré que quand le patron lance l'analyse. Un ancien
+     profil créé avec « Brasserie » par défaut, alors que le type n'est pas précisé, repose la question. */
+  function profil() {
+    var D = DB(), B = profilBrut(); if (!B || B.demo) return B;
+    var P = {}; for (var k in B) P[k] = B[k];
+    if (!P.typeChoisi && !profilComplet(P) && !String(D.etabType || '').trim() && P.type === 'brasserie') P.type = '';
+    if (!(Number(P.couverts) > 0)) { var cv = couvertsCaisse(D); if (cv) { P.couverts = cv; P.couvertsCaisse = true; } }
+    if (!P.tourisme) { var sc = saisonCaisse(D); if (sc) { P.tourisme = sc.cle; P.saisonCaisse = sc.texte; } }
+    return P;
+  }
+  /* Couverts par jour : tickets de la caisse sur les jours ouverts (sinon le chiffre de la saisie). */
+  function couvertsCaisse(D) {
+    var H = (D.histJour || []).filter(function (x) { return x && Number(x.tkJ) > 0; }), t = 0;
+    if (H.length >= 20) { H.forEach(function (x) { t += Number(x.tkJ); }); return Math.round(t / H.length); }
+    var c = Math.round(Number(D.in && D.in.cmdj)); return c > 0 ? c : null;
+  }
+  /* Saison lue dans la caisse : mois forts et creux d'une année complète. */
+  function saisonCaisse(D) {
+    var S = saison(D); if (!S.annees.length) return null;
+    var c = S.coef, moy = function (L) { return L.reduce(function (a, m) { return a + c[m - 1]; }, 0) / L.length; };
+    var ete = moy([6, 7, 8, 9]), hiver = moy([12, 1, 2, 3]), max = Math.max.apply(null, c), min = Math.min.apply(null, c);
+    var forts = c.map(function (v, i) { return v > 1.12 ? MOIS[i] : null; }).filter(Boolean);
+    var src = ' (' + S.annees.join(' et ') + ')';
+    if (max < 1.12 && min > 0.88) return { cle: 'non', texte: 'ventes régulières toute l’année' + src };
+    if (ete >= hiver + 0.1) return { cle: 'ete', texte: 'mois forts : ' + forts.join(', ') + src };
+    if (hiver >= ete + 0.1) return { cle: 'hiver', texte: 'mois forts : ' + forts.join(', ') + src };
+    return null;
   }
   function profilComplet(P) { return !!(P && TYPES[P.type] && HAB[P.habitants] && TOUR[P.tourisme] && Number(P.places) > 0 && Number(P.couverts) > 0 && SERV[P.services]); }
   function hauteSaison(P, m) { return P.tourisme === 'annee' || (P.tourisme === 'ete' && m >= 6 && m <= 9) || (P.tourisme === 'hiver' && (m === 12 || m <= 3)); }
@@ -161,6 +193,9 @@
   function saison(D) {
     var H = (D.monthlyHistory || []).filter(function (x) { return x && x.caTTC > 0 && /^\d{4}-\d{2}/.test(String(x.period)); }), ans = {};
     H.forEach(function (x) { var a = String(x.period).slice(0, 4), mo = Number(String(x.period).slice(5, 7)); (ans[a] = ans[a] || {})[mo] = Number(x.caTTC); });
+    /* C218 (W77) : sans historique mensuel, les journées de la caisse donnent les mois (avant : saison plate, aucun point jaune). */
+    var J = {}; (D.histJour || []).forEach(function (x) { var dt = String(x && x.date || ''), v = Number(x && (x.caJ != null ? x.caJ : x.ca)); if (!/^\d{4}-\d{2}/.test(dt) || !(v > 0)) return; var a = dt.slice(0, 4), mo = Number(dt.slice(5, 7)); (J[a] = J[a] || {})[mo] = ((J[a] || {})[mo] || 0) + v; });
+    Object.keys(J).forEach(function (a) { if (!ans[a] || Object.keys(ans[a]).length < 12) ans[a] = J[a]; });
     var complets = Object.keys(ans).filter(function (a) { return Object.keys(ans[a]).length === 12; }).sort().reverse().slice(0, 2), poids = [0.6, 0.4], coef = [];
     for (var mo = 1; mo <= 12; mo++) {
       var t = 0, pw = 0;
@@ -197,17 +232,17 @@
     '#c-smart .ci-pl .d{font-size:13px;color:var(--ci-m);margin:4px 0 0;line-height:1.4}#c-smart .ci-pl .x{font-size:14px;color:var(--ci-t);margin:4px 0 0;line-height:1.4}#c-smart .ci-pl .g{font-weight:800;color:#15803d}html.vd-workspace-dark #c-smart .ci-pl .g{color:#4ade80}' +
     '#c-smart .ci-ok{color:#15803d;font-weight:800}#c-smart .ci-ko{color:#c2410c;font-weight:800}html.vd-workspace-dark #c-smart .ci-ok{color:#4ade80}html.vd-workspace-dark #c-smart .ci-ko{color:#fb923c}' +
     '#cp-nav:has([data-ci-onglet]),.cp-nav:has([data-ci-onglet]),html.p40-app #v32ModuleDock .cp-nav:has([data-ci-onglet]){grid-template-columns:repeat(4,minmax(0,1fr))!important}#cp-nav [data-ci-onglet]{white-space:nowrap}#cp-nav [data-ci-onglet] .ci-np{display:none}@media (min-width:700px){#cp-nav [data-ci-onglet] .ci-np{display:inline}}' +
-    '#c-smart details{margin-top:8px}#c-smart summary{cursor:pointer;font-weight:700;color:var(--ci-t);min-height:32px;display:flex;align-items:center}';
+    '#c-smart .ci-form label{align-content:start}#c-smart .ci-lu{font-size:12px;font-weight:600;color:var(--ci-m)}#c-smart details{margin-top:8px}#c-smart summary{cursor:pointer;font-weight:700;color:var(--ci-t);min-height:32px;display:flex;align-items:center}';
   var part = 1, editProfil = false;
   function css() { if (!doc.getElementById('ciCss')) { var s = doc.createElement('style'); s.id = 'ciCss'; s.textContent = CSS; (doc.head || doc.documentElement).appendChild(s); } }
   function opt(map, v) { return Object.keys(map).map(function (k) { return '<option value="' + k + '"' + (k === v ? ' selected' : '') + '>' + esc(map[k]) + '</option>'; }).join(''); }
   function formProfil(P) {
     return '<form class="ci-form" data-ci-profil>' +
-      '<label>Type d’établissement<select name="type">' + opt(TYPES, P.type) + '</select></label>' +
+      '<label>Type d’établissement<select name="type"><option value="">Choisir…</option>' + opt(TYPES, P.type) + '</select></label>' +
       '<label>Habitants de la commune<select name="habitants"><option value="">Choisir…</option>' + opt(HAB, P.habitants) + '</select></label>' +
-      '<label>Tourisme<select name="tourisme"><option value="">Choisir…</option>' + opt(TOUR, P.tourisme) + '</select></label>' +
+      '<label>Saison<select name="tourisme"><option value="">Choisir…</option>' + opt(TOUR, P.tourisme) + '</select>' + (P.saisonCaisse ? '<small class="ci-lu">Lue dans votre caisse : ' + esc(P.saisonCaisse) + '</small>' : '') + '</label>' +
       '<label>Places assises<input name="places" type="number" inputmode="numeric" min="1" step="1" value="' + (P.places || '') + '"></label>' +
-      '<label>Couverts par jour en moyenne<input name="couverts" type="number" inputmode="numeric" min="1" step="1" value="' + (P.couverts || '') + '"></label>' +
+      '<label>Couverts par jour en moyenne<input name="couverts" type="number" inputmode="numeric" min="1" step="1" value="' + (P.couverts || '') + '">' + (P.couvertsCaisse || couvertsCaisse(DB() || {}) === Number(P.couverts) ? '<small class="ci-lu">Lus dans votre caisse</small>' : '') + '</label>' +
       '<label>Services<select name="services">' + opt(SERV, P.services) + '</select></label>' +
       '<div class="ci-a" style="grid-column:1/-1"><button type="submit" class="ci-b ci-p">Lancer l’analyse</button>' + (profilComplet(P) ? '<button type="button" class="ci-b" data-ci="annuler">Annuler</button>' : '') + '</div></form>';
   }
@@ -248,17 +283,29 @@
     return h + '<div class="ci-a"><button type="button" class="ci-b" data-cp-dish="' + esc(x.id) + '">Ouvrir le plat</button></div></div>';
   }
   /* C208 (V39) : l'Idéale, Décisions et Simuler disent d'où vient chaque euro des prix. */
+  /* C218 (W77) : le reste du gain se dit avec ce qui le produit vraiment (plats mis en avant, plats retirés), jamais
+     « retirés » quand aucun plat ne sort de la carte. Une mise en avant déplace des ventes, sans client en plus. */
+  function resteTxt(R, part) {
+    var avant = 0, retires = 0; R.cats.forEach(function (C) { C.plats.forEach(function (x) { if (x.retirer) retires++; else if (x.classe === 'enigme' && x.gain - (x.gainPrix || 0) > 0.5) avant++; }); });
+    var q = [];
+    if (avant) q.push(avant + ' plat' + (avant > 1 ? 's' : '') + ' mis en avant (10 % de leurs ventes reprises aux autres plats de la catégorie, aucun client en plus)');
+    if (retires) q.push(retires + ' plat' + (retires > 1 ? 's' : '') + ' retiré' + (retires > 1 ? 's' : '') + ' (70 % de leurs clients reportés)');
+    return 'Le reste (' + signe((R.gainMois - R.gainPrix) * part) + ' par mois) vient de ' + (q.length ? q.join(' et de ') : 'l’argent libéré du stock') + ' : Simuler et l’Audit ne le comptent pas.';
+  }
   function lienSimuler(R, part) {
     var g = R.gc; if (!(R.gainPrix > 0.5) || !g || !g.fiable) return '';
     return '<p class="ci-m" data-ci-lien style="margin-top:10px">Dont <b>' + signe(R.gainPrix * part) + ' par mois</b> par les nouveaux prix de ' + R.prixPlats + (R.prixPlats > 1 ? ' plats sous leur objectif' : ' plat sous son objectif') +
       (R.prixTous ? ' : le chiffre du curseur « Prix de la carte » de Simuler' : ', calculés comme dans Simuler') + '. ' +
       (g.retenu ? 'Ces prix sont compris dans votre plan Simuler.' : 'Votre plan Simuler (' + signe(g.plan) + ' par an) ne les ajoute pas' + (g.plafond ? ' : il atteint déjà le niveau des meilleurs établissements de votre format.' : '.')) +
-      (R.gainMois - R.gainPrix > 0.5 ? ' Le reste (' + signe((R.gainMois - R.gainPrix) * part) + ' par mois) vient des plats mis en avant ou retirés.' : '') + '</p>';
+      (R.gainMois - R.gainPrix > 0.5 ? ' ' + resteTxt(R, part) : '') + '</p>';
   }
   function dessiner() {
     var host = doc.getElementById('c-smart'); if (!host) return; css();
     var R = analyse(), h = '<p class="ci-sub" style="margin:0;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">Carte · analyse</p><h2 class="ci-t" data-cp-title tabindex="-1">Carte intelligente <span class="ci-pro">PRO</span></h2>' +
       '<p class="ci-sub">La carte la plus rentable pour votre établissement : chaque plat pesé, le bon nombre de plats pour votre salle et votre saison, l’argent investi dans le stock, et ce que cela vous rapporte mois après mois.</p>';
+    /* C218 (W73) : la carte idéale fait partie de Pro (badge PRO, grille de l'appli, site) : sous Pilotage elle est fermée et
+       le dit, comme Achats ; Ma carte, Ventes et Décisions (avec les mêmes prix conseillés) restent dans Pilotage. */
+    if (!pro()) { host.innerHTML = h + '<div class="ci-sec" data-ci-verrou><h3>🔒 Réservé à Verdict Pro</h3><p class="ci-m">La carte idéale (nombre de plats pour votre salle et votre saison, plats à mettre en avant ou à retirer, argent libéré du stock, gain sur 12 mois) fait partie de Verdict Pro. Votre offre Pilotage comprend Ma carte, Ventes et Décisions : les prix conseillés pour les plats sous leur objectif y sont déjà.</p><div class="ci-a"><button type="button" class="ci-b ci-p" data-ci="offres">Voir les offres</button><button type="button" class="ci-b" data-cp-page="plats">Ouvrir Décisions</button></div></div>'; return; }
     if (!R) { host.innerHTML = h + '<p class="ci-m">Chargement…</p>'; return; }
     var P = R.profil;
     if (!R.pret) {
@@ -276,7 +323,7 @@
       lienSimuler(R, part) +
       graphe(R, M) +
       '<div class="ci-range"><label for="ciPart"><span>Part des conseils appliqués</span><span>' + Math.round(part * 100) + ' %</span></label><input id="ciPart" type="range" min="0" max="100" step="10" value="' + Math.round(part * 100) + '"></div>' +
-      '<p class="ci-m" style="margin-top:8px">Mois par mois selon la saison de votre établissement' + (R.saison.annees.length ? ' (' + R.saison.annees.join(' et ') + ', l’année la plus récente compte pour 60 %)' : '') + ' ; les points jaunes marquent vos mois forts. Hypothèses prudentes : hausse de prix limitée à 8 % avec 3 % de ventes en moins (comme Décisions et Simuler), 70 % des clients d’un plat retiré reportés sur les autres.</p></div>';
+      '<p class="ci-m" style="margin-top:8px">Mois par mois selon la saison de votre établissement' + (R.saison.annees.length ? ' (' + R.saison.annees.join(' et ') + (R.saison.annees.length > 1 ? ', l’année la plus récente compte pour 60 %' : '') + ')' : '') + (R.saison.coef.some(function (v) { return v > 1.12; }) ? ' ; les points jaunes marquent vos mois forts' : ' ; aucun mois nettement plus fort que les autres') + '. Hypothèses prudentes : hausse de prix limitée à 8 % avec 3 % de ventes en moins (comme Décisions et Simuler), 70 % des clients d’un plat retiré reportés sur les autres.</p></div>';
     h += '<div class="ci-sec"><h3>Votre établissement</h3><div class="ci-chips"><span class="ci-chip">' + esc(TYPES[P.type]) + '</span><span class="ci-chip">' + esc(HAB[P.habitants]) + '</span><span class="ci-chip">' + esc(TOUR[P.tourisme]) + '</span><span class="ci-chip">' + P.places + ' places</span><span class="ci-chip">' + Math.round(P.couverts) + ' couverts / jour</span><span class="ci-chip">' + esc(SERV[P.services]) + '</span></div>' +
       (R.formuleMidi ? '<p class="ci-m" style="margin-top:10px"><b>Conseil :</b> un menu du midi à prix d’appel (entrée et plat, ou plat et dessert) fidélise les habitants hors saison.</p>' : '') +
       '<div class="ci-a"><button type="button" class="ci-b" data-ci="profil">Modifier</button></div></div>';
@@ -299,12 +346,13 @@
     var b = e.target.closest && e.target.closest('#c-smart [data-ci]'); if (!b) return;
     var a = b.getAttribute('data-ci');
     if (a === 'profil') { editProfil = true; dessiner(); } else if (a === 'annuler') { editProfil = false; dessiner(); }
+    else if (a === 'offres') { try { (w.parent && w.parent.go || w.go)('abo'); } catch (er) { try { w.go('abo'); } catch (e2) {} } }
     else if (a === 'vera') { try { w.VerdictVeraCarte.open('menu'); } catch (er) { try { w.VerdictVeraCarte.open(); } catch (e2) {} } }
   });
   doc.addEventListener('submit', function (e) {
     var f = e.target.closest && e.target.closest('#c-smart form[data-ci-profil]'); if (!f) return; e.preventDefault();
-    var P = profil(), v = function (n) { return f.querySelector('[name="' + n + '"]').value; };
-    P.type = v('type'); P.habitants = v('habitants'); P.tourisme = v('tourisme'); P.places = Math.round(+v('places')) || null; P.couverts = Math.round(+v('couverts')) || null; P.services = v('services'); delete P.demo;
+    var P = profilBrut(), v = function (n) { return f.querySelector('[name="' + n + '"]').value; };
+    P.type = v('type'); P.habitants = v('habitants'); P.tourisme = v('tourisme'); P.places = Math.round(+v('places')) || null; P.couverts = Math.round(+v('couverts')) || null; P.services = v('services'); delete P.demo; P.typeChoisi = true;
     if (!profilComplet(P)) { var m = f.querySelector('.ci-err') || doc.createElement('p'); m.className = 'ci-m ci-err ci-ko'; m.textContent = 'Répondez aux six questions pour lancer l’analyse.'; f.appendChild(m); return; }
     try { if (typeof w.save === 'function') w.save(); } catch (er) {}
     editProfil = false; dessiner(); var host = doc.getElementById('c-smart'); if (host) host.scrollIntoView({ block: 'start' });
@@ -317,13 +365,16 @@
     if (!nav.querySelector('[data-ci-onglet]')) { var b = doc.createElement('button'); b.type = 'button'; b.setAttribute('data-ci-onglet', '1'); b.innerHTML = '✨ Idéale<span class="ci-np"> <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:999px;background:linear-gradient(135deg,#b45309,#92400e);color:#fff;vertical-align:1px">PRO</span></span>'; b.setAttribute('aria-label', 'Carte intelligente (Pro)'); css(); nav.appendChild(b); }
     var on = root.getAttribute('data-cp-page') === 'smart'; nav.querySelector('[data-ci-onglet]').classList.toggle('on', on);
     /* C208 (V58) : un seul onglet plein — si la barre est reconstruite pendant l'Idéale, l'ancien onglet est éteint. */
-    if (on) [].forEach.call(nav.querySelectorAll('button:not([data-ci-onglet])'), function (x) { if (x.classList.contains('on')) x.classList.remove('on'); if (x.getAttribute('aria-current') === 'page') x.setAttribute('aria-current', 'false'); });
+    if (on) [].forEach.call(nav.querySelectorAll('button:not([data-ci-onglet])'), eteindre);
   }
+  /* C218 : un onglet éteint perd aussi la couleur « bouton principal » posée en ligne par le module de contraste
+     (data-vdl="prim") ; sinon « Ma carte » restait vert à côté de l'Idéale. */
+  function eteindre(x) { if (x.classList.contains('on')) x.classList.remove('on'); if (x.getAttribute('aria-current') === 'page') x.setAttribute('aria-current', 'false'); if (x.getAttribute('data-vdl') === 'prim') { x.removeAttribute('data-vdl'); x.style.removeProperty('background'); x.style.removeProperty('background-color'); x.style.removeProperty('border-color'); x.style.removeProperty('color'); } }
   function ouvrir() {
     monter(); var root = doc.getElementById('v-carte'); if (!root) return;
     root.setAttribute('data-cp-page', 'smart');
     root.querySelectorAll(':scope > .sv').forEach(function (el) { el.classList.toggle('on', el.id === 'c-smart'); });
-    root.querySelectorAll('#cp-nav button').forEach(function (x) { var on = x.hasAttribute('data-ci-onglet'); x.classList.toggle('on', on); if (on) x.setAttribute('aria-current', 'page'); else x.removeAttribute('aria-current'); });
+    root.querySelectorAll('#cp-nav button').forEach(function (x) { var on = x.hasAttribute('data-ci-onglet'); x.classList.toggle('on', on); if (on) x.setAttribute('aria-current', 'page'); else { x.removeAttribute('aria-current'); eteindre(x); } });
     dessiner(); var t = doc.querySelector('#c-smart [data-cp-title]'); if (t) try { t.focus({ preventScroll: true }); } catch (e) {}
     w.scrollTo(0, Math.max(0, root.getBoundingClientRect().top + w.scrollY - 120));
   }

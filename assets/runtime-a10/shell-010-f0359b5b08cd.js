@@ -23,6 +23,9 @@
     return activate(contract.runtime,options,historyMode);
   }
   var params=new URLSearchParams(location.search);
+  /* C217 W61 : le site écrit ?module=inventaire (français) ; c'est le même module que ?module=inventory. L'adresse est
+     corrigée avant toute lecture (démarrage, historique, rechargement). */
+  (function(){var m=String(params.get('module')||'').toLowerCase();if(m!=='inventory'&&/^(inventaire|inventario|inventar|stocks?|voorraad)$/.test(m)){params.set('module','inventory');try{var u=new URL(location.href);u.searchParams.set('module','inventory');history.replaceState(history.state,'',u.pathname+u.search+u.hash);}catch(e){}}})();
   var stored={};
   try{stored=JSON.parse(localStorage.getItem(cfg.storageKey)||'{}')||{};}catch(e){stored={};}
   var startupUnlocked=false,startupVisualReady=false;
@@ -278,17 +281,31 @@
     /* R321 : le voile se retire dès que le module affiche quelque chose de vrai — l’animation d’ouverture Verdict
        (règle de Steven : elle prend tout l’écran, première ouverture comme réouverture), l’écran d’entrée ou l’accueil —
        sans attendre la fin du chargement de la page. */
-    (function watchStartupScreen(){if(!startupCover)return;try{var child=els.verdict&&els.verdict.contentDocument;if(child&&child.body){var shown=function(e){if(!e)return false;var st=child.defaultView.getComputedStyle(e);return e.getClientRects().length>0&&st.display!=='none'&&st.visibility!=='hidden'&&st.opacity!=='0';};var splash=child.getElementById('splash');if(shown(splash)){finishStartupCover();return;}{var entry=child.querySelector('#mLang.on,#refSh.on,#mDemoIntent.on'),view=child.querySelector('section.view.on');if(shown(entry)||(!entry&&shown(view)&&child.readyState!=='loading')){finishStartupCover();return;}}}}catch(e){}setTimeout(watchStartupScreen,60);})();
+    (function watchStartupScreen(){if(!startupCover)return;try{/* C217 W68 : ouverture directe sur l'Inventaire — le voile ne regardait que le cadre Pilotage (vide ici) et attendait un message envoyé en fin de chargement (jusqu'à 10 à 20 s). Il se retire dès que l'Inventaire affiche son ouverture, son accueil ou un écran. */var invDoc=state.module==='inventory'&&els.inventory&&els.inventory.contentDocument;if(invDoc&&invDoc.body&&/inventaire/.test(String(invDoc.URL||''))){var iv=invDoc.defaultView,vis=function(e){if(!e)return false;var st=iv.getComputedStyle(e);return e.getClientRects().length>0&&st.display!=='none'&&st.visibility!=='hidden'&&st.opacity!=='0';};if(vis(invDoc.getElementById('splash'))||vis(invDoc.querySelector('section.view.on'))||vis(invDoc.querySelector('.wc'))){finishStartupCover();return;}}var child=els.verdict&&els.verdict.contentDocument;if(child&&child.body){var shown=function(e){if(!e)return false;var st=child.defaultView.getComputedStyle(e);return e.getClientRects().length>0&&st.display!=='none'&&st.visibility!=='hidden'&&st.opacity!=='0';};var splash=child.getElementById('splash');if(shown(splash)){finishStartupCover();return;}{var entry=child.querySelector('#mLang.on,#refSh.on,#mDemoIntent.on'),view=child.querySelector('section.view.on');if(shown(entry)||(!entry&&shown(view)&&child.readyState!=='loading')){finishStartupCover();return;}}}}catch(e){}setTimeout(watchStartupScreen,60);})();
     startupCoverTimer=setTimeout(function(){if(!startupCover)return;els.loading.classList.add('on','startup','failed');var text=els.loading.querySelector('span'),retry=els.loading.querySelector('.startup-retry');if(text)text.textContent='Le chargement prend plus de temps que prévu. Vérifiez votre connexion.';if(retry)retry.hidden=false;},20000);
   }
   window.addEventListener('message',function(event){
     if(event.origin!==location.origin||!event.data)return;
     if(event.source!==els.verdict.contentWindow&&event.source!==els.inventory.contentWindow)return;
     if(event.data.p41==='gate'&&event.data.open===true){finishStartupCover();return;}
+    if(event.data.type==='verdict-inventory-needs-verdict'&&event.source===els.inventory.contentWindow){prepareVerdictForInventory();return;}
     if(event.data.type==='verdict-unified-ready'){
       try{var frame=event.source===els.verdict.contentWindow?els.verdict:els.inventory,child=frame.contentDocument,entry=child&&child.querySelector('#mLang.on,#refSh.on,#mDemoIntent.on'),splash=child&&child.getElementById('splash'),view=child&&child.querySelector('.view.on');if(splash){var splashStyle=child.defaultView.getComputedStyle(splash);entry=entry||(splash.getClientRects().length>0&&splashStyle.display!=='none'&&splashStyle.visibility!=='hidden');}if(view&&!entry)finishStartupCover();}catch(e){}
     }
   });
+  /* C217 W63 : ouvert directement sur l'Inventaire (essai, Pilotage, Pro), Analyse a besoin de Pilotage (factures, pertes,
+     clôture, écart matière). Le cadre Pilotage est préparé caché, une seule fois, sans changer d'écran ; jamais sous la
+     formule Inventaire gratuite. L'Inventaire est prévenu quand Pilotage est prêt. */
+  var verdictForInventoryAsked=false;
+  function prepareVerdictForInventory(){
+    if(verdictForInventoryAsked||demoRequested())return false;
+    try{var P=window.VerdictPlan;if(P&&typeof P.actif==='function'&&P.actif()&&P.etat().niveau==='inventaire')return false;}catch(e){}
+    try{var A=window.VerdictWorkspaceAccess,R=A&&A.getPreferredTarget?A.getPreferredTarget():null;/* le serveur décide (espace connecté) : Pilotage seulement s'il l'ouvre */if(window.VERDICT_WORKSPACE_CONNECTED===true&&window.VERDICT_OPEN_ACCESS!==true&&!(R&&R.modules&&R.modules.pilotage&&R.modules.pilotage.view))return false;}catch(e){}
+    verdictForInventoryAsked=true;
+    var notify=function(){var n=0;(function poll(){try{var cw=els.verdict.contentWindow;if(cw&&typeof cw.verdictMatiereDepuisInventaire==='function'){send(els.inventory,{type:'verdict-frame-ready'});return;}}catch(e){}if(n++<80)setTimeout(poll,250);})();};
+    if(state.frames.verdict){notify();return true;}
+    ensureFrame('verdict',{profile:state.profile||'pilotage',preload:true});notify();return true;
+  }
   function ensureFrame(module,options){
     var frame=els[module],key=modeKey(module,options);
     if(!frame)return false;
@@ -549,7 +566,7 @@
     if(value&&!bool(value.demo))updateContext(value,value.source);
     else if(els.context)els.context.textContent='Même établissement';
   }
-  var networkCheckSerial=0;
+  var networkCheckSerial=0,networkSlowCount=0;
   function networkState(label,state,title){
     if(!els.network)return;
     /* C194 : la vérification périodique du réseau ne réécrit que ce qui change (0 changement au repos) */
@@ -565,7 +582,7 @@
     var connection=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
     var declaredWeak=!!connection&&(/^(slow-2g|2g|3g)$/.test(connection.effectiveType||'')||
       (typeof connection.rtt==='number'&&connection.rtt>=800)||
-      (typeof connection.downlink==='number'&&connection.downlink>0&&connection.downlink<.7));
+      false);/* C217 W69 : le débit estimé par le navigateur (downlink) est faux en local et sur les petits échanges : seule la mesure réelle compte */
     if(!window.fetch){networkState(declaredWeak?'Réseau faible':'En ligne',declaredWeak?'weak':'online','État estimé par le navigateur');return;}
     var controller=typeof AbortController==='function'?new AbortController():null;
     var timeout=setTimeout(function(){if(controller)controller.abort();},5000);
@@ -573,7 +590,10 @@
     fetch('./manifest.webmanifest?network-check='+started,{cache:'no-store',signal:controller?controller.signal:undefined}).then(function(response){
       if(serial!==networkCheckSerial)return;
       if(!response.ok)throw new Error('network_check_failed');
-      var weak=declaredWeak||Date.now()-started>=1200;
+      /* C217 W69 : durée réseau réelle (Resource Timing), pas le temps d'attente d'une page encore occupée à démarrer ; deux mesures lentes de suite avant de dire « Réseau faible ». */
+      var duree=Date.now()-started;try{var ent=performance.getEntriesByName(response.url||'');if(ent&&ent.length){var en=ent[ent.length-1];if(en.responseEnd>0)duree=Math.min(duree,en.responseEnd-(en.fetchStart||en.startTime));}}catch(e){}
+      networkSlowCount=duree>=1200?networkSlowCount+1:0;
+      var weak=declaredWeak||networkSlowCount>=2;
       networkState(weak?'Réseau faible':'En ligne',weak?'weak':'online',weak?'Connexion lente vers Verdict':'Connexion à Verdict disponible');
     }).catch(function(){
       if(serial===networkCheckSerial)networkState('Hors ligne','offline','Verdict inaccessible depuis cet appareil');

@@ -21,7 +21,7 @@ try{var LS=w.localStorage,OUB=[];for(var li=0;li<LS.length;li++){var lk=LS.key(l
 var CTRL={sal:1,fc:1,com:1,emb:1,fix:.5,panier:.5,carte:.5,cmd:1/3,jour:1/3};
 var CTRL_LIB={1:'élevé',0.5:'partiel'};
 var ORDER=['sal','fix','com','emb','fc','carte','panier','cmd'];
-var CARTE_CAP=8,CARTE_ELAST=.03,JOUR_DEMANDE=.6,JOUR_EQUIPE=.8;
+var CARTE_CAP=8,CARTE_ELAST=.03,JOUR_DEMANDE=.6,JOUR_EQUIPE=.8,PANIER_PCT=.02;
 
 function def(id){for(var i=0;i<w.DEC_DEFS.length;i++)if(w.DEC_DEFS[i].id===id)return w.DEC_DEFS[i];return null;}
 function num(x){x=Number(x);return isFinite(x)?x:0;}
@@ -122,7 +122,9 @@ function overAll(state){
 
 /* ── Le plan réaliste de l'établissement ── */
 var CACHE={k:null,v:null};
-function cle(){try{return JSON.stringify([w.LOCALE,w.DB.in,w.DB.etabType,w.DB.plats,w.DB.carteRef,w.DB.reg,w.DB.controlTargets,(w.DB.decisions||[]).length]);}catch(e){return String(Math.random());}}
+/* C218 (W76) : les prix des ingrédients, des préparations et des suppléments font partie de la clé : une facture qui change
+   un prix recalcule aussitôt le gain de la carte (avant, le gain restait celui d'avant la facture). */
+function cle(){try{return JSON.stringify([w.LOCALE,w.DB.in,w.DB.etabType,w.DB.plats,w.DB.carteRef,w.DB.reg,w.DB.controlTargets,(w.DB.decisions||[]).length,w.DB.ing,w.DB.preparations,w.DB.supp]);}catch(e){return String(Math.random());}}
 function payrollOk(){try{return typeof w.decPayrollRecommendationAllowed==='function'&&w.decPayrollRecommendationAllowed();}catch(e){return false;}}
 function txt(f,a){try{return typeof w[f]==='function'?w[f](a):'';}catch(e){return '';}}
 function plan(){
@@ -146,22 +148,22 @@ function plan(){
   var why=null,pts=0;
   if(cf){var st=null;try{st=w.carteStats();}catch(e){}
     if(st&&st.theoR>0){var tn=st.theoNourR!=null?st.theoNourR:st.theoR,rec=tn>fam.fc[1]?(tn-fam.fc[1])/3:0,fuite=(v.fc-tn)>=4?(v.fc-tn)/3:0;pts=rec+fuite;
-      why='Food cost théorique de la carte '+pc(tn)+' (repère '+pc(fam.fc[1],0)+')'+(fuite?' ; écart réel / théorique de '+pc(v.fc-tn)+' : pertes, portions ou offerts invisibles.':'.')+' Un tiers de chaque écart.';}}
-  else if(v.fc>fam.fc[1]){pts=(v.fc-fam.fc[1])/3;why='Food cost à '+pc(v.fc)+' du CA ; repère médian '+pc(fam.fc[1],0)+'. Un tiers de l’écart.';}
+      why='Coût de la nourriture d’après vos fiches '+pc(tn)+' du CA, hors boissons (repère '+pc(fam.fc[1],0)+')'+(fuite?' ; écart avec vos achats de nourriture de '+pc(v.fc-tn)+' : pertes, portions ou offerts invisibles.':'.')+' Un tiers de chaque écart.';}}
+  else if(v.fc>fam.fc[1]){pts=(v.fc-fam.fc[1])/3;why='Coût de la nourriture à '+pc(v.fc)+' du CA, hors boissons ; repère médian '+pc(fam.fc[1],0)+'. Un tiers de l’écart.';}
   pts=Math.floor(pts*2)/2;if(pts>=.5)add('fc',-pts,why,'Repeser les portions clés, mettre à jour les fiches techniques, renégocier le premier fournisseur.');
   /* carte : prix des plats sous leur objectif, plafonnés */
   var cp=cf?cartePlan(CARTE_CAP):null;
   if(cp&&cp.dContribAn>0){var tc=texteCarte(CARTE_CAP);add('carte',CARTE_CAP,tc.why,tc.how);}
   /* panier : remplacé par la carte quand elle est fiable */
+  /* C218 (W70) : le panier se borne sur le panier du client lui-même (+2 %), plus sur un repère de ticket propre au type
+     (repères à la précision douteuse, et gain qui changeait avec le seul type choisi). */
   var pa=num(d.panierTTC);
   var bornePanier=0;
-  if(pa>0){var tk=F.fmt&&F.fmt.tk,pct=!tk?.02:(pa<tk[1]?.03:(pa<tk[2]?.015:.01)),vp=Math.floor(pa*pct*10)/10;bornePanier=vp;}
-  if(pa>0&&!(cp&&cp.dContribAn>0)){
-    add('panier',vp,'Panier '+fr2(pa)+' € TTC'+(tk?' ; repères '+F.nom+' : médiane '+fr2(tk[1])+' €, haut '+fr2(tk[2])+' €':'')+'. Vente additionnelle : la matière et les commissions suivent.',txt('p11BasketAction',type)||'Entrées, desserts et boissons mis en avant, sans toucher aux prix affichés.');}
-  /* commandes */
-  var c=num(d.cmdj);
-  if(c>0){var cl=F.fmt&&F.fmt.cl,pc2=!cl?.02:(c<cl[1]?.04:.02),vc=Math.floor(c*pc2*2)/2;
-    add('cmd',vc,c.toLocaleString(tag(),{maximumFractionDigits:1})+' commandes par jour'+(cl?' ; repère médian '+F.nom+' : '+cl[1]:'')+'. Contrôle faible : la fréquentation ne se décrète pas.',txt('p11VolumeAction',type)||'Travailler les services creux.');}
+  if(pa>0){var vp=Math.floor(pa*PANIER_PCT*10)/10;bornePanier=vp;}
+  if(pa>0&&vp>0&&!(cp&&cp.dContribAn>0)){
+    add('panier',vp,'Panier '+fr2(pa)+' € TTC. Verdict compte au plus +'+Math.round(PANIER_PCT*100)+' % de votre propre panier, auprès des clients déjà là : la matière et les commissions suivent.',txt('p11BasketAction',type)||'Entrées, desserts et boissons mis en avant, sans toucher aux prix affichés.');}
+  /* C218 (W70) : le nombre de commandes n'est jamais proposé (doctrine C189 : on ne dit pas « vendez plus » quand la
+     clientèle n'est pas là ; la fréquentation ne se décide pas). Le curseur reste dans Simuler, comme une hypothèse. */
   L.sort(function(a,b){return ORDER.indexOf(a.id)-ORDER.indexOf(b.id);});
   /* l'équipe n'est proposée qu'après une décision d'organisation mesurée (règle existante de Simuler) */
   var pr=payrollOk(),retenus=L.filter(function(x){return x.id!=='sal'||pr;}),attente=L.filter(function(x){return x.id==='sal'&&!pr;});
@@ -195,6 +197,10 @@ function plan(){
 
 /* ── Simuler : nouveaux pas, levier Carte, cumul et impacts individuels ── */
 function installerSimuler(){
+  /* C218 (W80) : ce curseur agit sur la nourriture seule (achats nourriture / CA) : il le dit, et rappelle la marchandise
+     complète (nourriture + boissons) pour qu'aucun écran ne présente 18,6 % comme « le coût de la marchandise ». */
+  var fcd=def('fc');if(fcd&&!fcd.__c218){fcd.__c218=true;fcd.t='Coût de la nourriture';fcd.label='Je modifie le coût de la nourriture (hors boissons) de';
+    var fb0=fcd.dispBase;if(typeof fb0==='function')fcd.dispBase=function(){var r=fb0.apply(this,arguments);try{var R=w.moteur(),ca=num(R.d.ca),m=num(R.d.mat);if(ca>0&&m>0)r=String(r)+' · nourriture seule ; avec les boissons : '+pc(m/ca*100);}catch(e){}return r;};}
   var p=def('panier');if(p)p.step=0.1;var sl=def('sal');if(sl)sl.step=50;var c=def('cmd');if(c){c.step=0.5;c.fmt=function(v){return (v>0?'+':v<0?'\u2212':'')+String(Math.abs(Math.round(v*10)/10)).replace('.',',')+' / jour';};}var x=def('fix');if(x)x.step=1;
   if(!def('carte')){
     var at=w.DEC_DEFS.indexOf(def('panier'))+1;
@@ -223,7 +229,7 @@ function installerSimuler(){
   };
   w.decPotentialState=function(P){var s={},src=(P&&P.state)||{};for(var k in src)s[k]=src[k];s.jour=0;return s;};
   w.decBest=decBest;
-  if(typeof w.point11Decision==='function'&&!w.point11Decision.__c91){var p11=w.point11Decision;w.point11Decision=function(db){var r=p11.apply(this,arguments);try{aligner(r,db);}catch(e){}return r;};w.point11Decision.__c91=true;}
+  if(typeof w.point11Decision==='function'&&!w.point11Decision.__c91){var p11=w.point11Decision;w.point11Decision=function(db){var r=p11.apply(this,arguments);try{sansVolume(r);}catch(e){}try{aligner(r,db);}catch(e){}return r;};w.point11Decision.__c91=true;}
   w.decScenarioPersist=persist;
   if(typeof w.decScenarioEnsure==='function'&&!w.decScenarioEnsure.__c90){w.decScenarioEnsure=restaurer(w.decScenarioEnsure);w.decScenarioEnsure.__c90=true;}
   var origRecap=w.decDrawRecap;
@@ -267,12 +273,12 @@ function phrase(id,P,B){
     :(b?'Avec vos autres leviers, Verdict compte au plus '+dd.fmt(b)+' : au-delà, la rentabilité dépasserait '+meilleurs+'.'
        :'Verdict n’en compte pas davantage : avec vos autres leviers, la rentabilité est déjà de '+pc(B.rnAutres,1)+(B.rnAutres>=P.plafond.rn?', au-delà de ':' ; ce levier la ferait dépasser ')+meilleurs+'.');
   var fin=B.reduit?'':' Au-delà, ce n’est plus réaliste.';
-  if(id==='cmd')return 'Vous servez '+String(Math.round(num(d.cmdj)*10)/10).replace('.',',')+' commandes par jour'+(fmt?' ; repère Verdict '+t+' : '+fmt.cl[1]:'')+'. '+au+fin;
+  if(id==='cmd')return 'Vous servez '+String(Math.round(num(d.cmdj)*10)/10).replace('.',',')+' commandes par jour. La fréquentation ne se décide pas : Verdict ne propose jamais ce levier. Ce curseur reste une hypothèse à vérifier ; la matière, les commissions et l’équipe suivent.';
   if(B.reduit&&id==='carte')return 'Verdict relève les prix d’au plus '+CARTE_CAP+' %, sans dépasser le plat le plus cher de la catégorie. '+au;
-  if(id==='panier')return 'Votre panier moyen est de '+fr2(d.panierTTC)+' €'+(fmt?' ; repère Verdict '+t+' : '+fr2(fmt.tk[1])+' €':'')+'. '+au+fin;
+  if(id==='panier')return 'Votre panier moyen est de '+fr2(d.panierTTC)+' € ; Verdict compte au plus +'+Math.round(PANIER_PCT*100)+' % de votre propre panier. '+au+fin;
   if(id==='carte')return 'Verdict relève les prix d’au plus '+CARTE_CAP+' %, sans dépasser le plat le plus cher de la catégorie.'+fin;
   if(id==='sal')return 'Votre équipe coûte '+pc(v.ms)+' du chiffre d’affaires ; repère Verdict '+t+' : '+pc(fam.ms[1],0)+'. '+au+fin;
-  if(id==='fc')return 'Votre food cost est de '+pc(v.fc)+' ; repère Verdict '+t+' : '+pc(fam.fc[1],0)+'. '+au+fin;
+  if(id==='fc')return 'Votre coût de nourriture (hors boissons) est de '+pc(v.fc)+' du CA ; repère Verdict '+t+' : '+pc(fam.fc[1],0)+'. '+au+fin;
   if(id==='fix')return 'Vos charges fixes pèsent '+pc(v.acf)+' du chiffre d’affaires ; repère Verdict '+t+' : '+pc(fam.acf[1],0)+'. '+au+fin;
   if(id==='com')return 'Verdict compte au plus −10 % de commissions, en passant une partie des commandes en retrait.'+fin;
   if(id==='emb')return 'Verdict compte au plus −10 % sur ces achats.'+fin;
@@ -335,6 +341,12 @@ function noteRecap(){
 /* C91 — Priorités et Audit : le montant d'une action est celui que Simuler calcule pour le même levier, avec le même moteur
    (une seule base). La règle reste la même (un tiers de l'écart au repère du format) ; seul le calcul passe par moteur(). */
 var ACTIONS={STAFF_COST_HIGH:['sal'],CHARGES_AUTRES_HIGH:['fix'],PANIER_LOW:['panier'],COMMANDES_LOW:['cmd'],VARIABLE_COST_HIGH:['fc','emb','com']};
+/* C218 (W70) : l'action « attirer plus de commandes » n'est pas une décision du patron ; elle sort des priorités. */
+function sansVolume(res){
+  if(!res||!Array.isArray(res.items))return;var avant=res.items.length;res.items=res.items.filter(function(it){return !it||it.id!=='COMMANDES_LOW';});if(res.items.length===avant)return;
+  var vol=function(x){return x&&(x.id==='COMMANDES_LOW'||x==='COMMANDES_LOW');};
+  if(vol(res.top))res.top=res.items[0]||null;if(vol(res.next))res.next=res.items.filter(function(x){return x!==res.top;})[0]||null;
+}
 function aligner(res,db){
   if(!res||!res.items||!res.items.length)return;var keep=w.DB,swap=db&&db!==w.DB;if(swap)w.DB=db;
   try{
@@ -370,7 +382,7 @@ function decBest(){
     '<div class="autoline"><span class="k">'+U.profit+'</span><b>'+pc(Rt.v.rn,1)+'</b></div>'+
     (!had&&P.plafond.atteint?'<p class="note">Verdict ne propose pas d’aller au-delà de '+pc(P.plafond.rn,0)+' de résultat, le niveau des meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+'.</p>':'')+
     (P.attente.length&&!had?'<p class="note">'+P.attente.map(function(x){return 'Coût humain : jusqu’à '+signe(x.gain)+' / an possibles, proposés seulement après une décision d’organisation mesurée (onglet Équipe).';}).join(' ')+'</p>':'')+
-    '<p class="note" style="margin:6px 0 0">Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+' ; un client de plus consomme de la matière et des commissions ; tout est recalculé ensemble, sans rien compter deux fois.</p>'+
+    '<p class="note" style="margin:6px 0 0">Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+' ; une vente en plus consomme de la matière et des commissions ; le nombre de clients n’est jamais compté comme un levier ; tout est recalculé ensemble, sans rien compter deux fois.</p>'+
     '<div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--line)"><div style="font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:#93c5fd">'+U.proof+'</div><p class="note" style="margin:4px 0 0">'+U.proofD+'</p></div>'+
     '<button class="btn sec" style="margin-top:10px" onclick="decApplyBest()">'+(had?U.applyAdd:U.applyStart)+'</button></div>';
   out.innerHTML=h;
@@ -413,8 +425,9 @@ function patchAudit(){
     if(full&&!full.querySelector('#auGainReel')){var t=document.createElement('div');t.innerHTML=chapitreHTML(P);full.insertBefore(t.firstChild,full.firstChild);}
     var s5=el.querySelector('[data-av31-scene="4"]');if(s5&&!s5.getAttribute('data-c88')){s5.innerHTML=sceneDecision(P);s5.setAttribute('data-c88','1');s5.setAttribute('aria-label','Gain réaliste');}
     var s4=el.querySelector('[data-av31-scene="3"] .av31-risk');
-    if(s4&&!s4.getAttribute('data-c88')){var R=P.R,rr=P.format.fam.rn[1],risk=R.v.rn<rr?(rr-R.v.rn)/100*R.d.ca:0;s4.setAttribute('data-c88','1');
-      s4.className='av31-risk'+(risk?'':' good');s4.innerHTML=risk?'<span>Écart au repère de rentabilité de '+esc(P.format.type||'votre format')+' ('+pc(rr,0)+')</span><b>'+eur(risk)+'</b>':'<span>Au-dessus du repère de '+esc(P.format.type||'votre format')+' ('+pc(rr,0)+')</span><b>'+pc(R.v.rn)+'</b>';}
+    /* C218 (W78) : un seul repère de rentabilité, celui de la note et de l'Accueil (verdictRepereRN, C205 : 8 € pour 100 € vendus). */
+    if(s4&&!s4.getAttribute('data-c88')){var R=P.R,rr=8;try{var RR=typeof w.verdictRepereRN==='function'?w.verdictRepereRN():null;if(RR&&RR.repere>0)rr=RR.repere;}catch(e){}var risk=R.v.rn<rr?(rr-R.v.rn)/100*R.d.ca:0,rrTxt=String(rr).replace('.',',')+' € pour 100 € vendus';s4.setAttribute('data-c88','1');
+      s4.className='av31-risk'+(risk?'':' good');s4.innerHTML=risk?'<span>Écart au repère Verdict ('+rrTxt+')</span><b>'+eur(risk)+'</b>':'<span>Au-dessus du repère Verdict ('+rrTxt+')</span><b>'+String(Math.round(R.v.rn*10)/10).replace('.',',')+' €</b>';}
   }catch(e){}
 }
 function installerAudit(){
@@ -436,7 +449,7 @@ css.textContent='.c88-best{background:rgba(0,0,0,.25);border-radius:12px;padding
   '#decTotalBar.c206-retire{opacity:0!important;pointer-events:none!important;transform:translateY(16px)!important;transition:opacity .2s ease,transform .2s ease}';
 (document.head||document.documentElement).appendChild(css);
 
-w.VerdictGainRealiste={version:'C206',borneDyn:borneDyn,plan:plan,cartePlan:cartePlan,horsBornes:horsBornes,carteFiable:carteFiable,overAll:overAll,
+w.VerdictGainRealiste={version:'C218',borneDyn:borneDyn,plan:plan,cartePlan:cartePlan,horsBornes:horsBornes,carteFiable:carteFiable,overAll:overAll,
   ouvrirSimuler:function(){var P=plan();if(!P)return;try{w.decDepuisPotentiel();}catch(e){w.DEC_STATE=w.decPotentialState(P);w.go('dec');}},
   ouvrirDetail:function(){var d=document.querySelector('[data-audit-full-report]');if(d)d.open=true;setTimeout(function(){var c=document.getElementById('auGainReel');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});},40);}};
 installerSimuler();installerAudit();

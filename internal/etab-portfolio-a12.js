@@ -119,6 +119,28 @@ function clone(v){return v==null?v:JSON.parse(JSON.stringify(v));}
 function S(){return root.STORE;}
 function placeOf(d){d=d||{};return [d.etabVille,d.etabQuartier].map(function(x){return String(x==null?'':x).trim();}).filter(Boolean).join(' \u00b7 ');}
 function nameOf(id){var d=S()&&S().etabs[id];if(!d)return '';try{return root.verdictEtabIdentity(d).name;}catch(e){return d.etab||id;}}
+/* C218 (W74) : le prix d'un établissement en plus, celui de l'offre validée (05-BACKEND-API/src/offre.js, 05/10/2026) et de
+   la fenêtre de l'offre (C212) : +39 € HT par mois ou +390 € HT par an en Pilotage, +69 € HT par mois ou +690 € HT par an
+   en Pro. Le prix du niveau actif est relu dans l'appli (verdictOffrePourTier) quand elle le donne. */
+var PRIX_EN_PLUS={pilotage:{m:39,a:390},pro:{m:69,a:690}};
+function prixEnPlus(){
+  var niveau='pro',essai=false,P={pilotage:{m:PRIX_EN_PLUS.pilotage.m,a:PRIX_EN_PLUS.pilotage.a},pro:{m:PRIX_EN_PLUS.pro.m,a:PRIX_EN_PLUS.pro.a}};
+  try{if(typeof root.verdictNiveau==='function')niveau=root.verdictNiveau()==='pilotage'?'pilotage':'pro';}catch(e){}
+  try{var o=typeof root.verdictOffrePourTier==='function'?root.verdictOffrePourTier():null;if(o&&o.xm>0&&o.xa>0){P[niveau].m=o.xm;P[niveau].a=o.xa;}}catch(e){}
+  try{var VP=root.VerdictPlan||(root.parent&&root.parent!==root&&root.parent.VerdictPlan);essai=!!(VP&&VP.etat&&VP.etat().niveau==='essai');}catch(e){}
+  var e=function(v){return v.toLocaleString('fr-FR').replace(/\s/g,' ')+' € HT';},ligne=function(k){return '+'+e(P[k].m)+' par mois, ou +'+e(P[k].a)+' par an';};
+  if(essai)return 'Pendant l’essai, cet établissement est compris. Ensuite, il s’ajoute à votre abonnement : '+ligne('pro')+' en Pro ; '+ligne('pilotage')+' en Pilotage.';
+  return 'Cet établissement s’ajoute à votre abonnement '+(niveau==='pilotage'?'Pilotage':'Pro')+' : '+ligne(niveau)+' en formule annuelle.';
+}
+function prixHtml(){var l='';try{l=prixEnPlus();}catch(e){}return l?'<p class="ne12-prix">💶 '+esc(l)+'</p>':'';}
+/* C218 (W71) : un établissement qui vient d'être créé devient aussitôt celui de la coquille (barre latérale, Inventaire relié).
+   Sans cela, la coquille gardait l'établissement d'origine et pouvait le réafficher sous le nom et les chiffres du nouveau.
+   Le changement passe par switchEtab, que le pont de la coquille écoute (enveloppé ensuite par d'autres modules) ; le message
+   « Déjà affiché » est tu. Hors de la coquille, rien à faire. */
+function publierContexte(){
+  try{var id=S()&&S().actif;if(!id||typeof root.switchEtab!=='function'||!(root.VerdictUnified&&root.VerdictUnified.embedded))return;
+    var t=root.toast;root.toast=function(){};try{root.switchEtab(id);}finally{root.toast=t;}}catch(e){}
+}
 
 /* ── 1. Masquer de l'accueil ───────────────────────────────────────────────── */
 var showAll=false;
@@ -153,7 +175,7 @@ function sheet(inner){
 function openChooser(){
   var t=T(),ids=typeof root.etabList==='function'?root.etabList():[];
   if(!ids.length){closeSheet();return originalOpenNew&&originalOpenNew();}
-  sheet('<div class="grab"></div><h3>'+esc(t.title)+'</h3><p class="sub" style="margin:-6px 0 14px">'+esc(t.lead)+'</p>'+
+  sheet('<div class="grab"></div><h3>'+esc(t.title)+'</h3><p class="sub" style="margin:-6px 0 14px">'+esc(t.lead)+'</p>'+prixHtml()+
     '<button type="button" class="ne12-choice" onclick="verdictNewEtabSame()"><b>🔁 '+esc(t.same)+'</b><span>'+esc(t.sameSub)+'</span></button>'+
     '<button type="button" class="ne12-choice" onclick="verdictNewEtabFresh()"><b>✨ '+esc(t.fresh)+'</b><span>'+esc(t.freshSub)+'</span></button>'+
     (isTestSession()?'<button type="button" class="ne12-choice" onclick="verdictNewEtabModel()"><b>\ud83e\uddea '+esc(t.model)+'</b><span>'+esc(t.modelSub)+'</span></button>':'')+
@@ -170,7 +192,7 @@ function openSame(){
     '<label class="f"><span>'+esc(t.name)+'</span><input id="ne12-nom" type="text" autocomplete="off"></label>'+
     '<label class="f"><span>'+esc(t.city)+' <span style="opacity:.6">'+esc(t.optional)+'</span></span><input id="ne12-ville" type="text" autocomplete="off"></label>'+
     '<label class="f"><span>'+esc(t.district)+' <span style="opacity:.6">'+esc(t.optional)+'</span></span><input id="ne12-quartier" type="text" autocomplete="off" placeholder="'+esc(t.districtPh)+'"></label>'+
-    '<div class="ne12-rules"><p>✅ '+esc(t.copied)+'</p><p>⛔ '+esc(t.notCopied)+'</p><p><b>🔒 '+esc(t.scoreRule)+'</b></p></div>'+
+    '<div class="ne12-rules"><p>✅ '+esc(t.copied)+'</p><p>⛔ '+esc(t.notCopied)+'</p><p><b>🔒 '+esc(t.scoreRule)+'</b></p></div>'+prixHtml()+
     '<p class="ne12-err" id="ne12-err" hidden></p>'+
     '<button type="button" class="btn" style="width:100%" onclick="verdictNewEtabCreateSame()">'+esc(t.create)+'</button>'+
     '<button type="button" class="btn ghost" style="margin-top:8px;width:100%" onclick="verdictNewEtabChooser()">'+esc(t.back)+'</button>');
@@ -184,7 +206,7 @@ function openFresh(){
     '<label class="f"><span>'+esc(t.name)+'</span><input id="ne-nom" type="text" autocomplete="off"></label>'+
     '<label class="f"><span>'+esc(t.city)+' <span style="opacity:.6">'+esc(t.optional)+'</span></span><input id="ne-ville" type="text" autocomplete="off"></label>'+
     '<label class="f"><span>'+esc(t.district)+' <span style="opacity:.6">'+esc(t.optional)+'</span></span><input id="ne-quartier" type="text" autocomplete="off" placeholder="'+esc(t.districtPh)+'"></label>'+
-    '<button type="button" class="btn" style="width:100%" onclick="verdictNewEtabCreateBlank()">'+esc(t.createBlank)+'</button>'+
+    prixHtml()+'<button type="button" class="btn" style="width:100%" onclick="verdictNewEtabCreateBlank()">'+esc(t.createBlank)+'</button>'+
     '<button type="button" class="btn ghost" style="margin-top:8px;width:100%" onclick="verdictNewEtabChooser()">'+esc(t.back)+'</button>');
 }
 function openModel(){closeSheet();if(originalOpenNew)originalOpenNew();}
@@ -211,6 +233,7 @@ function duplicate(srcId,nom,ville,network,opts){
   if(!opts.silent){
     try{root.save&&root.save('duplicate-establishment');}catch(e){}
     try{root.fillInputs();root.readInputs();root.drawEtabs();root.refreshAll();root.go('pil');}catch(e){}
+    publierContexte();
     try{root.toast&&root.toast(T().done.replace('{name}',d.etab).replace('{src}',nameOf(srcId)));}catch(e){}
   }
   return id;
@@ -228,7 +251,7 @@ function districtField(){
     inp.addEventListener('change',function(){if(!root.DB)return;root.DB.etabQuartier=inp.value.trim().slice(0,80);try{root.save&&root.save('etab-place');}catch(e){}try{root.drawEtabs&&root.drawEtabs();root.refreshAll&&root.refreshAll();}catch(e){}});}
   if(doc.activeElement!==inp)inp.value=(root.DB&&root.DB.etabQuartier)||'';
 }
-function createBlank(){var q=((doc.getElementById('ne-quartier')||{}).value||'').trim();var before=S()&&S().actif;try{root.createEtab('');}catch(e){}closeSheet();if(q&&S()&&S().actif!==before&&root.DB){root.DB.etabQuartier=q.slice(0,80);try{root.save&&root.save('etab-place');root.drawEtabs&&root.drawEtabs();root.refreshAll&&root.refreshAll();}catch(e){}}}
+function createBlank(){var q=((doc.getElementById('ne-quartier')||{}).value||'').trim();var before=S()&&S().actif;try{root.createEtab('');}catch(e){}closeSheet();if(S()&&S().actif!==before)publierContexte();if(q&&S()&&S().actif!==before&&root.DB){root.DB.etabQuartier=q.slice(0,80);try{root.save&&root.save('etab-place');root.drawEtabs&&root.drawEtabs();root.refreshAll&&root.refreshAll();}catch(e){}}}
 /* Bandeau d'accueil d'un établissement dupliqué tant que son score est bloqué. */
 function banner(){
   var host=doc.getElementById('v-pil');if(!host)return;var old=doc.getElementById('dup12-banner');
@@ -259,6 +282,7 @@ function ensureStyle(){
   '#etabBar button.etab-more{font-weight:700;border-style:dashed!important;opacity:.85}'+
   '.ne12 .ne12-choice{display:block;width:100%;text-align:left;padding:14px 15px;margin:0 0 10px;border-radius:14px;border:1px solid rgba(128,128,128,.3);background:rgba(128,128,128,.05);color:inherit;cursor:pointer}.ne12 .ne12-choice:hover{border-color:#2563eb}.ne12 .ne12-choice b{display:block;font-size:15px;margin-bottom:4px}.ne12 .ne12-choice span{display:block;font-size:12.5px;line-height:1.45;opacity:.78}'+
   '.ne12 select{width:100%}.ne12-rules{margin:6px 0 12px;padding:10px 12px;border-radius:12px;background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.25);font-size:12.5px;line-height:1.45}.ne12-rules p{margin:3px 0}.ne12-err{color:#ef4444;font-size:12.5px;margin:0 0 8px}'+
+  '.ne12-prix{margin:0 0 12px;padding:9px 12px;border-radius:12px;background:rgba(22,163,74,.07);border:1px solid rgba(22,163,74,.3);font-size:12.5px;line-height:1.45}'+
   '.dup12{margin:0 0 14px;padding:14px 15px;border-radius:16px;border:1px solid rgba(234,179,8,.6);background:rgba(234,179,8,.08)}.dup12-k{font:800 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#a16207;margin-bottom:6px}.dup12 b{display:block;font-size:15.5px;margin-bottom:4px}.dup12 p{margin:0 0 10px;font-size:13px;line-height:1.5;opacity:.85}.dup12-actions{display:flex;flex-wrap:wrap;gap:8px}';
   doc.head.appendChild(st);
 }
@@ -275,6 +299,8 @@ function hook(){
     if(!isTestSession()&&typeof root.modeleDansDemonstration==='function'&&root.modeleDansDemonstration())return originalOpenNew.apply(this,arguments);
     if(typeof root.verdictEtabCapacityAvailable==='function'&&typeof root.etabBillableList==='function'&&!root.verdictEtabCapacityAvailable(root.etabBillableList().length+1))return originalOpenNew.apply(this,arguments);
     return openChooser();};wn.__etab12=true;root.openNewEtab=wn;}
+  /* C218 (W71) : le parcours d'origine « Nouveau concept » (createEtab) publie lui aussi le nouvel établissement à la coquille. */
+  if(typeof root.createEtab==='function'&&!root.createEtab.__etab12){var oce=root.createEtab,wce=function(){var avant=S()&&S().actif,r=oce.apply(this,arguments);try{if(S()&&S().actif!==avant)publierContexte();}catch(e){}return r;};wce.__etab12=true;root.createEtab=wce;}
   if(!root.refreshAll.__etab12){var orf=root.refreshAll,wr=function(){var r=orf.apply(this,arguments);try{ensureStyle();banner();districtField();placeUnderTitle();}catch(e){}return r;};wr.__etab12=true;root.refreshAll=wr;}
   try{ensureStyle();decorateBar();banner();districtField();placeUnderTitle();}catch(e){}
   /* Le titre de l'accueil est redessiné après un changement d'établissement : la ligne ville · quartier suit chaque rendu. */

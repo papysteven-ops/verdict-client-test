@@ -81,8 +81,17 @@
 
   /* ——— Caisse : une année complète importée confirme (ou non) le chiffre d'affaires, et donne panier et couverts ——— */
   function caisse(D, annee) {
-    var L = (D.histJour || []).filter(function (r) { return r && String(r.date).slice(0, 4) === String(annee) && /pos|csv|caisse|import/i.test(String(r.source || '')) && num(r.caJ) > 0; });
-    if (L.length < 250) return null;
+    /* C216 : l'exercice du FEC fait foi (exercice décalé : du 1er juillet au 30 juin) ; sinon l'année civile. */
+    var fi = D.fecImport, per = fi && fi.period && fi.period.start && fi.period.end && String(fi.period.year) === String(annee) ? fi.period : null;
+    var dans = function (d) { d = String(d).slice(0, 10); return per ? d >= per.start && d <= per.end : d.slice(0, 4) === String(annee); };
+    var L = (D.histJour || []).filter(function (r) { return r && dans(r.date) && /pos|csv|caisse|import/i.test(String(r.source || '')) && num(r.caJ) > 0; });
+    /* C216 (avec W27, L3) : une activité saisonnière (avril à octobre) n'a pas 250 journées. L'année est couverte aussi quand
+       chaque mois où le FEC a des ventes a au moins 15 journées de caisse (3 mois au moins). */
+    if (L.length < 250) {
+      var M = fi && fi.monthly || {}, mois = Object.keys(M).filter(function (k) { return dans(k + '-15') && num(M[k] && M[k].revenue) > 0; }), parMois = {};
+      L.forEach(function (r) { var k = String(r.date).slice(0, 7); parMois[k] = (parMois[k] || 0) + 1; });
+      if (mois.length < 3 || !mois.every(function (k) { return (parMois[k] || 0) >= 15; })) return null;
+    }
     var ttc = 0, tk = 0, tva = num(D.in && D.in.tva) || 10; L.forEach(function (r) { ttc += num(r.caJ); tk += num(r.tkJ); });
     return { jours: L.length, ttc: ttc, ht: ttc / (1 + tva / 100), tickets: tk, panier: tk > 0 ? ttc / tk : null, cmdj: tk > 0 ? tk / L.length : null, annee: annee };
   }
@@ -234,13 +243,17 @@
     var vue = doc.getElementById('v-in') || null; if (!vue) return;
     var an = (D.refSource && D.refSource.exerciseYear) || (D.ref && D.ref.exercice), C = an ? caisse(D, an) : null, acc = Object.keys(D.docAccords || {}), t = [], k = 'ok';
     if (D.docRef) t.push('✓ Document comptable ' + (D.docRef.year || '') + ' : il fait foi pour vos ventes, achats, équipe et charges.');
-    if (C) { var ca = caDeclare(D), e = ca ? (C.ht - ca) / ca : 0; t.push('✓ Caisse ' + an + ' : ' + C.jours + ' journées, ' + eur(C.ht) + ' HT' + (ca ? (Math.abs(e) <= 0.01 ? ', identique à votre chiffre d’affaires' : ', ' + (e > 0 ? '+' : '−') + Math.abs(Math.round(e * 1000) / 10).toLocaleString('fr-FR') + ' % par rapport à votre chiffre d’affaires' + (D.docRef ? ' : vérifiez avec votre comptable (ventes hors caisse, avoirs)' : '')) : '') + '. Panier moyen ' + (C.panier ? C.panier.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : '—') + '.'); }
+    if (C) { var ca = caDeclare(D), e = ca ? (C.ht - ca) / ca : 0; /* C216 (W49) : « identique » seulement à l'euro près ; sinon l'écart est dit en euros (et en % au-delà de 1 %). */
+      var gap = ca ? C.ht - ca : 0;
+      t.push('✓ Caisse ' + an + ' : ' + C.jours + ' journées, ' + eur(C.ht) + ' HT' + (ca ? (Math.abs(gap) < 1 ? ', identique à votre chiffre d’affaires' : Math.abs(e) <= 0.01 ? ', à ' + eur(Math.abs(gap)) + ' près de votre chiffre d’affaires (' + (gap > 0 ? '+' : '−') + (Math.round(Math.abs(e) * 10000) / 100).toLocaleString('fr-FR') + ' %)' : ', ' + (e > 0 ? '+' : '−') + Math.abs(Math.round(e * 1000) / 10).toLocaleString('fr-FR') + ' % par rapport à votre chiffre d’affaires' + (D.docRef ? ' : vérifiez avec votre comptable (ventes hors caisse, avoirs)' : '')) : '') + '. Panier moyen ' + (C.panier ? C.panier.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : '—') + '.'); }
     if (acc.length) { k = 'ko'; var nd = noteDocuments(D); t.push('Vous gardez votre saisie plutôt que vos documents : votre note est une lecture non finale.' + (nd != null ? ' Avec vos documents, votre note serait ' + nd + ' / 100.' : '')); }
     var ch = D.docChangements || {}, chk = Object.keys(ch);
     if (chk.length) { var ndc = noteDocuments(D), anr = anneeDoc(D);
       t.push('Changements depuis ' + anr + ' pris en compte : ' + chk.map(function (x) { var c = ch[x], f = function (v) { return c.cents ? v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : eur(v); }; return c.lib.toLowerCase() + ' ' + f(c.doc) + ' → ' + f(c.saisie) + (c.raison || c.depuis ? ' (' + [c.raison, c.depuis ? 'depuis ' + moisLib(c.depuis) : null].filter(Boolean).join(', ') + ')' : ''); }).join(' ; ') + '.');
       t.push('Votre note en tient compte.' + (ndc != null ? ' D’après vos seuls documents ' + anr + ' : ' + ndc + ' / 100.' : '')); }
-    if (!D.docRef && !C) { k = D.docVerrou ? 'ko' : 'info'; t.push(D.docVerrou ? 'Vous avez confirmé des chiffres inhabituels sans document : votre note reste une lecture non finale.' : 'Note calculée sur votre saisie.'); t.push('Déposez votre document comptable (FEC) et l’export de votre caisse : Verdict s’appuiera sur vos vrais chiffres.'); }
+    if (!D.docRef && !C) { k = D.docVerrou ? 'ko' : 'info'; /* C216 (W56) : sur un profil vide, il n'y a ni note ni saisie : on ne le prétend pas. */
+      var pret = false; try { var Rm = w.moteur && w.moteur(); pret = !!(Rm && Rm.ready); } catch (e) {}
+      t.push(D.docVerrou ? 'Vous avez confirmé des chiffres inhabituels sans document : votre note reste une lecture non finale.' : pret ? 'Note calculée sur votre saisie.' : 'Aucun chiffre pour l’instant : pas encore de note.'); t.push('Déposez votre document comptable (FEC) et l’export de votre caisse : Verdict s’appuiera sur vos vrais chiffres.'); }
     var html = '<b>D’où viennent vos chiffres</b>' + t.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + (acc.length ? '<button type="button" class="btn" data-df58="tout-doc" style="margin-top:8px">Prendre mes documents</button>' : chk.length ? '<button type="button" class="btn ghost" data-df58="tout-doc" style="margin-top:8px">Annuler ces changements et revenir à mes documents</button>' : '');
     var el = doc.getElementById('df58-ban');
     if (!el) { el = doc.createElement('div'); el.id = 'df58-ban'; var h1 = vue.querySelector('h1'); if (h1 && h1.parentNode === vue) h1.insertAdjacentElement('afterend', el); else vue.insertBefore(el, vue.firstChild); }

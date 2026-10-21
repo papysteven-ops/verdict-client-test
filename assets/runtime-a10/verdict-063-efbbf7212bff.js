@@ -12,6 +12,8 @@
  de:{k:'Die Richtwerte von heute',fc:'Prognose · Durchschnitt Ihrer letzten {n} {j}e',fcNo:'Prognose: zu wenige {j}e erfasst (3 nötig)',min:'Minimum, das alle Kosten deckt',obj:'Für Ihr Ergebnisziel ({o} pro Jahr, vor Steuern)',objNo:'Ergebnisziel nicht erfasst',objBtn:'Mein Ziel erfassen',ok:'Die Prognose übertrifft {c} um {v}.',ko:'Der Prognose fehlen {v} bis {c}.',cObj:'Ihr Ziel',cMin:'das Minimum',note:'Beträge brutto, wie die Tageseingabe. Die Prognose ist ein Durchschnitt, kein Versprechen.',kJ:'Richtwerte für {d}',reel:'Ist an diesem Tag',okR:'An diesem Tag lagen die Umsätze {v} über {c}.',koR:'An diesem Tag fehlten {v}, um {c} zu erreichen.',minNo:'Tagesminimum nicht berechenbar: Kosten und Kalender ergänzen.'},
  nl:{k:'De richtpunten van vandaag',fc:'Prognose · gemiddelde van uw laatste {n} {j}en',fcNo:'Prognose: te weinig {j}en ingevoerd (3 nodig)',min:'Minimum dat al uw kosten dekt',obj:'Voor uw resultaatdoel ({o} per jaar, vóór belasting)',objNo:'Resultaatdoel niet ingevoerd',objBtn:'Mijn doel invoeren',ok:'De prognose ligt {v} boven {c}.',ko:'De prognose mist {v} om {c} te halen.',cObj:'uw doel',cMin:'het minimum',note:'Bedragen incl. btw, zoals de dagelijkse invoer. De prognose is een gemiddelde, geen belofte.',kJ:'Richtpunten voor {d}',reel:'Gerealiseerd die dag',okR:'Die dag lag de omzet {v} boven {c}.',koR:'Die dag ontbrak {v} om {c} te halen.',minNo:'Dagminimum niet berekenbaar: vul kosten en kalender aan.'},
  pt:{k:'As referências de hoje',fc:'Previsão · média dos {n} últimos dias iguais ({j})',fcNo:'Previsão: poucos dias iguais introduzidos ({j}; são precisos 3)',min:'Mínimo que cobre todos os seus custos',obj:'Para o seu objetivo de resultado ({o} por ano, antes de impostos)',objNo:'Objetivo de resultado não introduzido',objBtn:'Introduzir o meu objetivo',ok:'A previsão ultrapassa {c} em {v}.',ko:'Faltam {v} à previsão para atingir {c}.',cObj:'o seu objetivo',cMin:'o mínimo',note:'Montantes com IVA, como a introdução do dia. A previsão é uma média, não uma promessa.',kJ:'As referências de {d}',reel:'Realizado nesse dia',okR:'Nesse dia, as vendas superam {c} em {v}.',koR:'Nesse dia faltaram {v} para atingir {c}.',minNo:'Mínimo do dia não calculável: complete os custos e o calendário.'}};
+ /* C213 (W18) : libellé de la prévision tirée de la même période l'an dernier. */
+ T.fr.fcN1='Prévision · moyenne de vos {n} {j}s à la même période l’an dernier';T.en.fcN1='Forecast · average of your {n} {j}s at the same time last year';T.es.fcN1='Previsión · media de sus {n} {j} en el mismo periodo del año pasado';T.it.fcN1='Previsione · media dei suoi {n} {j} nello stesso periodo dell’anno scorso';T.de.fcN1='Prognose · Durchschnitt Ihrer {n} {j}e im gleichen Zeitraum des Vorjahres';T.nl.fcN1='Prognose · gemiddelde van uw {n} {j}en in dezelfde periode vorig jaar';T.pt.fcN1='Previsão · média dos {n} dias iguais ({j}) no mesmo período do ano passado';
  function L(){var l=root.LOCALE;return T[l]?l:'fr';}
  function t(k,p){var s=(T[L()]||T.fr)[k]||T.fr[k];return p?s.replace(/\{(\w+)\}/g,function(_,x){return p[x]!=null?p[x]:'';}):s;}
  function money(v){try{return v.toLocaleString(L(),{style:'currency',currency:'EUR',maximumFractionDigits:0});}catch(e){return Math.round(v)+' €';}}
@@ -25,7 +27,10 @@
   try{var m=(o.choix&&num(o.choix.cible)&&o.choix.cible>0)?o.choix.cible:root.verdictPerformanceDayTarget(day);o.min=num(Number(m))&&Number(m)>0?Number(m):null;}catch(e){o.min=null;}
   try{var p=root.point3Calc(root.moteur());o.objAn=p.objectiveResult>0?p.objectiveResult:null;o.ratio=(o.objAn&&p.objectiveRevenue>0&&p.breakEven>0)?p.objectiveRevenue/p.breakEven:null;}catch(e){o.objAn=null;o.ratio=null;}
   o.obj=(o.min!=null&&o.ratio!=null)?o.min*o.ratio:null;
-  var rows=((root.DB&&root.DB.histJour)||[]).filter(function(r){return r&&typeof r.caJ==='number'&&isFinite(r.caJ)&&r.caJ>0&&String(r.date)<o.key&&new Date(String(r.date).slice(0,10)+'T12:00:00').getDay()===o.wd;}).sort(function(a,b){return a.date<b.date?1:-1;}).slice(0,8);
+  var all=((root.DB&&root.DB.histJour)||[]).filter(function(r){return r&&typeof r.caJ==='number'&&isFinite(r.caJ)&&r.caJ>0&&String(r.date)<o.key&&new Date(String(r.date).slice(0,10)+'T12:00:00').getDay()===o.wd;}).sort(function(a,b){return a.date<b.date?1:-1;}),rows=all.slice(0,8);o.src='recent';
+  /* C213 (W18) : si le dernier même jour date de plus de 5 semaines, la saison a changé : la prévision reprend les mêmes jours
+     de la même période l'an dernier (± 3 semaines autour de la même date), au moins 3, sans coefficient inventé. */
+  var age=rows.length?(dt-new Date(String(rows[0].date).slice(0,10)+'T12:00:00'))/864e5:Infinity;if(rows.length<3||age>35){var ref=new Date(dt);ref.setDate(ref.getDate()-364);var ly=all.filter(function(r){var x=new Date(String(r.date).slice(0,10)+'T12:00:00');return Math.abs(x-ref)<=21*864e5;});if(ly.length>=3){rows=ly;o.src='n1';}}
   o.n=rows.length;o.fc=o.n>=3?rows.reduce(function(s,r){return s+r.caJ;},0)/o.n:null;
   try{o.jour=new Intl.DateTimeFormat(L(),{weekday:'long'}).format(dt);}catch(e){o.jour='';}
   return o;}
@@ -35,7 +40,7 @@
   function row(a,b,attr){return '<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid rgba(148,163,184,.18)"'+(attr||'')+'><span class="sous" style="margin:0">'+esc(a)+'</span><b style="white-space:nowrap;font-variant-numeric:tabular-nums">'+esc(b)+'</b></div>';}
   var h='<div class="mod-h"><p class="kicker">'+esc(o.choix?t('kJ',{d:o.choix.nom}):t('k'))+'</p></div>';
   if(o.reel!=null)h+=row(t('reel'),money(o.reel),' data-rj="reel"');
-  h+=o.fc!=null?row(t('fc',{n:o.n,j:o.jour}),money(o.fc),' data-rj="fc"'):'<p class="sous" data-rj="fc-no" style="margin:6px 0">'+esc(t('fcNo',{j:o.jour}))+'</p>';
+  h+=o.fc!=null?row(t(o.src==='n1'?'fcN1':'fc',{n:o.n,j:o.jour}),money(o.fc),' data-rj="fc"'):'<p class="sous" data-rj="fc-no" style="margin:6px 0">'+esc(t('fcNo',{j:o.jour}))+'</p>';
   h+=o.min!=null?row(t('min'),money(o.min),' data-rj="min"'):'<p class="sous" data-rj="min-no" style="margin:6px 0">'+esc(t('minNo'))+'</p>';
   if(o.obj!=null)h+=row(t('obj',{o:money(o.objAn)}),money(o.obj),' data-rj="obj"');
   else if(o.min!=null)h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 0;border-top:1px solid rgba(148,163,184,.18)" data-rj="obj-no"><span class="sous" style="margin:0">'+esc(t('objNo'))+'</span><button type="button" class="btn ghost" onclick="try{parent.verdictSaisirObjectifResultat()}catch(e){}">'+esc(t('objBtn'))+'</button></div>';
@@ -51,7 +56,7 @@
   return {date:dt,cible:c.cible,reel:c.type==='reel'?c.valeur:null,nom:nom};}catch(e){return null;}}
  function attach(){try{if(root.VIEW!=='pil')return;var fr=root.document.querySelector('#v-pil iframe.p41-ecran')||root.document.querySelector('iframe.p41-ecran'),doc=fr&&fr.contentDocument;if(!doc||!doc.body)return;
   var M=doc.getElementById('modSaisie');if(!M||!M.parentNode)return;var o=compute(choixDe(doc));if(!o)return;
-  var sig=[L(),o.key,o.min,o.obj,o.fc,o.n,o.reel].join('|'),el=doc.getElementById('modReperesJour');if(el&&el.getAttribute('data-rj-sig')===sig)return;
+  var sig=[L(),o.key,o.min,o.obj,o.fc,o.n,o.reel,o.src].join('|'),el=doc.getElementById('modReperesJour');if(el&&el.getAttribute('data-rj-sig')===sig)return;
   var r=html(o);if(!el){el=doc.createElement('article');el.className='mod';el.id='modReperesJour';var off=doc.getElementById('vdOffCard'),after=(off&&off.parentNode===M.parentNode)?off:M;after.parentNode.insertBefore(el,after.nextSibling);}
   el.setAttribute('data-etat',r.etat);el.setAttribute('data-rj-sig',sig);el.innerHTML=r.h;}catch(e){}}
  root.setInterval(attach,900);

@@ -83,6 +83,41 @@
   }
   function variable(nom) { return VARIABLE.test(norm(nom)); }
   function produit(nom) { var k = norm(nom); for (var i = 0; i < PRODUITS.length; i++) if (norm(PRODUITS[i][0]) === k) return { nom: PRODUITS[i][0], type: PRODUITS[i][1], prix: PRODUITS[i][2], perte: PRODUITS[i][3] }; return null; }
+  /* C216 (W54) — un même produit sous un autre nom : « Entrecote VBF » (facture, Inventaire) est l'« Entrecôte de bœuf »
+     de la fiche type. Le produit déjà au catalogue est repris tel quel (son prix réel, ses factures) au lieu d'en créer un
+     second avec un prix type. Reconnaissance prudente : un mot propre au produit, et la même unité (kilo, litre, pièce). */
+  var RECO = {
+    'Bœuf haché 15 %': /\bhache\b/, 'Bavette de bœuf': /\bbavette\b/, 'Pomme de terre': /\bpommes? de terre\b|\bpdt\b/, 'Frites surgelées': /\bfrites?\b/,
+    'Œuf de poule': /\boeufs?\b/, 'Pavé de saumon': /\bsaumon\b(?!.*\bfume)/, 'Filet de cabillaud': /\bcabillaud\b/, 'Poulet fermier': /\bpoulet\b/,
+    'Salade verte': /\bsalade verte\b|\blaitue\b|\bmesclun\b|\bbatavia\b/, 'Tomate': /^tomates?\b(?!.*\b(concasse|coulis|sechee|cerise)\b)/, 'Pain burger': /\bpains? (a )?burger\b|\bbuns?\b/,
+    'Cheddar tranche': /\bcheddar\b/, 'Comté râpé': /\bcomte\b/, 'Pain de mie': /\bpain de mie\b/, 'Jambon blanc': /\bjambon\b(?!.*\b(cru|serrano|bayonne|parme)\b)/,
+    'Beurre': /^beurre\b(?!.*cacahu)/, 'Crème liquide': /\bcreme (liquide|fleurette|entiere)\b/, 'Lardons fumés': /\blardons?\b/, 'Oignon': /\boignons?\b/,
+    'Chocolat noir': /\bchocolat (noir|patissier|de couverture)\b/, 'Sucre': /^sucre\b/, 'Crème dessert vanille': /\bcreme (dessert|anglaise)\b/, 'Anchois/câpres': /\banchois\b/,
+    'Parmesan': /\bparmesan\b|\bparmigiano\b/, 'Entrecôte de bœuf': /\bentrecotes?\b/, 'Moules de bouchot': /\bmoules?\b/, 'Cuisse de canard confite': /\bconfit de canard\b|\bcuisses? de canard\b/,
+    'Sole entière': /\bsoles?\b/, 'Bûche de chèvre': /\bchevre\b/, 'Pommes fruit': /\bpommes? (golden|gala|granny|fruit|reinette|canada|pink)\b/, 'Pâte feuilletée': /\bpate feuilletee\b/,
+    'Café en grains': /\bcafe (en )?grains?\b|\bcafe moulu\b/, 'Vin blanc de cuisine': /\bvin blanc (de )?cuisine\b/, 'Lait entier': /^lait\b(?!.*\b(coco|soja|amande|avoine)\b)/,
+    'Thé en sachet': /\bsachets? de the\b|\bthe\b.*\bsachets?\b/, 'Soda 33 cl': /\bcoca\b|\bsodas?\b|\bpepsi\b|\borangina\b|\bschweppes\b/,
+    'Eau minérale 50 cl': /\beau (minerale|plate|gazeuse|de source)\b|\bevian\b|\bvittel\b|\bcristaline\b|\bbadoit\b|\bperrier\b|\bsan pellegrino\b/,
+    'Jus de fruits 25 cl': /\bjus\b/, 'Bière pression (fût)': /\bfut\b|\bbiere pression\b/, 'Vin au verre (cubi)': /\bcubi\b|\bbag in box\b|\bbib\b/
+  };
+  function unite(t) { var u = String(t || '').toUpperCase(); return /^(KG|G|KILO)/.test(u) ? 'KG' : /^(L|CL|ML|LITRE)/.test(u) ? 'L' : /^(U|PIECE|PCE|UNITE)/.test(u) ? 'UNITE' : ''; }
+  /* Un produit au prix réel (facture, Inventaire, saisie du patron) passe avant le produit de départ du même nom, posé avec
+     un prix type à la création de l'établissement. */
+  function prixReel(g) { return !!(g && g.prixSource && g.prixSource !== 'type' && !g.cpPrixType); }
+  function dansCatalogue(nomType, ing) {
+    var t = produit(nomType), k = norm(nomType), re = t && RECO[t.nom], vu = null;
+    (ing || []).forEach(function (g) { if (!vu && g && g.nom && norm(g.nom) === k) vu = g; });
+    var choix = !re ? [] : (ing || []).filter(function (g) {
+      if (!g || !g.nom || g.cpPortion || g === vu) return false;
+      var u = unite(g.type || g.unite || g.unit); if (u && u !== unite(t.type)) return false;
+      return re.test(norm(g.nom));
+    });
+    var reel = choix.filter(prixReel)[0];
+    if (reel && !prixReel(vu)) return reel.nom;
+    if (vu) return vu.nom;
+    choix = choix.filter(function (g) { return !g.cpPrixType; });
+    return choix.length ? choix[0].nom : null;
+  }
   function famille(f) { var n = norm(f); if (!n) return null; for (var i = 0; i < FAMILLES.length; i++) if (FAMILLES[i][0].test(n)) return FAMILLES[i][1]; return String(f).trim(); }
   /* Coût d'une fiche (même calcul que le moteur : perte du produit, puis sauces et pertes de l'établissement). */
   function cout(rec, ing, reg) {
@@ -104,5 +139,5 @@
       return l[0] + u;
     }).join(' · ');
   }
-  w.VerdictFichesTypes = { trouver: trouver, variable: variable, produit: produit, famille: famille, cout: cout, resume: resume, norm: norm, produits: function () { return PRODUITS.map(function (p) { return p.slice(); }); }, nombre: FICHES.length };
+  w.VerdictFichesTypes = { trouver: trouver, variable: variable, produit: produit, dansCatalogue: dansCatalogue, famille: famille, cout: cout, resume: resume, norm: norm, produits: function () { return PRODUITS.map(function (p) { return p.slice(); }); }, nombre: FICHES.length };
 })(window);

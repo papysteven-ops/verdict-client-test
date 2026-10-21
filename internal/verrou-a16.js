@@ -25,6 +25,9 @@
   var IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var MAC = !IOS && /Mac/.test(navigator.platform || '');
   var BIO = IOS ? 'Face ID' : MAC ? 'Touch ID' : 'empreinte ou visage';
+  /* C218 (W82) : Touch ID (Mac) lit l'empreinte, Face ID (iPhone) le visage : la phrase suit le capteur. */
+  var BIO_GESTE = IOS ? 'Ouvrez Verdict d’un regard.' : MAC ? 'Ouvrez Verdict d’un simple toucher.' : 'Ouvrez Verdict avec votre empreinte ou votre visage.';
+  var BIO_ECHEC = IOS ? 'si votre visage n’est pas reconnu' : MAC ? 'si votre empreinte n’est pas reconnue' : 'si vous n’êtes pas reconnu';
 
   /* ───────── Stockage ───────── */
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
@@ -263,7 +266,7 @@
       if (C && C.bioPropose) { hide(); return; }
       C = C || {}; C.bioPropose = Date.now(); store(C);
       S.mode = 'offer';
-      show('<div class="vr-logo">🙂</div><h2>Activer ' + esc(BIO) + ' ?</h2><p>Ouvrez Verdict d’un regard. ' + (COFFRE ? 'Votre mot de passe reste le secours si le visage n’est pas reconnu ; sans ' + esc(BIO) + ', il sera demandé à chaque ouverture.' : 'Votre code reste le secours si le visage n’est pas reconnu.') + '</p><button type="button" class="vr-btn" data-yes>Activer ' + esc(BIO) + '</button><button type="button" class="vr-btn sec" data-no>Plus tard</button>');
+      show('<div class="vr-logo">🙂</div><h2>Activer ' + esc(BIO) + ' ?</h2><p>' + esc(BIO_GESTE) + ' ' + (COFFRE ? 'Votre mot de passe reste le secours ' + esc(BIO_ECHEC) + ' ; sans ' + esc(BIO) + ', il sera demandé à chaque ouverture.' : 'Votre code reste le secours ' + esc(BIO_ECHEC) + '.') + '</p><button type="button" class="vr-btn" data-yes>Activer ' + esc(BIO) + '</button><button type="button" class="vr-btn sec" data-no>Plus tard</button>');
       var el = root();
       el.querySelector('[data-no]').onclick = hide;
       el.querySelector('[data-yes]').onclick = function () { bioEnroll().then(function () { hide(); toast(BIO + ' activé'); }, function () { hide(); toast(BIO + ' non activé : ' + (COFFRE ? 'le mot de passe' : 'le code') + ' reste demandé.'); }); };

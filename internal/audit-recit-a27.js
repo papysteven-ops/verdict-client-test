@@ -10,7 +10,8 @@
   var w = window, doc = document; if (w.__vdRecit) return; w.__vdRecit = true;
   var REDUIT = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function eur(v) { return Math.round(Number(v) || 0).toLocaleString('fr-FR') + ' €'; }
+  /* C218 (W70) : espace insécable visible entre les milliers (l'espace fine U+202F disparaissait dans les gros chiffres gras : « +15377 € »). */
+  function eur(v) { return Math.round(Number(v) || 0).toLocaleString('fr-FR').replace(/[\u202f\s]/g, '\u00a0') + '\u00a0€'; }
   function pct(v) { return (Number(v) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
   function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
   function ton(rn) { return rn < 0 ? 'Votre structure perd de l’argent' : rn < 5 ? 'Rentable, mais fragile' : rn < 8 ? 'Rentable, sans matelas' : 'Une structure solide'; }
@@ -41,11 +42,18 @@
       if (M.status === 'positive') rn = Math.round(Math.max(0, 100 - charges) * 10) / 10; else if (M.status === 'loss') rn = -Math.round(Math.max(0, charges - 100) * 10) / 10;
     }
     var seuil = (P && P.seuil) || {}, mini = num(seuil.eur);
+    /* C218 (W70) : l'écart matière réel (achats du document comptable contre fiches de la carte, nourriture + boissons), quand la
+       carte est fiable : c'est de l'argent qui s'échappe vraiment, à côté des leviers à récupérer. */
+    var fuite = null;
+    try {
+      var C = P && P.carte, st = typeof w.carteStats === 'function' ? w.carteStats() : null, reel = num(d.ca) > 0 ? num(d.mat) / num(d.ca) * 100 : 0, theo = st ? num(st.theoR) : 0;
+      if (C && C.ok && num(C.couverture) >= 80 && reel > 0 && theo > 0 && reel - theo >= 0.5) fuite = { reel: reel, theo: theo, pts: reel - theo, eur: (reel - theo) / 100 * num(d.ca), compte: reel - theo >= 4 };
+    } catch (e) {}
     var leviers = (G && G.leviers || []).slice(0, 8);
     return {
       R: R, ca: num(d.ca), res: num(d.res), rn: rn, score: Math.round(num(R.score)), postes: postes,
       mini: mini, securite: isFinite(Number(seuil.securiteEur)) ? Number(seuil.securiteEur) : num(d.ca) - mini,
-      leviers: leviers, cible: G && G.max ? num(G.max.res) : null, cibleScore: G && G.max ? Math.round(num(G.max.score)) : null,
+      leviers: leviers, fuite: fuite, cible: G && G.max ? num(G.max.res) : null, cibleScore: G && G.max ? Math.round(num(G.max.score)) : null,
       nom: (function () { try { return (w.DB && w.DB.etab) || 'Votre établissement'; } catch (e) { return 'Votre établissement'; } })()
     };
   }
@@ -86,12 +94,20 @@
         '<span class="rc-suite">Vos fuites ↓</span></section>');
     }
     /* 4 · Les fuites */
-    if (D.leviers.length) {
-      var fuites = D.leviers.map(function (x, i) {
-        return '<li style="--i:' + i + '"><span class="rc-n">' + (i + 1) + '</span><div><b>' + esc(x.n) + '</b><small>' + esc(x.vers || '') + '</small></div><strong>+<em data-rc-count="' + Math.round(x.gain) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
+    /* C218 (W70) : d'abord ce qui s'échappe vraiment (l'écart matière entre achats et fiches), puis ce que Verdict propose de
+       récupérer, avec les montants de Simuler. Le nombre de commandes n'y figure plus : ce n'est pas une décision du patron. */
+    if (D.leviers.length || D.fuite) {
+      var n0 = 0, fuites = '';
+      if (D.fuite) {
+        var fpt = (Math.round(D.fuite.pts * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière</b><small>Achats ' + pct(D.fuite.reel) + ' du CA, fiches ' + pct(D.fuite.theo) + ' (nourriture + boissons) : ' + fpt + ' point de pertes, portions ou offerts non saisis' + (D.fuite.compte ? ' ; un tiers compté ci-dessous' : ' ; sous 4 points, non compté dans le gain') + '</small></div><strong>≈\u00a0<em data-rc-count="' + Math.round(D.fuite.eur) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
+        n0 = 1;
+      }
+      fuites += D.leviers.map(function (x, i) {
+        return '<li style="--i:' + (i + n0) + '"><span class="rc-n">' + (i + 1) + '</span><div><b>' + esc(x.n) + '</b><small>' + esc(x.vers || '') + ' · à récupérer</small></div><strong>+<em data-rc-count="' + Math.round(x.gain) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
       }).join('');
       t.push('<section class="rc-card rc-c4" data-rc="4"><span class="rc-k">4 · Vos fuites</span><h2>L’argent qui s’échappe</h2><ol class="rc-leaks">' + fuites + '</ol>' +
-        '<p class="rc-p">Montants réalistes pour votre format, calculés comme dans Simuler.</p><span class="rc-suite">Comment remonter ↓</span></section>');
+        '<p class="rc-p">' + (D.leviers.length ? 'Montants à récupérer calculés comme dans Simuler, et repris tels quels dans Carte › Décisions pour les prix.' : 'Aucun levier réaliste à ajouter pour l’instant.') + '</p><span class="rc-suite">Comment remonter ↓</span></section>');
     }
     /* 5 · Comment remonter : cascade du résultat */
     if (D.leviers.length && D.cible != null) {
@@ -263,7 +279,7 @@
     '#vdRecit .rc-leaks li{display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);transform:translateX(-12px);opacity:0;transition:transform .6s ' + E + ',opacity .6s ' + E + ';transition-delay:calc(var(--i)*.16s + .25s)}' +
     '#vdRecit .rc-on .rc-leaks li{transform:none;opacity:1}#vdRecit .rc-n{flex:0 0 30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(239,68,68,.22);color:#fca5a5;font-weight:900}' +
     '#vdRecit .rc-leaks li div{flex:1;min-width:0}#vdRecit .rc-leaks li div b{display:block;color:#fff;font-size:16px;overflow-wrap:anywhere;-webkit-hyphens:auto;hyphens:auto}#vdRecit .rc-leaks li div small{color:rgba(248,250,252,.7);font-size:13px}' +
-    '#vdRecit .rc-leaks strong{text-align:right;color:#fde68a;font:900 20px/1.1 -apple-system,system-ui;font-variant-numeric:tabular-nums;white-space:nowrap}#vdRecit .rc-leaks strong em{font-style:normal}#vdRecit .rc-leaks strong small{display:block;font-size:11.5px;color:rgba(253,230,138,.75)}' +
+    '#vdRecit .rc-leaks strong{text-align:right;color:#fde68a;font:900 20px/1.1 -apple-system,system-ui;font-variant-numeric:tabular-nums;white-space:nowrap}#vdRecit .rc-leaks strong em{font-style:normal}#vdRecit .rc-fuite .rc-n{background:rgba(249,115,22,.28);color:#fdba74}#vdRecit .rc-leaks .rc-fuite strong{color:#fdba74}#vdRecit .rc-leaks strong small{display:block;font-size:11.5px;color:rgba(253,230,138,.75)}' +
     /* 5 · cascade */
     '#vdRecit .rc-wf{list-style:none;margin:0 0 26px;padding:0;display:grid;gap:14px}' +
     '#vdRecit .rc-wf-row{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:4px 10px;opacity:0;transform:translateY(10px);transition:opacity .35s ' + E + ',transform .35s ' + E + ';transition-delay:calc(var(--i)*.16s + .1s)}' +

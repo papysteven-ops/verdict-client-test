@@ -118,9 +118,10 @@ function verdictReadNumber(v,strict){
 function num(v){ /* R126 puis R313 : lecture unique, voir verdictReadNumber. */ return verdictReadNumber(v,false); }
 function localeTag(){ return typeof LOCALE_TAG==='string'?LOCALE_TAG:'fr-FR'; }
 function eur(n){ if(n==null||isNaN(n))return "\u2014";
-  return Math.round(n).toLocaleString(localeTag()).replace(/\u202f/g,"\u00a0")+"\u00a0\u20ac"; }
+  /* C214 (W37) : un montant arrondi à zéro s'écrit « 0 € », jamais « −0 € ». */
+  return (Math.round(n)||0).toLocaleString(localeTag()).replace(/\u202f/g,"\u00a0")+"\u00a0\u20ac"; }
 function eur2(n){ if(n==null||isNaN(n))return "\u2014";
-  return n.toLocaleString(localeTag(),{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0")+"\u00a0\u20ac"; }
+  return (Math.round(n*100)/100||0).toLocaleString(localeTag(),{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0")+"\u00a0\u20ac"; }
 function pc(n,d){ if(n==null||isNaN(n))return "\u2014";
   return n.toLocaleString(localeTag(),{minimumFractionDigits:d==null?1:d,maximumFractionDigits:d==null?1:d})+"\u00a0%"; }
 function fr(n,d){ if(n==null||isNaN(n))return "\u2014";
@@ -862,7 +863,7 @@ function freshDB(model){
    Ajouter une langue = ajouter son objet dans I18N_DICT, rien d'autre. */
 var I18N_LANGS=['fr','en','es','it','de','nl','pt'];
 var _ABO_BIENTOT='L\u2019abonnement s\u2019active depuis votre espace de souscription.';
-var I18N_DICT={"fr":{"journey.once":"une fois, guidé","journey.whenever":"quand vous voulez","journey.monthlyCount":"un comptage par mois","preview.notSaved":"Mode aperçu : vos chiffres ne sont pas conservés.","rap.mois.t":"{m} n'est pas renseigné","rap.mois.d":"Pour clore {m} : chiffre d'affaires, achats matière et un comptage de stock final. Verdict reprend le stock précédent ; le premier comptage crée simplement la base.","rap.mois.b":"Compléter le mois","rap.carnet.t":"L'exercice {an} se termine","rap.carnet.d":"C'est le moment de figer {an} dans votre carnet : vous verrez ensuite l'écart avec l'année suivante.","carnet.encoursT":"L'exercice {an} n'est pas terminé","carnet.encoursD":"Vos chiffres vont encore bouger d'ici la fin de l'année. Le carnet prend tout son sens quand chaque ligne est un exercice clos. Vous pouvez tout de même enregistrer un point d'étape, et le remplacer en décembre.","carnet.figerQuandMeme":"Enregistrer un point d'étape","rap.carnetClos.t":"L'exercice {an} est clos et pas encore figé","rap.carnetClos.d":"Figez {an} dans votre carnet : c'est la ligne qui rendra visible votre progression sur les années suivantes.","rap.eyebrow":"À faire","rap.autres":"{n} autre point à traiter.","rap.saisie.t":"Vos chiffres ne sont pas encore saisis","rap.saisie.d":"L’assistant guidé indique les postes indispensables et les contrôle avant de calculer un score.","rap.saisie.b":"Saisir mes chiffres","rap.carnet.b":"Aller au carnet","rap.pilote.t":"Votre point du jour n'est pas fait","rap.pilote.d":"Saisissez le CA TTC de la journée ; les tickets sont facultatifs et affinent le panier. Verdict cumule le mois.","rap.pilote.b":"Faire mon point","rap.carte.t":"Votre carte n'est pas renseignée","rap.carte.d":"Sans vos plats, l'écart entre le coût prévu et le coût constaté ne peut pas être calculé.","rap.carte.b":"Ajouter mes plats","cal.t":"Un rappel dans votre agenda","cal.d":"Ce rappel utilise l’agenda de votre téléphone, qui vous avertira à la date choisie, même si l’application est fermée.","cal.b.semaine":"Chaque lundi","cal.b.mois":"Chaque mois","cal.b.annee":"Chaque année","cal.note":"Le fichier s'ouvre dans votre application d'agenda. Vous pouvez changer l'heure ensuite.","cal.semaine.t":"Point Verdict de la semaine","cal.semaine.d":"Ouvrir Verdict et enregistrer la journée. Le CA est requis ; les tickets sont facultatifs.","cal.mois.t":"Point Verdict du mois","cal.mois.d":"Mettre à jour les achats et ventes du mois, puis relire le résultat estimé avant impôt.","cal.annee.t":"Figer l'année dans Verdict","cal.annee.d":"Fin d'exercice : figer les chiffres de l'année dans le carnet de trajectoire.","cal.ok":"Rappel ajouté — ouvrez le fichier pour le placer dans votre agenda","cal.ko":"Impossible de créer le rappel sur cet appareil","carnet.figer":"Figer l'année en cours","carnet.figee":"Année {an} figée dans le carnet","carnet.misAJour":"Année {an} mise à jour","carnet.dejaIdentique":"{an} est déjà figée avec ces chiffres","carnet.remplacerT":"Remplacer l'année {an} ?","carnet.remplacerD":"Cette année est déjà dans le carnet : {av}. Elle sera remplacée par vos chiffres actuels : {ap}.","carnet.remplacer":"Remplacer","carnet.saisieDabord":"Remplissez d'abord vos chiffres","carnet.vide":"Aucune année figée. À chaque fin d'exercice, figez vos chiffres : vous verrez alors l'écart d'une année sur l'autre.","carnet.note":"Une seule ligne par année. Figer à nouveau la même année remplace la valeur enregistrée.","carnet.depuis":"Depuis {an}","menu.route.t":"Fonctions disponibles","menu.route.d":"Stock, services, rapports et audit sont disponibles","route.t":"Fonctions disponibles","route.d":"Les modules sont maintenant intégrés à Verdict Pro.","route.inclus":"Ces fonctions sont <b>incluses dans Verdict Pro</b>, sans supplément.","route.enConstruction":"Disponible","route.apporte":"Ce qu'il vous apportera","route.prepare":"Ce qui prépare le terrain","route.note":"Stock, performance des services, exports et audit sont intégrés à la version actuelle.","route.tease":"Ces quatre fonctions sont disponibles dans Verdict Pro.","route.voir":"Voir les fonctions","route.stock.nom":"Stock","route.stock.quoi":"Ce que votre stock immobilise vraiment, et ce qu'il coûte quand il dort.","route.stock.a0":"Ce que vos réserves immobilisent, en euros","route.stock.a1":"Les produits qui dorment et pèsent sur la trésorerie","route.stock.a2":"L'effet de vos achats sur la marge du mois","route.stock.prep":"Vos achats déjà saisis alimentent cette lecture.","route.stock.btn":"Voir Achats","route.planning.nom":"Planning","route.planning.quoi":"Le coût réel de chaque service, face à ce qu'il rapporte.","route.planning.a0":"Combien coûte chaque service, en personnel","route.planning.a1":"Les heures creuses qui coûtent plus qu'elles ne rapportent","route.planning.a2":"Comparer coût humain et contribution par service","route.planning.prep":"Vos salaires sont déjà renseignés : c'est la base du calcul.","route.planning.btn":"Voir Salaires","route.rapports.nom":"Rapports","route.rapports.quoi":"Votre mois en un document lisible, à imprimer ou à transmettre.","route.rapports.a0":"Un document clair pour votre comptable ou votre banque","route.rapports.a1":"L'évolution d'un mois sur l'autre","route.rapports.a2":"Les décisions prises et l’évolution observée ensuite","route.rapports.prep":"Chaque mois complété aujourd'hui nourrira ces rapports.","route.rapports.btn":"Voir l'accueil","route.audit.nom":"Diagnostic complet","route.audit.quoi":"Toute votre structure relue en une fois, avec ce qui bloque en premier.","route.audit.a0":"Un point complet de votre établissement","route.audit.a1":"Ce qui bloque en premier, chiffré en euros","route.audit.a2":"L'évolution entre deux diagnostics","route.audit.prep":"Plus vos chiffres sont à jour, plus ce diagnostic sera juste.","route.audit.btn":"Voir Paramètres","nav.pil":"Accueil","nav.data":"Diagnostic","nav.carte":"Carte","nav.priorities":"Actions","nav.plus":"Plus","score":"Score","tagline":"Chaque chiffre mène à une décision.","pro.title":"Disponible avec Verdict Pro","pro.cta":"Découvrir Verdict Pro","pro.continue":"Continuer","pro.tileNote":"Disponible avec Verdict Pro","pro.b1":"Simulateurs avancés","pro.b2":"Menu engineering complet","pro.b3":"Contrôles et priorités recalculés","pro.b4":"Comparaison de scénarios","pro.b5":"Trajectoire sur plusieurs années","pro.b6":"Audit Premium : 27 chapitres · 4 formats","pro.b7":"Rapport exécutif 1 page","pro.b8":"Prévisions et projections","pro.b9":"Recommandations intelligentes","abo.title":"Mon abonnement","abo.sub":"Votre abonnement et ce qu'il inclut.","abo.current":"Abonnement actuel","abo.plan":"Abonnement","abo.access":"Accès","abo.free":"Essai terminé — abonnement requis pour continuer","abo.pro":"Accès complet à toutes les fonctionnalités","abo.included":"Verdict Pro comprend","abo.tierFree":"Sans abonnement actif","abo.i1":"Import FEC, diagnostic et 12 indicateurs","abo.i2":"Priorités du jour, projection et alertes","abo.i3":"Rentabilité de la carte et écart food cost","abo.i4":"Simulateur de décisions et trajectoire","abo.i5":"Repères sectoriels et audit complet","abo.i6":"Inventaire Cuisine & Bar — gratuit, sans limite, même sans abonnement","abo.upTitle":"Passer à Verdict Pro","abo.unlock":"Débloquez :","abo.activate":"Activer Verdict Pro","abo.proActive":"Verdict Pro actif","abo.allOpen":"Toutes les fonctionnalités sont ouvertes.","abo.back":"Revenir à Verdict","abo.backModules":"← Retour aux modules","abo.lang":"Langue","toast.proOn":"Verdict Pro activé — tout est ouvert.","toast.freeOn":"Retour à Verdict.","plus.title":"Tous les modules","plus.sub":"L'essentiel est dans la barre du bas — tout le reste est ici.","plus.abo":"⚙ Mon abonnement","menu.ca.t":"Chiffre d'affaires","menu.ca.d":"CA du jour, du mois, historique","menu.sal.t":"Salaires","menu.sal.d":"Masse salariale, % du CA, dépendance","menu.achats.t":"Matières","menu.achats.d":"Références, achats, fournisseurs et inventaire","menu.obj.t":"Objectifs","menu.obj.d":"Votre objectif de résultat, en direct","menu.alertes.t":"Alertes","menu.alertes.d":"Tout ce qui franchit un seuil","menu.sante.t":"Santé entreprise","menu.sante.d":"6 jauges pour lire l'ensemble","menu.hist.t":"Trajectoire","menu.hist.d":"Vos actions et les mouvements mesurés","menu.dec.t":"Simuler","menu.dec.d":"Simulez un changement","menu.x.t":"Food Cost","menu.x.d":"Théorique vs réel, l'écart","menu.stock.t":"Stock","menu.stock.d":"Un comptage par mois après le premier","menu.planning.t":"Performance des services","menu.planning.d":"L’équipe prévue est-elle rentable pour ce service ?","menu.rapports.t":"Rapports","menu.rapports.d":"Audit · 4 exports","menu.audit.t":"Audit","menu.audit.d":"Le point complet de votre établissement","menu.in.t":"Paramètres","menu.in.d":"Vos chiffres, votre configuration","lock.carte.t":"Analyse de carte","lock.carte.d":"Chaque plat : coût matière, marge, zone, prix cible et action recommandée.","lock.x.t":"Food cost","lock.x.d":"Votre food cost réel confronté au théorique de votre carte — l'écart chiffré en euros.","lock.dec.t":"Décisions","lock.dec.d":"Simulez un changement, voyez l’impact annuel avant de le faire.","lock.hist.t":"Trajectoire","lock.hist.d":"Semaine, mois, année — toute votre trajectoire, sans limite.","lock.rapports.t":"Rapports","lock.rapports.d":"Audit prêt à imprimer ou partager : 4 formats.","lock.audit.t":"Audit","lock.audit.d":"Le point complet de votre établissement — structure, carte, salaires et priorités en une seule lecture.","lock.generic.t":"Ce module","lock.generic.d":"Réservé à Verdict Pro.","menu.lang.t":"Langue","menu.lang.d":"Choisir la langue de l'application","lang.title":"Langue · Language · Idioma","v.data.h":"Diagnostic","v.data.s":"La Structure explique le Score Verdict® global sur 3 niveaux et 12 indicateurs.","v.carte.h":"Ma carte","v.carte.s":"Chaque plat construit depuis ses ingrédients, lu par sa marge.","v.priorities.h":"Priorités","v.priorities.s":"Ce qui pèse le plus sur vos chiffres, dans l’ordre.","v.x.h":"Food Cost","v.x.s":"Votre carte face à vos comptes — deux lectures indépendantes du même coût.","v.hist.h":"Trajectoire","v.hist.s":"Une action, une mesure, une conclusion honnête.","v.dec.h":"Décisions","v.dec.s":"Simulez un changement, voyez l’impact annuel avant de le faire.","v.ca.h":"Chiffre d'affaires","v.ca.s":"Votre CA, aujourd'hui, ce mois, et dans le temps.","v.sal.h":"Salaires","v.sal.s":"Un poste majeur à surveiller — ce qu’il pèse vraiment.","v.achats.h":"Achats","v.achats.s":"Ce que vous achetez, réparti par poste.","v.obj.h":"Objectifs","v.obj.s":"Votre objectif de résultat, et où vous en êtes.","v.alertes.h":"Alertes","v.alertes.s":"Tout ce qui franchit un seuil, en un coup d'œil.","v.sante.h":"Santé entreprise","v.sante.s":"6 jauges pour lire l'ensemble d'un coup.","pil.morning":"Bonjour","pil.afternoon":"Bon après-midi","pil.evening":"Bonsoir","pil.sub":"Votre point du jour.","pil.input":"Ce que vous saisissez","pil.day":"Jour du mois (1–31)","pil.ca":"CA TTC encaissé depuis le 1er","pil.tk":"Tickets encaissés depuis le 1er","pil.go":"Lire ma position","pil.note":"Le CA TTC = ce que la caisse et les plateformes ont encaissé dans la journée. Verdict cumule le mois.","pil.green":"En zone saine","pil.greenS":"le résultat avant impôt estimé du mois atteint le repère de pilotage Verdict","pil.almost":"Presque","pil.almostS":"le résultat avant impôt estimé approche le repère de pilotage Verdict","pil.watch":"Vigilance","pil.watchS":"le résultat avant impôt estimé reste positif mais faible","pil.alert":"Alerte","pil.alertS":"à ce rythme, le résultat avant impôt estimé du mois est négatif","pil.caMinD":"TTC par jour restant pour couvrir le mois","pil.covMin":"Couverts minimum aujourd'hui","pil.caMin":"CA minimum aujourd'hui","pil.caMinMonth":"CA minimum du mois","pil.caMinMonthD":"TTC, pour un résultat à zéro","pil.left":"Reste à faire ce mois","pil.proj":"Projection fin de mois","pil.res":"Résultat estimé du mois","pil.resD":"avant impôt, structure appliquée","pil.avgTicket":"au panier moyen","pil.todayMin":"Sur les jours restants, il faut tenir","pil.toStay":"par jour pour couvrir le mois","pil.foot":"Le Pilote lit votre structure (marge de contribution, charges fixes) et l'applique au mois en cours. C'est une estimation de pilotage — la saisonnalité, les décalages d'encaissement et la comptabilité restent le territoire du comptable.","z.sane":"Saine","z.correct":"Correcte","z.fragile":"Fragile","z.crit":"Critique","ind.rn":"Résultat avant impôt","ind.rn.s":"marge avant impôt","ind.mc":"Ce qui reste après les coûts variables","ind.mc.s":"la marge de contribution","ind.cv":"Charges variables","ind.ms":"Masse salariale","ind.acf":"Autres charges fixes","ind.tc":"Total des charges","ind.pm":"Chiffre minimum à réaliser","ind.pm.s":"le point mort, en % du CA","ind.sen":"Sensibilité au choc","ind.sen.s":"marge si le CA cède","ind.fc":"Ratio d’achats nourriture","ind.fc.s":"achats nourriture % CA · hors variation de stock","ind.pc":"Cuisine + salaires","ind.pc.s":"le prime cost, vos 2 plus gros postes","ind.com":"Commissions plateformes","ind.prod":"Productivité","ind.prod.s":"contribution / h d'ouverture","pctCA":"% du CA","tab.score":"Score","tab.pm":"Chiffre minimum","tab.stress":"Test de résistance","tab.season":"Saisonnalité","tab.bench":"Repères & secteur","tab.traj":"Trajectoire","d.structure":"Structure","d.resilience":"Solidité","d.performance":"Fonctionnement","d.resBefore":"Résultat avant impôt","d.netMargin":"marge avant impôt","d.perMonth":"par mois","d.loss":"Perte avant impôt","d.capped":"le verdict est plafonné.","d.capWarn":"Votre structure est limitée par son résultat avant impôt actuel. Les autres performances ne peuvent pas compenser un résultat insuffisant.","d.days":"jours sur","d.perOrder":"/ commande","d.foodBuy":"d'achats nourriture","d.foodPay":"nourriture + salaires","d.prodD":"contribution par heure d'ouverture","d.cover":"Mois de couverture","d.coverD":"mois de contribution pour payer le fixe","d.fixedNot":"charges fixes non couvertes","d.n1":"Niveau 1 — Économie","d.n2":"Niveau 2 — Solidité face aux coups durs","d.n3":"Niveau 3 — Fonctionnement au quotidien","d.frag":"Vos 3 fragilités dominantes","d.foot":"Bon niveau visé : garder 8 € sur 100 € vendus, avant impôt. Repère de pilotage Verdict, le même dans toute l’appli.","d.unreachable":"hors d'atteinte","need.txt":"Le verdict a besoin de vos chiffres : panier, commandes, charges. Remplissez la saisie — ou chargez le modèle de démonstration pour voir l'app tourner.","need.btn":"Aller à la saisie","bench.h":"Repères & secteur","bench.q":"Repères de pilotage et contexte sectoriel","bench.cmp":"Comparez votre structure à :","bench.c1":"les repères Verdict de votre format","bench.c2":"la zone cible Verdict","bench.c3":"la statistique FIBEN publiée, séparée de vos calculs","bench.c4":"votre score Verdict®","bench.find":"Voyez immédiatement :","bench.f1":"vos points solides","bench.f2":"vos points à travailler","bench.f3":"votre écart à la zone cible","bench.cta":"Débloquer","ben.carte":"Analyse complète de votre carte","ben.x":"L’écart chiffré en euros","ben.dec":"Simulateurs avancés","ben.hist":"Trajectoire sur plusieurs années","ben.rapports":"Rapports prêts à partager","ben.bench":"Repères & contexte sectoriel","ben.audit":"Le point complet en une lecture","ben.generic":"Analyse complète","pil.dyn.good":"Votre établissement est en bonne trajectoire aujourd’hui.","pil.dyn.near":"Vous êtes proche de votre objectif du jour.","pil.dyn.miss1":"Il manque encore","pil.dyn.miss2":" pour sécuriser la journée.","hdr.perMonth":"/mois","hdr.good":"En bonne trajectoire aujourd’hui","hdr.watch":"Vigilance","hdr.alert":"Alerte","hdr.missing":"manque","hdr.proj":"Projection","hdr.year":"Exercice","abo.login":"Compte et essai disponibles après activation serveur","abo.trial.noauto":"Essai Pro · {n} jour(s) restant(s) · aucun débit automatique","abo.trial.subscribed":"Essai Pro · {n} jour(s) restant(s) · abonnement choisi, aucun débit avant la fin de l’essai","abo.grace":"Paiement à régulariser · accès maintenu temporairement","abo.expired.safe":"Essai terminé · aucun montant débité · données conservées","abo.issue":"Paiement non régularisé · accès Pro en pause · données conservées"}};
+var I18N_DICT={"fr":{"journey.once":"une fois, guidé","journey.whenever":"quand vous voulez","journey.monthlyCount":"un comptage par mois","preview.notSaved":"Mode aperçu : vos chiffres ne sont pas conservés.","rap.mois.t":"{m} n'est pas renseigné","rap.mois.d":"Pour clore {m} : chiffre d'affaires, achats matière et un comptage de stock final. Verdict reprend le stock précédent ; le premier comptage crée simplement la base.","rap.mois.b":"Compléter le mois","rap.carnet.t":"L'exercice {an} se termine","rap.carnet.d":"C'est le moment de figer {an} dans votre carnet : vous verrez ensuite l'écart avec l'année suivante.","carnet.encoursT":"L'exercice {an} n'est pas terminé","carnet.encoursD":"Vos chiffres vont encore bouger d'ici la fin de l'année. Le carnet prend tout son sens quand chaque ligne est un exercice clos. Vous pouvez tout de même enregistrer un point d'étape, et le remplacer en décembre.","carnet.figerQuandMeme":"Enregistrer un point d'étape","rap.carnetClos.t":"L'exercice {an} est clos et pas encore figé","rap.carnetClos.d":"Figez {an} dans votre carnet : c'est la ligne qui rendra visible votre progression sur les années suivantes.","rap.eyebrow":"À faire","rap.autres":"{n} autre point à traiter.","rap.saisie.t":"Vos chiffres ne sont pas encore saisis","rap.saisie.d":"L’assistant guidé indique les postes indispensables et les contrôle avant de calculer un score.","rap.saisie.b":"Saisir mes chiffres","rap.carnet.b":"Aller au carnet","rap.pilote.t":"Votre point du jour n'est pas fait","rap.pilote.d":"Saisissez le CA TTC de la journée ; les tickets sont facultatifs et affinent le panier. Verdict cumule le mois.","rap.pilote.b":"Faire mon point","rap.carte.t":"Votre carte n'est pas renseignée","rap.carte.d":"Sans vos plats, l'écart entre le coût prévu et le coût constaté ne peut pas être calculé.","rap.carte.b":"Ajouter mes plats","cal.t":"Un rappel dans votre agenda","cal.d":"Ce rappel utilise l’agenda de votre téléphone, qui vous avertira à la date choisie, même si l’application est fermée.","cal.b.semaine":"Chaque lundi","cal.b.mois":"Chaque mois","cal.b.annee":"Chaque année","cal.note":"Le fichier s'ouvre dans votre application d'agenda. Vous pouvez changer l'heure ensuite.","cal.semaine.t":"Point Verdict de la semaine","cal.semaine.d":"Ouvrir Verdict et enregistrer la journée. Le CA est requis ; les tickets sont facultatifs.","cal.mois.t":"Point Verdict du mois","cal.mois.d":"Mettre à jour les achats et ventes du mois, puis relire le résultat estimé avant impôt.","cal.annee.t":"Figer l'année dans Verdict","cal.annee.d":"Fin d'exercice : figer les chiffres de l'année dans le carnet de trajectoire.","cal.ok":"Rappel ajouté — ouvrez le fichier pour le placer dans votre agenda","cal.ko":"Impossible de créer le rappel sur cet appareil","carnet.figer":"Figer l'année en cours","carnet.figee":"Année {an} figée dans le carnet","carnet.misAJour":"Année {an} mise à jour","carnet.dejaIdentique":"{an} est déjà figée avec ces chiffres","carnet.remplacerT":"Remplacer l'année {an} ?","carnet.remplacerD":"Cette année est déjà dans le carnet : {av}. Elle sera remplacée par vos chiffres actuels : {ap}.","carnet.remplacer":"Remplacer","carnet.saisieDabord":"Remplissez d'abord vos chiffres","carnet.vide":"Aucune année figée. À chaque fin d'exercice, figez vos chiffres : vous verrez alors l'écart d'une année sur l'autre.","carnet.note":"Une seule ligne par année. Figer à nouveau la même année remplace la valeur enregistrée.","carnet.depuis":"Depuis {an}","menu.route.t":"Fonctions disponibles","menu.route.d":"Stock, services, rapports et audit sont disponibles","route.t":"Fonctions disponibles","route.d":"Les modules sont maintenant intégrés à Verdict Pro.","route.inclus":"Ces fonctions sont <b>incluses dans Verdict Pro</b>, sans supplément.","route.enConstruction":"Disponible","route.apporte":"Ce qu'il vous apportera","route.prepare":"Ce qui prépare le terrain","route.note":"Stock, performance des services, exports et audit sont intégrés à la version actuelle.","route.tease":"Ces quatre fonctions sont disponibles dans Verdict Pro.","route.voir":"Voir les fonctions","route.stock.nom":"Stock","route.stock.quoi":"Ce que votre stock immobilise vraiment, et ce qu'il coûte quand il dort.","route.stock.a0":"Ce que vos réserves immobilisent, en euros","route.stock.a1":"Les produits qui dorment et pèsent sur la trésorerie","route.stock.a2":"L'effet de vos achats sur la marge du mois","route.stock.prep":"Vos achats déjà saisis alimentent cette lecture.","route.stock.btn":"Voir Achats","route.planning.nom":"Planning","route.planning.quoi":"Le coût réel de chaque service, face à ce qu'il rapporte.","route.planning.a0":"Combien coûte chaque service, en personnel","route.planning.a1":"Les heures creuses qui coûtent plus qu'elles ne rapportent","route.planning.a2":"Comparer coût humain et contribution par service","route.planning.prep":"Vos salaires sont déjà renseignés : c'est la base du calcul.","route.planning.btn":"Voir Salaires","route.rapports.nom":"Rapports","route.rapports.quoi":"Votre mois en un document lisible, à imprimer ou à transmettre.","route.rapports.a0":"Un document clair pour votre comptable ou votre banque","route.rapports.a1":"L'évolution d'un mois sur l'autre","route.rapports.a2":"Les décisions prises et l’évolution observée ensuite","route.rapports.prep":"Chaque mois complété aujourd'hui nourrira ces rapports.","route.rapports.btn":"Voir l'accueil","route.audit.nom":"Diagnostic complet","route.audit.quoi":"Toute votre structure relue en une fois, avec ce qui bloque en premier.","route.audit.a0":"Un point complet de votre établissement","route.audit.a1":"Ce qui bloque en premier, chiffré en euros","route.audit.a2":"L'évolution entre deux diagnostics","route.audit.prep":"Plus vos chiffres sont à jour, plus ce diagnostic sera juste.","route.audit.btn":"Voir Paramètres","nav.pil":"Accueil","nav.data":"Diagnostic","nav.carte":"Carte","nav.priorities":"Actions","nav.plus":"Plus","score":"Score","tagline":"Chaque chiffre mène à une décision.","pro.title":"Disponible avec Verdict Pro","pro.cta":"Découvrir Verdict Pro","pro.continue":"Continuer","pro.tileNote":"Disponible avec Verdict Pro","pro.b1":"Simulateurs avancés","pro.b2":"Menu engineering complet","pro.b3":"Contrôles et priorités recalculés","pro.b4":"Comparaison de scénarios","pro.b5":"Trajectoire sur plusieurs années","pro.b6":"Audit Premium : 27 chapitres · 4 formats","pro.b7":"Rapport exécutif 1 page","pro.b8":"Prévisions et projections","pro.b9":"Recommandations intelligentes","abo.title":"Mon abonnement","abo.sub":"Votre abonnement et ce qu'il inclut.","abo.current":"Abonnement actuel","abo.plan":"Abonnement","abo.access":"Accès","abo.free":"Essai terminé — abonnement requis pour continuer","abo.pro":"Accès complet à toutes les fonctionnalités","abo.included":"Ce que Pro ajoute à Pilotage","abo.tierFree":"Sans abonnement actif","abo.i1":"Où part l’argent : bilan des produits, pertes, achats et factures","abo.i2":"Le coût de l’équipe par service, heure par heure","abo.i3":"Votre compte en banque à 3 mois","abo.i4":"Simuler une décision avant de la prendre","abo.i5":"Vera, l’assistante, sur tous les écrans","abo.i6":"Inventaire Cuisine & Bar — gratuit, sans limite, même sans abonnement","abo.upTitle":"Passer à Verdict Pro","abo.unlock":"Débloquez :","abo.activate":"Activer Verdict Pro","abo.proActive":"Verdict Pro actif","abo.allOpen":"Toutes les fonctionnalités sont ouvertes.","abo.back":"Revenir à Verdict","abo.backModules":"← Retour aux modules","abo.lang":"Langue","toast.proOn":"Verdict Pro activé — tout est ouvert.","toast.freeOn":"Retour à Verdict.","plus.title":"Tous les modules","plus.sub":"L'essentiel est dans la barre du bas — tout le reste est ici.","plus.abo":"⚙ Mon abonnement","menu.ca.t":"Chiffre d'affaires","menu.ca.d":"CA du jour, du mois, historique","menu.sal.t":"Salaires","menu.sal.d":"Masse salariale, % du CA, dépendance","menu.achats.t":"Matières","menu.achats.d":"Références, achats, fournisseurs et inventaire","menu.obj.t":"Objectifs","menu.obj.d":"Votre objectif de résultat, en direct","menu.alertes.t":"Alertes","menu.alertes.d":"Tout ce qui franchit un seuil","menu.sante.t":"Santé entreprise","menu.sante.d":"6 jauges pour lire l'ensemble","menu.hist.t":"Trajectoire","menu.hist.d":"Vos actions et les mouvements mesurés","menu.dec.t":"Simuler","menu.dec.d":"Simulez un changement","menu.x.t":"Food Cost","menu.x.d":"Théorique vs réel, l'écart","menu.stock.t":"Stock","menu.stock.d":"Un comptage par mois après le premier","menu.planning.t":"Performance des services","menu.planning.d":"L’équipe prévue est-elle rentable pour ce service ?","menu.rapports.t":"Rapports","menu.rapports.d":"Audit · 4 exports","menu.audit.t":"Audit","menu.audit.d":"Le point complet de votre établissement","menu.in.t":"Paramètres","menu.in.d":"Vos chiffres, votre configuration","lock.carte.t":"Analyse de carte","lock.carte.d":"Chaque plat : coût matière, marge, zone, prix cible et action recommandée.","lock.x.t":"Food cost","lock.x.d":"Votre food cost réel confronté au théorique de votre carte — l'écart chiffré en euros.","lock.dec.t":"Décisions","lock.dec.d":"Simulez un changement, voyez l’impact annuel avant de le faire.","lock.hist.t":"Trajectoire","lock.hist.d":"Semaine, mois, année — toute votre trajectoire, sans limite.","lock.rapports.t":"Rapports","lock.rapports.d":"Audit prêt à imprimer ou partager : 4 formats.","lock.audit.t":"Audit","lock.audit.d":"Le point complet de votre établissement — structure, carte, salaires et priorités en une seule lecture.","lock.generic.t":"Ce module","lock.generic.d":"Réservé à Verdict Pro.","menu.lang.t":"Langue","menu.lang.d":"Choisir la langue de l'application","lang.title":"Langue · Language · Idioma","v.data.h":"Diagnostic","v.data.s":"La Structure explique le Score Verdict® global sur 3 niveaux et 12 indicateurs.","v.carte.h":"Ma carte","v.carte.s":"Chaque plat construit depuis ses ingrédients, lu par sa marge.","v.priorities.h":"Priorités","v.priorities.s":"Ce qui pèse le plus sur vos chiffres, dans l’ordre.","v.x.h":"Food Cost","v.x.s":"Votre carte face à vos comptes — deux lectures indépendantes du même coût.","v.hist.h":"Trajectoire","v.hist.s":"Une action, une mesure, une conclusion honnête.","v.dec.h":"Décisions","v.dec.s":"Simulez un changement, voyez l’impact annuel avant de le faire.","v.ca.h":"Chiffre d'affaires","v.ca.s":"Votre CA, aujourd'hui, ce mois, et dans le temps.","v.sal.h":"Salaires","v.sal.s":"Un poste majeur à surveiller — ce qu’il pèse vraiment.","v.achats.h":"Achats","v.achats.s":"Ce que vous achetez, réparti par poste.","v.obj.h":"Objectifs","v.obj.s":"Votre objectif de résultat, et où vous en êtes.","v.alertes.h":"Alertes","v.alertes.s":"Tout ce qui franchit un seuil, en un coup d'œil.","v.sante.h":"Santé entreprise","v.sante.s":"6 jauges pour lire l'ensemble d'un coup.","pil.morning":"Bonjour","pil.afternoon":"Bon après-midi","pil.evening":"Bonsoir","pil.sub":"Votre point du jour.","pil.input":"Ce que vous saisissez","pil.day":"Jour du mois (1–31)","pil.ca":"CA TTC encaissé depuis le 1er","pil.tk":"Tickets encaissés depuis le 1er","pil.go":"Lire ma position","pil.note":"Le CA TTC = ce que la caisse et les plateformes ont encaissé dans la journée. Verdict cumule le mois.","pil.green":"En zone saine","pil.greenS":"le résultat avant impôt estimé du mois atteint le repère de pilotage Verdict","pil.almost":"Presque","pil.almostS":"le résultat avant impôt estimé approche le repère de pilotage Verdict","pil.watch":"Vigilance","pil.watchS":"le résultat avant impôt estimé reste positif mais faible","pil.alert":"Alerte","pil.alertS":"à ce rythme, le résultat avant impôt estimé du mois est négatif","pil.caMinD":"TTC par jour restant pour couvrir le mois","pil.covMin":"Couverts minimum aujourd'hui","pil.caMin":"CA minimum aujourd'hui","pil.caMinMonth":"CA minimum du mois","pil.caMinMonthD":"TTC, pour un résultat à zéro","pil.left":"Reste à faire ce mois","pil.proj":"Projection fin de mois","pil.res":"Résultat estimé du mois","pil.resD":"avant impôt, structure appliquée","pil.avgTicket":"au panier moyen","pil.todayMin":"Sur les jours restants, il faut tenir","pil.toStay":"par jour pour couvrir le mois","pil.foot":"Le Pilote lit votre structure (marge de contribution, charges fixes) et l'applique au mois en cours. C'est une estimation de pilotage — la saisonnalité, les décalages d'encaissement et la comptabilité restent le territoire du comptable.","z.sane":"Saine","z.correct":"Correcte","z.fragile":"Fragile","z.crit":"Critique","ind.rn":"Résultat avant impôt","ind.rn.s":"marge avant impôt","ind.mc":"Ce qui reste après les coûts variables","ind.mc.s":"la marge de contribution","ind.cv":"Charges variables","ind.ms":"Masse salariale","ind.acf":"Autres charges fixes","ind.tc":"Total des charges","ind.pm":"Chiffre minimum à réaliser","ind.pm.s":"le point mort, en % du CA","ind.sen":"Sensibilité au choc","ind.sen.s":"marge si le CA cède","ind.fc":"Ratio d’achats nourriture","ind.fc.s":"achats nourriture % CA · hors variation de stock","ind.pc":"Cuisine + salaires","ind.pc.s":"le prime cost, vos 2 plus gros postes","ind.com":"Commissions plateformes","ind.prod":"Productivité","ind.prod.s":"contribution / h d'ouverture","pctCA":"% du CA","tab.score":"Score","tab.pm":"Chiffre minimum","tab.stress":"Test de résistance","tab.season":"Saisonnalité","tab.bench":"Repères & secteur","tab.traj":"Trajectoire","d.structure":"Structure","d.resilience":"Solidité","d.performance":"Fonctionnement","d.resBefore":"Résultat avant impôt","d.netMargin":"marge avant impôt","d.perMonth":"par mois","d.loss":"Perte avant impôt","d.capped":"le verdict est plafonné.","d.capWarn":"Votre structure est limitée par son résultat avant impôt actuel. Les autres performances ne peuvent pas compenser un résultat insuffisant.","d.days":"jours sur","d.perOrder":"/ commande","d.foodBuy":"d'achats nourriture","d.foodPay":"nourriture + salaires","d.prodD":"contribution par heure d'ouverture","d.cover":"Mois de couverture","d.coverD":"mois de contribution pour payer le fixe","d.fixedNot":"charges fixes non couvertes","d.n1":"Niveau 1 — Économie","d.n2":"Niveau 2 — Solidité face aux coups durs","d.n3":"Niveau 3 — Fonctionnement au quotidien","d.frag":"Vos 3 fragilités dominantes","d.foot":"Bon niveau visé : garder 8 € sur 100 € vendus, avant impôt. Repère de pilotage Verdict, le même dans toute l’appli.","d.unreachable":"hors d'atteinte","need.txt":"Le verdict a besoin de vos chiffres : panier, commandes, charges. Remplissez la saisie — ou chargez le modèle de démonstration pour voir l'app tourner.","need.btn":"Aller à la saisie","bench.h":"Repères & secteur","bench.q":"Repères de pilotage et contexte sectoriel","bench.cmp":"Comparez votre structure à :","bench.c1":"les repères Verdict de votre format","bench.c2":"la zone cible Verdict","bench.c3":"la statistique FIBEN publiée, séparée de vos calculs","bench.c4":"votre score Verdict®","bench.find":"Voyez immédiatement :","bench.f1":"vos points solides","bench.f2":"vos points à travailler","bench.f3":"votre écart à la zone cible","bench.cta":"Débloquer","ben.carte":"Analyse complète de votre carte","ben.x":"L’écart chiffré en euros","ben.dec":"Simulateurs avancés","ben.hist":"Trajectoire sur plusieurs années","ben.rapports":"Rapports prêts à partager","ben.bench":"Repères & contexte sectoriel","ben.audit":"Le point complet en une lecture","ben.generic":"Analyse complète","pil.dyn.good":"Votre établissement est en bonne trajectoire aujourd’hui.","pil.dyn.near":"Vous êtes proche de votre objectif du jour.","pil.dyn.miss1":"Il manque encore","pil.dyn.miss2":" pour sécuriser la journée.","hdr.perMonth":"/mois","hdr.good":"En bonne trajectoire aujourd’hui","hdr.watch":"Vigilance","hdr.alert":"Alerte","hdr.missing":"manque","hdr.proj":"Projection","hdr.year":"Exercice","abo.login":"Compte et essai disponibles après activation serveur","abo.trial.noauto":"Essai Pro · {n} jour(s) restant(s) · aucun débit automatique","abo.trial.subscribed":"Essai Pro · {n} jour(s) restant(s) · abonnement choisi, aucun débit avant la fin de l’essai","abo.grace":"Paiement à régulariser · accès maintenu temporairement","abo.expired.safe":"Essai terminé · aucun montant débité · données conservées","abo.issue":"Paiement non régularisé · accès Pro en pause · données conservées"}};
 var VERDICT_I18N_PACKS=window.VERDICT_I18N_PACKS||{},VERDICT_I18N_LOADS={};
 (function(){var style=document.createElement('style');style.id='verdict-i18n-loading-style';style.textContent='html.verdict-i18n-loading body{visibility:hidden!important}';(document.head||document.documentElement).appendChild(style);})();
 function verdictInstallLanguagePack(l){
@@ -1833,7 +1834,9 @@ function isLocked(v){
   try{ if(PILOTAGE_PRO_VIEWS.indexOf(v)>=0 && typeof window.verdictNiveau==='function' && window.verdictNiveau()==='pilotage') return true; }catch(e){}
   return false;
 }
-var PILOTAGE_PRO_VIEWS=['achats'];
+/* C214 (W24) : grille du 05/10 — Simuler (dec) et le coût par service (planning) sont Pro, comme Achats. En Pilotage,
+   l'écran reste visible sous un verrou qui dit ce qu'il apporte et le prix de Pro. */
+var PILOTAGE_PRO_VIEWS=['achats','dec','planning'];
 function canAccess(v){ return !isLocked(v); }
 /* Aucun cadenas pendant l'ouverture. Le splash, la langue et le choix de
    situation forment une seule entrée client : un verrou commercial aperçu
@@ -2033,6 +2036,29 @@ function verdictDemoSubscriptionCopy(){
     pt:{tier:'Demonstração Verdict Pro',access:'Todas as funções estão abertas apenas com os dados fictícios da Brasserie Collet.',active:'Demonstração completa',sub:'Sem assinatura ativa e sem pagamento: está a explorar o produto completo num espaço fictício separado.',back:'Continuar a demonstração',multi:'A Brasserie Collet é fictícia, gratuita e não é faturada. Uma assinatura real começa apenas após a sua escolha explícita.'}
   };return I[l]||I.fr;
 }
+/* C214 (W28) : l'écran Abonnement n'est plus un cul-de-sac. Il mène au compte (créer le compte = essai de 14 jours,
+   ou formule, échéance, « Gérer ou résilier ») et, en Pilotage, à Pro. La page Compte (L4, C215) lit view=abo. */
+function aboCompteUrl(q){var base='account.html';try{if(/\/modules\/verdict\//.test(location.pathname))base='../../account.html';}catch(e){}return base+q;}
+function aboAller(q){try{(window.top&&window.top!==window?window.top:window).location.href=aboCompteUrl(q);}catch(e){location.href=aboCompteUrl(q);}}
+window.aboAller=aboAller;
+function aboActionsInject(){
+  var old=document.getElementById('aboActions');if(old)old.remove();
+  if(estDemo()||VERDICT_PRESENTATION_PROFILE||VERDICT_TEST_SESSION||(typeof VERDICT_PERSO!=='undefined'&&VERDICT_PERSO===true))return;
+  var sub=document.getElementById('aboSub');if(!sub)return;
+  var C=window.VERDICT_COMPTE||null;try{if(!C&&window.parent&&window.parent!==window)C=window.parent.VERDICT_COMPTE||null;}catch(e){}
+  var n=(typeof window.verdictNiveau==='function')?window.verdictNiveau():'pro',pret=window.VERDICT_ACCOUNT_AUTH_READY===true;
+  var h='<div class="card" id="aboActions" style="margin:12px 0">';
+  if(C&&C.connecte){
+    var f={essai:'Essai Pro',pilotage:'Verdict Pilotage',pro:'Verdict Pro',inventaire:'Inventaire gratuit',activation:'Compte en cours d’activation'}[C.formule]||'Votre compte';
+    h+='<p style="margin:0 0 8px"><b>'+esc(f)+'</b>'+(C.essai&&C.joursRestants!=null?' · encore '+esc(String(C.joursRestants))+' jour'+(C.joursRestants>1?'s':'')+' d’essai':'')+'</p>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap">'+((C.formule==='pilotage'||C.formule==='inventaire'||C.essai)?'<button type="button" class="btn" onclick="aboAller(\'?view=abo\')">'+(C.essai?'Choisir ma formule':'Passer à Pro')+'</button>':'')+'<button type="button" class="btn sec" onclick="aboAller(\'?view=abo\')">Gérer mon abonnement</button></div>';
+  }else{
+    h+='<p style="margin:0 0 8px"><b>'+(n==='pilotage'?'Passer à Pro':'Choisir ma formule')+'</b></p><p class="note" style="margin:0 0 8px">Créer votre compte démarre l’essai de 14 jours, sans carte ; la formule se choisit ensuite depuis votre compte, et vos données restent les vôtres.</p>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" onclick="aboAller(\'?mode=register&return=app\')">Créer mon compte · 14 jours d’essai</button><button type="button" class="btn sec" onclick="aboAller(\'?mode=login&return=app\')">J’ai déjà un compte</button></div>';
+  }
+  if(!pret)h+='<p class="note" style="margin:8px 0 0">Le serveur de comptes ne répond pas sur cet appareil pour l’instant : la page Compte s’ouvrira, la connexion se fera dès qu’il sera joignable.</p>';
+  sub.insertAdjacentHTML('afterend',h+'</div>');
+}
 function drawAbonnement(){
   var pro=isPro(),demo=estDemo(),demoCopy=verdictDemoSubscriptionCopy();
   function set(id,txt){ var e=document.getElementById(id); if(e)e.textContent=txt; }
@@ -2059,7 +2085,7 @@ function drawAbonnement(){
   set('aboTierDesc',accessDesc);
   set('aboInclH',t('abo.included'));
   var il=document.getElementById('aboInclList');
-  if(il){ var h='';for(var i2=1;i2<=6;i2++)h+='<li>&#10003; '+t('abo.i'+i2)+'</li>';il.innerHTML=h; }
+  if(il){ var h='';for(var i2=1;i2<=5;i2++)h+='<li>&#10003; '+t('abo.i'+i2)+'</li>';il.innerHTML=h; }/* C214 (W28) : l'Inventaire gratuit n'est pas un ajout de Pro (il est dans la grille au-dessus) */
   set('aboUpH',t('abo.upTitle')); set('aboUpSub',t('abo.unlock')); set('aboUpBtn',t('abo.activate'));
   var l=document.getElementById('aboProList'); if(l)l.innerHTML=proBenefitsHTML();
   set('aboProH',demo?demoCopy.active:t('abo.proActive')); set('aboProSub',demo?demoCopy.sub:t('abo.allOpen')); set('aboDownBtn',demo?demoCopy.back:(VERDICT_ACCOUNT_STATE.auth?'Gérer mon abonnement':t('abo.back')));
@@ -2077,8 +2103,10 @@ function drawAbonnement(){
   var multi=document.getElementById('aboMultisiteText');
   if(multi){
     if(demo){multi.textContent=demoCopy.multi;return;}
-    if(VERDICT_PUBLIC_OPEN){multi.textContent=publicCopy[1];return;}
-    var count=Math.max(1,Number(VERDICT_PENDING_MULTISITE_COUNT)||Number(VERDICT_ACCOUNT_STATE.active_establishments)||1);
+    try{aboActionsInject();}catch(e){}
+    /* C214 (W28) : le total pour vos établissements est toujours donné, aux deux formules, au mois et à l'an. */
+    var count=Math.max(1,Number(VERDICT_PENDING_MULTISITE_COUNT)||Number(window.VERDICT_COMPTE&&window.VERDICT_COMPTE.etablissements)||Number(VERDICT_ACCOUNT_STATE.active_establishments)||0,(function(){try{return etabBillableList().length;}catch(e){return 1;}})());
+    if(VERDICT_PUBLIC_OPEN){var _x=count-1;multi.textContent=publicCopy[1]+' '+(count>1?count+' établissements actifs : '+fr(69+_x*39,0)+' € HT/mois ou '+fr(690+_x*390,0)+' € HT/an en Pilotage, '+fr(129+_x*69,0)+' € HT/mois ou '+fr(1290+_x*690,0)+' € HT/an en Pro.':'Un établissement : 69 € HT/mois ou 690 € HT/an en Pilotage, 129 € HT/mois ou 1 290 € HT/an en Pro. Chaque établissement réel en plus : +39 € HT/mois (+390 € HT/an) en Pilotage, +69 € HT/mois (+690 € HT/an) en Pro.');return;}
     var _vo=(window.verdictOffrePourTier?window.verdictOffrePourTier():{m:129,a:1290,xm:69,xa:690}),totalM=_vo.m+(count-1)*_vo.xm,totalA=_vo.a+(count-1)*_vo.xa;
     multi.textContent=(count>1?
       count+' établissements actifs : '+totalM+' € HT/mois ou '+totalA+' € HT/an. ':
@@ -3405,7 +3433,7 @@ function openNewEtab(){
     '<p class="sub" style="margin:-8px 0 14px">Un dossier indépendant pour ses chiffres, sa carte, son historique et son inventaire. Aucune donnée d’un autre établissement n’est copiée.</p>'+
     '<label class="f"><span>Nom</span><input id="ne-nom" type="text" placeholder="ex. Le Comptoir, Pizzeria du Port\u2026"></label>'+
     '<label class="f"><span>Ville <span style="color:var(--mut2)">(facultatif)</span></span><input id="ne-ville" type="text"></label>'+
-    '<div class="pil-sites-plan" style="margin-top:2px"><b>1 établissement inclus.</b> Tout établissement réel supplémentaire coûte 39 € HT/mois en Pilotage ou 69 € HT/mois en Pro, après confirmation.</div>'+
+    '<div class="pil-sites-plan" style="margin-top:2px"><b>1 établissement inclus.</b> Tout établissement réel supplémentaire coûte 39 € HT/mois (390 € HT/an) en Pilotage ou 69 € HT/mois (690 € HT/an) en Pro, après confirmation.</div>'+
     '<button class="btn" style="width:100%" onclick="createEtab(\'\')">Créer l’établissement réel</button>'+
     '<button class="btn ghost" style="margin-top:8px" onclick="closeNewEtab()">Annuler</button></div>';
   var m=document.createElement("div"); m.className="modal on"; m.id="mNewEtab"; m.innerHTML=h;
@@ -3811,9 +3839,24 @@ function anomaliesNonConfirmees(){
   ANOMALIES.forEach(function(a){
     var t=false; try{ t=a.test(); }catch(e){}
     /* confirmée uniquement si elle l'a été SUR CES CHIFFRES-LÀ */
-    if(t && c[a.k]!==emp) out.push(a);
+    if(t && c[a.k]!==emp && !anomalieTrancheeParDocument(a.k)) out.push(a);
   });
   return out;
+}
+/* C214 (W27) : un FEC confirmé fait foi. Une anomalie de vraisemblance portant sur des montants repris tels quels du
+   document (marge élevée d'une activité saisonnière, loyer lourd…) n'est pas une question de plus : le document l'a
+   tranchée. Dès qu'un montant est changé à la main, la question revient. */
+var ANOMALIES_DOCUMENT=['sansMatiere','sansHumain','sansFixes','foodBas','foodHaut','margeHaute','loyerLourd','caMinuscule','achatsSupCA','salairesSupCA','perteExtreme','primeCostHaut'];
+function anomalieTrancheeParDocument(k){
+  try{
+    if(ANOMALIES_DOCUMENT.indexOf(k)<0)return false;
+    var rs=DB.refSource||{},dr=DB.docRef;
+    if(rs.documentVerified!==true||!dr||dr.source!=='fec'||!dr.in)return false;
+    if(dr.ca!=null&&rs.ca!=null&&Math.abs(Number(dr.ca)-Number(rs.ca))>0.5)return false;
+    var ks=['nour','boi','emb','autv','com','dirb','salb','dirt','salt','amort','f1','f2','f3','f4','f5','f6','f7','f8','f9','f10'];
+    for(var i=0;i<ks.length;i++){if(Math.abs((Number(DB.in[ks[i]])||0)-(Number(dr.in[ks[i]])||0))>0.5)return false;}
+    return true;
+  }catch(e){return false;}
 }
 function confirmerAnomalie(k){
   if(!DB.confirmations)DB.confirmations={};
@@ -4239,6 +4282,9 @@ function auAuditClientOrder(root){
    une activité de six mois obtenait donc un objectif quotidien deux fois trop
    faible. Elle inventait aussi un mois et un jour calendaires à partir d'une
    moyenne annuelle — précision impossible sans ventes mensuelles datées. */
+/* C214 (W37) : quand la caisse de l'exercice compte un autre nombre de journées que le calendrier (313 contre 6 × 52),
+   la phrase le dit au lieu de laisser deux chiffres se contredire. */
+function point3JoursCaisseTxt(p){try{var an=(DB.refSource&&DB.refSource.exerciseYear)||(DB.ref&&DB.ref.exercice);if(!an||!p)return '';var n=(DB.histJour||[]).filter(function(r){return r&&String(r.date).slice(0,4)===String(an)&&Number(r.caJ)>0;}).length;if(n<200||Math.abs(n-p.activeDays)<1)return '';return ' Votre caisse '+an+' compte '+fr(n,0)+' journées ouvertes ; le rythme utilise votre calendrier ('+fr(p.activeDays,0)+' jours).';}catch(e){return '';}}
 function point3Calc(R){if(!R||!R.d||R.d.exactEngineError)return null;return VerdictFinance.breakEven(R.d);}
 
 var POINT3_I18N={
@@ -4271,11 +4317,11 @@ function point3HTML(R){
     '<div class="kpis"><div class="kpi"><div class="k">'+esc(window.verdictSeuilsT?window.verdictSeuilsT('kpi'):point3T('minimumAnnual'))+'</div><div class="v">'+(p.attainable?eur(p.breakEven):'—')+'</div><div class="d">HT · '+esc(point3T('annualShort'))+'</div></div>'+
     '<div class="kpi"><div class="k">'+esc(middleLab)+'</div><div class="v" style="color:'+col+'">'+middle+'</div><div class="d">HT · '+esc(point3T('annualShort'))+'</div></div>'+
     '<div class="kpi"><div class="k">'+esc(thirdLab)+'</div><div class="v">'+third+'</div><div class="d">'+esc(point3T('contribution'))+' '+pc(p.contributionRate,1)+'</div></div></div>'+
-    (window.verdictSeuilsHTML?window.verdictSeuilsHTML('diag',p):'')+'<div class="card"><h3>'+esc(point3T('rhythmTitle'))+'</h3><p class="note" style="margin:0 0 12px">'+esc(point3T('rhythmIntro',{months:fr(p.activeMonths,0),days:fr(p.activeDays,0)}))+'</p>'+
+    (window.verdictSeuilsHTML?window.verdictSeuilsHTML('diag',p):'')+'<div class="card"><h3>'+esc(point3T('rhythmTitle'))+'</h3><p class="note" style="margin:0 0 12px">'+esc(point3T('rhythmIntro',{months:fr(p.activeMonths,0),days:fr(p.activeDays,0)}))+point3JoursCaisseTxt(p)+'</p>'+
     '<table class="tt"><tr><th></th><th>'+esc(point3T('current'))+'</th><th>'+esc(point3T('minimum'))+'</th></tr>'+
     '<tr><td>'+esc(point3T('activeMonth'))+'</td><td>'+eur(p.currentPerMonth)+'</td><td>'+(p.attainable?eur(p.requiredPerMonth):'—')+'</td></tr>'+
     '<tr><td>'+esc(point3T('openDay'))+'</td><td>'+eur(p.currentPerDay)+'</td><td>'+(p.attainable?eur(p.requiredPerDay):'—')+'</td></tr>'+
-    '<tr><td>'+esc(point3T('ordersDay'))+'</td><td>'+fr(p.currentOrders,1)+'</td><td>'+(p.requiredOrders!=null?fr(p.requiredOrders,1):'—')+'</td></tr></table>'+
+    '<tr><td>'+esc(point3T('ordersDay'))+'</td><td>'+(p.currentOrders>0?fr(p.currentOrders,1):'—')+'</td><td>'+(p.requiredOrders!=null&&p.currentOrders>0?fr(p.requiredOrders,1):'—')+'</td></tr></table>'+
     '<p class="note">'+esc(p.activeMonths<12?point3T('seasonalNote',{months:fr(p.activeMonths,0)}):point3T('yearRoundNote'))+'</p></div>';
   if(p.objectiveRevenue!=null)h+='<details class="card"><summary style="cursor:pointer;font-weight:800">'+esc(point3T('objectiveTitle'))+'</summary><p class="note">'+esc(point3T('objectiveCopy',{profit:eur(p.objectiveResult),revenue:eur(p.objectiveRevenue),day:eur(p.objectivePerDay)}))+'</p></details>';
   h+='<details class="card"><summary style="cursor:pointer;font-weight:800">'+esc(point3T('formulaTitle'))+'</summary><p class="note">'+esc(point3T('formula'))+'</p><p class="note">'+esc(point3T('scope'))+'</p></details>'+
@@ -4601,6 +4647,9 @@ function cardDiagnosticStats(st,R){
     negative:st.perte||0,priority:priority};
 }
 /* ═══ POINT 5 — CARTE ET PLATS : UNE DÉCISION, SA PREUVE, SA LIMITE ═══ */
+/* C214 (W37) : une période de caisse s'écrit en mots (« janvier 2025 »), jamais « 2025-01 ». */
+function point5PeriodeTxt(per){var m=/^(\d{4})-(\d{2})$/.exec(String(per||''));if(!m)return String(per||'');return ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'][(+m[2])-1]+' '+m[1];}
+window.point5PeriodeTxt=point5PeriodeTxt;
 var POINT5_TEXT={
 fr:{tag:"CARTE",question:"Quel plat sécuriser, corriger ou pousser en premier ?",period:"Mois analysé",source:"Source des ventes",save:"Valider cette référence",sourceCash:"Caisse",sourceImport:"Import caisse",sourceManual:"Saisie manuelle",sourceEstimate:"Estimation",demo:"Démonstration fictive",missingTitle:"Avant de classer un plat",missingBody:"Indiquez le même mois et la même source pour tous les volumes. Sans période commune, deux plats ne sont pas comparables.",completeData:"Compléter les données",reliability:"Fiabilité",strong:"Forte",medium:"Moyenne",weak:"À compléter",secure:"À sécuriser",correct:"À corriger",push:"À pousser",observe:"À observer",test:"À tester avant retrait",proof:"Pourquoi",action:"Prochaine action",gap:"Écart mensuel à votre objectif interne",notGain:"Cet écart n’est pas un gain promis : il mesure seulement la distance avec l’objectif que vous avez choisi.",boundary:"La contribution matière n’est pas le bénéfice du plat : elle ne répartit ni le personnel, ni le loyer, ni les autres charges fixes, ni l’impôt.",sourceNote:"Verdict compare vos plats entre eux, sur vos données. Il n’invente pas une marge universelle ni un classement sectoriel.",zero:"Aucune vente sur la période : cela ne suffit jamais à supprimer un plat.",edit:"Ouvrir le plat",add:"Ajouter un plat",periodSource:"Période et source",counts:"Lecture de la carte"},
 en:{tag:"MENU",question:"Which dish should you secure, correct or promote first?",period:"Month analysed",source:"Sales source",save:"Confirm this baseline",sourceCash:"POS",sourceImport:"POS import",sourceManual:"Manual entry",sourceEstimate:"Estimate",demo:"Fictitious demo",missingTitle:"Before classifying a dish",missingBody:"Use the same month and source for every volume. Without one shared period, dishes cannot be compared.",completeData:"Complete the data",reliability:"Reliability",strong:"Strong",medium:"Medium",weak:"To complete",secure:"Secure",correct:"Correct",push:"Promote",observe:"Observe",test:"Test before removing",proof:"Why",action:"Next action",gap:"Monthly gap to your internal target",notGain:"This gap is not a promised gain: it only measures the distance to the target you selected.",boundary:"Food contribution is not the dish's profit: staff, rent, other fixed costs and tax are not allocated.",sourceNote:"Verdict compares your own dishes using your own data. It does not invent a universal margin or sector ranking.",zero:"No sale in the period never justifies removing a dish on its own.",edit:"Open dish",add:"Add a dish",periodSource:"Period and source",counts:"Menu reading"},
@@ -4748,7 +4797,7 @@ function point5Calc(st){
 function point5ReferenceHTML(P){
   if(P.ref.demo)return (DB.modele==='FoodTruck'?'<details class="card"><summary>Food truck : hypothèses et sources</summary><p>'+esc(MODELES.FoodTruck.research.assumptions)+'</p><p>Les cartes publiques consultées servent à situer les prix ; elles ne donnent ni les charges ni les ventes de ces établissements. Les coûts, volumes et historiques de ce modèle sont fictifs.</p><a href="https://entreprendre.service-public.gouv.fr/vosdroits/F36831" target="_blank" rel="noopener">Service Public : food truck</a> · <a href="https://lacuisinedememe.fr/carte/" target="_blank" rel="noopener">La Cuisine de Mémé : prix publics</a> · <a href="https://www.nomadeburger.fr/menu" target="_blank" rel="noopener">Nomade Burger : prix publics</a></details>':'')+'<div class="card"><div class="autoline"><span class="k">'+point5T('periodSource')+'</span><b>'+point5T('demo')+'</b></div><p class="note" style="margin:8px 0 0">Les volumes et le mix de canaux sont des hypothèses de démonstration, jamais des statistiques sectorielles.</p></div>';
   var r=DB.carteRef||{},opts=['','caisse','import','manual','estimate'].map(function(x){var l=x?point5SourceLabel(x):'—';return '<option value="'+x+'"'+(r.source===x?' selected':'')+'>'+l+'</option>';}).join('');
-  return '<details class="card" id="p5-reference-card"'+(!P.ref.ready?' open':'')+'><summary style="cursor:pointer;font-weight:800">'+point5T('periodSource')+(P.ref.ready?' · '+esc(r.moyenne?'moyenne '+r.moyenne.debut+' → '+r.moyenne.fin:r.periode)+' · '+esc(point5SourceLabel(r.source)):'')+'</summary><div class="g2" style="margin-top:12px"><label class="f"><span>'+point5T('period')+'</span><input id="p5-period" type="month" value="'+esc(r.periode||'')+'"></label><label class="f"><span>'+point5T('source')+'</span><select id="p5-source">'+opts+'</select></label></div><label class="f"><span><input type="checkbox" id="p5-full-month"'+(r.fullMonth?' checked':'')+'> Ces volumes couvrent toute la carte, boissons et canaux compris, sur un mois complet.</span></label><button class="btn" id="p5-save-ref" onclick="saveCarteRef()">'+point5T('save')+'</button></details>';
+  return '<details class="card" id="p5-reference-card"'+(!P.ref.ready?' open':'')+'><summary style="cursor:pointer;font-weight:800">'+point5T('periodSource')+(P.ref.ready?' · '+esc(r.moyenne?'moyenne '+point5PeriodeTxt(r.moyenne.debut)+' → '+point5PeriodeTxt(r.moyenne.fin):point5PeriodeTxt(r.periode))+' · '+esc(point5SourceLabel(r.source)):'')+'</summary><div class="g2" style="margin-top:12px"><label class="f"><span>'+point5T('period')+'</span><input id="p5-period" type="month" value="'+esc(r.periode||'')+'"></label><label class="f"><span>'+point5T('source')+'</span><select id="p5-source">'+opts+'</select></label></div><label class="f"><span><input type="checkbox" id="p5-full-month"'+(r.fullMonth?' checked':'')+'> Ces volumes couvrent toute la carte, boissons et canaux compris, sur un mois complet.</span></label><button class="btn" id="p5-save-ref" onclick="saveCarteRef()">'+point5T('save')+'</button></details>';
 }
 function saveCarteRef(){
   var pe=document.getElementById('p5-period'),se=document.getElementById('p5-source'),period=pe?pe.value:'',source=se?se.value:'';
@@ -4984,7 +5033,9 @@ function drawFixFields(){
   });
 }
 function fillFormats(){
-  var s=document.getElementById("i-etabtype"); if(!s||s.options.length>1)return;
+  var s=document.getElementById("i-etabtype");
+  try{var sm=s&&s.parentNode&&s.parentNode.querySelector('small');if(sm){var w=typeEtabCoherence(DB&&DB.etabType);sm.textContent=TYPE_ETAB_AIDE+(w?' '+w:'');sm.style.color=w?'#f59e0b':'';}}catch(e){}
+  if(!s||s.options.length>1)return;
   if(typeof FORMAT_ORDER==="undefined"||!FORMAT_ORDER)return;
   FORMAT_ORDER.forEach(function(k){ var o=document.createElement("option"); o.value=k; o.textContent=k; s.appendChild(o); });
   var a=document.createElement("option"); a.value="Autre"; a.textContent="Autre"; s.appendChild(a);
@@ -5497,7 +5548,7 @@ var AIDE_V104=[
   {c:'Démarrer',t:'Quel parcours choisir ?',
    d:'Vous avez un exercice comptable clôturé et son compte de résultat : choisissez « J’ai un exercice clôturé » — ou, plus simple, « J’ai mon fichier comptable (FEC) » pour ne rien saisir. Vous êtes déjà ouvert sans premier exercice clôturé : choisissez « J’ai ouvert récemment » pour séparer les faits observés de la projection de travail, sans score annuel. Vous préparez une ouverture ou une reprise : choisissez « Je crée ou reprends ». Pour explorer sans vos chiffres, choisissez la démonstration fictive.',
    o:'Au démarrage, après le choix de la langue.'},
-  {c:'Démarrer',t:'J’ai terminé la démonstration. Et maintenant ?',
+  {c:'Démarrer',t:'Après la démonstration, comment passer à mes chiffres ?',
    d:'La visite guidée ne tourne qu’une fois. Ensuite vous pouvez explorer librement le modèle. À tout moment, passez à vos propres chiffres ou créez un projet ; vous n’avez pas à refaire la visite.',
    o:'Bandeau bleu « Et ensuite ? » dans la démonstration, ou Centre d’aide → Mes chiffres.'},
   {c:'Saisir sans erreur',t:'0 ou case vide : ce n’est pas la même chose',
@@ -6312,6 +6363,13 @@ function chrCockpitServiceHTML(){
         '<div class="facts"><span>'+chrCockpitEscape(date)+'</span>'+(r.tickets!=null?'<span>'+chrCockpitEscape(fr(r.tickets,0))+' '+chrCockpitEscape(chrCockpitText('tickets'))+'</span>':'')+'</div></article>';
     }).join('')+'</div></section>';
 }
+/* C214 (W27) : sans Indice, l'en-tête nomme ce qui manque ou ce qui reste à vérifier, jamais « 0 donnée manquante ». */
+function chrCockpitAttente(R){
+  var m=(R&&R.manquants)||[],a=(R&&R.anomalies)||[],x=(R&&R.incoherences)||[];
+  if(m.length||!(a.length||x.length))return chrCockpitCount(m.length,'countCritical');
+  var l=a.map(function(q){return q&&q.lb?q.lb:'';}).concat(x.map(String)).filter(Boolean);
+  return (l.length===1?'1 point à vérifier : ':l.length+' points à vérifier : ')+l.slice(0,2).join(' · ')+(l.length>2?'…':'');
+}
 function chrCockpitCount(n,key){return String(Math.max(0,Number(n)||0))+' '+chrCockpitText(key);}
 function chrCockpitEvidence(v){
   var R=null,D=null;try{R=moteur();}catch(e){}
@@ -6319,7 +6377,7 @@ function chrCockpitEvidence(v){
   var ready=function(main,detail,source){return {state:'ready',main:main,detail:detail||chrCockpitText('enteredOnlyProof'),source:source||'entered'};};
   var count=function(list){return Array.isArray(list)?list.length:0;};
   if(v==='in')return R&&R.ready?ready(chrCockpitText('engineReady'),null,'engine'):
-    {state:'empty',main:chrCockpitText('engineWaiting'),detail:chrCockpitCount(R&&R.manquants?R.manquants.length:0,'countCritical'),source:'engine'};
+    {state:'empty',main:chrCockpitText('engineWaiting'),detail:chrCockpitAttente(R),source:'engine'};
   if(v==='pil'){
     var latest=chrCockpitServiceRows();return latest.length?ready(chrCockpitCount(latest.length,'countServices'),null,'services'):empty;
   }
@@ -6518,6 +6576,7 @@ function renderViewContent(v){
   if(v==='in'){
     try{majValidationVisible();}catch(e){}
     try{majInject();}catch(e){}
+    try{typeEtabInject();}catch(e){}
   }
   chrCockpitApply(v);
 }
@@ -6544,7 +6603,7 @@ function go(v){
   }
   var previousView=VIEW,current=document.querySelector('.view.on');
   var revision=String(VERDICT_VIEW_REVISION);
-  var reuse=target.getAttribute('data-verdict-render-revision')===revision;
+  var reuse=target.getAttribute('data-verdict-render-revision')===revision&&v!=='abo';/* C214 (W28) : Abonnement suit toujours l'établissement actif */
   var samePublished=target===current&&reuse&&target.classList.contains('on')&&!target.classList.contains('preparing');
   VIEW=v;
   /* Les étapes successives d'une démonstration utilisent souvent la même
@@ -7180,7 +7239,8 @@ function drawData(){
   if(!R.ready){ ["d-score","d-pm","d-stress","d-annuel","d-bench","d-carnet"].forEach(function(id){ needData(document.getElementById(id)); }); return; }
   var v=R.v,d=R.d,z=zone(R.score),sc=Math.round(R.score),H=scoreHierarchyCopy();
   /* ─ Score ─ */
-  var frag=IND.map(function(x){ return {n:x[1],k:x[0],s:R.s[x[0]]}; }).sort(function(a,b){ return a.s-b.s; }).slice(0,3);
+  /* C214 (W32) : un indicateur non calculable (null) n'est ni noté 0 ni classé parmi les fragilités : il est « à mesurer ». */
+  var frag=IND.map(function(x){ return {n:x[1],k:x[0],s:R.s[x[0]]}; }).filter(function(f){ return f.s!=null&&isFinite(f.s); }).sort(function(a,b){ return a.s-b.s; }).slice(0,3);
 
   // Affichage validation
   var val=R.d.validation;
@@ -7212,13 +7272,15 @@ function drawData(){
     '<div class="kpi"><div class="k">'+t('ind.mc')+'</div><div class="v">'+pc(v.mc,0)+'</div><div class="d">'+eur(d.mc)+(d.cmdAn>0?' \u00b7 '+eur2(d.mcCmd)+' '+t('d.perOrder'):'')+'</div></div>'+
     '<div class="kpi"><div class="k">'+t('ind.fc')+'</div><div class="v">'+pc(v.fc,1)+'</div><div class="d">'+eur(d.nour)+' '+t('d.foodBuy')+'</div></div>'+
     '<div class="kpi"><div class="k">'+t('ind.pc')+'</div><div class="v">'+pc(v.pc,0)+'</div><div class="d">'+t('d.foodPay')+' \u00b7 '+eur(d.nour+d.sal)+'</div></div>'+
-    '<div class="kpi"><div class="k">'+t('ind.prod')+'</div><div class="v">'+fr(v.prod,1)+' \u20ac/h</div><div class="d">'+t('d.prodD')+'</div></div>'+
+    '<div class="kpi"><div class="k">'+t('ind.prod')+'</div><div class="v">'+(R.s.prod==null?'\u2014':fr(v.prod,1)+' \u20ac/h')+'</div><div class="d">'+(R.s.prod==null?'\u00e0 mesurer : tickets de caisse n\u00e9cessaires':t('d.prodD')+' \u00b7 8 h par jour suppos\u00e9es')+'</div></div>'+
     '<div class="kpi"><div class="k">'+t('d.cover')+'</div><div class="v">'+(d.mc>0?fr(d.cf/d.mc*d.mois,1):"\u2014")+'</div><div class="d">'+t('d.coverD')+'</div></div></div>';
   var niv=[[0,6,t('d.n1')],[6,8,t('d.n2')],[8,12,t('d.n3')]];
   niv.forEach(function(nv){
     h+='<h2 class="sec">'+nv[2]+'</h2><div class="card">';
     IND.slice(nv[0],nv[1]).forEach(function(ind){
       var s=R.s[ind[0]],iz=zone(s);
+      if(s==null||!isFinite(s)){ h+='<div class="ind" data-a-mesurer="1"><div class="n"><b>'+ind[1]+'</b><span>'+ind[2]+'</span></div><div class="v">à mesurer</div><div class="bario"><i style="width:0"></i></div><div class="s" style="color:var(--mut2)">—</div></div>'+
+        '<div class="indx"><span>'+(ind[0]==='prod'?'Il faut vos tickets de caisse (nombre de commandes) pour la mesurer. D’ici là, elle ne compte pas dans votre Indice.':'Donnée manquante : elle ne compte pas dans votre Indice.')+'</span></div>'; return; }
       h+='<div class="ind"><div class="n"><b>'+ind[1]+'</b><span>'+ind[2]+'</span></div>'+
         '<div class="v">'+indVal(ind[0],v)+'</div>'+
         '<div class="bario"><i style="width:'+Math.max(3,Math.min(100,s))+'%;background:'+iz.h+'"></i></div>'+
@@ -8374,13 +8436,16 @@ function p11QualiteDonnees(confidence){
   return {state:'impossible',label:'Fiabilité insuffisante',detail:'Les données disponibles ne permettent pas un calcul solide.'};
 }
 function p11LibellePoste(base){
-  return {salaires:'le coût humain',variables:'la matière et les coûts variables',fixes:'les charges fixes',resilience:'le chiffre minimum',structure:'la structure',ventes:'le volume ou le panier',measurement:'un écart matière à vérifier',tresorerie:'la trésorerie'}[base]||'ce poste';
+  return {salaires:'le coût humain',variables:'la matière et les coûts variables',fixes:'les charges fixes',resilience:'le chiffre minimum',structure:'la structure',ventes:'vos prix (le panier moyen)',/* C214 (W25) : jamais « le volume » : la clientèle ne se décide pas, les prix oui */measurement:'un écart matière à vérifier',tresorerie:'la trésorerie'}[base]||'ce poste';
 }
 function p11PhraseSituation(R){
   if(!R||!R.ready)return null;
   /* C205 (V07) : le même repère que l’Indice et le Test de résistance (l’ancienne « moyenne du secteur » de 4,5 % le contredisait). */var rnRepere=verdictRepereRN().repere,rn=R.v.rn,zoneRn=rn>=rnRepere?'conforme au repère':(rn>=0?'en retrait par rapport au repère':'en perte');
   var D=null,top=null;try{D=DecisionEngine.PrioritiesEngine.decision(DB);top=D&&D.top;}catch(e){}
-  var base=rn<0?'Sur l’année, vous perdez '+p11Pct(-rn).replace(' %',' €')+' pour 100 € vendus, avant impôt':'Sur l’année, il vous reste '+p11Pct(rn).replace(' %',' €')+' pour 100 € vendus, avant impôt ('+(rn>=rnRepere?'au-dessus':'en dessous')+' du repère Verdict : '+p11Pct(rnRepere).replace(' %',' €')+')'; /* C178 : en clair, sans « conforme… à cause de » */
+  /* C214 (W35) : une période en cours (« J’ai ouvert récemment ») n’est pas une année : la phrase dit sa vraie période. */
+  var _rs=(typeof DB!=='undefined'&&DB&&DB.refSource)||{},_per='Sur l’année';
+  if(_rs.nature==='current-management-period'&&_rs.start&&_rs.end){var _mo=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'],_dt=function(x){var p=String(x).slice(0,10).split('-');return (+p[2]===1?'1er':String(+p[2]))+' '+_mo[(+p[1])-1];};_per='Du '+_dt(_rs.start)+' au '+_dt(_rs.end);}
+  var base=rn<0?_per+', vous perdez '+p11Pct(-rn).replace(' %',' €')+' pour 100 € vendus, avant impôt':_per+', il vous reste '+p11Pct(rn).replace(' %',' €')+' pour 100 € vendus, avant impôt ('+(rn>=rnRepere?'au-dessus':'en dessous')+' du repère Verdict : '+p11Pct(rnRepere).replace(' %',' €')+')'; /* C178 : en clair, sans « conforme… à cause de » */
   if(!top)return base+'.';
   if(top.level==='opportunity')return base+'. Rien d’inquiétant ; une piste à saisir : '+p11LibellePoste(top.base)+'.';
   var poste=p11LibellePoste(top.base);var lien=/^(le |la |les |l’)/i.test(poste)?(poste.slice(0,1)==='l'||/^l’/i.test(poste)?'de '+poste:'de '+poste):'de '+poste;lien=poste.indexOf('le ')===0?'du '+poste.slice(3):(poste.indexOf('les ')===0?'des '+poste.slice(4):(poste.indexOf('un ')===0?'d’'+poste:'de '+poste));return base+'. À surveiller en premier : '+poste+'.'; /* R223 : « d’un écart », plus « de un » */
@@ -10748,6 +10813,8 @@ function openRef(premier){
     '<button type="button" class="ch" data-entry-door="closed" data-entry-mode="existing" onclick="choisirMode(\'existing\')">\u2705 '+entryT('closedTitle')+'<span>'+entryT('closedDesc')+infoBrouillon('existing')+'</span></button>'+
     '<button type="button" class="ch" data-entry-door="recent" data-entry-mode="recent" onclick="choisirMode(\'recent\')">\ud83d\udfe2 '+recentT('cardTitle')+'<span>'+recentT('cardDesc')+infoBrouillon('recent')+'</span></button>'+
     '<button type="button" class="ch" data-entry-door="creation" onclick="choisirMode(\'creation\')">\ud83d\ude80 '+entryT('projectTitle')+'<span>'+entryT('projectDesc')+infoBrouillon('creation')+'</span></button>'+
+    /* C214 (W36) : l'Inventaire gratuit a sa porte, comme sur la grille des offres. */
+    (premier?'<button type="button" class="ch" data-entry-door="inventaire" onclick="choisirInventaireGratuit()">\ud83d\udce6 Je veux seulement l’Inventaire (gratuit)<span>Compter, valoriser et commander, sans limite de durée. Pilotage et Pro restent à un clic quand vous le voulez.</span></button>':'')+
     (premier?'<button type="button" class="ch" data-entry-door="demo" onclick="choisirMode(\'demo\')">\ud83d\udc41 '+entryT('demoTitle')+'<span>'+entryT('demoDesc')+'</span></button>':'<button type="button" class="btn ghost mini" data-return-entry-root="1" style="margin-top:4px" onclick="openRef(true)">'+entryT('back')+'</button>');
   try{ if(typeof translateDOM==='function')translateDOM(p); }catch(e){}
   try{ veraApplySeason(p); }catch(e){}
@@ -10853,6 +10920,14 @@ function v10140Fill(text,values){return String(text||'').replace(/\{([a-z]+)\}/g
 /* V44.42 — porte FEC : le client qui possède son fichier comptable ne saisit rien.
    La feuille se ferme, Mes chiffres s'ouvre sur le bloc FEC, le consentement
    reçoit le focus. L'onboarding est marqué fait par l'import lui-même. */
+function choisirInventaireGratuit(){
+  try{
+    if(window.parent&&window.parent!==window)window.parent.postMessage({type:'verdict-unified-switch',module:'inventory',options:{}},'*');
+    else location.href='../../index.html?module=inventory';
+  }catch(e){}
+  return true;
+}
+window.choisirInventaireGratuit=choisirInventaireGratuit;
 function choisirFEC(){
   verdictEntrySelected();
   try{ verdictDemoResumeWrite(false); }catch(e){}
@@ -10872,6 +10947,7 @@ function choisirFEC(){
 window.choisirFEC=choisirFEC;
 function choisirMode(m){
   /* La démo est un bac à sable, pas un mode à écrire dans le dossier réel. */
+  if(m==='inventaire'){ return choisirInventaireGratuit(); }/* C214 (W36) : porte « Inventaire gratuit » (la confirmation animée passe par choisirMode) */
   verdictEntrySelected();
   if(m==='fec'){ return choisirFEC(); }
   if(m==='demo'){ VERDICT_DEMO_EXPLICIT_ENTRY=true; verdictDemoResumeWrite(true); demoEntrerSession(); refExemple(); return; }
@@ -10946,10 +11022,13 @@ function qrVersCompte(){
 function qrContinuer(){
   if(!qrValide())return;var r=qrLire(),z=v10140Text();qrSauver();refFormulaire();
   setTimeout(function(){
-    var vals={'rf-ca':r.ca,'rf-ms':r.ms,'rf-loy':r.loy,'rf-cf':r.cf,'rf-com':r.com};
+    /* C214 (W34) : le total matière de la lecture rapide est repris (en nourriture) au lieu d'être redemandé ; seule la part
+       boissons, que la lecture rapide ne donne pas, reste à déplacer si on la connaît. */
+    var vals={'rf-ca':r.ca,'rf-ms':r.ms,'rf-loy':r.loy,'rf-cf':r.cf,'rf-com':r.com,'rf-nour':r.mat,'rf-boi':0};
     Object.keys(vals).forEach(function(id){var e=document.getElementById(id);if(e)e.value=String(vals[id]).replace('.',',');});
     var p=document.querySelector('#refP .ux-step[data-step="2"] .note');
-    if(p)p.insertAdjacentHTML('afterend','<div class="ux-zero">'+v10140Fill(z.qrSplit,{amount:'<b>'+eur(r.mat)+'</b>'})+'</div>');
+    var _qrT=(typeof LOCALE==='undefined'||LOCALE==='fr')?'Vos achats matière ({amount}) sont repris en « Achats nourriture ». Si une part concerne les boissons, déplacez-la dans « Achats boissons » : le total doit rester {amount}.':z.qrSplit;
+    if(p)p.insertAdjacentHTML('afterend','<div class="ux-zero">'+v10140Fill(_qrT,{amount:'<b>'+eur(r.mat)+'</b>'})+'</div>');
     try{sauverBrouillon('existing',1);}catch(e){}
   },0);
   try{if(typeof window.verdictTrack==='function')window.verdictTrack('full_diagnostic_start',{source:'quick_reading'});}catch(e){}
@@ -12257,6 +12336,9 @@ function uxNum(id,label,help,val,oblig){
     '<input id="'+id+'" inputmode="decimal" value="'+(val!=null?String(val).replace('.',','):'')+'">'+
     (help?'<small>'+help+'</small>':'')+'</label>';
 }
+/* C214 (W34) : le mois de clôture était déduit d'office (décembre) : il est demandé une fois, avec l'année. */
+function uxMoisCloture(id,val){var M=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'],h='';M.forEach(function(m,i){h+='<option value="'+(i+1)+'"'+(Number(val)===i+1?' selected':'')+'>'+m+'</option>';});
+  return '<label class="f"><span>Mois de clôture de l’exercice</span><select id="'+id+'">'+h+'</select><small>Le dernier mois de votre exercice, sur votre bilan (décembre le plus souvent).</small></label>';}
 function uxTexte(id,label,val,help,oblig){
   return '<label class="f"><span>'+label+(oblig?' <b class="ux-required">*</b>':'')+'</span>'+
     '<input id="'+id+'" type="text" value="'+esc(val||'')+'">'+(help?'<small>'+help+'</small>':'')+'</label>';
@@ -12267,7 +12349,29 @@ function uxTypeEtab(id,val){
   var h='<option value="">Choisir\u2026</option>';
   a.forEach(function(x){ h+='<option value="'+esc(x)+'"'+(x===val?' selected':'')+'>'+esc(x)+'</option>'; });
   return '<label class="f"><span>Type d\u2019\u00e9tablissement</span><select id="'+id+'">'+h+'</select>'+
-    '<small>Sert uniquement \u00e0 choisir vos rep\u00e8res de comparaison \u2014 aucun calcul ne change.</small></label>';
+    '<small>'+esc(TYPE_ETAB_AIDE)+'</small></label>';
+}
+/* C214 (W30) : le type ne change pas l'Indice, mais il choisit les repères et les conseils : le texte le dit. */
+var TYPE_ETAB_AIDE='Choisit vos repères de comparaison (panier, équipe, matière) et les conseils qui en découlent. Votre Indice, lui, ne dépend pas du type.';
+/* C214 (W30) : contrôle de cohérence, sans blocage : un panier très loin des repères du type choisi est signalé. */
+function typeEtabCoherence(t){
+  try{var f=FORMATS[t],p=Number(DB&&DB.in&&DB.in.panier)||0;if(!f||!f.tk||!(p>0))return '';
+    if(p>f.tk[2]*2||p<f.tk[0]/2)return 'Votre panier moyen ('+eur2(p)+' TTC) est loin des repères « '+t+' » ('+fr(f.tk[0],0)+' à '+fr(f.tk[2],0)+' €) : vérifiez le type choisi, vos repères et conseils en dépendent.';}catch(e){}
+  return '';
+}
+/* C214 (W30) : les portes FEC et caisse ne demandaient jamais le type. Une seule question, facultative, en tête de
+   l'écran d'import tant que le type manque (ou qu'il ne colle pas au panier) ; rien n'est bloqué. */
+function typeEtabInject(){
+  try{
+    var v=document.getElementById('v-in');if(!v)return;var old=document.getElementById('typeEtabBloc');if(old)old.remove();
+    if((typeof estDemo==='function'&&estDemo())||(typeof modeleDansDemonstration==='function'&&modeleDansDemonstration()))return;
+    var t=DB&&DB.etabType&&FORMATS[DB.etabType]?DB.etabType:'',w=t?typeEtabCoherence(t):'';
+    if(t&&!w)return;
+    var d=document.createElement('div');d.id='typeEtabBloc';d.className='card';
+    d.innerHTML='<h3 style="margin:0 0 6px">'+(t?'Votre type d’établissement':'Quel type d’établissement ?')+'</h3>'+uxTypeEtab('te-type',t)+(w?'<p class="note" style="margin:6px 0 0;color:#f59e0b">'+esc(w)+'</p>':'');
+    var ancre=v.querySelector('.card');if(ancre)v.insertBefore(d,ancre);else v.appendChild(d);
+    var s=document.getElementById('te-type');if(s)s.addEventListener('change',function(){var i=document.getElementById('i-etabtype');if(i&&typeof saveIdentite==='function'){i.value=s.value;try{saveIdentite();}catch(e){}}else{DB.etabType=s.value||null;try{save();}catch(e){}}typeEtabInject();try{fillFormats();}catch(e){}});
+  }catch(e){}
 }
 var ESTABLISHMENT_PROFILE_TEXT={
   fr:{k:'PASSEPORT ÉTABLISSEMENT · 6 CHOIX',t:'Ce qui change votre diagnostic',d:'Ces réponses adaptent les conseils de Verdict. Aucun chiffre n’est inventé.',required:'Choisissez les six éléments avant de continuer.',choose:'Choisir…',delivery:'Livraison / plateformes',deliveryOpts:[['none','Aucune'],['secondary','Secondaire'],['major','Majoritaire']],seasonality:'Activité',seasonalityOpts:[['annual','Toute l’année'],['seasonal','Saisonnière']],network:'Organisation',networkOpts:[['independent','Indépendant'],['franchise','Franchise'],['group','Groupe']],hotel:'Intégré à un hôtel',hotelOpts:[['no','Non'],['yes','Oui']],sites:'Nombre de sites',sitesOpts:[['one','Un seul'],['multi','Plusieurs']],mix:'Activités',mixOpts:[['single','Une seule'],['mixed','Plusieurs activités']]},
@@ -12736,6 +12840,9 @@ function recentLire(){
     ca:n('rc-ca'),food:n('rc-nour'),drinks:n('rc-boi'),pack:n('rc-emb'),commission:n('rc-com'),tickets:n('rc-tickets'),
     vat:n('rc-tva'),daysWeek:n('rc-jsem'),months:n('rc-mois'),ticket:n('rc-panier'),payroll:n('rc-ms'),fte:n('rc-etp'),rent:n('rc-loy'),fixed:n('rc-cf')};
 }
+var recentLireBrut=recentLire;
+/* C214 (W34) : panier laissé vide + tickets donnés = panier calculé (CA TTC ÷ tickets), jamais redemandé. */
+recentLire=function(){var r=recentLireBrut();if(!(r.ticket>0)&&r.tickets>0&&r.ca>0&&r.vat!=null)r.ticket=Math.round(r.ca*(1+r.vat/100)/r.tickets*100)/100;return r;};
 function recentCalc(r){
   var days=recentDays(r.start,r.end),openDays=Math.max(1,Math.round(days*Math.max(1,r.daysWeek||1)/7));
   var observedVariable=(r.food||0)+(r.drinks||0)+(r.pack||0)+(r.commission||0),variableRate=r.ca>0?observedVariable/r.ca:1;
@@ -12785,7 +12892,7 @@ function recentValidateStructure(continuation){
     {id:'rc-tva',nom:recentT('vat'),ok:function(v){return v!=null&&v>=0&&v<=30;}},
     {id:'rc-jsem',nom:recentT('daysWeek'),ok:function(v){return v!=null&&v>=1&&v<=7;}},
     {id:'rc-mois',nom:recentT('monthsYear'),ok:function(v){return v!=null&&v>=1&&v<=12;}},
-    {id:'rc-panier',nom:recentT('averageTicket'),ok:function(v){return v!=null&&v>0;}},
+    {id:'rc-panier',nom:recentT('averageTicket'),ok:function(v){return (v!=null&&v>0)||(v==null&&recentLire().tickets>0);}},
     {id:'rc-ms',nom:recentT('payroll'),ok:function(v){return v!=null&&v>=0;}},
     {id:'rc-loy',nom:recentT('rent'),ok:function(v){return v!=null&&v>=0;}},
     {id:'rc-cf',nom:recentT('fixed'),ok:function(v){return v!=null&&v>=0;}}
@@ -12811,6 +12918,8 @@ function recentValidateStructure(continuation){
 }
 function recentEtape(n){
   if(n>RC_ETAPE&&RC_ETAPE===1&&!recentValidateIdentity())return;
+  /* C214 (W34) : la période observée commence à la date d'ouverture donnée juste avant (et non aujourd'hui). */
+  try{if(n===2&&RC_ETAPE===1&&!recentStored().start){var _st=document.getElementById('rc-start'),_op=document.getElementById('rc-open');if(_st&&_op&&_op.value&&(!_st.value||_st.value===recentToday()||_st.value<_op.value))_st.value=_op.value;}}catch(_e){}
   if(n>RC_ETAPE&&RC_ETAPE===2&&!recentValidateFacts())return;
   RC_ETAPE=n;try{sauverBrouillon('recent',n);}catch(e){}
   document.querySelectorAll('#refP .ux-step').forEach(function(x){x.hidden=(Number(x.getAttribute('data-step'))!==n);});
@@ -12862,8 +12971,8 @@ function recentFormulaire(){
       uxNum('rc-emb',recentT('packaging')+' (€)','',q.pack)+uxNum('rc-com',recentT('commissions')+' (€)','',q.commission)+uxNum('rc-tickets',recentT('tickets'),recentT('ticketsHelp'),q.tickets,false)+
       '<div class="rsum" id="rc-preview-2"><b>'+recentT('partial')+'</b>'+recentT('samePeriod')+'</div><div class="ux-actions"><button class="btn sec" type="button" onclick="recentEtape(1)">'+recentT('back')+'</button><button class="btn primary" type="button" onclick="recentEtape(3)">'+recentT('next')+'</button></div></div>'+
     '<div class="ux-step" data-step="3" hidden><div class="ux-kicker">'+recentT('structure')+'</div><h3>'+recentT('structureTitle')+'</h3><p class="note">'+recentT('monthlyNote')+'</p>'+
-      '<div class="g2">'+uxNum('rc-tva',recentT('vat'),' ',q.vat==null?10:q.vat)+uxNum('rc-jsem',recentT('daysWeek'),' ',q.daysWeek==null?6:q.daysWeek)+'</div>'+uxNum('rc-mois',recentT('monthsYear'),' ',q.months==null?12:q.months)+
-      uxNum('rc-panier',recentT('averageTicket')+' (€)',recentT('ticketsHelp'),q.ticket)+uxNum('rc-ms',recentT('payroll'),' ',q.payroll)+uxNum('rc-etp',recentT('fte'),' ',q.fte,false)+uxNum('rc-loy',recentT('rent'),' ',q.rent)+uxNum('rc-cf',recentT('fixed'),' ',q.fixed)+
+      '<div class="g2">'+uxNum('rc-tva',recentT('vat'),'Votre taux moyen, lu sur vos tickets Z ou votre déclaration de TVA.',q.vat==null?null:q.vat)+uxNum('rc-jsem',recentT('daysWeek'),' ',q.daysWeek==null?6:q.daysWeek)+'</div>'+uxNum('rc-mois',recentT('monthsYear'),' ',q.months==null?12:q.months)+
+      uxNum('rc-panier',recentT('averageTicket')+' (€)','Facultatif si vous avez donné le nombre de tickets : Verdict le calcule (CA TTC ÷ tickets).',q.ticket,false)+uxNum('rc-ms',recentT('payroll'),' ',q.payroll)+uxNum('rc-etp',recentT('fte'),' ',q.fte,false)+uxNum('rc-loy',recentT('rent'),' ',q.rent)+uxNum('rc-cf',recentT('fixed'),' ',q.fixed)+
       '<div class="rsum" id="rc-preview-3"><b>'+recentT('partial')+'</b>'+recentT('limit')+'</div><div class="ux-actions"><button class="btn sec" type="button" onclick="recentEtape(2)">'+recentT('back')+'</button><button class="btn primary" type="button" onclick="recentApply()">'+recentT('validate')+'</button></div></div>'+
     '<button type="button" class="btn ghost mini" data-return-entry="recent" style="margin-top:10px" onclick="retourAuxQuatreSituations(\'recent\')">'+entryT('back')+'</button>';
   var resume=restaurerBrouillon('recent');lierBrouillon('recent');
@@ -12954,7 +13063,7 @@ function refFormulaire(){
     uxTypeEtab('rf-type',DB.etabType||'')+
     uxPassport('rf',DB.establishmentProfile)+
     uxTexte('rf-ville','Ville',DB.etabVille||'','Facultatif \u2014 aucun calcul n\u2019en d\u00e9pend.',false)+
-    uxNum('rf-year',entryT('closedYear'),entryT('closedYearHelp'),an)+
+    uxNum('rf-year',entryT('closedYear'),entryT('closedYearHelp'),an)+uxMoisCloture('rf-clot',(DB.refSource&&DB.refSource.closingMonth)||12)+
     '<div class="ux-actions"><button type="button" class="btn sec" onclick="retourAuxQuatreSituations(\'existing\')">Retour</button>'+
       '<button type="button" class="btn primary" onclick="refEtape(2)">Continuer</button></div>'+
   '</div>'+
@@ -13165,6 +13274,7 @@ function refValider(){
      pouvoir le lui remontrer dans la saisie : « 125 €/mois — d'après les
      1 500 €/an de votre compte de résultat ». Sans cela il croit que Verdict a inventé. */
   DB.refSource={nature:'closed-income-statement-manual',exerciseYear:r.year,loy:r.loy, ms:r.ms, cf:r.cf, ca:r.ca, cv:r.cv, pm:r.pm,documentVerified:false};
+  try{var _cm=Number((document.getElementById('rf-clot')||{}).value)||12;DB.refSource.closingMonth=_cm;DB.ref.closingMonth=_cm;}catch(_e){}
   /* V7.0 — des chiffres réels viennent d'être saisis : ce ne sont plus des
      données de démonstration, quel que soit l'état précédent. */
   DB.exempleCharge=false; DB.userMode='existing'; DB.onboardingDone=false;
@@ -14985,7 +15095,7 @@ function perfReliability(rows,ctx){
   var complete=P&&P.nJours?P.nComplete/P.nJours:0;score+=Math.round(complete*20);
   if(complete<1)limits.push('journées partielles exclues du résultat avec charges fixes');
   var tickets=base.filter(function(x){return x.tickets!=null;}).length;
-  if(base.length&&tickets/base.length>=.8)score+=10;else if(tickets)score+=5;else limits.push('tickets absents : panier et tickets/heure non calculés');
+  if(base.length&&tickets/base.length>=.8)score+=10;else if(tickets)score+=5;else limits.push('tickets par service non renseignés : panier et tickets/heure par service non calculés');
   score=Math.max(0,Math.min(100,score));
   return {score:score,label:illustrative?trText('Illustrative'):(score>=80?'Forte':score>=55?'Moyenne':'À renforcer'),illustrative:illustrative,demo:demo,usable:L.length,
     baseline:base.length,proven:proven,completeDays:P?P.nComplete:0,totalDays:P?P.nJours:0,limits:limits};
@@ -15580,23 +15690,30 @@ function dailyCsvColumns(head){
   });return c;
 }
 function dailyCsvAnalyse(txt){
-  var lines=String(txt||'').split(/\r?\n/).filter(function(x){return x.trim();}),out={ok:false,rows:[],errors:[],warnings:[],newRows:[],same:[],conflicts:[],fingerprint:''};
+  var lines=String(txt||'').split(/\r?\n/).filter(function(x){return x.trim();}),out={ok:false,rows:[],errors:[],warnings:[],newRows:[],same:[],conflicts:[],completes:[],dupSame:0,fingerprint:''};
   if(lines.length<2){out.errors.push('Fichier vide ou sans données.');return out;}
   var sep=point5CsvSep(lines[0]),head=point5CsvRow(lines[0],sep),c=dailyCsvColumns(head);if(c.date<0||c.ca<0||c.tickets<0){out.errors.push('Colonnes requises introuvables : Date, CA TTC, Nombre de tickets.');return out;}
   var seen={},today=typeof point12Today==='function'?point12Today():new Date().toISOString().slice(0,10);
   lines.slice(1).forEach(function(line,n){var p=point5CsvRow(line,sep),date=dailyCsvDate(p[c.date]),ca=point5Number(p[c.ca]),tk=point5Number(p[c.tickets]),_num=function(x){/* R313 : même lecteur que le calcul ; milliers acceptés, ambigu refusé. */return point5Number(x)!==null;};
     if(!_num(p[c.ca])){out.errors.push('Ligne '+(n+2)+' : CA TTC vide ou illisible (jamais lu comme 0).');return;}if(!_num(p[c.tickets])){out.errors.push('Ligne '+(n+2)+' : nombre de tickets vide ou illisible (jamais lu comme 0).');return;}
-    if(!date){out.errors.push('Ligne '+(n+2)+' : date illisible.');return;}if(date>today){out.errors.push('Ligne '+(n+2)+' : date future.');return;}if(seen[date]){out.errors.push('Ligne '+(n+2)+' : la date '+date+' apparaît deux fois dans le fichier.');return;}seen[date]=1;
+    if(!date){out.errors.push('Ligne '+(n+2)+' : date illisible.');return;}if(date>today){out.errors.push('Ligne '+(n+2)+' : date future.');return;}/* C214 (W29) : une ligne strictement identique à une précédente est un doublon de l'export, ignoré sans bloquer ;
+       seule une même date avec d'autres montants demande une décision. */
+    if(seen[date]){if(Math.abs(seen[date].ca-ca)<.005&&seen[date].tk===tk){out.dupSame++;return;}out.errors.push('Ligne '+(n+2)+' : le '+dailyCsvJour(date)+' apparaît deux fois avec des montants différents ('+fr(seen[date].ca,2)+' € et '+fr(ca,2)+' €).');return;}seen[date]={ca:ca,tk:tk};
     if(!(ca>=0)){out.errors.push('Ligne '+(n+2)+' : CA TTC invalide.');return;}if(!(tk>=0)||Math.floor(tk)!==tk){out.errors.push('Ligne '+(n+2)+' : tickets invalides.');return;}
     var row={date:date,jour:Number(date.slice(8)),caJ:Math.round(ca*100)/100,tkJ:tk,ca:null,tickets:null,source:'pos-csv',importedAt:new Date().toISOString()};out.rows.push(row);
     if(ca>0&&tk===0)out.warnings.push(date+' : CA positif avec 0 ticket.');if(ca===0&&tk>0)out.warnings.push(date+' : tickets positifs avec 0 € de CA.');
   });
   var vals=out.rows.map(function(x){return x.caJ;}).filter(function(x){return x>0;}).sort(function(a,b){return a-b;});if(vals.length>=5){var med=vals.length%2?vals[(vals.length-1)/2]:(vals[vals.length/2-1]+vals[vals.length/2])/2;out.rows.forEach(function(x){if(x.caJ>med*3)out.warnings.push(x.date+' : CA supérieur à 3× la médiane du fichier.');else if(x.caJ>0&&x.caJ<med*.25)out.warnings.push(x.date+' : CA inférieur au quart de la médiane du fichier.');});}
-  out.rows.forEach(function(x){var old=(DB.histJour||[]).filter(function(y){return y&&y.date===x.date;})[0];if(!old)out.newRows.push(x);else if(Math.abs(Number(old.caJ)-x.caJ)<.01&&Number(old.tkJ)===x.tkJ)out.same.push(x);else out.conflicts.push({incoming:x,existing:old});});
+  out.rows.forEach(function(x){var old=(DB.histJour||[]).filter(function(y){return y&&y.date===x.date;})[0];if(!old)out.newRows.push(x);else if(Math.abs(Number(old.caJ)-x.caJ)<.01&&Number(old.tkJ)===x.tkJ)out.same.push(x);
+    /* C214 (W29) : même chiffre, tickets absents de la journée connue (export par article) : on complète, ce n'est pas un conflit. */
+    else if(Math.abs(Number(old.caJ)-x.caJ)<.01&&!(Number(old.tkJ)>0)&&x.tkJ>0)out.completes.push({incoming:x,existing:old});
+    else out.conflicts.push({incoming:x,existing:old});});
   out.fingerprint=point5Hash(JSON.stringify(out.rows.map(function(x){return [x.date,x.caJ,x.tkJ];})));out.duplicate=(DB.dailyImports||[]).some(function(x){return x.fingerprint===out.fingerprint;});
   if(out.duplicate)out.errors.push('Ce fichier a déjà été importé.');out.ok=out.rows.length>0&&!out.errors.length;return out;
 }
-function dailyCsvPreview(){var t=document.getElementById('daily-csv-text'),e=document.getElementById('daily-csv-result'),b=document.getElementById('daily-csv-apply');if(!t||!e)return;DAILY_CSV_LOT=dailyCsvAnalyse(t.value);var r=DAILY_CSV_LOT,col=r.ok?'#22c55e':'#f97316',h='<b style="color:'+col+'">'+r.rows.length+' journée(s) lue(s)</b> · '+r.newRows.length+' nouvelle(s) · '+r.same.length+' déjà identique(s) · '+r.conflicts.length+' conflit(s)';if(r.ok)h+='<br><b style="color:#22c55e">Prêt à importer après votre validation.</b>';if(r.errors.length)h+='<br><b>À corriger :</b> '+r.errors.slice(0,4).map(esc).join(' · ');if(r.warnings.length)h+='<br><b style="color:#f97316">À vérifier sans blocage :</b> '+r.warnings.slice(0,4).map(esc).join(' · ');e.innerHTML='<p class="note" style="margin:9px 0">'+h+'</p>';if(b)b.disabled=!r.ok;}
+function dailyCsvJour(iso){var p=String(iso||'').split('-');if(p.length<3)return String(iso||'');var m=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'][(+p[1])-1]||'';return (+p[2]===1?'1er':String(+p[2]))+' '+m+' '+p[0];}
+function dailyCsvNb(n,un,plusieurs){return fr(n,0)+' '+(n>1?plusieurs:un);}
+function dailyCsvPreview(){var t=document.getElementById('daily-csv-text'),e=document.getElementById('daily-csv-result'),b=document.getElementById('daily-csv-apply');if(!t||!e)return;DAILY_CSV_LOT=dailyCsvAnalyse(t.value);var r=DAILY_CSV_LOT,col=r.ok?'#22c55e':'#f97316',h='<b style="color:'+col+'">'+dailyCsvNb(r.rows.length,'journée lue','journées lues')+'</b> · '+dailyCsvNb(r.newRows.length,'nouvelle','nouvelles')+(r.completes.length?' · '+dailyCsvNb(r.completes.length,'complétée (tickets ajoutés)','complétées (tickets ajoutés)'):'')+(r.same.length?' · '+dailyCsvNb(r.same.length,'déjà identique','déjà identiques'):'')+' · '+(r.conflicts.length?dailyCsvNb(r.conflicts.length,'conflit','conflits'):'aucun conflit');if(r.dupSame)h+='<br>'+esc(dailyCsvNb(r.dupSame,'ligne en double, identique, ignorée','lignes en double, identiques, ignorées'))+'.';if(r.ok)h+='<br><b style="color:#22c55e">Prêt à importer après votre validation.</b>';if(r.errors.length)h+='<br><b>À corriger'+(r.errors.length>4?' ('+r.errors.length+')':'')+' :</b> '+r.errors.slice(0,4).map(esc).join(' · ')+(r.errors.length>4?' …':'');if(r.warnings.length)h+='<br><b style="color:#f97316">À vérifier sans blocage :</b> '+r.warnings.slice(0,4).map(esc).join(' · ');e.innerHTML='<p class="note" style="margin:9px 0">'+h+'</p>';if(b)b.disabled=!r.ok;}
 function dailyCsvFile(inp){var f=inp.files&&inp.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){var t=document.getElementById('daily-csv-text');if(t){t.value=rd.result;dailyCsvPreview();}};rd.readAsText(f);}
 var DAILY_GUIDED_ID=0,DAILY_PREVIEW_TIMER=null;
 function dailyGuidedRowHTML(){DAILY_GUIDED_ID++;return '<div class="daily-guided-row g2" style="align-items:end;padding:9px 0;border-top:1px solid var(--line)"><label class="f"><span>Date de clôture</span><input class="daily-guided-date" type="date" max="'+new Date().toISOString().slice(0,10)+'" onchange="dailyGuidedChanged()"></label><label class="f"><span>CA TTC (€)</span><input class="daily-guided-ca" type="text" inputmode="decimal" autocomplete="off" placeholder="ex. 1250,50" oninput="dailyGuidedChanged()"></label><label class="f"><span>Nombre de tickets</span><input class="daily-guided-tickets" type="text" inputmode="numeric" autocomplete="off" placeholder="ex. 47" oninput="dailyGuidedChanged()"></label><button type="button" class="btn2" aria-label="Supprimer cette journée" onclick="dailyGuidedRemove(this)">Retirer</button></div>';}
@@ -15611,7 +15728,7 @@ function dailyCsvApply(secured,confirmed){
   var r=DAILY_CSV_LOT,mode=(document.getElementById('daily-csv-conflict')||{}).value||'replace';if(!r||!r.ok){toast('Prévisualisez un fichier valide.');return;}
   if(r.warnings.length&&!confirmed){ask('Verdict a détecté '+r.warnings.length+' valeur(s) inhabituelle(s)',r.warnings.slice(0,5).join(' '),'J’ai vérifié, importer',function(){dailyCsvApply(false,true);});return;}
   if(!secured){verdictBeforeRisk('import-daily-pos').then(function(ok){if(ok)dailyCsvApply(true,true);});return;}
-  r.newRows.forEach(function(x){DB.histJour.push(x);});if(mode==='replace')r.conflicts.forEach(function(c){var i=DB.histJour.findIndex(function(x){return x.date===c.incoming.date;});if(i>=0){var _o=DB.histJour[i];(DB.dailyCorrections=DB.dailyCorrections||[]).push({date:c.incoming.date,avant:{caJ:_o.caJ,tkJ:_o.tkJ,source:_o.source||null},apres:{caJ:c.incoming.caJ,tkJ:c.incoming.tkJ},at:new Date().toISOString(),via:'import-caisse'});DB.histJour[i]=c.incoming;}});
+  r.newRows.forEach(function(x){DB.histJour.push(x);});(r.completes||[]).forEach(function(c){var i=DB.histJour.findIndex(function(x){return x.date===c.incoming.date;});if(i>=0){DB.histJour[i].tkJ=c.incoming.tkJ;DB.histJour[i].tkSource='pos-csv';}});if(mode==='replace')r.conflicts.forEach(function(c){var i=DB.histJour.findIndex(function(x){return x.date===c.incoming.date;});if(i>=0){var _o=DB.histJour[i];(DB.dailyCorrections=DB.dailyCorrections||[]).push({date:c.incoming.date,avant:{caJ:_o.caJ,tkJ:_o.tkJ,source:_o.source||null},apres:{caJ:c.incoming.caJ,tkJ:c.incoming.tkJ},at:new Date().toISOString(),via:'import-caisse'});DB.histJour[i]=c.incoming;}});
   DB.dailyImports=DB.dailyImports||[];DB.dailyImports.push({fingerprint:r.fingerprint,at:new Date().toISOString(),rows:r.rows.length,added:r.newRows.length,replaced:mode==='replace'?r.conflicts.length:0,kept:mode==='keep'?r.conflicts.length:0});if(DB.dailyImports.length>120)DB.dailyImports=DB.dailyImports.slice(-120);
   r.newRows.concat(mode==='replace'?r.conflicts.map(function(c){return c.incoming;}):[]).forEach(function(x){DB.moisPilotage=DB.moisPilotage||{};DB.moisPilotage[x.date.slice(0,7)]=true;DB.ouvertsJours=DB.ouvertsJours||[];if(DB.ouvertsJours.indexOf(x.date)<0)DB.ouvertsJours.push(x.date);});dailyCsvRecompute();save('import-daily-pos');DAILY_CSV_LOT=null;drawPil();refreshAll();toast('Journées caisse importées sans doublon');
 }
@@ -16081,7 +16198,7 @@ var MAT_TX={
  vaDemo:["Démonstration : achats simulés, aucune facture réelle.", "Demonstration: simulated purchases, no real invoice.", "Demostración: compras simuladas, ninguna factura real.", "Dimostrazione: acquisti simulati, nessuna fattura reale.", "Demo: simulierte Einkäufe, keine echte Rechnung.", "Demonstratie: gesimuleerde aankopen, geen echte factuur.", "Demonstração: compras simuladas, nenhuma fatura real."],
  titre:['Écart matière · {m}','Material variance · {m}','Desviación de materia · {m}','Scostamento materia · {m}','Materialabweichung · {m}','Materiaalafwijking · {m}','Desvio de matéria · {m}'],
  couv:['Ventes reliées à une fiche : {v} · produits comptés début et fin : {s}.','Sales linked to a recipe: {v} · products counted at start and end: {s}.','Ventas vinculadas a una ficha: {v} · productos contados al inicio y al final: {s}.','Vendite collegate a una scheda: {v} · prodotti contati a inizio e fine: {s}.','Mit Rezeptur verknüpfte Verkäufe: {v} · am Anfang und Ende gezählte Produkte: {s}.','Verkopen gekoppeld aan een recept: {v} · producten geteld bij begin en einde: {s}.','Vendas ligadas a uma ficha: {v} · produtos contados no início e no fim: {s}.'],
- estime:['Vos ventes ont été saisies à la main (pas lues dans votre caisse) : ces écarts sont approximatifs, à vérifier.','Theoretical estimated from declared volumes (no till linked): gaps to check, not to conclude.','Teórico estimado a partir de los volúmenes declarados (sin caja conectada): desviaciones por verificar, no por concluir.','Teorico stimato dai volumi dichiarati (nessuna cassa collegata): scostamenti da verificare, non da concludere.','Theoretischer Wert aus angegebenen Mengen geschätzt (keine Kasse verbunden): Abweichungen prüfen, nicht folgern.','Theoretisch geschat op basis van opgegeven volumes (geen kassa gekoppeld): afwijkingen te controleren, niet te concluderen.','Teórico estimado a partir dos volumes declarados (sem caixa ligada): desvios a verificar, não a concluir.'],
+ estime:['Vos ventes par plat ne sont pas lues dans votre caisse pour cette période : le théorique est estimé sur vos volumes moyens, ces écarts sont approximatifs, à vérifier.','Theoretical estimated from declared volumes (no till linked): gaps to check, not to conclude.','Teórico estimado a partir de los volúmenes declarados (sin caja conectada): desviaciones por verificar, no por concluir.','Teorico stimato dai volumi dichiarati (nessuna cassa collegata): scostamenti da verificare, non da concludere.','Theoretischer Wert aus angegebenen Mengen geschätzt (keine Kasse verbunden): Abweichungen prüfen, nicht folgern.','Theoretisch geschat op basis van opgegeven volumes (geen kassa gekoppeld): afwijkingen te controleren, niet te concluderen.','Teórico estimado a partir dos volumes declarados (sem caixa ligada): desvios a verificar, não a concluir.'],
  aucun:['Écart non calculable pour {m} : il manque le comptage des produits au début et à la fin du mois. Comptez les références ci-dessus : Verdict fait le reste.','Variance not computable for {m}: product counts at the start and end of the month are missing. Count the items above: Verdict does the rest.','Desviación no calculable para {m}: falta el conteo de productos al inicio y al final del mes. Cuente las referencias de arriba: Verdict hace el resto.','Scostamento non calcolabile per {m}: manca il conteggio dei prodotti a inizio e fine mese. Contate le referenze sopra: Verdict fa il resto.','Abweichung für {m} nicht berechenbar: Die Zählung der Produkte zu Monatsbeginn und -ende fehlt. Zählen Sie die Artikel oben: Verdict erledigt den Rest.','Afwijking voor {m} niet berekenbaar: de telling van producten aan begin en einde van de maand ontbreekt. Tel de artikelen hierboven: Verdict doet de rest.','Desvio não calculável para {m}: falta a contagem dos produtos no início e no fim do mês. Conte as referências acima: o Verdict faz o resto.'],
  ligne:['Réel {r} · théorique {t} · écart {e}.','Actual {r} · theoretical {t} · variance {e}.','Real {r} · teórico {t} · desviación {e}.','Reale {r} · teorico {t} · scostamento {e}.','Ist {r} · Soll {t} · Abweichung {e}.','Werkelijk {r} · theoretisch {t} · afwijking {e}.','Real {r} · teórico {t} · desvio {e}.'],
  valeur:['{v} selon le dernier prix d’achat — une valeur d’écart, pas une perte certaine.','{v} at the last purchase price — a variance value, not a certain loss.','{v} al último precio de compra: un valor de desviación, no una pérdida segura.','{v} all’ultimo prezzo d’acquisto: un valore di scostamento, non una perdita certa.','{v} zum letzten Einkaufspreis – ein Abweichungswert, kein sicherer Verlust.','{v} tegen de laatste aankoopprijs — een afwijkingswaarde, geen zeker verlies.','{v} ao último preço de compra — um valor de desvio, não uma perda certa.'],
@@ -16468,6 +16585,9 @@ function vdsSourceHTML(R){
     if(C&&C.partCA!=null)h+='<p class="note" style="margin:0 0 4px">'+aideEsc(matT('srcCA',{p:matPct(C.partCA)}))+'</p>';
     var nr=Object.keys(R.ventesNonReliees||{});if(nr.length)h+='<p class="note" style="margin:0 0 4px;color:#f59e0b">'+aideEsc(matT('nonRelies',{n:nr.length,l:nr.slice(0,5).join(', ')+(nr.length>5?'…':'')}))+'</p>';
   }else{
+    /* C214 (W33) : la vraie raison. Une caisse importée qui ne couvre pas la période n'est pas une « saisie à la main ». */
+    try{var _ds=(DB.dishSales||[]).map(function(s){return String(s&&s.date||'').slice(0,10);}).filter(Boolean).sort();
+      if(_ds.length)h+='<p class="note" style="margin:0 0 4px;color:#f59e0b">'+aideEsc('Votre export de caisse couvre du '+dailyCsvJour(_ds[0])+' au '+dailyCsvJour(_ds[_ds.length-1])+' : aucune vente de caisse sur cette période (du '+dailyCsvJour(String(R.debutISO).slice(0,10))+' au '+dailyCsvJour(String(R.finISO).slice(0,10))+').')+'</p>';}catch(_e){}
     h+='<p class="note" style="margin:0 0 4px;color:#f59e0b">'+aideEsc(matT('estime'))+'</p>';
     if(C&&C.ventes&&C.ventes.length)h+='<p class="note" style="margin:0 0 4px;color:#f59e0b">'+aideEsc(matT('couvInsuff',{j:C.joursVentes,c:C.joursCA}))+'</p>';
     h+='<p class="note" style="margin:0 0 4px">'+aideEsc(matT('conseilImport'))+'</p>';
@@ -16955,13 +17075,15 @@ window.verdictFournisseurSuivre=verdictFournisseurSuivre;
   }
   /* --- rapprochement produits : exact / probable / ambigu / inconnu (seul l'exact est proposé d'office) --- */
   function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
-  function mots(s){return norm(s).split(' ').filter(function(w){return w.length>1&&!/^\d+$/.test(w)&&['de','du','la','le','les','des','en','et','au','aux','kg','g','l'].indexOf(w)<0;});}
+  /* C214 (W26) : « bœuf » se lit « boeuf » (et non « b uf »), et les mentions d'origine ou de qualité (VBF, bio, AOP…) ne
+     comptent pas comme des mots du produit. */
+  function mots(s){return norm(String(s||'').replace(/œ/gi,'oe').replace(/æ/gi,'ae')).split(' ').filter(function(w){return w.length>1&&!/^\d+$/.test(w)&&['de','du','la','le','les','des','en','et','au','aux','kg','g','l','vbf','vf','bio','aop','igp','label','rouge','fr','france','origine','frais','fraiche','extra','pce','piece'].indexOf(w)<0;});}
   function rapprocher(ligne,catalogue,memoire,fournisseur){
     memoire=memoire||{};var cle=(fournisseur||'')+'|'+(ligne.ref||'');
     if(ligne.gtin&&memoire['gtin|'+ligne.gtin])return {statut:'exact',produitId:memoire['gtin|'+ligne.gtin],score:1,raison:'code-barres déjà validé'};
     if(ligne.ref&&memoire[cle])return {statut:'exact',produitId:memoire[cle],score:1,raison:'référence fournisseur déjà validée'};
     var n=norm(ligne.libelle);var ex=(catalogue||[]).filter(function(p){return norm(p.nom)===n;});if(ex.length===1)return {statut:'exact',produitId:ex[0].id,score:1,raison:'libellé identique'};
-    var a=mots(ligne.libelle),sc=(catalogue||[]).map(function(p){var b=mots(p.nom),inter=a.filter(function(w){return b.indexOf(w)>=0;}).length,uni=a.length+b.length-inter;return {id:p.id,nom:p.nom,score:uni?inter/uni:0};}).filter(function(x){return x.score>0;}).sort(function(x,y){return y.score-x.score;});
+    var a=mots(ligne.libelle),sc=(catalogue||[]).map(function(p){var b=mots(p.nom),inter=a.filter(function(w){return b.indexOf(w)>=0;}).length,uni=a.length+b.length-inter,x=uni?inter/uni:0;if(a[0]&&a[0]===b[0]&&a[0].length>=4)x=Math.max(x,0.5);/* C214 (W26) : même produit de tête */return {id:p.id,nom:p.nom,score:x};}).filter(function(x){return x.score>0;}).sort(function(x,y){return y.score-x.score;});
     if(!sc.length||sc[0].score<0.34)return {statut:'inconnu',produitId:null,score:sc.length?sc[0].score:0,candidats:sc.slice(0,3)};
     if(sc.length>1&&sc[0].score-sc[1].score<0.1)return {statut:'ambigu',produitId:null,score:sc[0].score,candidats:sc.slice(0,3)};
     return {statut:'probable',produitId:null,proposition:sc[0].id,score:sc[0].score,candidats:sc.slice(0,3),raison:'à valider par une personne'};
@@ -17036,7 +17158,7 @@ var FAC_TX={
  corrigee:['Version corrigée : elle remplacera la précédente, sans doublon.','Corrected version: it will replace the previous one, without duplicates.','Versión corregida: sustituirá a la anterior, sin duplicados.','Versione corretta: sostituirà la precedente, senza doppioni.','Korrigierte Fassung: ersetzt die vorherige, ohne Doppelung.','Gecorrigeerde versie: vervangt de vorige, zonder dubbeling.','Versão corrigida: substituirá a anterior, sem duplicados.'],
  entete:['{f} · n° {n} · {d} · {t} TTC','{f} · no. {n} · {d} · {t} incl. VAT','{f} · n.º {n} · {d} · {t} IVA incl.','{f} · n. {n} · {d} · {t} IVA incl.','{f} · Nr. {n} · {d} · {t} brutto','{f} · nr. {n} · {d} · {t} incl. btw','{f} · n.º {n} · {d} · {t} com IVA'],
  ctrl:['Contrôle à revoir : {c}','Check to review: {c}','Control por revisar: {c}','Controllo da rivedere: {c}','Zu prüfende Kontrolle: {c}','Te herziene controle: {c}','Controlo a rever: {c}'],
- m_exact:['reconnu','matched','reconocido','riconosciuto','erkannt','herkend','reconhecido'],m_probable:['probable, à confirmer','likely, to confirm','probable, por confirmar','probabile, da confermare','wahrscheinlich, zu bestätigen','waarschijnlijk, te bevestigen','provável, a confirmar'],m_ambigu:['ambigu, à choisir','ambiguous, to choose','ambiguo, por elegir','ambiguo, da scegliere','mehrdeutig, auswählen','dubbelzinnig, te kiezen','ambíguo, a escolher'],m_inconnu:['produit inconnu, à choisir','unknown product, to choose','producto desconocido, por elegir','prodotto sconosciuto, da scegliere','unbekanntes Produkt, auswählen','onbekend product, te kiezen','produto desconhecido, a escolher'],
+ m_exact:['reconnu','matched','reconocido','riconosciuto','erkannt','herkend','reconhecido'],m_probable:['reconnu, confirmé par votre validation','likely, to confirm','probable, por confirmar','probabile, da confermare','wahrscheinlich, zu bestätigen','waarschijnlijk, te bevestigen','provável, a confirmar'],m_ambigu:['ambigu, à choisir','ambiguous, to choose','ambiguo, por elegir','ambiguo, da scegliere','mehrdeutig, auswählen','dubbelzinnig, te kiezen','ambíguo, a escolher'],m_inconnu:['produit inconnu, à choisir','unknown product, to choose','producto desconocido, por elegir','prodotto sconosciuto, da scegliere','unbekanntes Produkt, auswählen','onbekend product, te kiezen','produto desconhecido, a escolher'],
  produit:['Produit…','Product…','Producto…','Prodotto…','Produkt…','Product…','Produto…'],
  contenu:['Contenu d’un colis','Content of one pack','Contenido de un bulto','Contenuto di un collo','Inhalt eines Gebindes','Inhoud van één colli','Conteúdo de um volume'],
  valider:['Valider les lignes cochées','Validate checked lines','Validar las líneas marcadas','Convalida le righe selezionate','Markierte Zeilen bestätigen','Aangevinkte regels valideren','Validar as linhas marcadas'],
@@ -17073,12 +17195,28 @@ var FPP_TX={maj:['Prix mis à jour dans la Carte : {l}.','Prices updated in the 
 function fppT(k,v){var i=['fr','en','es','it','de','nl','pt'].indexOf(typeof LOCALE!=='undefined'?LOCALE:'fr');if(i<0)i=0;var a=FPP_TX[k]||[k],s=a[i]||a[0];v=v||{};return String(s).replace(/\{(\w+)\}/g,function(_,x){return v[x]!=null?v[x]:'';});}
 function fppUnite(u){u=String(u||'').trim().toLowerCase();var M={kgm:['m',1],kg:['m',1],kilo:['m',1],grm:['m',0.001],g:['m',0.001],ltr:['v',1],l:['v',1],litre:['v',1],clt:['v',0.01],cl:['v',0.01],mlt:['v',0.001],ml:['v',0.001],c62:['p',1],h87:['p',1],u:['p',1],pce:['p',1],'pièce':['p',1],piece:['p',1],unite:['p',1],'unité':['p',1]};return M[u]||null;}
 function fppPrixBase(l){if(!(l.qte>0)||!(l.pu>0))return null;var c=l.cond;if(c&&c.qte>0){var cu=fppUnite(c.unite);if(!cu)return null;return {dim:cu[0],prix:l.pu/(c.qte*cu[1])};}var u=fppUnite(l.unite);if(!u)return null;return {dim:u[0],prix:l.pu/u[1]};}
+/* C214 (W26) : l'ingrédient de la Carte qui reçoit le prix d'une ligne de facture. Nom identique, rapprochement déjà
+   validé (alias), ou un seul ingrédient probable (« Entrecote VBF » → « Entrecôte de bœuf »). Le rapprochement probable
+   est montré avant la validation : le seul « Valider » de la facture le confirme, jamais ligne par ligne. */
+var FAC_MOTS_VIDES=['de','du','la','le','les','des','en','et','au','aux','kg','g','l','vbf','vf','bio','aop','igp','label','rouge','fr','france','origine','frais','fraiche','extra','pce','piece','x'];
+function facMots(s){return String(s||'').replace(/œ/gi,'oe').replace(/æ/gi,'ae').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim().split(' ').filter(function(w){return w.length>1&&!/^\d+$/.test(w)&&FAC_MOTS_VIDES.indexOf(w)<0;});}
+function facScoreNoms(a,b){var A=facMots(a),B=facMots(b);if(!A.length||!B.length)return 0;var inter=A.filter(function(w){return B.indexOf(w)>=0;}).length,uni=A.length+B.length-inter,sc=uni?inter/uni:0;if(A[0]===B[0]&&A[0].length>=4)sc=Math.max(sc,0.5);return sc;}
+function facIngredientCarte(art,produitId){
+  var ing=DB.ing||[],k=achCle(art||''),i,al=(DB.factureAliasCarte||{})[k];
+  for(i=0;i<ing.length;i++){var x=ing[i];if(x&&x.nom&&(achCle(x.nom)===produitId||achCle(x.nom)===k))return {g:x,mode:'exact'};}
+  if(al)for(i=0;i<ing.length;i++){if(ing[i]&&ing[i].nom&&achCle(ing[i].nom)===al)return {g:ing[i],mode:'alias'};}
+  var sc=ing.map(function(x){return {g:x,s:x&&x.nom?facScoreNoms(art,x.nom):0};}).filter(function(o){return o.s>=0.5;}).sort(function(a,b){return b.s-a.s;});
+  if(sc.length===1||(sc.length>1&&sc[0].s-sc[1].s>=0.1))return {g:sc[0].g,mode:'probable'};
+  return null;
+}
+window.facIngredientCarte=facIngredientCarte;
 function facPropagerPrix(lignes){var ok=[],non=[],chg=false,fmt=function(x){return fr(Math.round(x*100)/100,2);};
-  (lignes||[]).forEach(function(l){var nom=l.art||l.produitId;var g=null;for(var i=0;i<(DB.ing||[]).length;i++){var x=DB.ing[i];if(x&&(achCle(x.nom)===l.produitId||achCle(x.nom)===achCle(l.art||''))){g=x;break;}}
-    if(!g){if(l.qte>0)non.push(fppT('r_pasIng',{n:nom}));return;}if(!(l.qte>0))return;var b=fppPrixBase(l);var gd=g.type==='UNITE'?'p':(/^L$|VOL|LIT/i.test(String(g.type||''))?'v':'m');/* C192 : un produit au litre (type L) suit aussi ses factures */
+  (lignes||[]).forEach(function(l){var nom=l.art||l.produitId;var M=facIngredientCarte(l.art||'',l.produitId),g=M?M.g:null;
+    if(!g){if(l.qte>0)non.push(fppT('r_pasIng',{n:nom}));return;}
+    if(M.mode==='probable'){DB.factureAliasCarte=DB.factureAliasCarte||{};DB.factureAliasCarte[achCle(l.art||'')]=achCle(g.nom);chg=true;}if(!(l.qte>0))return;var b=fppPrixBase(l);var gd=g.type==='UNITE'?'p':(/^L$|VOL|LIT/i.test(String(g.type||''))?'v':'m');/* C192 : un produit au litre (type L) suit aussi ses factures */
     if(!b||(b.dim!==gd&&!(gd==='m'&&b.dim==='v'&&false))){non.push(fppT('r_unite',{n:g.nom}));return;}
     var d=String(l.d||l.dateFacture||'').slice(0,10);if(g.prixDate&&d&&d<String(g.prixDate).slice(0,10)){non.push(fppT('r_ancien',{n:g.nom}));return;}
-    var nv=Math.round(b.prix*10000)/10000,av=Number(g.prix);if(isFinite(av)&&Math.abs(av-nv)<0.00005){/* C192 : même prix = prix confirmé par la facture (un prix type devient un prix réel) */if(g.prixSource!=='facture'||g.cpPrixType){g.prixSource='facture';g.prixDate=d||g.prixDate||new Date().toISOString().slice(0,10);delete g.cpPrixType;chg=true;ok.push(g.nom+' '+fmt(nv)+' € confirmé');}return;}if(isFinite(av)&&av>0&&Math.abs(nv/av-1)>0.5){non.push(fppT('r_saut',{n:g.nom,p:(nv>av?'+':'−')+pc(Math.abs(nv/av-1)*100,0)}));return;}
+    var nv=Math.round(b.prix*10000)/10000,av=Number(g.prix);if(isFinite(av)&&Math.abs(av-nv)<0.00005){/* C192 : même prix = prix confirmé par la facture (un prix type devient un prix réel) */if(g.prixSource!=='facture'||g.cpPrixType){g.prixSource='facture';g.prixDate=d||g.prixDate||new Date().toISOString().slice(0,10);delete g.cpPrixType;chg=true;ok.push(g.nom+' '+fmt(nv)+' € confirmé');}return;}if(isFinite(av)&&av>0&&Math.abs(nv/av-1)>0.5&&!g.cpPrixType){/* C214 (W26) : un prix « type » n'est pas un prix réel : la facture le remplace */non.push(fppT('r_saut',{n:g.nom,p:(nv>av?'+':'−')+pc(Math.abs(nv/av-1)*100,0)}));return;}
     (g.prixHist=g.prixHist||[]).push({date:d||null,prix:nv,ancien:isFinite(av)?av:null,source:'facture',fournisseur:l.four||null,facture:l.facture||null,at:new Date().toISOString()});
     g.prix=nv;g.prixDate=d||new Date().toISOString().slice(0,10);g.prixSource='facture';delete g.cpPrixType;chg=true;var u=gd==='p'?'/pce':(gd==='v'?'/L':'/kg');ok.push(g.nom+' '+(isFinite(av)?fmt(av):'—')+' → '+fmt(nv)+' €'+u);});
   if(chg){try{save();}catch(e){}}var t=(ok.length?fppT('maj',{l:ok.join(' · ')}):'')+(non.length?(ok.length?' ':'')+fppT('non',{l:non.join(' · ')}):'');return {propages:ok,nonPropages:non,texte:t};}
@@ -17119,6 +17257,10 @@ function verdictFactureValider(validations){var f=window.__factureEnCours;if(!f)
     try{save();}catch(e){}window.__factureEnCours=null;}
   facJournal({type:'validation',ajoutes:R.ajoutes,remplaces:R.remplaces,ignores:R.ignores,refusees:R.refusees.length,empreinte:f.empreinte});
   var _P=(A.lignes.length&&typeof facPropagerPrix==='function')?facPropagerPrix(A.lignes):null;R.propagation=_P;window.__factureResultat=facT('resultat',{a:R.ajoutes,r:R.remplaces,i:R.ignores,x:R.refusees.length})+(_P&&_P.texte?' '+_P.texte:'');return R;}
+/* C214 (W37) : nombres et unités d'une facture écrits en français (« 22,50 », « 24 pce », jamais « 22.5 » ni « piece »). */
+function facDateTxt(d){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d||''));return m?m[3]+'/'+m[2]+'/'+m[1]:String(d||'');}
+function facNb(x){if(x==null||x==='')return '—';var n=Number(x);if(!isFinite(n))return String(x);var d=Math.abs(n-Math.round(n))<1e-9?0:(Math.abs(n*100-Math.round(n*100))<1e-6?2:3);return fr(n,d);}
+function facUniteTxt(u){var k=String(u||'').trim().toLowerCase();return {kgm:'kg',kg:'kg',kilo:'kg',grm:'g',g:'g',ltr:'L',l:'L',litre:'L',clt:'cL',cl:'cL',mlt:'mL',ml:'mL',c62:'pce',h87:'pce',u:'pce',pce:'pce','pièce':'pce',piece:'pce',unite:'pce','unité':'pce'}[k]||String(u||'');}
 function verdictFactureAnnuler(){window.__factureEnCours=null;window.__factureResultat=null;}
 function facCtrlTxt(c){var m=/^ligne-(.+?)-(.+)$/.exec(c.code);var d=c.detail&&typeof c.detail==='object'?JSON.stringify(c.detail).replace(/[{}"]/g,'').replace(/,/g,', '):(c.detail||'');return (m?('L'+m[1]+' · '+m[2]):c.code)+(d?' ('+d+')':'');}
 function verdictFacturesCarteHTML(){
@@ -17127,17 +17269,21 @@ function verdictFacturesCarteHTML(){
   if(!f){h+='<p class="note" style="margin:0 0 6px">'+aideEsc(facT('intro'))+'</p><p class="note fac-pas-pa" style="margin:0 0 6px">'+aideEsc(facT('pasPA'))+'</p><p class="note fac-tva-pa" style="margin:0 0 6px">'+aideEsc(facT('tvaPA'))+'</p><p class="note" style="margin:0 0 8px">'+aideEsc(facT('limite'))+'</p><label class="btn ghost" style="display:inline-block;cursor:pointer">'+aideEsc(facT('choisir'))+'<input id="facFile" type="file" accept=".xml,.pdf,text/xml,application/xml,application/pdf" style="display:none" onchange="facLire(this)"></label>';
     var K=verdictFacturesKPI(),pc=function(v){return v==null?'—':Math.round(v*100)+'\u00a0%';};if(K)h+='<p class="note" style="margin:10px 0 0">'+aideEsc(facT('kpi',{v:K.moteur||'',n:K.documents,x:pc(K.lus),y:pc(K.mapping),z:pc(K.aVerifier),d:K.doublons,a:K.crees,c:K.corrections}))+'</p>';
     var L=(DB.facturesImportees||[]).slice(-3).reverse();if(L.length)h+='<p class="note" style="margin:10px 0 2px"><b>'+aideEsc(facT('recentes'))+'</b></p>'+L.map(function(x){var ach=(DB.achats||[]).filter(function(a){return a&&a.empreinte===x.empreinte;});
-      return '<p class="note" style="margin:0">'+aideEsc(facT('entete',{f:x.fournisseur,n:x.numero,d:x.date,t:eur(x.ttc)}))+'</p><details style="margin:0 0 6px"><summary class="note" style="cursor:pointer">'+aideEsc(facT('preuve'))+'</summary>'+ach.map(function(a){return '<p class="note" style="margin:2px 0 0">'+aideEsc(a.art+' · '+a.qte+' '+a.unite+(a.cond?' ('+a.cond.qte+' '+a.cond.unite+')':'')+' × '+a.pu+' € · L'+a.ligne+' · '+(a.d||''))+'</p>';}).join('')+'<p class="note" style="margin:4px 0 0">'+aideEsc(facT('empreinte',{e:x.empreinte,m:x.moteur,s:x.statut||'—',f:x.fichier||'—'}))+'</p></details>';}).join('');
+      return '<p class="note" style="margin:0">'+aideEsc(facT('entete',{f:x.fournisseur,n:x.numero,d:facDateTxt(x.date),t:eur(x.ttc)}))+'</p><details style="margin:0 0 6px"><summary class="note" style="cursor:pointer">'+aideEsc(facT('preuve'))+'</summary>'+ach.map(function(a){return '<p class="note" style="margin:2px 0 0">'+aideEsc(a.art+' · '+facNb(a.qte)+' '+facUniteTxt(a.unite)+(a.cond?' ('+facNb(a.cond.qte)+' '+facUniteTxt(a.cond.unite)+')':'')+' × '+facNb(a.pu)+' € · ligne '+a.ligne+(a.d?' · '+String(a.d).slice(0,10).split('-').reverse().join('/'):''))+'</p>';}).join('')+'<p class="note" style="margin:4px 0 0">'+aideEsc(facT('empreinte',{e:x.empreinte,m:x.moteur,s:x.statut||'—',f:x.fichier||'—'}))+'</p></details>';}).join('');
     return h+'</div>';}
   if(f.statut==='illisible'||f.statut==='format-non-supporte')return h+'<p class="note">'+aideEsc(facT('s_erreur'))+' · '+aideEsc(f.raison||'')+'</p><button type="button" class="btn ghost" onclick="facAnnuler()">'+aideEsc(facT('annuler'))+'</button></div>';
-  h+='<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><b>'+aideEsc(facT('entete',{f:f.fournisseur||'—',n:f.numero||'—',d:f.dateEco||f.date||'—',t:f.totaux&&f.totaux.ttc!=null?eur(f.totaux.ttc):'—'}))+'</b><span class="chip" style="white-space:nowrap">'+aideEsc(facT('s_'+String(f.statutVerdict||'a_verifier').replace('-','_')))+'</span></div>';
+  h+='<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><b>'+aideEsc(facT('entete',{f:f.fournisseur||'—',n:f.numero||'—',d:facDateTxt(f.dateEco||f.date)||'—',t:f.totaux&&f.totaux.ttc!=null?eur(f.totaux.ttc):'—'}))+'</b><span class="chip" style="white-space:nowrap">'+aideEsc(facT('s_'+String(f.statutVerdict||'a_verifier').replace('-','_')))+'</span></div>';
   if(f.statut==='doublon')return h+'<p class="note" style="margin:6px 0">'+aideEsc(facT('doublon'))+'</p><button type="button" class="btn ghost" onclick="facAnnuler()">'+aideEsc(facT('annuler'))+'</button></div>';
   if(f.statut==='doublon-probable')return h+'<p class="note" style="margin:6px 0;color:#f59e0b">'+aideEsc(facT('probable'))+'</p><button type="button" class="btn ghost" onclick="facAnnuler()">'+aideEsc(facT('annuler'))+'</button></div>';
   if(f.versionCorrigee)h+='<p class="note" style="margin:4px 0;color:#f59e0b">'+aideEsc(facT('corrigee'))+'</p>';
   f.controles.filter(function(c){return !c.ok;}).slice(0,6).forEach(function(c){h+='<p class="note" style="margin:2px 0;color:#f59e0b">'+aideEsc(facT('ctrl',{c:facCtrlTxt(c)}))+'</p>';});
   var cat=facCatalogue();
+  /* C214 (W26) : ce que Verdict a reconnu est dit avant la validation, en une phrase : un seul « Valider » confirme tout. */
+  try{var _nc={};cat.forEach(function(c){_nc[c.id]=c.nom;});var _li=[];f.lignes.forEach(function(l){var m=l.correspondance||{},pid=m.statut==='exact'?m.produitId:(m.statut==='probable'?m.proposition:'');if(!pid)return;var M=facIngredientCarte(_nc[pid]||l.libelle||'',pid);
+      if(M&&achCle(M.g.nom)!==achCle(l.libelle||''))_li.push('« '+(l.libelle||'—')+' » → '+M.g.nom);else if(m.statut==='probable'&&_nc[pid])_li.push('« '+(l.libelle||'—')+' » → '+_nc[pid]);});
+    if(_li.length)h+='<p class="note fac-liens" style="margin:6px 0;color:#22c55e">'+aideEsc('Verdict a reconnu : '+_li.slice(0,6).join(' · ')+(_li.length>6?' …':'')+'. Ces lignes sont cochées : un seul « Valider les lignes cochées » les enregistre et met leur prix réel dans vos fiches. Décochez une ligne pour l’écarter.')+'</p>';}catch(_e){}
   f.lignes.forEach(function(l,i){var k=l.id||String(i+1),m=l.correspondance||{},pre=m.statut==='exact'?m.produitId:(m.proposition||'');
-    h+='<div class="fac-l" data-ligne="'+aideEsc(k)+'" style="padding:8px 0;border-top:1px solid rgba(255,255,255,.07)"><label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" class="fac-ok"'+(m.statut==='exact'?' checked':'')+' style="width:20px;height:20px;margin-top:2px"><span><b>'+aideEsc(l.libelle||'—')+'</b><br><span class="note">'+aideEsc((l.quantite!=null?l.quantite:'—')+' '+(l.unite||l.uniteCode||'')+' × '+(l.prix!=null?l.prix:'—')+(l.baseQuantite&&l.baseQuantite!==1?' / '+l.baseQuantite:'')+' = '+(l.montant!=null?eur(l.montant):'—'))+' · '+aideEsc(facT('m_'+(m.statut||'inconnu')))+'</span></span></label>';
+    h+='<div class="fac-l" data-ligne="'+aideEsc(k)+'" style="padding:8px 0;border-top:1px solid rgba(255,255,255,.07)"><label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" class="fac-ok"'+(m.statut==='exact'||m.statut==='probable'?' checked':'')+' style="width:20px;height:20px;margin-top:2px"><span><b>'+aideEsc(l.libelle||'—')+'</b><br><span class="note">'+aideEsc(facNb(l.quantite)+' '+facUniteTxt(l.unite||l.uniteCode)+' × '+facNb(l.prix)+' €'+(l.baseQuantite&&l.baseQuantite!==1?' / '+facNb(l.baseQuantite):'')+' = '+(l.montant!=null?eur2(l.montant):'—'))+' · '+aideEsc(facT('m_'+(m.statut||'inconnu')))+'</span></span></label>';
     h+='<select class="fac-prod" style="margin-top:6px;width:100%;min-height:44px"><option value="">'+aideEsc(facT('produit'))+'</option>'+cat.map(function(c){return '<option value="'+aideEsc(c.id)+'"'+(c.id===pre?' selected':'')+'>'+aideEsc(c.nom)+'</option>';}).join('')+'</select>';
     if(!l.unite)h+='<div style="display:flex;gap:6px;margin-top:6px;align-items:center"><span class="note">'+aideEsc(facT('contenu'))+'</span><input class="fac-cq" type="number" inputmode="decimal" min="0" step="any" style="width:90px;min-height:44px"><select class="fac-cu" style="min-height:44px"><option value="kg">kg</option><option value="L">L</option><option value="piece">pce</option></select></div>';
     h+='</div>';});
@@ -17519,7 +17665,7 @@ window.verdictCoutHumain=verdictCoutHumain;
  m_c2:['Coût humain {d} : volume d’heures {v}, coût horaire {t}, équipe {x}, non expliqué {n}.','Labour cost {d}: hours volume {v}, hourly cost {t}, team mix {x}, unexplained {n}.','Coste humano {d}: volumen de horas {v}, coste horario {t}, equipo {x}, sin explicar {n}.','Costo del personale {d}: volume ore {v}, costo orario {t}, squadra {x}, non spiegato {n}.','Personalkosten {d}: Stundenvolumen {v}, Stundenkosten {t}, Teammix {x}, unerklärt {n}.','Personeelskost {d}: urenvolume {v}, uurkost {t}, teammix {x}, onverklaard {n}.','Custo humano {d}: volume de horas {v}, custo horário {t}, equipa {x}, não explicado {n}.'],
  m_nomix:['non calculable sans répartition','not computable without split','no calculable sin reparto','non calcolabile senza ripartizione','ohne Aufteilung nicht berechenbar','niet berekenbaar zonder verdeling','não calculável sem repartição'],
  m_warn:['Observation, pas une cause démontrée : un ratio plus élevé ne prouve pas un sureffectif.','An observation, not a proven cause: a higher ratio does not prove overstaffing.','Observación, no una causa demostrada: un ratio más alto no prueba un exceso de plantilla.','Osservazione, non una causa dimostrata: un rapporto più alto non prova un eccesso di personale.','Beobachtung, keine bewiesene Ursache: ein höheres Verhältnis beweist keine Überbesetzung.','Waarneming, geen bewezen oorzaak: een hogere verhouding bewijst geen overbezetting.','Observação, não uma causa demonstrada: um rácio mais alto não prova excesso de pessoal.'],
- m_besoin2:['Encore {n} mois complet à enregistrer pour expliquer une évolution.','{n} more complete month needed to explain a change.','Falta {n} mes completo para explicar una evolución.','Serve ancora {n} mese completo per spiegare un andamento.','Noch {n} vollständiger Monat nötig, um eine Entwicklung zu erklären.','Nog {n} volledige maand nodig om een evolutie te verklaren.','Falta {n} mês completo para explicar uma evolução.'],
+ m_besoin2:['Pour expliquer une évolution, il faut encore {n} mois complets enregistrés.','{n} more complete month needed to explain a change.','Falta {n} mes completo para explicar una evolución.','Serve ancora {n} mese completo per spiegare un andamento.','Noch {n} vollständiger Monat nötig, um eine Entwicklung zu erklären.','Nog {n} volledige maand nodig om een evolutie te verklaren.','Falta {n} mês completo para explicar uma evolução.'],
  a_comparer:['comparer ce résultat à votre objectif avant toute décision sur le planning','compare this result with your target before any rota decision','comparar este resultado con su objetivo antes de decidir sobre el planning','confrontare il risultato con il vostro obiettivo prima di decidere sul planning','dieses Ergebnis mit Ihrem Ziel vergleichen, bevor Sie den Dienstplan ändern','dit resultaat met uw doel vergelijken vóór een beslissing over de planning','comparar este resultado com o seu objetivo antes de decidir sobre o horário']
 };Object.keys(L).forEach(function(k){SAL_TX[k]=L[k];});})();
 (function(){var L={
@@ -17566,7 +17712,7 @@ function salAnalyseMois(){var L=salMoisListe().map(function(r){var ca=salCaMois(
     var d=function(k){return da[k]!=null&&db[k]!=null?db[k]-da[k]:null;};out.evol.composantes={hs:d('hsC'),ex:d('exC'),ab:d('abC')};}
   return out;}
 function salSigne(x,u){var s=x>0.005?'+':(x<-0.005?'−':'');return s+(u==='pt'?fr(Math.abs(x),1)+' pt':eur(Math.abs(x)));}
-function salEvolLignes(A){if(!A.evol)return [salT('m_besoin2',{n:Math.max(1,2-A.complets)})];var e=A.evol,R=e.ratio,C=e.cout,o=[salT('m_evol',{a:salMoisLabel(e.a),b:salMoisLabel(e.b)})];
+function salEvolLignes(A){if(!A.evol)return [Math.max(1,2-A.complets)===1&&(typeof LOCALE==='undefined'||LOCALE==='fr')?'Pour expliquer une évolution, il faut encore un mois complet enregistré.':salT('m_besoin2',{n:Math.max(1,2-A.complets)})];var e=A.evol,R=e.ratio,C=e.cout,o=[salT('m_evol',{a:salMoisLabel(e.a),b:salMoisLabel(e.b)})];
   if(R.statut!=='non-calculable')o.push(salT('m_r',{x:pc(R.avant,1),y:pc(R.apres,1),ec:salSigne(R.effetCout,'pt'),ea:salSigne(R.effetActivite,'pt')}));
   if(C.statut==='reconcilie')o.push(salT('m_c2',{d:salSigne(C.variation),v:salSigne(C.effetVolumeHeures),t:salSigne(C.effetCoutHoraire),x:e.mix?salSigne(C.effetMix):salT('m_nomix'),n:salSigne(C.partNonExpliquee)}));
   if(e.absencesSeparees)o.push(salT('d_abs',{ab:salSigne(e.composantes.ab)}));
@@ -20428,23 +20574,32 @@ function drawCA(){
   el.innerHTML=h;
 }
 /* ═══ SALAIRES ═══ */
+/* C214 (W31) : un montant lu dans le FEC (comptes 641 à 646) ou saisi avec un taux de charges à 0 est un coût chargé,
+   pas un « brut » : le libellé le dit. Un brut n'est appelé brut que si un taux de charges s'y ajoute. */
+function salLibelleCout(k){
+  var tx=Number(DB.in&&DB.in[k+'t'])||0,dr=DB.docRef,fec=false;
+  try{fec=!!(dr&&dr.source==='fec'&&dr.in&&Math.abs((Number(dr.in[k+'b'])||0)-(Number(DB.in[k+'b'])||0))<0.5);}catch(e){}
+  var charge=tx===0&&(fec||(typeof salSaisi==='function'&&salSaisi(k+'t')));
+  if(k==='dir')return charge?'Dirigeant(s) / mois, charges comprises'+(fec?' · lu dans votre FEC':''):'Brut dirigeant(s) / mois';
+  return charge?'Salariés / mois, charges comprises'+(fec?' · lu dans votre FEC':''):'Bruts salariés / mois';
+}
 function drawSal(){
   var R=moteur(), el=document.getElementById("salBody");
   if(!R.ready){ needData(el); return; }
   var d=R.d,v=R.v, iz=zone(R.s.ms);
   var h='<div class="kpis">'+
     '<div class="kpi"><div class="k">Masse salariale / an</div><div class="v">'+eur(d.sal)+'</div><div class="d">'+(typeof salChargesConnues==='function'&&!salChargesConnues()?aideEsc(salT('brutsSeuls')):'dirigeant(s) + salari\u00e9s, charges incluses')+'</div></div>'+
-    '<div class="kpi"><div class="k">% du CA</div><div class="v" style="color:'+iz.h+'">'+pc(v.ms,1)+'</div><div class="d">rep\u00e8re sain \u2264 35 %</div></div>'+
+    '<div class="kpi"><div class="k">% du CA</div><div class="v" style="color:'+iz.h+'">'+pc(v.ms,1)+'</div><div class="d">conseill\u00e9 : '+repereMS().sec+' % au plus \u00b7 trop lourd au-del\u00e0 de '+(repereMS().sec+5)+' %</div></div>'+
     '<div class="kpi"><div class="k">&#128100; Co\u00fbt salarial du jour</div><div class="v">'+eur(d.jMois>0?d.salM/d.jMois:0)+'</div><div class="d">masse salariale mensuelle \u00f7 jours ouverts</div></div></div>';
   h+='<div class="jauge"><div class="jt"><span>Masse salariale % CA</span><b style="color:'+iz.h+'">'+pc(v.ms,1)+'</b></div>'+
     '<div class="jtrk"><i style="width:'+Math.min(100,v.ms/55*100)+'%;background:'+iz.h+'"></i></div></div>';
   h+='<div class="card"><h3>D\u00e9tail</h3>'+
-    '<div class="autoline"><span class="k">Brut dirigeant(s) / mois</span><b>'+eur(DB.in.dirb||0)+'</b></div>'+
-    '<div class="autoline"><span class="k">Bruts salari\u00e9s / mois</span><b>'+eur(DB.in.salb||0)+'</b></div>'+
+    '<div class="autoline"><span class="k">'+esc(salLibelleCout('dir'))+'</span><b>'+eur(DB.in.dirb||0)+'</b></div>'+
+    '<div class="autoline"><span class="k">'+esc(salLibelleCout('sal'))+'</span><b>'+eur(DB.in.salb||0)+'</b></div>'+
     '<div class="autoline"><span class="k">Masse salariale / mois (charges incl.)</span><b>'+eur(d.salM)+'</b></div>'+
     '<div class="autoline"><span class="k">ETP renseign\u00e9s</span><b>'+(d.etp>0?fr(d.etp,1):'\u2014')+'</b></div>'+
     '<div class="autoline"><span class="k">CA par ETP</span><b>'+(d.caSalarie!=null?eur(d.caSalarie):'\u2014')+'</b></div></div>'+
-    '<button class="btn sec" onclick="goIn(\'i-dirb\')">Modifier dans Param\u00e8tres</button>'+
+    '<button class="btn sec" onclick="goIn(\'i-dirb\')">Modifier dans Mes chiffres</button>'+
     '<p class="note">Au-del\u00e0 de '+(repereMS().sec+5)+' % des ventes, le co\u00fbt de l\u2019\u00e9quipe devient trop lourd. C\u2019est un signal de pilotage, jamais une prescription RH : les d\u00e9cisions d\u2019emploi restent celles du dirigeant avec ses professionnels.</p>';
   try{h+=verdictCoutHumainCarteHTML();}catch(e){}
   try{h+=salMoisHTML();}catch(e){}
@@ -21064,7 +21219,7 @@ function drawAchats(){
       '<div class="bario" style="width:74px"><i style="width:'+Math.max(2,pct)+'%;background:#60a5fa"></i></div>'+
       '<div class="v" style="min-width:70px;text-align:right">'+eur(r[1])+'</div></div>';
   });
-  h+='</div><button class="btn sec" onclick="go(\'in\')">Modifier dans Param\u00e8tres</button>';
+  h+='</div><button class="btn sec" onclick="go(\'in\')">Modifier dans Mes chiffres</button>';
   if(d.com>0){
     var pfPlats=DB.plats.filter(function(p){return p.pf;});
     var margeSurPlace=0,margePf=0,volPf=0;
@@ -21782,7 +21937,10 @@ function majBandeauDemo(){
   var prefixeDemo={fr:'D\u00e9monstration \u2014 mod\u00e8le',en:'Demo \u2014 model',es:'Demostraci\u00f3n \u2014 modelo',
     it:'Dimostrazione \u2014 modello',de:'Demo \u2014 Modell',nl:'Demo \u2014 model',pt:'Demonstra\u00e7\u00e3o \u2014 modelo'}[typeof LOCALE==='string'?LOCALE:'fr']||'D\u00e9monstration \u2014 mod\u00e8le';
   var libelle=(estimation?verdictSimulationText('banner'):prefixeDemo)+' '+modeleDemo+(estimation?' · '+verdictSimulationText('body'):'');
-  if(DB&&DB.presentationProfile==='brasserie-24m')libelle+=' · 24 mois · données fictives complètes';
+  /* C219 (W79) : le détail (services, achats, inventaires) couvre 24 mois, les journées de caisse remontent plus loin
+     (la projection les lit) : l'étiquette dit les deux, dans la langue choisie. */
+  if(DB&&DB.presentationProfile==='brasserie-24m'){var dpDebut=(DB.histJour||[]).reduce(function(m,r){var x=r&&String(r.date||'').slice(0,4);return /^\d{4}$/.test(x)&&(!m||x<m)?x:m;},null),dpMois=(DB.presentationPeriod&&DB.presentationPeriod.months)||24,dpL=typeof LOCALE==='string'?LOCALE:'fr';
+    libelle+=(dpDebut?({fr:' · {m} mois détaillés · journées depuis {a} · données fictives',en:' · {m} detailed months · daily figures since {a} · fictional data',es:' · {m} meses detallados · jornadas desde {a} · datos ficticios',it:' · {m} mesi dettagliati · giornate dal {a} · dati fittizi',de:' · {m} detaillierte Monate · Tageswerte seit {a} · fiktive Daten',nl:' · {m} gedetailleerde maanden · dagcijfers sinds {a} · fictieve gegevens',pt:' · {m} meses detalhados · dias desde {a} · dados fictícios'}[dpL]||' · {m} mois détaillés · journées depuis {a} · données fictives'):' · {m} mois · données fictives complètes').replace('{m}',dpMois).replace('{a}',dpDebut);}
   /* Le détail complet reste dans aria-label et dans la fiche info. Sur mobile,
      un libellé court évite une phrase visiblement coupée avant les actions. */
   var demoUi={
@@ -21928,6 +22086,8 @@ function quitterDemo(clientOnly){
   "Type d’établissement":["Business type","Tipo de establecimiento","Tipo di locale","Betriebsart","Type zaak","Tipo de estabelecimento"],
   "Restaurant traditionnel":["Traditional restaurant","Restaurante tradicional","Ristorante tradizionale","Klassisches Restaurant","Traditioneel restaurant","Restaurante tradicional"],
   "Brasserie":["Brasserie","Brasserie","Brasserie","Brasserie","Brasserie","Brasserie"],
+  "Bar / café":["Bar / café","Bar / cafetería","Bar / caffè","Bar / Café","Bar / café","Bar / café"],
+  "Restauration rapide":["Quick-service restaurant","Comida rápida","Ristorazione veloce","Schnellrestaurant","Fastfoodrestaurant","Restauração rápida"],
   "Restaurant gastronomique":["Fine dining restaurant","Restaurante gastronómico","Ristorante gastronomico","Gourmetrestaurant","Gastronomisch restaurant","Restaurante gastronómico"],
   "Table gastronomique d’exception":["Exceptional fine dining","Alta gastronomía de excepción","Alta ristorazione d'eccellenza","Fine Dining der Spitzenklasse","Exclusieve gastronomie","Alta gastronomia de exceção"],
   "Restaurant italien":["Italian restaurant","Restaurante italiano","Ristorante italiano","Italienisches Restaurant","Italiaans restaurant","Restaurante italiano"],
@@ -23396,7 +23556,7 @@ var FAMILLES = {
 /* ticket et fréquentation : repère faible / médian / supérieur — PAS des quartiles */
 var FORMATS = {
   "Restaurant traditionnel":{f:"trad",tk:[22,28,34],cl:[45,65,90],pr:"Bonne"},
-  "Brasserie":{f:"trad",tk:[28,30.72,32],cl:[60,75,100],pr:"Élevée"},
+  "Brasserie":{f:"trad",tk:[28,30,32],cl:[60,75,100],pr:"Élevée"},/* C214 (W30) : repères arrondis, jamais une précision qui n'existe pas (30,72 €) */
   "Restaurant gastronomique":{f:"trad",tk:[60,85,120],cl:[40,50,60],pr:"Bonne"},
   "Table gastronomique d’exception":{f:"hdg",tk:[150,240,300],cl:[20,40,60],pr:"Faible"},
   "Restaurant italien":{f:"trad",tk:[22,26,30],cl:[50,70,90],pr:"Bonne"},
@@ -23408,12 +23568,16 @@ var FORMATS = {
   "Food truck":{f:"rapide",tk:[9,11,14],cl:[50,80,120],pr:"Faible"},
   "Dark kitchen":{f:"rapide",tk:[20,25,30],cl:[25,40,60],pr:"Moyenne"},
   "Coffee shop":{f:"boissons",tk:[5,7,9],cl:[120,160,250],pr:"Moyenne"},
+  /* C214 (W30) : deux types manquants. Ils reprennent les repères déjà utilisés pour leur plus proche format (aucun chiffre nouveau) :
+     Bar / café = débits de boissons (repères du coffee shop) ; Restauration rapide = restauration rapide (repères des burgers). */
+  "Bar / café":{f:"boissons",tk:[5,7,9],cl:[120,160,250],pr:"Moyenne"},
+  "Restauration rapide":{f:"rapide",tk:[15,18,22],cl:[60,80,100],pr:"Élevée"},
   "Traiteur":{f:"traiteur",tk:[30,44,60],cl:[20,40,60],pr:"Aucune"},
-  "Boulangerie":{f:"boulangerie",tk:[5,6.33,7],cl:[250,313,380],pr:"Très élevée"}
+  "Boulangerie":{f:"boulangerie",tk:[5,6,7],cl:[250,300,380],pr:"Très élevée"}
 };
 var FORMAT_ORDER=["Restaurant traditionnel","Brasserie","Restaurant gastronomique","Table gastronomique d’exception",
  "Restaurant italien","Restaurant asiatique","Bar à tapas","Restaurant à burgers","Pizzeria","Kebab",
- "Food truck","Dark kitchen","Coffee shop","Traiteur","Boulangerie"];
+ "Food truck","Dark kitchen","Coffee shop","Bar / café","Restauration rapide","Traiteur","Boulangerie"];
 function fmtActif(){ var t=DB&&DB.etabType; return (t&&FORMATS[t])?t:null; }
 function famActive(){ var f=fmtActif(); return f?FAMILLES[FORMATS[f].f]:null; }
 function repFormat(){ var f=fmtActif(); return f?FORMATS[f]:null; }

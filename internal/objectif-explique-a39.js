@@ -37,7 +37,8 @@
   function position(c) {
     if (!c || !c.exact) return '';
     var base = Number(c.base) || 0, retard = Number(c.deficit) || 0, avance = Number(c.advance) || 0, total = Number(c.catchup) || base, g = c.input && c.input.glissant, out = '';
-    out += retard > 0 ? '<span class="vx39-pos retard">Retard du mois : <b>' + eur(retard) + '</b></span>' : (avance > 0 ? '<span class="vx39-pos avance">Avance du mois : <b>+' + eur(avance) + '</b></span>' : '<span class="vx39-pos">Mois dans les temps</span>');
+    var saisies = c.input && Array.isArray(c.input.days) ? c.input.days.filter(function (d) { return d && d.ca != null; }).length : 1; /* C213 (W08) : sans journée saisie, le mois n'est ni en retard ni « dans les temps » */
+    out += retard > 0 ? '<span class="vx39-pos retard">Retard du mois : <b>' + eur(retard) + '</b></span>' : (avance > 0 ? '<span class="vx39-pos avance">Avance du mois : <b>+' + eur(avance) + '</b></span>' : (saisies ? '<span class="vx39-pos">Mois dans les temps</span>' : '<span class="vx39-pos">Aucune journée saisie ce mois-ci</span>'));
     out += '<small>Reste à faire ce mois : <b>' + eur(c.remaining) + '</b> sur ' + c.openRemaining + ' jour' + (c.openRemaining > 1 ? 's' : '') + ' ouvert' + (c.openRemaining > 1 ? 's' : '') + ', réparti selon le poids de chaque jour : aujourd’hui ' + eur(total) + ' (base ' + eur(base) + ' ' + signe(total - base) + ').</small>';
     if (g && Math.abs(Number(g.ecartAnnee) || 0) >= 1) out += '<small class="vx39-rep">Année : ' + (g.ecartAnnee > 0 ? 'retard' : 'avance') + ' de ' + eur(Math.abs(g.ecartAnnee)) + ' sur les mois passés, réparti sur les ' + g.moisRestants + ' mois restants (' + signe(g.partMois) + ' sur ce mois).</small>';
     var tm = c.input && c.input.days ? ticketMoyen(c.next || c.input.days[0].date) : null; if (tm) out += '<small>Soit environ <b>' + Math.ceil(total / tm) + ' couverts</b> au ticket moyen de ' + tm.toFixed(2).replace('.', ',') + ' € TTC (8 dernières semaines).</small>';
@@ -58,6 +59,12 @@
       '<div class="vx39-l"><dt>Minimum à faire ce jour-là<small>coût du jour ' + eur(base) + ' ' + signe(aFaire - base) + ' (' + (aFaire < base ? 'part de l’avance du mois' : 'part du retard du mois') + ')</small></dt><dd><b>' + eur(aFaire) + '</b></dd></div>' +
       '<div class="vx39-l">' + pos(apres, 'après ce jour') + '</div>';
   }
+  /* C213 (W11) : quand le suivi commence en cours de mois, le budget est la part des jours suivis, selon le même calcul que l'année. */
+  function debutMois(plan, date) {
+    var s = String(plan && plan.trackingStart || ''); if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || s.slice(0, 7) !== date.slice(0, 7) || s.slice(8) === '01') return '';
+    var ap = w.DB && w.DB.performanceYearPlans && w.DB.performanceYearPlans[s.slice(0, 4)], full = ap && ap.fullMonthlyTargets && Number(ap.fullMonthlyTargets[s.slice(0, 7)]);
+    return ' Suivi depuis le ' + (Number(s.slice(8)) === 1 ? '1er' : Number(s.slice(8))) + ' ' + MOIS[Number(s.slice(5, 7)) - 1] + ' : c’est la part de ces jours' + (full > 0 ? ' dans le minimum du mois entier (' + eur(full) + ')' : '') + '.';
+  }
   function report(input) { var g = input && input.glissant; if (!g || !g.ecartAnnee) return null; return { ecartAnnee: g.ecartAnnee, partMois: g.partMois, moisRestants: g.moisRestants }; }
   var ouverts = {}; /* l'ouverture survit aux redessins du module */
   function bloc(input, date, aujourdHui) {
@@ -66,15 +73,17 @@
     var c; try { c = w.VerdictCHR.calculate({ minimum: input.minimum, today: date, days: input.days.map(function (d) { return Object.assign({}, d, { ca: d.date >= date ? null : d.ca }); }) }); } catch (e) { return ''; }
     if (!c || !c.exact || c.next !== date) return '';
     var base = Number(c.base) || 0, total = Number(c.catchup) || base, budget = Number(input.budget) || Number(input.minimum) || 0, g = input.glissant;
-    var M = moyennes(date.slice(0, 7) + '-01') /* mêmes moyennes que celles qui ont fixé les bases du mois */, connus = M.filter(function (m) { return m != null; }), js = jourSem(date), lui = M[js];
+    var plan = w.DB && w.DB.performancePlans && w.DB.performancePlans[date.slice(0, 7)], src = plan && Array.isArray(plan.weekdayMeans) ? plan.weekdayMeansSource : null;
+    var M = plan && Array.isArray(plan.weekdayMeans) ? plan.weekdayMeans : moyennes(date.slice(0, 7) + '-01') /* C213 (W09) : les poids qui ont fixé les bases du mois, lus dans le plan */, connus = M.filter(function (m) { return m != null && m > 0; }), js = jourSem(date), lui = M[js];
+    var quand = src === 'lastYear' ? 'Sur les mêmes semaines de l’an dernier (votre caisse ' + (Number(date.slice(0, 4)) - 1) + ')' : src === 'year' ? 'Sur vos 12 derniers mois de caisse' : 'Sur les 10 semaines avant ce mois';
     var bas = null; M.forEach(function (m, i) { if (m != null && i !== js && (bas === null || m < M[bas])) bas = i; });
     var part = connus.length >= 3 && lui != null
-      ? 'Chaque jour reçoit sa part selon ce qu’il fait d’habitude. Sur les 10 semaines avant ce mois, un <b>' + JOURS[js] + '</b> rapporte en moyenne <b>' + eur(lui) + '</b>' + (bas !== null ? ', un ' + JOURS[bas] + ' ' + eur(M[bas]) : '') + ' : la base du ' + JOURS[js] + ' est ' + (bas !== null && lui > M[bas] ? 'plus haute' : 'adaptée') + '. Base de ce jour : <b>' + eur(base) + '</b>.'
-      : 'Tant que l’historique est court (moins de 3 jours de semaine connus), chaque jour ouvert reçoit la même part : <b>' + eur(base) + '</b>.';
+      ? 'Chaque jour reçoit sa part selon ce qu’il fait d’habitude. ' + quand + ', un <b>' + JOURS[js] + '</b> rapporte en moyenne <b>' + eur(lui) + '</b>' + (bas !== null ? ', un ' + JOURS[bas] + ' ' + eur(M[bas]) : '') + ' : la base du ' + JOURS[js] + ' est ' + (bas !== null && lui > M[bas] ? 'plus haute' : 'adaptée') + '. Base de ce jour : <b>' + eur(base) + '</b>.'
+      : 'Aucune caisse jour par jour ne dit encore ce que rapporte chaque jour de semaine : chaque jour ouvert reçoit la même part, <b>' + eur(base) + '</b>.';
     var annee = g && Math.abs(Number(g.ecartAnnee) || 0) >= 1 ? ' L’année porte ' + (g.ecartAnnee > 0 ? 'un retard' : 'une avance') + ' de <b>' + eur(Math.abs(g.ecartAnnee)) + '</b> sur les mois passés, réparti sur les ' + g.moisRestants + ' mois restants : objectif du mois <b>' + eur(input.minimum) + '</b> (' + signe(g.partMois) + ').' : '';
     var reste = 'Objectif du mois ' + eur(input.minimum) + ' − encaissé ' + eur(c.actual) + ' = <b>' + eur(c.remaining) + '</b> à faire sur les <b>' + c.openRemaining + ' jours ouverts</b> restants, ' + (aujourdHui ? 'partagés' : 'qui étaient partagés') + ' selon leur poids : un retard fait monter la part de chaque jour, une avance la fait baisser.';
     return '<details class="vx39" data-vx39="' + date + '"' + (ouverts[date] ? ' open' : '') + '><summary class="vx39-t"><span>Pourquoi ' + (aujourdHui ? 'ce montant aujourd’hui' : 'ce montant le ' + libJour(date)) + ' ?</span><i aria-hidden="true">›</i></summary><div class="vx39-c"><ol>' +
-      '<li><b>Le budget du mois</b> : <b>' + eur(budget) + '</b> de chiffre d’affaires, la part de ce mois dans le minimum annuel qui couvre vos charges, salaires et loyer, sur <b>' + input.days.length + ' jours ouverts</b> (jours de repos exclus).' + annee + '</li>' +
+      '<li><b>Le budget du mois</b> : <b>' + eur(budget) + '</b> de chiffre d’affaires, la part de ce mois dans le minimum annuel qui couvre vos charges, salaires et loyer, sur <b>' + input.days.length + ' jours ouverts</b> (jours de repos exclus).' + debutMois(plan, date) + annee + '</li>' +
       '<li><b>La part de ce jour</b> : ' + part + '</li>' +
       '<li><b>Le reste à faire</b> : ' + reste + '</li></ol>' +
       '<p class="vx39-f">Base ' + eur(base) + ' ' + signe(total - base) + ' = <b>' + eur(total) + '</b> ' + (aujourdHui ? 'à réaliser aujourd’hui' : 'à réaliser ce jour-là') + '</p></div></details>';
@@ -144,7 +153,7 @@
     else if (extra <= -1 && avance > 0) e = charges + ' Le mois a <b>' + eur(avance) + '</b> d’avance, partagée entre les ' + jours + ' selon le poids de chaque jour\u00a0: <b>− ' + eur(-extra) + '</b> pour ce ' + jour + '.<br>' + eur(base) + ' − ' + eur(-extra) + ' = <b>' + eur(t) + '</b>.';
     else if (retard > 0) e = charges + ' Le mois a ' + eur(retard) + ' de retard, partagé entre les jours ouverts restants.';
     else if (avance > 0) e = charges + ' Le mois a ' + eur(avance) + ' d’avance.';
-    else e = charges + ' Le mois est dans les temps.';
+    else e = charges + (c && c.input && Array.isArray(c.input.days) && !c.input.days.some(function (d) { return d && d.ca != null; }) ? ' Aucune journée n’est encore saisie ce mois-ci.' : ' Le mois est dans les temps.'); /* C213 (W08) */
     lp.className = 'vx53-o'; /* C165 : « minimum », comme les repères (« objectif » est réservé à l'objectif de résultat) */ lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>' + eur(t) + '</b>';
     var ex = lp.nextElementSibling; if (!ex || !ex.classList.contains('vx53-e')) { ex = lp.ownerDocument.createElement('p'); ex.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex); }
     ex.innerHTML = e;

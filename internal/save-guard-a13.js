@@ -11,8 +11,9 @@ var doc=root.document;
 if(!doc||root.VerdictSaveGuard)return;
 
 var GESTURE_MS=1500;
-var IGNORE_FIELDS='[type=search],[data-guard-ignore],#sg13-ask *,#sg13-bar *,.cmp12-sheet *,[id*=search],[id*=Search],[id*=filtre],[id*=Filtre],[id*=recherche],[id*=query],#ntfCenter *,.ntf-center *';
-var COMMIT_BUTTON=/enregistr|valider|confirmer|appliquer|terminer|importer ces|ajouter au/i;
+/* C216 (W53) : l'assistant de bienvenue (#refP) a sa propre validation (« Créer ma référence ») : ses champs ne déclenchent ni barre ni seconde demande. */
+var IGNORE_FIELDS='[type=search],[data-guard-ignore],#refP *,#sg13-ask *,#sg13-bar *,.cmp12-sheet *,[id*=search],[id*=Search],[id*=filtre],[id*=Filtre],[id*=recherche],[id*=query],#ntfCenter *,.ntf-center *';
+var COMMIT_BUTTON=/enregistr|valider|confirmer|appliquer|terminer|importer ces|ajouter au|cr[eé]er (ma|mon|mes|la|le|les|un|une)\b/i;
 var EXPLICIT_REASON=/^(etab-lien|fec-import|recent-apply|ref-valider|create-establishment|archive-establishment|restore-establishment|delete-archived-establishment|duplicate-establishment|bar-visibility|restore|file-restore|load-demo|reset-establishment|demo-|sg13-|switch)/;
 var LABELS_VERDICT={etab:'Nom de l’établissement',etabVille:'Ville',etabQuartier:'Arrondissement / quartier',etabType:'Type d’établissement',
   plats:'Carte et recettes',ing:'Ingrédients',preparations:'Préparations',supp:'Suppléments',reg:'Réglages de la carte',histJour:'Saisies du jour',
@@ -251,6 +252,8 @@ function css(){
 function el(tag,cls,txt){var e=doc.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 function showBar(){
   if(!doc.body)return;css();
+  /* C216 (W53) : jamais de barre par-dessus l'assistant de bienvenue (elle recouvrait « Continuer »). */
+  var rs=doc.getElementById('refSh');if(rs&&rs.classList.contains('on')){hideBar();return;}
   var list=changedLabels();if(!list.length){hideBar();return;}
   var bar=doc.getElementById('sg13-bar');
   if(!bar){
@@ -301,7 +304,7 @@ function onGesture(e){
   var t=e.target;if(t&&t.closest&&(t.closest('#sg13-ask')||t.closest('#sg13-bar')))return;
   S.gestureAt=Date.now();ensureBase();if(e.type==='pointerdown')wrapAll();
   if(e.type==='pointerdown'||e.type==='click'){var ch=t&&t.closest&&t.closest('[aria-checked],[role=radio],[role=option],[role=switch],[role=checkbox],[role=menuitemradio]');if(ch&&!ignoredTarget(ch))S.editAt=Date.now();}
-  if(e.type==='click'){var b=t&&t.closest&&t.closest('button,[role=button],a');if(b&&(COMMIT_BUTTON.test((b.textContent||'')+' '+(b.getAttribute('aria-label')||''))||(b.closest&&b.closest('#welcome'))))S.commitClickAt=Date.now(); /* C116 : l'accueil de l'Inventaire (Continuer, Entrer) enregistre */}
+  if(e.type==='click'){var b=t&&t.closest&&t.closest('button,[role=button],a');if(b&&(COMMIT_BUTTON.test((b.textContent||'')+' '+(b.getAttribute('aria-label')||''))||(b.closest&&b.closest('#welcome,#refP')))){S.commitClickAt=Date.now();S.commitBtn=b;} /* C116 : l'accueil de l'Inventaire (Continuer, Entrer) enregistre */}
 }
 function onFocus(e){if(!trusted(e)||!S.mode||S.mode==='shell')return;var t=e.target;if(isField(t)&&!ignoredTarget(t))trackField(t);}
 function onEdit(e){
@@ -327,7 +330,8 @@ function wrapSave(){
     var why=typeof reason==='string'?reason:'';
     if(EXPLICIT_REASON.test(why)){S.touched=false;S.stale=true;hideBar();forgetRecovery();return r;}
     if(gestureRecent()||Date.now()<(S.importUntil||0)){
-      if(Date.now()-S.commitClickAt<GESTURE_MS){setTimeout(function(){if(!formDirty())rebase();},0);return r;}
+      /* C216 (W53) : « Enregistrer » d'une fiche vaut enregistrement de ses champs : plus de bandeau juste après. */
+      if(Date.now()-S.commitClickAt<GESTURE_MS){if(F.sheet&&S.commitBtn&&F.sheet.contains(S.commitBtn)){F.fields.forEach(function(x){if(x.el.isConnected)x.v=valueOf(x.el);});F.structural=false;}setTimeout(function(){if(!formDirty())rebase();},0);return r;}
       if(!editRecent()){if(!S.touched)S.stale=true;return r;}
       if(!S.touched){S.touched=true;}
       scheduleBar();

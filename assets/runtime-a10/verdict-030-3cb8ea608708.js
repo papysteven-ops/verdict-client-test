@@ -56,6 +56,8 @@ document.querySelector('nav').parentNode.insertBefore(sec, document.querySelecto
 var nav = document.querySelector('nav');
 var PRO_VIEWS=PRO_FEATURES;
 function lockInfo(k){
+  /* C214 (W24) : en Pilotage, un écran Pro dit ce qu'il apporte et ce que la formule garde, au lieu de « Ce module ». */
+  try{ if(typeof window.verdictNiveau==='function'&&window.verdictNiveau()==='pilotage'){ var P=lockPilotageTxt(k); if(P)return P; } }catch(e){}
   var known=['carte','x','dec','hist','audit'];
   var kk=known.indexOf(k)>=0?k:'generic';
   return {t:t('lock.'+kk+'.t'),d:t('lock.'+kk+'.d')};
@@ -78,6 +80,12 @@ function lockHTML(kind){
     '<button class="v5btn" onclick="v5upgrade()">'+t('pro.cta')+'</button>';
 }
 window._navLocks=navLocks;
+function lockPilotageTxt(k){
+  var T={dec:['Simuler · avec Verdict Pro','Simuler une décision et voir son effet sur votre année fait partie de Verdict Pro (129 € HT/mois). Votre formule Pilotage garde le jour, le mois, l’année, la structure, la carte et l’équipe.'],
+    planning:['Coût par service · avec Verdict Pro','Savoir quels services paient l’équipe, heure par heure, fait partie de Verdict Pro (129 € HT/mois). Votre formule Pilotage garde l’équipe à l’année et au mois.'],
+    achats:['Achats · avec Verdict Pro','Vos achats par poste, vos factures et le suivi des prix font partie de Verdict Pro (129 € HT/mois). Votre formule Pilotage garde la carte et le coût de chaque plat.']}[k];
+  return T?{t:T[0],d:T[1]}:null;
+}
 function lockSync(){
   var deferred=verdictLockVisualsDeferred();
   PRO_VIEWS.forEach(function(v){
@@ -85,9 +93,12 @@ function lockSync(){
     if(!s) return;
     var o=s.querySelector('.v5lock');
     if(deferred){ if(o)o.remove(); return; }
+    /* C214 (W24) : sous le verrou, l'écran n'est plus atteignable au clavier (inert), et il le redevient sans verrou. */
+    var inertKids=function(on){ Array.prototype.forEach.call(s.children,function(c){ if(c.className==='v5lock')return; if(on)c.setAttribute('inert',''); else c.removeAttribute('inert'); }); };
     if(isLocked(v)){
       if(!o){ o=document.createElement('div'); o.className='v5lock'; o.innerHTML=lockHTML(v); s.appendChild(o); }
-    } else if(o){ o.remove(); }
+      inertKids(true);
+    } else if(o){ o.remove(); inertKids(false); }
   });
 }
 window._lockSync=lockSync;
@@ -458,7 +469,9 @@ var VAL_TX={titre:['Ce que Verdict vous a déjà permis de comprendre','What Ver
  vide:['Pas encore assez de données pour un bilan : saisissez vos chiffres ou importez votre FEC.','Not enough data yet for a review: enter your figures or import your FEC.','Aún no hay datos suficientes para un balance: introduzca sus cifras o importe su FEC.','Dati ancora insufficienti per un bilancio: inserite i vostri dati o importate il FEC.','Noch nicht genug Daten für eine Bilanz: Zahlen eingeben oder FEC importieren.','Nog niet genoeg gegevens voor een balans: voer uw cijfers in of importeer uw FEC.','Ainda sem dados suficientes para um balanço: introduza os seus números ou importe o FEC.'],
  demo:['Démonstration : bilan calculé sur les données fictives.','Demo: review computed on fictional data.','Demostración: balance calculado con datos ficticios.','Dimostrazione: bilancio calcolato su dati fittizi.','Demo: Bilanz auf fiktiven Daten.','Demo: balans berekend op fictieve gegevens.','Demonstração: balanço calculado com dados fictícios.']};
 function valT(k,v){var i=['fr','en','es','it','de','nl','pt'].indexOf(typeof LOCALE!=='undefined'?LOCALE:'fr');if(i<0)i=0;var a=VAL_TX[k]||[k],s=a[i]||a[0];v=v||{};return String(s).replace(/\{(\w+)\}/g,function(_,x){return v[x]!=null?v[x]:'';});}
-function valeurObtenue(){var out={prob:[],dec:{actives:0,mesurees:0,abandonnees:0},evo:{h:(DB.monthlyHistory||[]).length,c:Object.keys(DB.cloturesMois||{}).length,p:0},estime:0,observe:0,nObs:0,demo:!!(DB.referenceMeta&&DB.referenceMeta.fictional)};
+/* C214 (W37) : les mois d'historique comptent aussi les journées de caisse importées (« 0 mois » avec 12 mois importés). */
+function valMoisHistorique(){var m={};(DB.monthlyHistory||[]).forEach(function(x){if(x&&x.period&&(Number(x.caTTC)>0||Number(x.ca)>0))m[x.period]=1;});(DB.histJour||[]).forEach(function(r){if(r&&r.date&&Number(r.caJ)>0)m[String(r.date).slice(0,7)]=1;});return Math.max(Object.keys(m).length,0);}
+function valeurObtenue(){var out={prob:[],dec:{actives:0,mesurees:0,abandonnees:0},evo:{h:valMoisHistorique(),c:Object.keys(DB.cloturesMois||{}).length,p:0},estime:0,observe:0,nObs:0,demo:!!(DB.referenceMeta&&DB.referenceMeta.fictional)};
   try{var P=v5recos();out.prob=((P&&P.list)||[]).map(function(x){return x.t;}).filter(Boolean);}catch(e){}
   try{Object.keys(DB.previsionsVersions||{}).forEach(function(m){out.evo.p+=(DB.previsionsVersions[m]||[]).length;});}catch(e){}
   try{var G=decisionsRegistre();(G.decisions||[]).forEach(function(x){var d=x.d,e=x.etat;if(e==='mesuree'){out.dec.mesurees++;if(decisionObservedImpact(d)!=null&&isFinite(decisionObservedImpact(d))){out.observe+=Number(decisionObservedImpact(d));out.nObs++;}}else if(e==='abandonnee')out.dec.abandonnees++;else if(e!=='a-examiner'){out.dec.actives++;var est=d.kind==='organization'?0:d.est!=null?Number(d.est):(d.estimateRange&&d.estimateRange.central!=null?Number(d.estimateRange.central):null);if(est!=null&&isFinite(est))out.estime+=est;}});}catch(e){}

@@ -16,8 +16,11 @@
   function fondDe(e, win) {
     for (var p = e; p && p.nodeType === 1; p = p.parentElement) {
       var cs = win.getComputedStyle(p), c = rgb(cs.backgroundColor);
+      /* C216 (W46) : un dégradé se peint PAR-DESSUS la couleur de fond, et ses couches se lisent sur leur première couleur
+         opaque (pas sur la première écrite, souvent un halo transparent). Sinon l'écran Bienvenue et la carte FEC, sombres,
+         étaient mesurés comme clairs en thème clair, et leurs textes assombris jusqu'au presque noir. */
+      var img = cs.backgroundImage; if (img && img !== 'none' && /gradient/.test(img)) { var ms = img.match(/rgba?\([^)]*\)/g) || []; for (var gi = 0; gi < ms.length; gi++) { var g = rgb(ms[gi]); if (g && g.a > 0.55) return g; } }
       if (c && c.a > 0.55) return c;
-      var img = cs.backgroundImage; if (img && img !== 'none' && /gradient/.test(img)) { var m = img.match(/rgba?\([^)]*\)/); var g = m && rgb(m[0]); if (g && g.a > 0.55) return g; }
     }
     var b = rgb(win.getComputedStyle(e.ownerDocument.body).backgroundColor); return b && b.a > 0.5 ? b : { r: 255, g: 255, b: 255, a: 1 };
   }
