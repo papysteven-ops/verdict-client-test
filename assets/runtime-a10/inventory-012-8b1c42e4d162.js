@@ -246,6 +246,7 @@ function save(alreadyInvalidated){
   if(INVENTORY_FAST_SAVE_TIMER){clearTimeout(INVENTORY_FAST_SAVE_TIMER);INVENTORY_FAST_SAVE_TIMER=0;}
   if(!alreadyInvalidated)inventoryInvalidateViews();
   if(DEMO)return {status:"temporary",committed:false};
+  if(EQUIPE_ETAB)return {status:"same",committed:true};/* C238 : équipe — comptage gardé sur l'onglet, envoyé au « Terminer » */
   var state=saveLocal();if(state==="same"||state==="disabled")return {status:state,committed:state==="same"};cloudSave();return {status:state,committed:state==="changed"};
 }
 function scheduleInventoryFastSave(){
@@ -265,12 +266,16 @@ function equipeDroits(perms){var P=Array.isArray(perms)?perms:[],has=function(x)
 /* Ce qui n'est pas utile pour compter ne reste pas dans la page : factures du patron (montants, fournisseurs) et lignes de valeur envoyées à Verdict. */
 function equipeNettoyer(d){if(!d||typeof d!=='object')return d;/* un rôle qui enregistre renvoie le document entier : rien n'y est retiré (sinon le serveur l'effacerait) */if(!staffCan('edit_catalog'))['facturesInventaire','vdLignesBySite'].forEach(function(k){delete d[k];});if(!staffCan('view_prices'))delete d.priceHistory;
   /* Un rôle qui ne modifie rien (il n'envoie jamais le document) ne garde ni fournisseurs, ni commandes, ni consommation tirée des ventes. */
-  if(!staffCan('edit_catalog')){if(!staffCan('view_suppliers')){delete d.suppliersBySite;delete d.lastSup;Object.keys(d.spaces||{}).forEach(function(k){((d.spaces[k]||{}).products||[]).forEach(function(p){if(p){p.sup='';delete p.offers;delete p.sku;}});});}if(!staffCan('view_orders')){['demandBridge','needs','purchaseOrders','orderingSettings','supplyIncidents','operationsBySite'].forEach(function(k){delete d[k];});}if(d.profile&&typeof d.profile==='object')d.profile=Object.assign({},d.profile,{prenom:''});}
+  if(!staffCan('edit_catalog')){if(!staffCan('view_suppliers')){delete d.suppliersBySite;delete d.lastSup;Object.keys(d.spaces||{}).forEach(function(k){((d.spaces[k]||{}).products||[]).forEach(function(p){if(p){p.sup='';delete p.offers;delete p.sku;}});});}if(!staffCan('view_orders')){['demandBridge','needs','purchaseOrders','orderingSettings','supplyIncidents','operationsBySite'].forEach(function(k){delete d[k];});}}
+  /* C238 : le nom affiché dans « Inventaire réalisé par » est celui de l'employé, pour tous les rôles de l'équipe. */
+  d.profile=Object.assign({},(d.profile&&typeof d.profile==='object')?d.profile:{},{prenom:equipeNom(),done:true});/* jamais l'accueil du patron pour l'équipe (profil local, jamais renvoyé) */
   return d;}
 var equipeBrut=(function(){var b=null;return function(x){if(arguments.length)b=x;return b;};})();
 var EQUIPE_MONTANTS=['price','priceDate','unitPrice','purchasePrice','priceHistory','estimatedTotal','deliveryFee','minValue','freeShippingFrom','eur','previousEur','stockFinalHT','previousStockHT','amountHT','amountCents','unitPriceCents','totalHT','prix','pu','cost','costHT','materialCost','valuation','netCents','ttc','ht','facturesInventaire','factureMemoireInv','demandBridge','vdLignesBySite'];
 function equipeSansMontant(x){if(Array.isArray(x))return x.map(equipeSansMontant);if(!x||typeof x!=='object')return x;var o={};Object.keys(x).forEach(function(k){if(EQUIPE_MONTANTS.indexOf(k)<0)o[k]=equipeSansMontant(x[k]);});return o;}
-function equipeEnvoi(d){var b=equipeBrut();if(staffCan('edit_catalog')||!b||!d)return d;var out=JSON.parse(JSON.stringify(b)),compte={};
+function equipeNom(v){var k='verdict:equipe:nom:'+(typeof EQUIPE_ETAB!=='undefined'?EQUIPE_ETAB:'');try{if(arguments.length)sessionStorage.setItem(k,String(v||'').slice(0,80));return sessionStorage.getItem(k)||'';}catch(e){return '';}}
+if(typeof document!=='undefined')document.addEventListener('change',function(e){if(typeof EQUIPE_ETAB!=='undefined'&&EQUIPE_ETAB&&e.target&&e.target.id==='countActor')equipeNom(e.target.value.trim());},true);
+function equipeEnvoi(d){var b=equipeBrut();if(!b||!d)return d;if(staffCan('edit_catalog')){var o=JSON.parse(JSON.stringify(d));if(b.profile!==undefined)o.profile=JSON.parse(JSON.stringify(b.profile));else delete o.profile;return o;}var out=JSON.parse(JSON.stringify(b)),compte={};
   Object.keys(d.spaces||{}).forEach(function(z){((d.spaces[z]||{}).products||[]).forEach(function(p){if(p&&p.id)compte[z+'|'+p.id]=p;});});
   Object.keys(out.spaces||{}).forEach(function(z){((out.spaces[z]||{}).products||[]).forEach(function(p){var c=p&&compte[z+'|'+p.id];if(!c)return;['stock','countedAt','countedBy'].forEach(function(k){if(c[k]!==undefined)p[k]=c[k];});});});
   var vus={};(b.snapshots||[]).forEach(function(s){if(s&&s.id)vus[s.id]=1;});out.snapshots=(b.snapshots||[]).concat((d.snapshots||[]).filter(function(s){return s&&s.id&&!vus[s.id];}).map(equipeSansMontant));
@@ -881,7 +886,8 @@ function valuationForSite(sid){
   /* C217 W60 : la valorisation ne lit que les prix réellement connus (px) ; un prix à 0 ou vide reste « inconnu ». */
   return VerdictFinance.inventoryValuation(siteRows(sid).map(function(x){return px(x.p)===null&&x.p.price!=null&&x.p.price!==''?{p:Object.assign({},x.p,{price:null}),space:x.space}:x;}));
 }
-function countFingerprint(sid){ return siteRows(sid).map(function(x){return x.space+":"+x.p.id+":"+(x.p.stock==null?"?":x.p.stock)+":"+px(x.p);}).join("|"); }
+/* C238 (Y01) : l'empreinte d'un comptage = les quantités, jamais les prix (elle part avec le comptage, vue par l'équipe). */
+function countFingerprint(sid){ return siteRows(sid).map(function(x){return x.space+":"+x.p.id+":"+(x.p.stock==null?"?":x.p.stock);}).join("|"); }
 function finishCount(){
   var active=document.activeElement;if(active&&active.matches&&active.matches('#countList input[data-id]'))active.blur();
   var v=valuationForSite(DB.site); if(!v.total){toast("Ajoutez d'abord vos produits");return;}

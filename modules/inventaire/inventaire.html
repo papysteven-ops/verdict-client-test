@@ -2,6 +2,7 @@
 <html lang="fr" style="background:#08090b">
 <head>
 <meta name="verdict-product-version" content="V2-A9">
+<script id="vd-recharge-perimee-c238" src="../../internal/recharge-perimee-c238.js"></script>
 <script id="vd-appearance-boot-r307" src="../../assets/runtime-a10/inventory-000-7f4e89838a82.js"></script><script id="vd-number-fields-r321" src="../../assets/runtime-a10/inventory-001-76dfdb95ab35.js"></script>
 
 <style id="vd-first-paint-r307">html.vd-workspace-dark,html.vd-workspace-dark body{background-color:#08090b!important;color:#f5f7fa}html.vd-workspace-light,html.vd-workspace-light body{background-color:#fff!important;color:#17212b}</style>
@@ -589,7 +590,7 @@ html.staff-mode #vInvBtn,html.staff-mode #inventoryVerdictBridge,html.staff-mode
   <h1>Compter</h1>
   <p class="sub">Combien il vous en reste. C&rsquo;est tout.</p>
   <input class="search" id="q" type="search" aria-label="Chercher un produit" placeholder="Chercher un produit&hellip;" oninput="drawCount()">
-  <div class="ord-count-owner"><label>Inventaire réalisé par<input id="countActor" maxlength="80" placeholder="Nom du responsable" onchange="DB.profile=DB.profile||{};DB.profile.prenom=this.value.trim();save()"></label><p>Touchez un produit et indiquez la quantité restante. Une case vide reste à compter. Saisissez 0 uniquement si le stock est nul.</p></div><div class="count-session"><span id="countProgress" role="status"></span><button type="button" class="btn" id="finishCountButton" onclick="finishCount()">Terminer le comptage</button></div><div id="countList"></div>
+  <div class="ord-count-owner"><label>Inventaire réalisé par<input id="countActor" maxlength="80" placeholder="Nom du responsable" data-guard-ignore="comptage-nom" onchange="DB.profile=DB.profile||{};DB.profile.prenom=this.value.trim();save()"></label><p>Touchez un produit et indiquez la quantité restante. Une case vide reste à compter. Saisissez 0 uniquement si le stock est nul.</p></div><div class="count-session"><span id="countProgress" role="status"></span><button type="button" class="btn" id="finishCountButton" onclick="finishCount()">Terminer le comptage</button></div><div id="countList"></div>
   <button class="btn ghost" id="staffManageProducts" style="margin-top:14px" onclick="go('prod')">Voir ou g&eacute;rer mes produits</button>
 
 </section>
@@ -707,7 +708,7 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
 </style>
 <script data-mono="./shared-inventory-r32.js" src="../../assets/runtime-a10/inventory-010-aec23afa60af.js"></script>
 <script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/inventory-011-b00023ca8807.js"></script>
-<script src="../../assets/runtime-a10/inventory-012-b240f745070c.js"></script>
+<script src="../../assets/runtime-a10/inventory-012-8b1c42e4d162.js"></script>
 <script data-mono="./supplier-ordering-v1.js" src="../../assets/runtime-a10/inventory-013-679a03798c7f.js"></script>
 <script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-aa8c37adba3f.js"></script>
 <script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-236122e8e39f.js"></script>

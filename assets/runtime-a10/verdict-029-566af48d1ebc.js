@@ -1625,6 +1625,12 @@ function verdictEtatDepuisCompte(c,f){var s=verdictAccountDefaultState('availabl
 (function(){try{var h=document.documentElement;h.classList.add('vd-pil-attente');var fin=function(){h.classList.remove('vd-pil-attente');};
   var t=setInterval(function(){var p=document.getElementById('v-pil');if(p&&p.classList.contains('p41-on')){clearInterval(t);fin();}},150);
   setTimeout(function(){clearInterval(t);fin();},5000);}catch(e){}})();
+/* C239 (Y09) : en ouvrant À faire, l'ancien écran (« ACTION N°1 », fond sombre) ne se montre plus le temps que la lecture
+   premium se pose : il reste masqué 1,5 s au plus, puis redevient le secours. Sans chiffres calculables, il est l'écran : rien n'est masqué. */
+function verdictAttenteP41(){var h=document.documentElement,p=document.getElementById('v-priorities');if(!p||p.querySelector(':scope > .p41-cadre'))return;
+  if(document.body&&document.body.classList.contains('demo-tour-active'))return;var m=null;try{m=moteur();}catch(e){}if(!m||!m.ready)return;
+  h.classList.add('vd-p41-attente');var fin=function(){clearInterval(t);h.classList.remove('vd-p41-attente');};
+  var t=setInterval(function(){if(p.classList.contains('p41-on')&&p.querySelector(':scope > .p41-cadre'))fin();},60);setTimeout(fin,1500);}
 var VERDICT_PUBLIC_OPEN=(function(){
   try{if(verdictCompteFixe())return false;}catch(e){}
   try{return window.VERDICT_OPEN_ACCESS===true||(window.parent!==window&&window.parent.VERDICT_UNIFIED_CONFIG&&window.parent.VERDICT_UNIFIED_CONFIG.openAccess===true);}
@@ -2148,18 +2154,24 @@ function drawAbonnement(){
     var count=Math.max(1,Number(VERDICT_PENDING_MULTISITE_COUNT)||Number(window.VERDICT_COMPTE&&window.VERDICT_COMPTE.etablissements)||Number(VERDICT_ACCOUNT_STATE.active_establishments)||0,(function(){try{return etabBillableList().length;}catch(e){return 1;}})());
     if(VERDICT_PUBLIC_OPEN){multi.innerHTML=aboPrixHTML(count,null,verdictCompteCourant()?'':publicCopy[1]);return;}
     var _vo=(window.verdictOffrePourTier?window.verdictOffrePourTier():{m:129,a:1290,xm:69,xa:690}),totalM=_vo.m+(count-1)*_vo.xm,totalA=_vo.a+(count-1)*_vo.xa;
-    multi.innerHTML=aboPrixHTML(count,count>1?{m:totalM,a:totalA}:null,'');
+    var _fd=aboFondateurTotal(_C,count);/* C239 (Y15) : en Pro fondateur, le montant fondateur (comme la page Compte), jamais 198 € */
+    multi.innerHTML=aboPrixHTML(count,_fd||(count>1?{m:totalM,a:totalA}:null),'');
   }
 }
 /* C236 (Steven, 21/10 : « ce n'est pas du tout ça, les prix de l'abonnement ! » — « 69 € » se lisait deux fois, avec deux sens) :
    les prix en deux blocs nets, ceux de l'offre du 5/10 (05-BACKEND-API/src/offre.js) — l'abonnement, 1 établissement inclus,
    puis chaque établissement en plus — et, à partir de 2 établissements, le total. */
+/* C239 (Y15) : tarif fondateur de 05-BACKEND-API/src/offre.js (69 € puis 99 €/mois, 690 € puis 990 €/an ; +69 € / +690 € par établissement en plus) :
+   2 établissements = 138 € puis 168 €/mois, comme la page Compte. */
+function aboFondateurTotal(c,count){if(!c||c.formule!=='pro'||!c.fondateur||c.essai)return null;var x=Math.max(1,Number(count)||1)-1;
+  return {fondateur:true,m:69+x*69,a:690+x*690,m2:99+x*69,a2:990+x*690};}
 function aboPrixHTML(count,total,intro){
   var L=function(a,b){return '<span style="display:flex;justify-content:space-between;gap:12px;padding:3px 0"><span>'+a+'</span><b style="white-space:nowrap">'+b+'</b></span>';};
   var h=(intro?'<span style="display:block;margin-bottom:6px">'+intro+'</span>':'')+
     '<b style="display:block;margin-top:4px">Votre abonnement · 1 établissement inclus</b>'+L('Pilotage','69 € HT/mois · 690 € HT/an')+L('Pro','129 € HT/mois · 1 290 € HT/an')+
     '<b style="display:block;margin-top:10px">Chaque établissement en plus</b>'+L('Pilotage','+39 € HT/mois · +390 € HT/an')+L('Pro','+69 € HT/mois · +690 € HT/an');
-  if(count>1)h+='<b style="display:block;margin-top:10px">Pour vos '+count+' établissements</b>'+(total?L('Votre formule',fr(total.m,0)+' € HT/mois · '+fr(total.a,0)+' € HT/an'):
+  if(total&&total.fondateur)h+='<b style="display:block;margin-top:10px">'+(count>1?'Pour vos '+count+' établissements · ':'')+'votre tarif fondateur</b>'+L('La 1re année',fr(total.m,0)+' € HT/mois · '+fr(total.a,0)+' € HT/an')+L('Ensuite',fr(total.m2,0)+' € HT/mois · '+fr(total.a2,0)+' € HT/an');
+  else if(count>1)h+='<b style="display:block;margin-top:10px">Pour vos '+count+' établissements</b>'+(total?L('Votre formule',fr(total.m,0)+' € HT/mois · '+fr(total.a,0)+' € HT/an'):
     L('Pilotage',fr(69+(count-1)*39,0)+' € HT/mois · '+fr(690+(count-1)*390,0)+' € HT/an')+L('Pro',fr(129+(count-1)*69,0)+' € HT/mois · '+fr(1290+(count-1)*690,0)+' € HT/an'));
   return h+'<span style="display:block;margin-top:8px;opacity:.75">Les modèles fictifs de démonstration sont gratuits et ne créent jamais un établissement facturé.</span>';
 }
@@ -6440,11 +6452,13 @@ function chrCockpitEvidence(v){
   var empty={state:'empty',main:chrCockpitText('unavailableProof'),detail:chrCockpitText('enteredOnlyProof'),source:'empty'};
   var ready=function(main,detail,source){return {state:'ready',main:main,detail:detail||chrCockpitText('enteredOnlyProof'),source:source||'entered'};};
   var count=function(list){return Array.isArray(list)?list.length:0;};
+  if(v==='in'&&typeof estModeRecent==='function'&&estModeRecent())return ready(recentT('header'),recentT('samePeriod'),'engine');/* C239 (Y02) : la page d'import en année partielle ne parle pas de « référence complète » */
   if(v==='in')return R&&R.ready?ready(chrCockpitText('engineReady'),null,'engine'):
     {state:'empty',main:chrCockpitText('engineWaiting'),detail:chrCockpitAttente(R),source:'engine'};
   if(v==='pil'){
     var latest=chrCockpitServiceRows();return latest.length?ready(chrCockpitCount(latest.length,'countServices'),null,'services'):empty;
   }
+  if(v==='data'&&typeof estModeRecent==='function'&&estModeRecent())return ready(recentT('partial'),recentT('gateTitle'),'engine');/* C239 (Y07) : en année partielle, Structure ne montre jamais un Indice (l'en-tête dit « aucun score annuel ») */
   if(v==='data')return R&&R.ready?ready(chrCockpitText('scoreLabel')+' : '+Math.round(R.score)+' / 100',verdictScoreText('label',R),'engine'):empty;
   if(v==='carte'){
     var dishes=DB&&Array.isArray(DB.plats)?DB.plats.length:0;return dishes?ready(chrCockpitCount(dishes,'countDishes'),null,'menu'):empty;
@@ -6669,6 +6683,7 @@ function go(v){
   var revision=String(VERDICT_VIEW_REVISION);
   var reuse=target.getAttribute('data-verdict-render-revision')===revision&&v!=='abo';/* C214 (W28) : Abonnement suit toujours l'établissement actif */
   var samePublished=target===current&&reuse&&target.classList.contains('on')&&!target.classList.contains('preparing');
+  try{if(v==='priorities'&&previousView!=='priorities')verdictAttenteP41();}catch(e){}/* C239 (Y09) */
   VIEW=v;
   /* Les étapes successives d'une démonstration utilisent souvent la même
      grande vue. La republier relançait cockpit, verrous, rails et scroll alors
@@ -13070,7 +13085,7 @@ function recentFeatureGate(feature){
     '<button type="button" class="btn sec" style="margin-top:8px" onclick="refClose();recentClore()">'+recentT('closed')+'</button><button type="button" class="btn ghost mini" style="margin-top:8px" onclick="refClose()">'+recentT('back')+'</button>';
   p.setAttribute('data-recent-feature',feature||'');el.classList.add('on');
 }
-function recentRestrictedView(v){return ['x','hist','dec','org','ca','sal','achats','obj','alertes','sante','in','planning','audit'].indexOf(v)>=0;}
+function recentRestrictedView(v){return ['x','hist','dec','org','ca','sal','achats','obj','alertes','sante','planning','audit'].indexOf(v)>=0;}/* C239 (Y02/Y13) : « Importer mes chiffres » s'ouvre aussi en année partielle (c'est là que la période se met à jour) ; plus de fenêtre « exercice clôturé » ni d'onglet Structure surligné */
 function recentClore(){refLectureRapide();}
 function recentDataHTML(){
   var d=DB.recent||{},r=d.raw||{},c=d.calculated||recentCalc(r),mat=(r.food||0)+(r.drinks||0)+(r.pack||0),q=recentReliability();

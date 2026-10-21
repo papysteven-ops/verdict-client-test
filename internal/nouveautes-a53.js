@@ -11,6 +11,12 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C243', date: '2026-10-21', titre: 'Équipe › Tester une décision : la boîte est claire et lisible en mode clair (elle restait sombre avec vos propres chiffres)' },
+    { id: 'C242', date: '2026-10-21', titre: 'Quand votre iPhone ou votre Mac passe en sombre ou en clair, Verdict suit aussitôt, sans recharger, même installé sur l’écran d’accueil' },
+    { id: 'C241', date: '2026-10-21', titre: 'Thème clair : les fenêtres « Comparer mes établissements » et « Ajouter un établissement » sont claires et lisibles, même quand Verdict est ouvert seul ; le thème sombre ne change pas' },
+    { id: 'C240', date: '2026-10-21', titre: 'Accueil : juste après « Enregistrer ma journée », l’onglet Mois compte aussitôt votre journée ; une journée sans tickets dit « non renseignés » ; en année partielle, la projection montre l’écart entre votre mois le plus faible et le plus fort' },
+    { id: 'C239', date: '2026-10-21', titre: 'J’ai ouvert récemment : « Importer mes chiffres » ouvre bien la page d’import et Structure ne montre plus d’Indice. Abonnement : en Pro fondateur, le total de vos établissements donne votre tarif fondateur (138 € puis 168 € HT/mois pour 2). À faire s’ouvre sans l’ancien écran sombre, et « Protégez votre historique » se lit en thème clair' },
+    { id: 'C238', date: '2026-10-21', titre: 'Inventaire en équipe : l’employé qui ouvre votre lien arrive directement sur Compter, écrit son nom dans « Inventaire réalisé par » sans bandeau « Modifications non enregistrées », et son nom est gardé jusqu’à l’envoi. Votre prénom n’est plus jamais remplacé par le sien, et un comptage enregistré ne contient plus aucun prix. Après une mise à jour, une page gardée par votre navigateur ne reste plus jamais bloquée : elle se recharge seule sur la nouvelle version' },
     { id: 'C236', date: '2026-10-21', titre: 'Abonnement : les prix en deux blocs clairs. Votre abonnement (1 établissement inclus) : Pilotage 69 €, Pro 129 € HT/mois ; puis chaque établissement en plus : +39 € ou +69 €' },
     { id: 'C235', date: '2026-10-21', titre: 'Écran Abonnement : avec votre compte, le prix d’un établissement en plus redonne aussi le montant à l’année (+390 € HT en Pilotage, +690 € HT en Pro)' },
     { id: 'C234', date: '2026-10-21', titre: 'Argent : les mois de l’an dernier (de juillet à novembre) s’ouvrent bien quand vous les touchez, et leurs boutons se voient aussi en thème clair' },

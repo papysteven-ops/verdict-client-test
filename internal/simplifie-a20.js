@@ -85,7 +85,11 @@
     'html.vd-workspace-light #v-org .dec-col,html.vd-workspace-light #v-org .dec-vd,html.vd-workspace-light #v-org .dec-rec{background:#f6f8fa!important;border:1px solid #e3e8ee!important}' +
     'html.vd-workspace-light #v-org .dec-col.after{background:#effaf3!important;border:1px solid #cdeed8!important;border-left:4px solid #22c55e!important}' +
     'html.vd-workspace-light #v-org .warn.on{background:#fff7ed!important;border:1px solid #fed7aa!important;color:#9a3412!important}' +
-    'html.vd-workspace-light #v-org [style*="rgba(0,0,0,0.25)"]{background:#f4f6f9!important;border:1px solid #e3e8ee!important}';
+    'html.vd-workspace-light #v-org [style*="rgba(0,0,0,0.25)"]{background:#f4f6f9!important;border:1px solid #e3e8ee!important}' +
+    /* C243 (T1, vague 5 : « Tester une décision » gardait en clair son dégradé sombre écrit dans la carte, titre gris sur gris) */
+    'html.vd-workspace-light #v-org #point9-organization{background:#fff!important;border:1px solid #cfe0f5!important;box-shadow:0 6px 18px rgba(20,35,50,.06)!important}' +
+    'html.vd-workspace-light #v-org #point9-organization h3{color:#17212b!important}html.vd-workspace-light #v-org #point9-organization p.note{color:#526171!important}' +
+    'html.vd-workspace-light #v-org #point9-organization [style*="color:#93c5fd"]{color:#1d4ed8!important}';
   /* C76 — Simuler commence au « Point de départ calculé » (demande de Steven) : rien au-dessus ; puis les curseurs et
      le total ; le registre des décisions et le journal des gains (seulement ici) passent tout en bas. */
   css.textContent +=

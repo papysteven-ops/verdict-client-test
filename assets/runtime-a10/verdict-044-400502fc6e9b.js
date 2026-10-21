@@ -225,10 +225,18 @@
     else if(p.end&&mois>=11){var e=String(p.end).slice(0,10),nx=new Date(Date.UTC(+e.slice(0,4),+e.slice(5,7)-1,+e.slice(8,10)+1,12));if(nx.getUTCDate()===1){out.cloture=e.slice(5);out.sources.cloture="fec-fin:"+e;}}
     return out.regime||out.periodicite||out.cloture?out:null;
   }
+  function moisActifs(result){
+    var duree=periodMonthCount(result&&result.period),M=result&&result.monthly||{},p=result&&result.period||{},n=0;if(!duree)return null;
+    Object.keys(M).forEach(function(k){var d=k+"-15";if((!p.start||d>=String(p.start).slice(0,10))&&(!p.end||d<=String(p.end).slice(0,10))&&Number(M[k]&&M[k].revenue)>0)n++;});
+    return n>=3&&n<duree?n:null;
+  }
   function applyToApp(result,mapped,rawHash,context){
     if(!root.DB||!root.DB.in)throw new Error("APP_NOT_READY");var t=result.totals,year=result.period.year||new Date().getFullYear();context=context||{};
     var jsem=Number(context.jsem),mois=periodMonthCount(result.period);if(!(jsem>=1&&jsem<=7)){var j0=joursLus();jsem=j0?j0.jours:null;}
-    root.DB.in.panier=null;root.DB.in.tva=(context&&context.tva!=null&&isFinite(Number(context.tva)))?Number(context.tva):(function(){var mf=result.monthlyFlux||{},s=0,n=0;Object.keys(mf).forEach(function(k){var v=Number(mf[k]&&mf[k].tvaCollectee);if(isFinite(v)&&v!==0){s+=v;n++;}});var r=t.revenue>0&&n?s/t.revenue:null;return r!=null&&r>=0.02&&r<=0.25?Math.round(r*1e6)/1e4:null;})();/* C216 (W49) : TVA moyenne gardée au dix-millième de point (11,9368 %, pas 11,9 %) : le TTC tombe juste à l’euro près. */root.DB.in.cmdj=null;root.DB.in.amort=round2(Math.max(0,Number(t.amortization)||0));root.DB.in.jsem=jsem;root.DB.in.mois=mois;root.DB.in.moisch=mois;root.DB.in.obj=root.DB.in.obj==null?null:root.DB.in.obj;
+    root.DB.in.panier=null;root.DB.in.tva=(context&&context.tva!=null&&isFinite(Number(context.tva)))?Number(context.tva):(function(){var mf=result.monthlyFlux||{},s=0,n=0;Object.keys(mf).forEach(function(k){var v=Number(mf[k]&&mf[k].tvaCollectee);if(isFinite(v)&&v!==0){s+=v;n++;}});var r=t.revenue>0&&n?s/t.revenue:null;return r!=null&&r>=0.02&&r<=0.25?Math.round(r*1e6)/1e4:null;})();/* C216 (W49) : TVA moyenne gardée au dix-millième de point (11,9368 %, pas 11,9 %) : le TTC tombe juste à l’euro près. */root.DB.in.cmdj=null;root.DB.in.amort=round2(Math.max(0,Number(t.amortization)||0));root.DB.in.jsem=jsem;/* C228 (Y11, avec L3) : activité saisonnière — « Mois travaillés » = mois où le FEC a des ventes (au moins 3, moins que
+       l’exercice) ; la durée de l’exercice (moisch) reste celle des charges, et les montants par mois ci-dessous restent calculés sur elle. */
+    var actifs=moisActifs(result);root.DB.in.mois=actifs||mois;root.DB.in.moisch=mois;
+    if(actifs){try{var EP=root.DB.establishmentProfile=root.DB.establishmentProfile||{};if(!EP.seasonality)EP.seasonality="seasonal";}catch(_s){}}root.DB.in.obj=root.DB.in.obj==null?null:root.DB.in.obj;
     root.DB.in.nour=round2(Math.max(0,t.food));root.DB.in.boi=round2(Math.max(0,t.beverage));root.DB.in.emb=round2(Math.max(0,t.packaging));root.DB.in.autv=0;root.DB.in.com=round2(Math.max(0,t.commissions));
     var own=Math.max(0,Math.min(Number(result.payrollOwner)||0,Math.max(0,t.payroll)));root.DB.in.dirb=mois?round2(own/mois):0;root.DB.in.dirn=Number(root.DB.in.dirn)>0?root.DB.in.dirn:0;/* le nombre de dirigeants n’est pas dans le FEC : jamais deviné */root.DB.in.dirt=0;root.DB.in.salb=mois?round2(Math.max(0,t.payroll-own)/mois):null;root.DB.in.saln=null;root.DB.in.salt=0;
     for(var i=1;i<=10;i++)root.DB.in["f"+i]=0;root.DB.in.f1=mois?round2(Math.max(0,t.rent)/mois):null;root.DB.in.f10=mois?round2(Math.max(0,t.other_fixed)/mois):null;
@@ -271,6 +279,6 @@
   }
   if(root.document)installerReprise();
 
-  return Object.freeze({VERSION:VERSION,UI:UI,installerReprise:installerReprise,porteFEC:porteFEC,CATEGORY_LABELS:CATEGORY_LABELS,parseNumber:parseNumber,splitDelimited:splitDelimited,detectDelimiter:detectDelimiter,decodeBytes:decodeBytes,parse:parse,classify:classify,map:map,memoriser:memoriser,aggregate:aggregate,tvaRegimeFromFec:tvaRegimeFromFec,stableHash:stableHash,periodMonthCount:periodMonthCount,mount:mount,relabel:relabel,humanError:humanError,majJours:majJours,exercicePeriod:exercicePeriod,periodTexte:periodTexte});
+  return Object.freeze({VERSION:VERSION,UI:UI,installerReprise:installerReprise,porteFEC:porteFEC,moisActifs:moisActifs,CATEGORY_LABELS:CATEGORY_LABELS,parseNumber:parseNumber,splitDelimited:splitDelimited,detectDelimiter:detectDelimiter,decodeBytes:decodeBytes,parse:parse,classify:classify,map:map,memoriser:memoriser,aggregate:aggregate,tvaRegimeFromFec:tvaRegimeFromFec,stableHash:stableHash,periodMonthCount:periodMonthCount,mount:mount,relabel:relabel,humanError:humanError,majJours:majJours,exercicePeriod:exercicePeriod,periodTexte:periodTexte});
 });
 

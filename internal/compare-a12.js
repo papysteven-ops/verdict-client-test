@@ -238,7 +238,10 @@ function ensureStyle(){
 '@media(max-width:640px){.cmp12-cards{grid-template-columns:1fr}.cmp12-pods{grid-template-columns:1fr}.cmp12-podium{padding:9px 10px}.cmp12-podium p{display:none}.cmp12-pod{padding:3px 0;font-size:13px}.cmp12-pod.first b{font-size:14.5px}.cmp12-medal{font-size:15px}}'+
 '@media(prefers-reduced-motion:reduce){.cmp12-card{animation:none}}'+
 '@keyframes cmp12In{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}'+
-  '@media(prefers-reduced-motion:reduce){.cmp12-col{animation:none}.cmp12-bar i{transition:none}}';
+  '@media(prefers-reduced-motion:reduce){.cmp12-col{animation:none}.cmp12-bar i{transition:none}}'+
+  /* C241 (Y08) : en thème clair, la fenêtre est claire même sans le recoloriage de la coque (appli ouverte seule) ; la
+     règle sombre des fenêtres (html.p40-app .modal .sheet) ne s'applique plus qu'au thème sombre. */
+  'html.vd-workspace-light #mCompare .sheet{background:#ffffff!important;background-image:none!important;border-color:#d5dde5!important;box-shadow:0 18px 48px rgba(16,24,40,.18)!important;color:#14202b}html.vd-workspace-light #mCompare .sh-fermer{background:#f3f5f7!important;color:#14202b!important;border-color:#cfd8e1!important}html.vd-workspace-light #mCompare h3{color:#14202b}';
   doc.head.appendChild(st);
 }
 function close(){var m=doc.getElementById('mCompare');if(!m)return;try{root.a11yDialogRestore&&root.a11yDialogRestore(m);}catch(e){}if(m.parentNode)m.parentNode.removeChild(m);}

@@ -61,7 +61,7 @@
     var base = Number(c.base) || 0, avant = (Number(c.deficit) || 0) - (Number(c.advance) || 0), aFaire = Number(c.catchup) || base, ca = Number(jour.ca) || 0, apres = avant + base - ca;
     function pos(v, quand) { return v > 0.5 ? '<dt>Retard du mois ' + quand + '</dt><dd class="vx39-r">' + eur(v) + '</dd>' : (v < -0.5 ? '<dt>Avance du mois ' + quand + '</dt><dd class="vx39-a">+' + eur(-v) + '</dd>' : '<dt>Mois ' + quand + '</dt><dd>dans les temps</dd>'); }
     return '<div class="vx39-l" data-vx39l="' + date + '">' + pos(avant, 'avant ce jour') + '</div>' +
-      '<div class="vx39-l"><dt>Minimum à faire ce jour-là<small>coût du jour ' + eur(base) + ' ' + signe(aFaire - base) + ' (' + (aFaire < base ? 'part de l’avance du mois' : 'part du retard du mois') + ')</small></dt><dd><b>' + eur(aFaire) + '</b></dd></div>' +
+      '<div class="vx39-l"><dt>Minimum à faire ce jour-là<small>minimum du jour ' + eur(base) + ' ' + signe(aFaire - base) + ' (' + (aFaire < base ? 'part de l’avance du mois' : 'part du retard du mois') + ')</small></dt><dd><b>' + eur(aFaire) + '</b></dd></div>' +
       '<div class="vx39-l">' + pos(apres, 'après ce jour') + '</div>';
   }
   /* C213 (W11) : quand le suivi commence en cours de mois, le budget est la part des jours suivis, selon le même calcul que l'année. */
@@ -155,7 +155,7 @@
   function clair(lp, c, S) {
     var t = montant(lp.textContent), base = Number(S.obj) || t, passe = /pour cette journée/.test(lp.textContent);
     if (!(t > 0)) return;
-    var date = S.cle || (c && c.next), jour = date ? JOURS[jourSem(date)] : 'jour', extra = Math.round(t) - Math.round(base);
+    var date = S.cle || (c && c.next), jourDate = S.cle || (function () { try { return String(w.verdictOperationalClock().key).slice(0, 10); } catch (e) { return date; } })(), jour = jourDate ? JOURS[jourSem(jourDate)] : 'jour', extra = Math.round(t) - Math.round(base); /* C240 : le jour de la carte (après la saisie, c.next est déjà demain) */
     var meme = c && c.exact && c.next === date, em = meme ? ecartMois(c) : { retard: 0, avance: 0 }, retard = em.retard, avance = em.avance, ouv = meme ? Number(c.openRemaining) || 0 : 0;
     /* C177 (Steven, 20/10 : « je comprends rien : 2 300 c'est quoi, si 1 676… là tu additionnes, mais pourquoi ? Je ne
        comprends pas l'info d'après ») : l'avance (ou le retard) du mois est partagée entre les jours ouverts qui restent ;

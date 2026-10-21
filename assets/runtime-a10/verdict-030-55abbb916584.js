@@ -21,6 +21,9 @@ css.textContent =
 '.v5lock{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:90px 24px 24px;text-align:center;background:rgba(5,5,6,.55);backdrop-filter:blur(14px) saturate(.8);-webkit-backdrop-filter:blur(14px) saturate(.8);border-radius:0}'+
 '.v5lock .li{font-size:34px;margin-bottom:12px}'+
 'html.vd-pil-attente #v-pil.on:not(.p41-on){visibility:hidden}'+
+'#v-abo .autoline .k{flex:0 0 auto;white-space:nowrap}'+
+'html.vd-p41-attente #v-priorities.on #priorities-container{visibility:hidden}'+/* C239 (Y09) *//* C239 (Y15) : l'étiquette « Accès » ne se coupe plus en « Accè / s » */
+'html.vd-workspace-light #mBackupReminder .sheet{background:#fff!important;border-color:#dbe2e8!important;color:#17212b!important}html.vd-workspace-light #mBackupReminder h3{color:#17212b!important}html.vd-workspace-light #mBackupReminder .sub{color:#40566d!important}'+/* C239 (Y08b) : « Protégez votre historique » lisible en thème clair */
 '.v5lock p{max-width:430px;font-weight:800;font-size:16px;line-height:1.45;color:#f4f6f8!important;background:rgba(12,14,18,.94);padding:16px 18px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.28)}'+/* C226 (X12) : lisible en thème clair comme en sombre */
 '.v5lock small{display:block;color:#d4dae2!important;font-weight:500;font-size:13px;margin-top:8px;line-height:1.55}'+
 '.v5lock .v5btn.v5sec{background:#fff;color:#14161a;box-shadow:0 4px 18px rgba(0,0,0,.18)}'+

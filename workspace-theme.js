@@ -236,9 +236,20 @@
         document.documentElement.classList.contains('vd-workspace-light') === dark) render();
   }).observe(document.documentElement, {attributes:true,attributeFilter:['class']});
   window.addEventListener('storage', function (event) { if (event.key === mobileKey || event.key === desktopKey) render(); });
-  if (system) system.addEventListener('change', function () { suivreAppareil(); render(); });
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) { suivreAppareil(); render(); } });
-  window.addEventListener('pageshow', function () { suivreAppareil(); render(); });
-  if (mobile) mobile.addEventListener('change', render);
+  /* C242 (Y10, T1 N7 : « passer le système en sombre ne change pas l'appli tant qu'on ne la recharge pas ») : le passage
+     de l'appareil en sombre ou en clair est suivi aussitôt, partout. Les anciens Safari n'ont pas addEventListener sur
+     matchMedia (le script s'arrêtait ici, sans aucune écoute) : addListener en secours. Et comme l'appli installée sur
+     l'écran d'accueil ne reçoit pas toujours l'événement (Centre de contrôle, coucher du soleil), l'apparence est relue au
+     retour (focus, page affichée) et toutes les 2 s : une simple lecture, rien n'est réécrit tant qu'elle ne change pas.
+     Le choix au soleil ou à la lune reste tel que C188 l'a fixé (l'appareil reprend la main quand il change). */
+  function ecouter(mq, fn) { if (!mq) return; try { if (mq.addEventListener) mq.addEventListener('change', fn); else if (mq.addListener) mq.addListener(fn); } catch (e) {} }
+  var dernierAppareil = apparenceAppareil();
+  function verifierAppareil() { var a = apparenceAppareil(); if (a === dernierAppareil) return; dernierAppareil = a; suivreAppareil(); render(); }
+  ecouter(system, verifierAppareil);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { dernierAppareil = apparenceAppareil(); suivreAppareil(); render(); } });
+  window.addEventListener('pageshow', function () { dernierAppareil = apparenceAppareil(); suivreAppareil(); render(); });
+  window.addEventListener('focus', verifierAppareil);
+  setInterval(function () { if (!document.hidden) verifierAppareil(); }, 2000);
+  ecouter(mobile, render);
   render();
 })();
