@@ -11,6 +11,7 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C195', date: '2026-10-21', titre: 'Votre jour de fermeture se lit aussi dans vos journées de caisse : « Mes services » le coche pour vous, et si vous aviez choisi autre chose, Verdict vous le dit et vous laisse décider en un clic' },
     { id: 'C193', date: '2026-10-21', titre: 'Vos journées de caisse se déposent dans « Importer mes chiffres », l’export « ventes par article » les remplit aussi, et vos jours d’ouverture se lisent dans la caisse : rien à saisir' },
     { id: 'C192', date: '2026-10-21', titre: 'Votre carte vient de votre caisse : déposez l’export « ventes par article », Verdict crée toutes vos fiches (prix, TVA, ventes) et ne vous demande que ce qui manque' },
     { id: 'C191', date: '2026-10-21', titre: 'Un salarié en plus, un loyer revu depuis votre dernier bilan ? Indiquez-le en un clic : Verdict garde votre bilan comme référence et calcule à jour' },

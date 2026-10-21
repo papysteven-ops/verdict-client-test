@@ -552,11 +552,12 @@
   var networkCheckSerial=0;
   function networkState(label,state,title){
     if(!els.network)return;
-    els.network.textContent=label;
+    /* C194 : la vérification périodique du réseau ne réécrit que ce qui change (0 changement au repos) */
+    if(els.network.textContent!==label)els.network.textContent=label;
     els.network.classList.toggle('offline',state==='offline');
     els.network.classList.toggle('weak',state==='weak');
     els.network.classList.toggle('checking',state==='checking');
-    els.network.title=title;
+    if(els.network.title!==title)els.network.title=title;
   }
   function updateNetwork(){
     var serial=++networkCheckSerial;

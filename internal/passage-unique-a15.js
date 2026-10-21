@@ -8,7 +8,10 @@
    ce qui n'a pas de recette fixe (coût d'une portion) ; périmètre « toute la carte, mois complets » établi par la caisse.
    C193 — Les journées de caisse : l'import des clôtures est dans « Importer mes chiffres » (plus dans un bloc caché) ;
    l'export « ventes par article » remplit aussi les journées (CA TTC du jour = somme des articles) dans la même validation,
-   sans jamais écraser une clôture déjà importée ; les jours d'ouverture par semaine se lisent dans ces journées. */
+   sans jamais écraser une clôture déjà importée ; les jours d'ouverture par semaine se lisent dans ces journées.
+   C195 — Le jour de repos se lit aussi dans les journées : le jour de semaine absent des semaines entières habituelles
+   (congés et fériés sans effet). Sans choix du patron, il est posé à la validation de l'import ; un choix explicite du
+   patron n'est jamais écrasé : Mes services le dit et propose la caisse en un clic. */
 (function(root){
 'use strict';
 var doc=root.document;if(!doc||root.VerdictPassageUnique)return;
@@ -140,14 +143,38 @@ function joursSemaine(extra){
   var d=DB(),vu={};(d&&d.histJour||[]).forEach(function(r){if(r&&r.date&&journeeCaisse(r)&&num(r.caJ)>0)vu[String(r.date).slice(0,10)]=1;});
   (extra||[]).forEach(function(x){if(x&&x.caJ>0)vu[x.date]=1;});
   var dates=Object.keys(vu).filter(function(s){return /^\d{4}-\d{2}-\d{2}$/.test(s);}).sort();if(dates.length<28)return null;
-  var t0=Date.parse(dates[0]+'T00:00:00Z'),t1=Date.parse(dates[dates.length-1]+'T00:00:00Z'),W={};
-  dates.forEach(function(s){var t=Date.parse(s+'T00:00:00Z'),lundi=t-((new Date(t).getUTCDay()+6)%7)*864e5;if(lundi<t0||lundi+6*864e5>t1)return;W[lundi]=(W[lundi]||0)+1;});
+  var t0=Date.parse(dates[0]+'T00:00:00Z'),t1=Date.parse(dates[dates.length-1]+'T00:00:00Z'),W={},WD={};
+  dates.forEach(function(s){var t=Date.parse(s+'T00:00:00Z'),wd=(new Date(t).getUTCDay()+6)%7,lundi=t-wd*864e5;if(lundi<t0||lundi+6*864e5>t1)return;W[lundi]=(W[lundi]||0)+1;(WD[lundi]=WD[lundi]||[]).push(wd);});
   var C={},n=0;Object.keys(W).forEach(function(k){C[W[k]]=(C[W[k]]||0)+1;n++;});if(n<8)return null;
   var best=null;Object.keys(C).forEach(function(k){if(best==null||C[k]>C[best]||(C[k]===C[best]&&+k>+best))best=k;});
-  var j=+best;return {jours:j,journees:dates.length,semaines:n,debut:dates[0],fin:dates[dates.length-1],texte:j+' par semaine, lu'+(j>1?'s':'')+' dans vos '+int(dates.length)+' journées de caisse (du '+dateLabel(dates[0])+' au '+dateLabel(dates[dates.length-1])+')'};
+  var j=+best;
+  /* C195 — jour(s) de repos : absent(s) des semaines entières qui ont le nombre habituel de jours ouverts (une semaine de
+     congés ou avec un férié n'y compte pas). Repos qui change d'une semaine à l'autre : rien n'est déduit. */
+  var N=[0,0,0,0,0,0,0],m=0;Object.keys(W).forEach(function(k){if(W[k]!==j)return;m++;WD[k].forEach(function(x){N[x]++;});});
+  var repos=[];N.forEach(function(x,w){if(x<=m*0.1)repos.push(w);});if(m<6||repos.length!==7-j)repos=null;
+  return {jours:j,repos:repos,semainesRepos:m,journees:dates.length,semaines:n,debut:dates[0],fin:dates[dates.length-1],texte:j+' par semaine, lu'+(j>1?'s':'')+' dans vos '+int(dates.length)+' journées de caisse (du '+dateLabel(dates[0])+' au '+dateLabel(dates[dates.length-1])+')'};
 }
 function majJoursSemaine(){var d=DB(),js=joursSemaine();if(!d||!d.in||!js)return null;var avant=num(d.in.jsem);d.jsemSource={source:'caisse',jours:js.jours,journees:js.journees,at:new Date().toISOString()};if(avant===js.jours)return null;d.in.jsem=js.jours;return {avant:avant,apres:js.jours};}
-function jsemLigne(js){if(!js)return '';var d=DB(),avant=num(d&&d.in&&d.in.jsem);return 'Jours d’ouverture : <b>'+js.jours+' par semaine</b>, lus dans ces journées'+(avant!=null&&avant!==js.jours?' (vous aviez indiqué '+String(avant).replace('.',',')+')':'')+' : rien à saisir.';}
+/* C195 — le jour de repos : DB.fermes (0 = lundi) et sa source (DB.fermesSource : « caisse » ou « patron »). */
+var JOURS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+function nb(a,b){return a-b;}
+function reposTexte(R){if(!R)return '';if(!R.length)return 'ouvert 7 jours sur 7';var a=R.slice().sort(nb).map(function(w){return 'le '+JOURS[w];});return 'fermé '+(a.length>1?a.slice(0,-1).join(', ')+' et '+a[a.length-1]:a[0]);}
+/* Un choix du patron : touché à la main (source « patron »), ou des jours fermés posés avant que la caisse ne les dise. */
+function reposExplicite(d){var s=d&&d.fermesSource;if(s&&s.source)return s.source==='patron';return !!(d&&d.fermes&&d.fermes.length);}
+function etatRepos(){var d=DB(),js=joursSemaine();if(!d||!js||!js.repos)return null;var fe=(d.fermes||[]).slice().sort(nb),sig=js.repos.join(','),s=d.fermesSource||{};
+  return {repos:js.repos.slice(),fermes:fe,egal:fe.join(',')===sig,explicite:reposExplicite(d),garde:s.source==='patron'&&s.garde===sig,source:s.source||null,jours:js.jours,journees:js.journees,semaines:js.semainesRepos,texte:reposTexte(js.repos)};}
+/* Prendre les jours de la caisse (un clic dans Mes services, ou la validation d'un import sans choix du patron). */
+function prendreRepos(){var d=DB(),js=joursSemaine();if(!d||!js||!js.repos)return null;var avant=(d.fermes||[]).slice().sort(nb),at=new Date().toISOString();
+  d.fermes=js.repos.slice();d.fermesSource={source:'caisse',repos:js.repos.slice(),journees:js.journees,semaines:js.semainesRepos,avant:avant,at:at};
+  d.in=d.in||{};d.in.jsem=js.jours;d.jsemSource={source:'caisse',jours:js.jours,journees:js.journees,at:at};return {avant:avant,apres:d.fermes.slice()};}
+/* Garder son calendrier : la caisse ne le repropose plus tant qu'elle dit la même chose. */
+function garderRepos(){var d=DB(),js=joursSemaine();if(!d||!js||!js.repos)return null;d.fermesSource={source:'patron',garde:js.repos.join(','),at:new Date().toISOString()};return true;}
+/* À la validation d'un import : posé sans choix du patron ; un choix explicite différent est gardé et signalé. */
+function majJoursRepos(){var e=etatRepos(),d=DB();if(!e)return null;
+  if(e.egal){if(!e.explicite)d.fermesSource={source:'caisse',repos:e.repos.slice(),journees:e.journees,semaines:e.semaines,at:new Date().toISOString()};return null;}
+  if(e.explicite)return {garde:true,avant:e.fermes,caisse:e.repos};
+  return prendreRepos();}
+function jsemLigne(js){if(!js)return '';var d=DB(),avant=num(d&&d.in&&d.in.jsem),R=js.repos,fe=(d&&d.fermes||[]).slice().sort(nb),conflit=!!(R&&fe.join(',')!==R.join(',')&&reposExplicite(d));return 'Jours d’ouverture : <b>'+js.jours+' par semaine'+(R?', '+reposTexte(R):'')+'</b>, lus dans ces journées'+(avant!=null&&avant!==js.jours?' (vous aviez indiqué '+String(avant).replace('.',',')+')':'')+' : rien à saisir.'+(conflit?' Vous aviez indiqué '+reposTexte(fe)+' : votre choix est gardé, Mes services vous propose celui de la caisse.':'');}
 function journeesLigne(P){
   if(!P)return '';var n=P.nouveaux.length+P.remplacees.length;
   if(!n)return 'Journées de caisse : déjà à jour ('+int(P.rows.length)+' jours'+(P.gardees?', '+int(P.gardees)+' clôture'+(P.gardees>1?'s':'')+' de caisse gardée'+(P.gardees>1?'s':'')+' telle'+(P.gardees>1?'s':'')+' quelle'+(P.gardees>1?'s':''):'')+').';
@@ -159,7 +186,7 @@ function journeesLigne(P){
 function jCard(){return doc.getElementById('a15-journees');}
 function jEtat(){var d=DB(),L=(d&&d.histJour||[]).filter(journeeCaisse).map(function(r){return String(r.date).slice(0,10);}).sort(),js=joursSemaine();
   if(!L.length)return '<div class="a15-sum">Aucune journée de caisse pour l’instant. L’export « ventes par article » ci-dessus les remplit aussi.</div>';
-  return '<div class="a15-sum a15-ok"><b>'+int(L.length)+' journée'+(L.length>1?'s':'')+' de caisse</b>, du '+esc(dateLabel(L[0]))+' au '+esc(dateLabel(L[L.length-1]))+(js?' · '+js.jours+' jour'+(js.jours>1?'s':'')+' d’ouverture par semaine':'')+'.</div>';}
+  return '<div class="a15-sum a15-ok"><b>'+int(L.length)+' journée'+(L.length>1?'s':'')+' de caisse</b>, du '+esc(dateLabel(L[0]))+' au '+esc(dateLabel(L[L.length-1]))+(js?' · '+js.jours+' jour'+(js.jours>1?'s':'')+' d’ouverture par semaine'+(js.repos&&js.repos.length?', '+reposTexte(js.repos):''):'')+'.</div>';}
 function jRender(){var c=jCard();if(!c)return;var form=typeof root.dailyCsvHTML==='function'?String(root.dailyCsvHTML()).replace('<details class="card">','<details class="a15-det">'):'';
   c.innerHTML='<h2 style="margin:0 0 4px">Journées de caisse</h2><p class="note" style="margin:0 0 6px">Le chiffre de chaque journée (clôture, ticket Z). Il suit vos ventes jour par jour à l’Accueil et donne vos jours d’ouverture.</p>'+jEtat()+form;}
 function jMount(){var p=card(),c=jCard();if(!p||!p.parentNode)return;
@@ -231,7 +258,7 @@ function render(){
   var h='<h2 style="margin:0 0 4px">Un seul passage : fichier comptable + export de caisse</h2><p class="note" style="margin:0 0 6px">Vos deux notes d’un coup. Le fichier comptable (FEC) donne la <b>Structure</b> ; l’export « ventes par article » de votre caisse donne la <b>Carte</b>. Tout est lu ici, dans ce navigateur : rien n’est envoyé.</p>'+stepsHtml();
   if(!f){h+='<div class="a15-sum">Étape 1 : déposez votre fichier comptable dans la carte juste au-dessus. Vous pouvez aussi commencer par l’export de caisse ci-dessous : la note Carte n’attend pas la Structure.</div>';}
   else{var fi=d.fecImport;h+='<div class="a15-sum a15-ok">Fichier comptable lu : exercice '+esc(fi.period&&fi.period.year||'')+', chiffre d’affaires '+money(fi.totals.revenue)+'. Structure : '+(st.ready?'<b>score '+st.score+' / 100</b>':'<b>à compléter</b> — '+esc(st.missing.slice(0,4).join(', ')))+'</div>';}
-  if(S.applied){var a=S.applied;h+='<div class="a15-sum a15-ok"><b>Carte créée depuis votre caisse</b> · '+esc(periodLabel(a.period))+' : '+int(a.matched)+' plat'+(a.matched>1?'s':'')+' avec leurs ventes'+(a.created?' · '+int(a.created)+' fiche'+(a.created>1?'s':'')+' créée'+(a.created>1?'s':'')+' par Vera'+(a.vide?', sans recette':', à vérifier'):'')+(a.ajouts&&a.ajouts.length?' · '+int(a.ajouts.length)+' produit'+(a.ajouts.length>1?'s':'')+' ajouté'+(a.ajouts.length>1?'s':'')+' au catalogue avec un prix type':'')+(a.panier?' · panier moyen '+money(a.panier)+' et '+a.cmdj+' commandes par jour lus dans la caisse':'')+(a.dated?' · ventes datées conservées (écart matière théorique / réel)':'')+(a.jours?' · '+int(a.jours)+' journée'+(a.jours>1?'s':'')+' de caisse remplie'+(a.jours>1?'s':''):'')+(a.jsem?' · '+a.jsem.apres+' jours d’ouverture par semaine, lus dans la caisse':'')+'.'+(a.complet&&!(a.manquent||[]).length?'<br>Toute la carte vendue est couverte, recettes comprises : l’Indice Carte se calcule.':'')+((a.manquent||[]).length?'<br><b>Reste à compléter :</b> '+esc(a.manquent.slice(0,5).join(', '))+(a.manquent.length>5?'…':'')+'. L’Indice Carte attend '+(a.manquent.length>1?'ces recettes':'cette recette')+'.':'')+'<br>Carte : '+int(ct.plats)+' plats, '+int(ct.withVol)+' avec ventes, '+int(ct.incomplete)+' recette'+(ct.incomplete>1?'s':'')+' à compléter.</div><div class="a15-actions"><button type="button" class="btn" data-a15="score">Voir mon score</button><button type="button" class="btn ghost" data-a15="carte">Compléter mes recettes</button><button type="button" class="btn ghost" data-a15="again">Un autre mois</button></div>';}
+  if(S.applied){var a=S.applied;h+='<div class="a15-sum a15-ok"><b>Carte créée depuis votre caisse</b> · '+esc(periodLabel(a.period))+' : '+int(a.matched)+' plat'+(a.matched>1?'s':'')+' avec leurs ventes'+(a.created?' · '+int(a.created)+' fiche'+(a.created>1?'s':'')+' créée'+(a.created>1?'s':'')+' par Vera'+(a.vide?', sans recette':', à vérifier'):'')+(a.ajouts&&a.ajouts.length?' · '+int(a.ajouts.length)+' produit'+(a.ajouts.length>1?'s':'')+' ajouté'+(a.ajouts.length>1?'s':'')+' au catalogue avec un prix type':'')+(a.panier?' · panier moyen '+money(a.panier)+' et '+a.cmdj+' commandes par jour lus dans la caisse':'')+(a.dated?' · ventes datées conservées (écart matière théorique / réel)':'')+(a.jours?' · '+int(a.jours)+' journée'+(a.jours>1?'s':'')+' de caisse remplie'+(a.jours>1?'s':''):'')+(a.jsem?' · '+a.jsem.apres+' jours d’ouverture par semaine, lus dans la caisse':'')+(a.repos&&a.repos.apres?' · '+reposTexte(a.repos.apres)+', lu dans la caisse':'')+(a.repos&&a.repos.garde?' · votre calendrier est gardé ('+reposTexte(a.repos.avant)+') : la caisse dit '+reposTexte(a.repos.caisse)+', Mes services vous le propose':'')+'.'+(a.complet&&!(a.manquent||[]).length?'<br>Toute la carte vendue est couverte, recettes comprises : l’Indice Carte se calcule.':'')+((a.manquent||[]).length?'<br><b>Reste à compléter :</b> '+esc(a.manquent.slice(0,5).join(', '))+(a.manquent.length>5?'…':'')+'. L’Indice Carte attend '+(a.manquent.length>1?'ces recettes':'cette recette')+'.':'')+'<br>Carte : '+int(ct.plats)+' plats, '+int(ct.withVol)+' avec ventes, '+int(ct.incomplete)+' recette'+(ct.incomplete>1?'s':'')+' à compléter.</div><div class="a15-actions"><button type="button" class="btn" data-a15="score">Voir mon score</button><button type="button" class="btn ghost" data-a15="carte">Compléter mes recettes</button><button type="button" class="btn ghost" data-a15="again">Un autre mois</button></div>';}
   else{
     h+='<label class="a15-consent"><input type="checkbox" id="a15-consent"><span>J’autorise l’analyse locale de cet export pour préremplir la carte de cet établissement. Le fichier n’est ni envoyé ni conservé.</span></label>'+
       '<div class="a15-file"><label class="btn" for="a15-file">Choisir l’export de caisse</label><input id="a15-file" type="file" accept=".csv,.txt,text/csv,text/plain" hidden><select id="a15-period" aria-label="Mois du fichier">'+monthOptions(S.period||addMonth(today(),-1))+'</select><span class="note" id="a15-fname">Colonnes minimales : article et quantité. La date, le montant, la TVA et la famille servent aussi : un export de plusieurs mois donne la carte de toute l’année, saisons comprises.</span></div><div id="a15-preview"></div>';
@@ -335,10 +362,10 @@ function apply(vide){
     var complet=periodeComplete(S.read,S.period)&&!lot.unknown.length;
     if(d.carteRef){d.carteRef.fullMonth=complet;d.carteRef.origine='export-caisse';if(lot.moyenne)d.carteRef.moyenne=lot.moyenne;else delete d.carteRef.moyenne;}
     var dated=false;if(S.read&&S.read.hasDate&&typeof root.verdictDishSalesImport==='function'){try{var r=root.verdictDishSalesImport(S.text);dated=!!(r&&r.ok);}catch(e){}}
-    var jours=appliquerJournees(S.jour),jsem=jours?majJoursSemaine():null;S.jour=null;
+    var jours=appliquerJournees(S.jour),jsem=jours?majJoursSemaine():null;S.jour=null;var repos=jours?majJoursRepos():null;
     var vol=volumes(S.read),used=null;
     if(vol&&vol.panier&&vol.cmdj){var q=d.in||(d.in={});if(num(q.panier)==null)q.panier=vol.panier;if(num(q.cmdj)==null)q.cmdj=vol.cmdj;used=vol;d.caisseVolumes={period:S.period,panier:vol.panier,cmdj:vol.cmdj,tickets:vol.tickets,days:vol.days,source:'export-caisse',at:new Date().toISOString()};}
-    S.applied={period:S.period,matched:lot.matched.length,created:created,ajouts:S.ajouts.slice(),manquent:manquent,complet:complet,vide:!!vide,panier:used&&used.panier,cmdj:used&&used.cmdj,dated:dated,jours:jours,jsem:jsem};
+    S.applied={period:S.period,matched:lot.matched.length,created:created,ajouts:S.ajouts.slice(),manquent:manquent,complet:complet,vide:!!vide,panier:used&&used.panier,cmdj:used&&used.cmdj,dated:dated,jours:jours,jsem:jsem,repos:repos};
     try{root.save('un-seul-passage');}catch(e){}
     try{root.fillInputs();}catch(e){}try{root.readInputs();}catch(e){}try{root.refreshAll();}catch(e){}
     try{if(root.VerdictSaveGuard&&root.VerdictSaveGuard.rebase)root.VerdictSaveGuard.rebase();}catch(e){}
@@ -356,15 +383,17 @@ function install(){
   mount();doorNote();
   var sv=root.save;if(typeof sv==='function'&&!sv._a15){var w=function(){
       /* C193 — import des clôtures de caisse : les jours d'ouverture se lisent dans les journées, au même enregistrement. */
-      var reason0=String(arguments[0]||''),js=null;if(reason0==='import-daily-pos'){try{js=majJoursSemaine();}catch(e){}}
-      var r=sv.apply(this,arguments);try{var reason=reason0;if(/fec-import|amort-fec|restore|create-establishment|load-demo|reset-establishment/.test(reason)&&!S.applied)render();if(/import-daily-pos|fec-import|restore|create-establishment|load-demo|reset-establishment/.test(reason))jRender();if(js)setTimeout(function(){toast(js.apres+' jours d’ouverture par semaine, lus dans vos journées de caisse');},900);}catch(e){}return r;};w._a15=true;for(var k in sv)if(Object.prototype.hasOwnProperty.call(sv,k))w[k]=sv[k];root.save=w;}
+      var reason0=String(arguments[0]||''),js=null;if(reason0==='import-daily-pos'){try{js=majJoursSemaine();}catch(e){}}var rp=null;if(reason0==='import-daily-pos'){try{rp=majJoursRepos();}catch(e){}}
+      var r=sv.apply(this,arguments);try{var reason=reason0;if(/fec-import|amort-fec|restore|create-establishment|load-demo|reset-establishment/.test(reason)&&!S.applied)render();if(/import-daily-pos|fec-import|restore|create-establishment|load-demo|reset-establishment/.test(reason))jRender();if(js||(rp&&rp.apres))setTimeout(function(){var m=js&&rp&&rp.apres?js.apres+' jours d’ouverture par semaine, '+reposTexte(rp.apres)+', lus':js?js.apres+' jours d’ouverture par semaine, lus':reposTexte(rp.apres)+', lu';toast(m.charAt(0).toUpperCase()+m.slice(1)+' dans vos journées de caisse');},900);}catch(e){}return r;};w._a15=true;for(var k in sv)if(Object.prototype.hasOwnProperty.call(sv,k))w[k]=sv[k];root.save=w;}
   var sw=root.switchEtab;if(typeof sw==='function'&&!sw._a15){var w2=function(){var r=sw.apply(this,arguments);S.applied=null;S.text='';S.lot=null;S.unknown=[];S.jour=null;setTimeout(function(){render();jRender();},200);return r;};w2._a15=true;for(var k2 in sw)if(Object.prototype.hasOwnProperty.call(sw,k2))w2[k2]=sw[k2];root.switchEtab=w2;}
   /* L'aperçu des clôtures dit aussi les jours d'ouverture qu'elles donnent, avant la validation. */
   var dp=root.dailyCsvPreview;if(typeof dp==='function'&&!dp._a15){var w3=function(){var r=dp.apply(this,arguments);try{var L=root.DAILY_CSV_LOT,e=doc.getElementById('daily-csv-result');if(L&&L.ok&&e){var mode=(doc.getElementById('daily-csv-conflict')||{}).value||'replace',x=jsemLigne(joursSemaine(L.newRows.concat(mode==='replace'?L.conflicts.map(function(c){return c.incoming;}):[])));if(x)e.insertAdjacentHTML('beforeend','<p class="note" style="margin:6px 0">'+x.replace('lus dans ces journées','lus dans ces journées de caisse')+'</p>');}}catch(err){}return r;};w3._a15=true;root.dailyCsvPreview=w3;}
+  /* C195 — toucher « Fermé » (Mes services ou la lettre du jour dans le calendrier) est un choix du patron : la caisse ne l'écrase plus. */
+  var bf=root.basculerFermeSem;if(typeof bf==='function'&&!bf._a15){var w4=function(){try{var d=DB();if(d)d.fermesSource={source:'patron',at:new Date().toISOString()};}catch(e){}return bf.apply(this,arguments);};w4._a15=true;root.basculerFermeSem=w4;}
   if(root.MutationObserver){var t=0;new root.MutationObserver(function(){if(t)return;t=setTimeout(function(){t=0;mount();doorNote();},150);}).observe(doc.body,{childList:true,subtree:true});}
   return true;
 }
-root.VerdictPassageUnique={journees:journees,planJournees:planJournees,appliquerJournees:appliquerJournees,joursSemaine:joursSemaine,majJoursSemaine:majJoursSemaine,renderJournees:jRender,mois:mois,moyenneOption:moyenneOption,analyse:analyse,infosArticles:infosArticles,periodLabel:periodLabel,tvaNum:tvaNum,createDish:createDish,readCsv:readCsv,volumes:volumes,unitPrice:unitPrice,guessCategory:guessCategory,similarDish:similarDish,draftRecipe:draftRecipe,render:render,preview:preview,apply:apply,state:S,setText:function(t,per){S.text=String(t||'');if(per){S.period=per;S.periodChosen=true;}preview();}};
+root.VerdictPassageUnique={journees:journees,planJournees:planJournees,appliquerJournees:appliquerJournees,joursSemaine:joursSemaine,majJoursSemaine:majJoursSemaine,etatRepos:etatRepos,prendreRepos:prendreRepos,garderRepos:garderRepos,majJoursRepos:majJoursRepos,reposTexte:reposTexte,renderJournees:jRender,mois:mois,moyenneOption:moyenneOption,analyse:analyse,infosArticles:infosArticles,periodLabel:periodLabel,tvaNum:tvaNum,createDish:createDish,readCsv:readCsv,volumes:volumes,unitPrice:unitPrice,guessCategory:guessCategory,similarDish:similarDish,draftRecipe:draftRecipe,render:render,preview:preview,apply:apply,state:S,setText:function(t,per){S.text=String(t||'');if(per){S.period=per;S.periodChosen=true;}preview();}};
 function boot(n){if(install())return;if(n>0)setTimeout(function(){boot(n-1);},300);}
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',function(){boot(60);});else boot(60);
 })(window);

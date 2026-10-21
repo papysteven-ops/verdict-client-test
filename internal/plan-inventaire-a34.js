@@ -137,7 +137,8 @@
     var texte = !actif() ? '' : (E.attente ? 'Essai terminé · tout reste ouvert' : E.niveau === 'essai' ? 'Essai · J-' + E.jours : (E.niveau === 'inventaire' ? (E.termine || (lire() || {}).essaiUtilise ? 'Passer à Pilotage ou Pro' : 'Tout Verdict · 14 j gratuits') : ''));
     if (!texte) { if (b) b.remove(); return; }
     if (!b) { b = doc.createElement('button'); b.id = 'vdPlanBadge'; b.type = 'button'; acts.appendChild(b); b.onclick = function () { ouvrirOffre(); }; }
-    b.innerHTML = '<i></i>' + texte; b.setAttribute('aria-label', texte);
+    /* C194 : appliquer() tourne toutes les 400 ms ; la pastille n'est réécrite que si son texte change (0 changement au repos) */
+    if (b.__vdTexte !== texte) { b.__vdTexte = texte; b.innerHTML = '<i></i>' + texte; b.setAttribute('aria-label', texte); }
   }
   function appliquer() {
     if (actif() && !lire() && !doc.getElementById('vdOffre') && doc.body) { ouvrirOffre('choix'); }
