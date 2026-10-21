@@ -139,7 +139,7 @@
     return '<div class="sh52-j" role="img" aria-label="L’équipe coûte ' + Math.round(part * 100) + ' € pour 100 € vendus, conseillé ' + Math.round(rep * 100) + ' € au plus : ' + mot + '">' +
       '<div class="sh52-jb"><i style="left:0;width:' + b[0] + '%;background:linear-gradient(90deg,#15803d,#22c55e)"></i><i style="left:' + b[0] + '%;width:' + (b[1] - b[0]) + '%;background:linear-gradient(90deg,#facc15,#eab308)"></i>' +
       '<i style="left:' + b[1] + '%;width:' + (b[2] - b[1]) + '%;background:linear-gradient(90deg,#fb923c,#f97316)"></i><i style="left:' + b[2] + '%;width:' + (100 - b[2]) + '%;background:linear-gradient(90deg,#ef4444,#991b1b)"></i>' +
-      '<em class="sh52-js"></em><span class="sh52-jr" style="left:' + b[0] + '%"></span><b class="sh52-jm" style="left:' + x + '%;--c:' + COUL[k] + '"><span>' + Math.round(part * 100) + '\u00a0€ · ' + mot + '</span></b></div>' +
+      '<em class="sh52-js"></em><span class="sh52-jr" style="left:' + b[0] + '%"></span><b class="sh52-jm" style="left:' + x + '%;--c:' + COUL[k] + '"><span style="transform:translateX(-' + (x > 75 ? 88 : x < 25 ? 12 : 50) + '%)">' + Math.round(part * 100) + '\u00a0€ pour 100\u00a0€ · ' + mot + '</span></b></div>' +
       '<div class="sh52-jl"><span></span><span style="left:' + b[0] + '%">conseillé : ' + Math.round(rep * 100) + '\u00a0€</span><span>trop lourde</span></div></div>';
   }
   /* La phrase utile, la même dans la carte et dans « À faire ». */
@@ -150,6 +150,13 @@
   var ART = { 'Petit-déjeuner': 'le petit-déjeuner', 'Midi': 'le midi', 'Après-midi': 'l’après-midi', 'Soir': 'le soir', 'Service continu': 'le service continu', 'Livraison': 'la livraison', 'Événement': 'l’événement' };
   function le(nom) { return ART[nom] || '« ' + nom + ' »'; }
   function cap(x) { return x.charAt(0).toUpperCase() + x.slice(1); }
+  /* C196 (Steven : « pourquoi 2 chiffres opposés, lequel est juste : 96 ou 41 ? ») : les deux sont justes, l'un en € pour
+     100 € vendus, l'autre en euros ; une phrase les relie avec les montants du jour (soustraction juste à l'euro près). */
+  function lienHTML(R) {
+    var t = tropTotal(R); if (t == null || t < 0.5 || !(R.total.part > R.repere + 0.005)) return '';
+    var c = Math.round(R.total.cout), tr = Math.round(t), quand = R.periode === 'jour' ? 'Ce jour-là' : R.periode === 'mois' ? 'Ce mois-ci' : 'Sur l’année';
+    return '<p class="sh52-lien">' + esc(quand + ', l’équipe a coûté ' + eur(c) + ' pour ' + eur(R.total.ht) + ' de ventes : ' + s100(R.total.part) + '. Au conseillé (' + conseil(R) + ' pour 100\u00a0€), elle aurait coûté ' + eur(c - tr) + ' : ' + eur(tr) + ' de trop.') + '</p>';
+  }
   function tropTotal(R) { return R.total && R.total.cout != null && R.total.ht > 0 ? R.total.cout - R.repere * R.total.ht : null; }
   function phrase(R) {
     if (!R || R.vide) return '';
@@ -179,13 +186,13 @@
     '@keyframes sh52In{from{left:0;opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}@keyframes sh52Shine{to{left:110%}}' +
     '@media (prefers-reduced-motion:reduce){.sh52-jm,.sh52-js::after{animation:none}}' +
     'html.vd-workspace-dark .sh52 .sh52-vert{color:#4ade80}html.vd-workspace-dark .sh52 .sh52-orange{color:#fb923c}html.vd-workspace-dark .sh52 .sh52-rouge{color:#f87171}' +
-    '.sh52 .sh52-c{display:none}.sh52 small.sh52-s{display:block;font-size:11px;font-weight:500;opacity:.7;margin-top:2px}.sh52 td{vertical-align:top}' +
+    '.sh52 .sh52-lien{margin:2px 0 10px;padding:9px 12px;border-radius:12px;background:rgba(148,163,184,.12);font-size:14px;line-height:1.45}.sh52 .sh52-c{display:none}.sh52 small.sh52-s{display:block;font-size:11px;font-weight:500;opacity:.7;margin-top:2px}.sh52 td{vertical-align:top}' +
     '@media (max-width:520px){.sh52 table{font-size:13px}.sh52 th,.sh52 td{padding:6px 3px}.sh52 td:first-child{white-space:normal}.sh52 .sh52-hab,.sh52 .sh52-l{display:none}.sh52 .sh52-c{display:inline}.sh52 .sh52-p{min-width:0;padding:2px 5px}}';
   function carteHTML(R) {
     var jour = R.periode === 'jour', aHab = jour && R.services.some(function (x) { return x.habituel != null; });
     var h = '<p class="kicker">Ventes et heures par service · ' + esc(libelle(R)) + (w.DB && (w.DB.demo || (w.DB.services || []).some(function (s) { return s && s.demo; })) ? ' · démonstration' : '') + '</p>' +
       '<p class="titre">' + esc(R.lourd && tropTotal(R) >= 0.5 ? 'L’équipe a coûté ' + eur(tropTotal(R)) + ' de trop' + (R.periode === 'jour' ? ' ce jour-là' : R.periode === 'mois' ? ' ce mois-ci' : ' sur l’année') : R.lourd ? cap(le(R.lourd.nom)) + ' coûte trop d’équipe' : R.total.part != null && R.total.part > R.repere + 0.005 ? 'L’équipe coûte ' + s100(R.total.part) + ', sur tous les services' : 'Équipe dans le conseillé, service par service') + '</p>' +
-      jaugeHTML(R.total.part, R.repere) + '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>Ventes</th><th>Équipe</th><th>En trop</th></tr></thead><tbody>';
+      jaugeHTML(R.total.part, R.repere) + lienHTML(R) + '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>Ventes</th><th>Équipe</th><th>En trop</th></tr></thead><tbody>';
     var plusieurs = R.services.length > 1;
     R.services.concat(plusieurs ? [R.total] : []).forEach(function (x) {
       var tot = x === R.total, trop = x.coutConnu && x.ht > 0 ? x.cout - R.repere * x.ht : null, ok = trop != null && trop < 0.5;

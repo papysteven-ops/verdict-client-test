@@ -92,7 +92,7 @@
     return '<div class="em54-j" role="img" aria-label="L’équipe coûte ' + Math.round(part * 100) + ' € pour 100 € vendus, conseillé ' + Math.round(rep * 100) + ' € au plus, ' + st.mot + '">' +
       '<div class="em54-jb"><i style="left:0;width:' + b[0] + '%;background:linear-gradient(90deg,#16a34a,#22c55e)"></i><i style="left:' + b[0] + '%;width:' + (b[1] - b[0]) + '%;background:#eab308"></i>' +
       '<i style="left:' + b[1] + '%;width:' + (b[2] - b[1]) + '%;background:#f97316"></i><i style="left:' + b[2] + '%;width:' + (100 - b[2]) + '%;background:linear-gradient(90deg,#ef4444,#b91c1c)"></i>' +
-      '<span class="em54-jr" style="left:' + b[0] + '%"></span><b class="em54-jm" style="left:' + x + '%;--c:' + COUL[st.k] + '"><span>' + pc(part) + '</span></b></div>' +
+      '<span class="em54-jr" style="left:' + b[0] + '%"></span><b class="em54-jm" style="left:' + x + '%;--c:' + COUL[st.k] + '"><span style="transform:translateX(-' + (x > 75 ? 88 : x < 25 ? 12 : 50) + '%)">' + Math.round(part * 100) + '\u00a0€ pour 100\u00a0€</span></b></div>' + /* C196 : même unité que « conseillé : 36 € » (jamais « 41 % » face à « 36 € ») */
       '<div class="em54-jl"><span>équipe légère</span><span style="left:' + b[0] + '%">conseillé : ' + Math.round(rep * 100) + ' €</span><span>trop lourde</span></div></div>';
   }
   function arr(x, p) { return Math.round(x / p) * p; }
