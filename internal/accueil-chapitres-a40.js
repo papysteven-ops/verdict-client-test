@@ -15,8 +15,8 @@
     /* C164 (Steven, 19/10 : « une cohérence de lecture ») : d'abord « Vos journées », à côté le détail de la journée
        (Journée d'exploitation, déplié), ensuite seulement les alertes et décisions (limite, décision, rupture, repères),
        en pleine largeur (b = bas). */
-    { k: 'jour', t: 'Jour', ouvert: true, p: ['modSaisie'], s: ['modJour'], b: ['modReperesJour', 'modServJ', 'modRupture', 'modLimites', 'modAction'] }, /* C170 (Steven, 19/10 : « je veux ça en dernier, en bas ») : repères, ventes et heures par service, rupture, puis limite de consommation et décision prioritaire tout en bas */ /* C165 : repères d'aujourd'hui dépliés, puis limite, décision, rupture */
-    { k: 'mois', t: 'Mois', ouvert: true, large: true /* C136 : calendrier et mois ont leur propre mise en page en deux colonnes : pleine largeur, l’un sous l’autre */, p: ['calendrier'], s: ['modMois', '~vdOffCard', '~modManqueCarte'], b: ['modServM', 'modEquipeM'] }, /* C172 : puis comparer les mois et anticiper l’équipe */
+    { k: 'jour', t: 'Jour', ouvert: true, p: ['modSaisie'], s: ['modJour'], b: ['modReperesJour', 'modServJ', 'modRupture', 'modLimites', 'modAction', '~calendrier'] }, /* C221 : le calendrier d’exploitation (ouvert, fermé, à vérifier) vit avec les journées, replié en bas */ /* C170 (Steven, 19/10 : « je veux ça en dernier, en bas ») : repères, ventes et heures par service, rupture, puis limite de consommation et décision prioritaire tout en bas */ /* C165 : repères d'aujourd'hui dépliés, puis limite, décision, rupture */
+    { k: 'mois', t: 'Mois', ouvert: true, large: true /* C136 : calendrier et mois ont leur propre mise en page en deux colonnes : pleine largeur, l’un sous l’autre */, p: [] /* C221 (Steven, 21/10 : « pourquoi on me parle de journées dans Mois ? doublon du journalier ») : plus de calendrier des jours ici ; le mois touché s’affiche sous « Vos mois » */, s: ['modMois', '~vdOffCard', '~modManqueCarte'], b: ['modServM', 'modEquipeM'] }, /* C172 : puis comparer les mois et anticiper l’équipe */
     { k: 'annee', t: 'Année', p: ['modAnnee'], s: [], b: ['modServA'] },
     { k: 'argent', t: 'Argent', p: ['modArgent'], s: ['~modTreso', '~modCash13'] }
   ];
@@ -30,6 +30,7 @@
     '.vx40-nav button{appearance:none;border:0;background:transparent;color:var(--mut,#8b94a0);font:inherit;font-size:14.5px;font-weight:700;letter-spacing:.01em;padding:11px 4px;border-radius:12px;cursor:pointer;min-height:44px;transition:background .2s,color .2s}' +
     '.vx40-nav button[aria-selected="true"]{background:linear-gradient(180deg,rgba(34,197,94,.20),rgba(34,197,94,.10));color:var(--txt,inherit);box-shadow:inset 0 0 0 1px rgba(34,197,94,.38)}' +
     '.vx40-nav button:focus-visible{outline:2px solid rgba(34,197,94,.6);outline-offset:2px}' +
+    '#vx40-jour #calendrier>.kicker,#vx40-jour #calendrier>h3,#vx40-jour #calendrier>.sous,#vx40-jour #calendrier>.legende,#vx40-jour #calendrier>.cal,#vx40-jour #calendrier>.cles{display:none!important}' + /* C222 : une seule grille des journées */
     '.vx40-ch[hidden]{display:none!important}.vx40-ch{display:grid;gap:0 16px;align-items:start}.vx40-col{min-width:0}.vx40-b{grid-column:1/-1}.vx40-b:empty{display:none}.vx40-ch>.vx40-suite{grid-column:1/-1}' +
     '.vx40-t{margin:0 0 12px;border:1px solid var(--line,rgba(148,163,184,.16));border-radius:var(--r-mod,18px);background:var(--card,transparent);overflow:hidden}' +
     '.vx40-t>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:14px 16px;min-height:44px}' +
@@ -59,10 +60,11 @@
     var d = m.ownerDocument;
     if (m.id === 'modReperesJour') return txt(m.querySelector('.titre')) || txt(m.querySelector('b'));
     if (m.id === 'modJour') { var ca = txt(d.getElementById('jCA')), v = txt(d.getElementById('jVerdict')); return [ca, v].filter(Boolean).join(' · '); }
+    if (m.id === 'calendrier') return 'Corriger, supprimer ou saisir la journée touchée dans « Vos journées »';
     if (m.id === 'vdOffCard') { var r = m.querySelector('.vo-row'); return r ? txt(r.querySelector('span')) + ' : ' + txt(r.querySelector('b')) : ''; }
     return txt(m.querySelector('.verdict-grand,.titre,.verdict,.grand'));
   }
-  function titre(m) { return txt(m.querySelector('.mod-h>.kicker,#vdOffTitle,h3,.kicker')) || ''; }
+  function titre(m) { if (m.id === 'calendrier') return 'Journée choisie'; /* C222 : la grille est dans « Vos journées » */ return txt(m.querySelector('.mod-h>.kicker,#vdOffTitle,h3,.kicker')) || ''; }
 
   function signaler(d) { try { d.defaultView.dispatchEvent(new d.defaultView.Event('resize')); } catch (e) {} }
   /* C137 (Steven, 17/10 : « le module courbe des journées : impossible de défiler ») : déplacer un module dans le document
@@ -176,7 +178,7 @@
         if (plie) {
           var t = d.querySelector('.vx40-t[data-m="' + id + '"]');
           if (t && m.parentElement !== t) deplacer(m, function () { t.appendChild(m); });
-          if (!t) { t = d.createElement('details'); t.className = 'vx40-t'; t.setAttribute('data-m', id); /* C133 : déplié d'office dans Jour et Mois (Steven, 17/10) ; le client peut replier. */ if (c.ouvert) t.open = true; t.innerHTML = '<summary><b></b><span></span><i aria-hidden="true">›</i></summary>'; m.before(t); deplacer(m, function () { t.appendChild(m); }); t.addEventListener('toggle', function () { signaler(d); if (t.open) d.defaultView.requestAnimationFrame(function () { aLaFin(t); }); }); }
+          if (!t) { t = d.createElement('details'); t.className = 'vx40-t'; t.setAttribute('data-m', id); /* C133 : déplié d'office dans Jour et Mois (Steven, 17/10) ; le client peut replier. */ if (c.ouvert && id !== 'calendrier') t.open = true; /* C222 : replié d’office */ t.innerHTML = '<summary><b></b><span></span><i aria-hidden="true">›</i></summary>'; m.before(t); deplacer(m, function () { t.appendChild(m); }); t.addEventListener('toggle', function () { signaler(d); if (t.open) d.defaultView.requestAnimationFrame(function () { aLaFin(t); }); }); }
           var tb = titre(m), rs = resume(m), sb = t.querySelector('summary>b'), sp = t.querySelector('summary>span');
           if (sb.textContent !== tb) sb.textContent = tb; if (sp.textContent !== rs) sp.textContent = rs;
           if (t.parentElement !== col) deplacer(t, function () { col.appendChild(t); });
