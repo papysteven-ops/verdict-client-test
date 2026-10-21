@@ -223,18 +223,44 @@
     for(var day=addDate(input.debut,-Math.max(params.delai,45));day<=end;day=addDate(day,1)){var c=cashByDay[day];if(!c){if(day>=input.debut)missingDates.push(day);continue;}var net=c.div(fraction(1).add(v));if(day>=input.debut){push(day,'encaissements',c);push(day,'commissions',net.mul(txC).mul(-1));}push(addDate(day,params.delai),'fournisseurs',net.mul(txA).mul(-1));}
     [['nets','salaires','jSal'],['fixes','loyer','jLoy'],['emprunt','emprunt','jEmp'],['prelevements','prelevements','jPre'],['investissements','investissements','jPre'],['cotisations','cotisations','jUr']].forEach(function(x){if(parseInput(M[x[0]],{nonnegative:true}).state!=='known')missingExpenses.push(x[0]);});
     var firstMonth=addDate(input.debut,-31).slice(0,7),lastMonth=end.slice(0,7);
+    /* TVA datée selon le régime de l'établissement (DGFiP : actualité du 22/09/2026 modifiée le 23/09/2026 ; FAQ des acomptes
+       modifiée le 14/10/2026). Réel normal : CA3 mensuelle (mois écoulé) ou trimestrielle (trimestre civil écoulé). Régime simplifié
+       jusqu'au 31/12/2026 : acomptes de juillet et de décembre estimés sur le semestre. À partir du 1er janvier 2027, aucun ancien
+       acompte n'est reconduit : CA3 dès janvier 2027 (exercice civil) ou après la clôture 2026/2027 (exercice décalé) ; solde
+       CA12 / CA12E et acompte de juillet 2027 : montant indiqué (document ou expert-comptable), sinon plan incomplet.
+       Régime inconnu : mensuel jusqu'au 31/12/2026, inconnu ensuite. À faire confirmer par l'expert-comptable. */
+    var TV=input.tvaRegime||{},tvR=TV.regime==='simplifie'||TV.regime==='normal'?TV.regime:null,tvP=TV.periodicite==='mensuelle'||TV.periodicite==='trimestrielle'?TV.periodicite:null,tvM=TV.montants||{},tvC=null,echeances=[],Y27='2027-01-01';
+    if(/^\d{2}-\d{2}$/.test(String(TV.cloture||''))){var tcm=Number(String(TV.cloture).slice(0,2)),tcd=Number(String(TV.cloture).slice(3));if(tcm===12&&tcd===31)tvC='2026-12-31';else if(tcm>=1&&tcm<=11&&tcd>=1&&tcd<=31)tvC=due('2027-'+String(TV.cloture).slice(0,2),tcd);}
+    function nextMonth(ym){return addDate(ym+'-01',32).slice(0,7);}
+    function monthsBack(ym,n){var out=[ym];while(out.length<n)out.unshift(addDate(out[0]+'-01',-1).slice(0,7));return out;}
+    function inWindow(d){return d>=input.debut&&d<=end;}
+    function monthVat(ym){var monthly=fraction(0),count=0;Object.keys(cashByDay).forEach(function(d){if(d.slice(0,7)===ym){monthly=monthly.add(cashByDay[d]);count++;}});if(!count)return null;var days=Number(addDate(nextMonth(ym)+'-01',-1).slice(8)),net=monthly.div(fraction(1).add(v)),fixed=parseInput(M.fixes),ded=net.mul(txA).add(fixed.state==='known'?fixed.value:0).mul(deductible.value);return {v:monthly.sub(net).sub(ded),complete:count>=days};}
+    function vatEvent(d,nature,months){if(!inWindow(d))return;var total=fraction(0),known=true;months.forEach(function(m){var x=monthVat(m);if(!x){known=false;missingExpenses.push('tva:'+m);return;}if(!x.complete){known=false;missingExpenses.push('tva:'+m);}total=total.add(x.v);});var amount=total.cmp(0)>0?total:fraction(0);push(d,'tva',amount.mul(-1));echeances.push({date:d,nature:nature,periode:months[0]+(months.length>1?'/'+months[months.length-1]:''),montant:money(amount.mul(-1)),complet:known,source:'estimation'});}
+    function vatUnknown(d,nature,key){if(!inWindow(d))return;var given=tvM[nature]!=null&&tvM[nature]!==''?parseInput(tvM[nature],{nonnegative:true}):null;if(given&&given.state==='known'){push(d,'tva',fraction(given.value).mul(-1));echeances.push({date:d,nature:nature,montant:money(fraction(given.value).mul(-1)),complet:true,source:'indique'});return;}missingExpenses.push(key);echeances.push({date:d,nature:nature,montant:null,complet:false,source:'inconnu'});}
+    function vatDue(ym){var d=due(ym,params.jTva),prev=addDate(ym+'-01',-1).slice(0,7),pm=Number(prev.slice(5)),mm=Number(ym.slice(5));
+      if(tvR==='normal'||(!tvR&&d<Y27)){var p=tvR==='normal'?(tvP||'mensuelle'):'mensuelle';if(p==='mensuelle')vatEvent(d,'ca3-mensuelle',[prev]);else if(pm%3===0)vatEvent(d,'ca3-trimestrielle',monthsBack(prev,3));return;}
+      if(!tvR){if(inWindow(d)){missingExpenses.push('tva-regime');echeances.push({date:d,nature:'regime-inconnu',montant:null,complet:false,source:'inconnu'});}return;}
+      if(d<Y27){if(mm===7)vatEvent(d,'acompte-simplifie',monthsBack(ym.slice(0,4)+'-06',6));else if(mm===12)vatEvent(d,'acompte-simplifie',monthsBack(ym,6));return;}
+      if(!tvC){if(inWindow(d)){missingExpenses.push('tva-cloture');echeances.push({date:d,nature:'cloture-inconnue',montant:null,complet:false,source:'inconnu'});}return;}
+      var first=nextMonth(tvC.slice(0,7));if(prev<first)return;
+      if(!tvP){if(inWindow(d)){missingExpenses.push('tva-periodicite');echeances.push({date:d,nature:'periodicite-inconnue',montant:null,complet:false,source:'inconnu'});}return;}
+      if(tvP==='mensuelle'){vatEvent(d,'ca3-mensuelle',[prev]);return;}
+      if(pm%3!==0)return;var q=monthsBack(prev,3);if(q[0]<first){vatUnknown(d,'transition','tva-transition');return;}vatEvent(d,'ca3-trimestrielle',q);
+    }
+    function vatOnce(){if(tvR!=='simplifie'||!tvC)return;if(tvC==='2026-12-31'){vatUnknown('2027-05-04','solde-ca12','tva-solde');return;}
+      var ym3=nextMonth(nextMonth(nextMonth(tvC.slice(0,7)))),last=tvC===due(tvC.slice(0,7),0);vatUnknown(due(ym3,last?0:Number(tvC.slice(8))),'solde-ca12e','tva-solde');
+      var cm=Number(tvC.slice(5,7));if(cm>=7&&cm<=11)vatUnknown(due('2027-07',params.jTva),'acompte-2027-07','tva-acompte');}
     for(var ym=firstMonth;ym<=lastMonth;ym=addDate(ym+'-01',32).slice(0,7)){
       [['nets','salaires','jSal'],['fixes','loyer','jLoy'],['emprunt','emprunt','jEmp'],['prelevements','prelevements','jPre'],['investissements','investissements','jPre']].forEach(function(x){var p=parseInput(M[x[0]],{nonnegative:true});if(p.state==='known')push(due(ym,params[x[2]]),x[1],fraction(p.value).mul(-1));});
       var previous=addDate(ym+'-01',-1).slice(0,7),prevMonth=Number(previous.slice(5)),cot=parseInput(M.cotisations,{nonnegative:true});if(cot.state==='known'&&(!params.trim||prevMonth%3===0))push(due(ym,params.jUr),'cotisations',fraction(cot.value).mul(params.trim?-3:-1));
-      var monthly=fraction(0),count=0;Object.keys(cashByDay).forEach(function(d){if(d.slice(0,7)===previous){monthly=monthly.add(cashByDay[d]);count++;}});
-      var prevDays=Number(addDate(ym+'-01',-1).slice(8));if(count){var net=monthly.div(fraction(1).add(v)),fixed=parseInput(M.fixes),ded=net.mul(txA).add(fixed.state==='known'?fixed.value:0).mul(deductible.value),payable=monthly.sub(net).sub(ded);push(due(ym,params.jTva),'tva',payable.cmp(0)>0?payable.mul(-1):0);if(count<prevDays&&due(ym,params.jTva)>=input.debut&&due(ym,params.jTva)<=end)missingExpenses.push('tva:'+previous);}
-      else if(due(ym,params.jTva)>=input.debut&&due(ym,params.jTva)<=end)missingExpenses.push('tva:'+previous);
+      vatDue(ym);
     }
+    vatOnce();
     var weeks=[],balance=fraction(opening.value),minimum=null,critical=null,totalOut=fraction(0);
     for(var w=0;w<13;w++){var start=addDate(input.debut,w*7),finish=addDate(start,6),receipts=fraction(0),payments=fraction(0),detail={};for(var d=start;d<=finish;d=addDate(d,1))(flow[d]||[]).forEach(function(f){if(f.v.cmp(0)>0)receipts=receipts.add(f.v);else{payments=payments.add(f.v);detail[f.k]=(detail[f.k]||fraction(0)).add(f.v);}});balance=balance.add(receipts).add(payments);totalOut=totalOut.sub(payments);var row={i:w,debut:start,fin:finish,encaissements:money(receipts),sorties:money(payments),solde:money(balance),detail:Object.keys(detail).map(function(k){return {k:k,v:money(detail[k])};}).sort(function(a,b){return a.v-b.v;})};weeks.push(row);if(!minimum||balance.cmp(minimum)<0){minimum=balance;critical=row;}}
     var complete=!missingDates.length&&!missingExpenses.length,average=totalOut.div(13);
     function state(b){b=fraction(b);return !complete?'info':b.cmp(0)<0?'rouge':average.cmp(0)<=0?'info':b.cmp(average.mul(2))<0?'orange':b.cmp(average.mul(4))<0?'jaune':'vert';}
-    weeks.forEach(function(w){w.etat=state(w.solde);});return {ok:true,complete:complete,missingDates:missingDates,missingExpenses:Array.from(new Set(missingExpenses)),semaines:weeks,pointBas:money(minimum),semaineCritique:critical,etat:state(minimum),sortiesMoyennes:money(average),causes:critical?critical.detail.slice(0,3):[],params:params,engineVersion:'A10.1'};
+    weeks.forEach(function(w){w.etat=state(w.solde);});return {ok:true,complete:complete,missingDates:missingDates,missingExpenses:Array.from(new Set(missingExpenses)),semaines:weeks,pointBas:money(minimum),semaineCritique:critical,etat:state(minimum),sortiesMoyennes:money(average),causes:critical?critical.detail.slice(0,3):[],params:params,tva:{regime:tvR,periodicite:tvP,cloture:tvC?String(TV.cloture):null,clotureExercice:tvC,echeances:echeances.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;})},engineVersion:'A10.1'};
   }
 
   function laborAmounts(x){var batch=fraction(x.batchMin||0),finish=fraction(x.finishMin||0),people=fraction(x.batchPeople||0),finPeople=fraction(x.finishPeople||0),rate=fraction(x.rate||0);var per=batch.cmp(0)>0?batch.mul(people).div(x.batchQty):fraction(0),active=per.add(finish.mul(finPeople)),cost=active.mul(rate).div(60),batchCost=batch.mul(people).mul(rate).div(60);return {cost:cost.number(),activeMinutesPerPortion:active.number(),batchCost:money(batchCost),exact:{cost:cost.toJSON(),active:active.toJSON(),batchCost:batchCost.toJSON()}};}

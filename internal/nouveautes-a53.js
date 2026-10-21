@@ -11,6 +11,8 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C199', date: '2026-10-21', titre: 'TVA 2027 : fin du régime simplifié au 1er janvier 2027. Votre trésorerie à 13 semaines date vos échéances de TVA selon votre régime, son rythme et votre clôture (lus dans votre FEC, sinon une seule question), sans reconduire les anciens acomptes ; à faire confirmer par votre expert-comptable' },
+    { id: 'C198', date: '2026-10-21', titre: 'Sécurité : si Chrome n’est pas à jour sur votre ordinateur, Verdict vous le signale discrètement (vos données sont dans ce navigateur), avec la marche à suivre' },
     { id: 'C196', date: '2026-10-21', titre: 'Équipe du jour : « 41 € pour 100 € vendus » et « 96 € de trop » sont maintenant reliés en une phrase, avec les montants du jour' },
     { id: 'C195', date: '2026-10-21', titre: 'Votre jour de fermeture se lit aussi dans vos journées de caisse : « Mes services » le coche pour vous, et si vous aviez choisi autre chose, Verdict vous le dit et vous laisse décider en un clic' },
     { id: 'C193', date: '2026-10-21', titre: 'Vos journées de caisse se déposent dans « Importer mes chiffres », l’export « ventes par article » les remplit aussi, et vos jours d’ouverture se lisent dans la caisse : rien à saisir' },
