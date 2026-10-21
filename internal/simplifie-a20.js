@@ -73,6 +73,19 @@
     'html.vd-workspace-light #v-dec .dec-rec{background:#f6f8fa!important;border:1px solid #e3e8ee!important}' +
     'html.vd-workspace-light #v-dec [style*="rgba(0,0,0,0.25)"]{background:#f4f6f9!important;border:1px solid #e3e8ee!important}' +
     'html.vd-workspace-light #v-dec [style*="color:#8b94a0"]{color:#5b6573!important}';
+  /* C233 (Steven, 21/10 : « revoir entièrement les 3 modules, mode clair complètement noir, illisible ») : À faire, Alertes et
+     Équipe gardaient en clair la barre d'onglets noire collée en haut, les cases noires des Alertes et les boîtes sombres de
+     « Tester une décision ». Fond clair partout ; onglet actif au vert Verdict ; le texte se règle alors en foncé. */
+  css.textContent +=
+    'html.vd-workspace-light #v-priorities .chips,html.vd-workspace-light #v-alertes .chips,html.vd-workspace-light #v-org .chips{background:#fff!important;border:1px solid #d5dde5!important;box-shadow:0 6px 18px rgba(20,35,50,.10)!important;backdrop-filter:none!important}' +
+    'html.vd-workspace-light #v-priorities .chips>button,html.vd-workspace-light #v-alertes .chips>button,html.vd-workspace-light #v-org .chips>button{color:#334155!important;background:transparent!important}' +
+    'html.vd-workspace-light #v-priorities .chips>button.on,html.vd-workspace-light #v-alertes .chips>button.on,html.vd-workspace-light #v-org .chips>button.on{background:#e8f5ee!important;color:#166534!important;box-shadow:inset 0 0 0 1px #bfe5cd!important}' +
+    'html.vd-workspace-light #v-alertes .kpis{background:#fff!important;border:1px solid #e3e8ee!important}' +
+    'html.vd-workspace-light #v-alertes .kpi{background:#fff!important;border-color:#e3e8ee!important;box-shadow:none!important}' +
+    'html.vd-workspace-light #v-org .dec-col,html.vd-workspace-light #v-org .dec-vd,html.vd-workspace-light #v-org .dec-rec{background:#f6f8fa!important;border:1px solid #e3e8ee!important}' +
+    'html.vd-workspace-light #v-org .dec-col.after{background:#effaf3!important;border:1px solid #cdeed8!important;border-left:4px solid #22c55e!important}' +
+    'html.vd-workspace-light #v-org .warn.on{background:#fff7ed!important;border:1px solid #fed7aa!important;color:#9a3412!important}' +
+    'html.vd-workspace-light #v-org [style*="rgba(0,0,0,0.25)"]{background:#f4f6f9!important;border:1px solid #e3e8ee!important}';
   /* C76 — Simuler commence au « Point de départ calculé » (demande de Steven) : rien au-dessus ; puis les curseurs et
      le total ; le registre des décisions et le journal des gains (seulement ici) passent tout en bas. */
   css.textContent +=

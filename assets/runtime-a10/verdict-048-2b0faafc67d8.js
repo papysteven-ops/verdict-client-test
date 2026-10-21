@@ -1771,7 +1771,7 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     var ec=root.DB&&root.DB.demoCompleteVersion==='R275'?null:vmCache.ecart,B=vmBreakdown(vmEntrees(vmSel,ec));vmLastB=B;var _unused=0,prevI=dispo.indexOf(vmSel)>0?dispo[dispo.indexOf(vmSel)-1]:null,P=prevI!=null?vmBreakdown(vmEntrees(prevI,ec)):null;
     var neg=B.reste<0,etat=neg?'rouge':(B.pour100Reste<3?'orange':'vert');
     var h=head+' data-etat="'+etat+'" data-vm-mois="'+vmSel+'"><div class="mod-h"><p class="kicker">'+vmE(C.kicker)+'</p></div>';
-    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px" role="group" aria-label="'+vmE(C.choisir)+'">'+dispo.slice(-6).map(function(i){var on=i===vmSel;return '<button type="button" data-vm-m="'+i+'" aria-pressed="'+on+'" style="min-height:36px;padding:4px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:'+(on?'#e2e8f0':'transparent')+';color:'+(on?'#0b0e12':'inherit')+';font:inherit;font-size:13px;cursor:pointer">'+vmE(vmMois(i))+'</button>';}).join('')+'</div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px" role="group" aria-label="'+vmE(C.choisir)+'">'+dispo.slice(-6).map(function(i){var on=i===vmSel;return '<button type="button" data-vm-m="'+i+'" aria-pressed="'+on+'" style="min-height:36px;padding:4px 12px;border-radius:999px;border:1px solid '+(on?'#94a3b8':'rgba(148,163,184,.6)')+';background:'+(on?'#e2e8f0':'transparent')+';color:'+(on?'#0b0e12':'inherit')+';font:inherit;font-size:13px;cursor:pointer">'+vmE(vmMois(i))+'</button>';}).join('')+'</div>';
     h+='<p class="verdict-grand" style="color:'+(neg?'#ef4444':'inherit')+'">'+vmE(vmF(neg?C.manque:C.reste,{m:vmMois(vmSel),dm:(/^[aeiouyhâéèêîôûœ]/i.test(vmMois(vmSel))?'d’':'de ')+vmMois(vmSel),v:vmEur(Math.abs(B.pour100Reste),2)}))+'</p>';
     h+='<p class="sous" style="margin:0 0 8px">'+vmE(vmF(C.total,{v:vmEur(B.caHT)}))+'</p>';
     h+='<p class="sous" data-tax-scope style="margin:4px 0 10px;font-size:14px">'+vmE(vmF(C.taxNote,{c:vmEur(100-B.pour100Reste,2)}))+'</p>';
@@ -1792,7 +1792,7 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
   function vmBindMonths(doc){
     if(doc.__verdictMoneyClicks)return;doc.__verdictMoneyClicks=true;
     doc.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('#modArgent [data-vm-m]');if(!b)return;
-      var i=Number(b.getAttribute('data-vm-m'));if(!Number.isInteger(i)||i<0||i>11||i===vmSel)return;
+      var i=Number(b.getAttribute('data-vm-m'));if(!Number.isInteger(i)||i<-12||i>11||i===vmSel)return; /* C234 : les mois de l'an dernier ont un indice négatif */
       e.preventDefault();vmSel=i;vmAttach(true,true);
     });
   }

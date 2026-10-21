@@ -11,6 +11,10 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C236', date: '2026-10-21', titre: 'Abonnement : les prix en deux blocs clairs. Votre abonnement (1 établissement inclus) : Pilotage 69 €, Pro 129 € HT/mois ; puis chaque établissement en plus : +39 € ou +69 €' },
+    { id: 'C235', date: '2026-10-21', titre: 'Écran Abonnement : avec votre compte, le prix d’un établissement en plus redonne aussi le montant à l’année (+390 € HT en Pilotage, +690 € HT en Pro)' },
+    { id: 'C234', date: '2026-10-21', titre: 'Argent : les mois de l’an dernier (de juillet à novembre) s’ouvrent bien quand vous les touchez, et leurs boutons se voient aussi en thème clair' },
+    { id: 'C233', date: '2026-10-21', titre: 'À faire, Alertes et Équipe lisibles en mode clair. « À faire » dit ce que vous achetez de trop en nourriture, combien (en euros) et quoi faire, étape par étape' },
     { id: 'C231', date: '2026-10-21', titre: 'Mêmes écrans partout et dans toutes les langues : l’abonnement lu sur votre compte, les verrous, la lecture rapide et les minimums du jour sont traduits dans les 7 langues, et l’exemple d’exercice décalé est le même partout' },
     { id: 'C230', date: '2026-10-21', titre: 'Plusieurs établissements : un établissement créé « à partir de la référence » ouvre son propre Accueil, même quand vous le créez depuis la Carte (plus jamais le nom, la date ni les chiffres de la référence) ; dans Comparer, le résultat est dit « avant impôt »' },
     { id: 'C229', date: '2026-10-21', titre: 'Inventaire et Carte ne font qu’un : les factures déposées dans l’Inventaire arrivent dans Pilotage et leurs prix dans vos fiches, un produit facturé se relie à son ingrédient (« Entrecote VBF » = « Entrecôte de bœuf »), et l’Inventaire est gardé sur votre compte. Nouveau : « Partager » donne à votre équipe un lien qui ouvre l’Inventaire seul, sans Pilotage ni Carte, sans prix ni chiffre d’affaires ; l’équipe compte, vous recevez le comptage. Plus de bandeau sur les champs pendant le comptage, « prix connus 33/42 » dans l’Analyse' },
