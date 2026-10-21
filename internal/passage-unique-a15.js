@@ -5,7 +5,10 @@
    point5CommitImport, verdictDishSalesImport). Tout reste dans la page : rien n'est envoyé.
    C192 — La carte vient de la caisse, sans saisie : prix, TVA, famille et ventes lus dans l'export ; moyenne des mois
    complets ; recette reprise d'un plat proche ou d'une fiche type (internal/fiches-types-a59.js) ; une seule question pour
-   ce qui n'a pas de recette fixe (coût d'une portion) ; périmètre « toute la carte, mois complets » établi par la caisse. */
+   ce qui n'a pas de recette fixe (coût d'une portion) ; périmètre « toute la carte, mois complets » établi par la caisse.
+   C193 — Les journées de caisse : l'import des clôtures est dans « Importer mes chiffres » (plus dans un bloc caché) ;
+   l'export « ventes par article » remplit aussi les journées (CA TTC du jour = somme des articles) dans la même validation,
+   sans jamais écraser une clôture déjà importée ; les jours d'ouverture par semaine se lisent dans ces journées. */
 (function(root){
 'use strict';
 var doc=root.document;if(!doc||root.VerdictPassageUnique)return;
@@ -36,7 +39,7 @@ function readCsv(text){
   var sep=csvSep(lines[0]),head=csvRow(lines[0],sep),c=columns(head),tv=tvaCol(head);
   if(c.nom<0||c.qte<0)return {ok:false,reason:'colonnes article et quantité introuvables (en-têtes lus : '+head.join(', ')+')',rows:[]};
   var rows=[];for(var i=1;i<lines.length;i++){var p=csvRow(lines[i],sep);var st=norm(c.status>=0?p[c.status]:'');if(/annul|cancel|void|supprim/.test(st))continue;rows.push({nom:String(p[c.nom]||'').trim(),qte:num(p[c.qte]),date:c.date>=0?isoDate(p[c.date]):'',cat:c.cat>=0?p[c.cat]:'',gross:c.gross>=0?num(p[c.gross]):null,ticket:c.ticket>=0?String(p[c.ticket]||'').trim():'',refund:/refund|rembours|retour/.test(st),tva:tv>=0?tvaNum(p[tv]):null});}
-  return {ok:true,rows:rows,columns:c,hasDate:c.date>=0,hasTicket:c.ticket>=0,hasGross:c.gross>=0,hasTva:tv>=0};
+  return {ok:true,rows:rows,columns:c,hasDate:c.date>=0,hasTicket:c.ticket>=0,hasGross:c.gross>=0,hasTva:tv>=0,grossHT:c.gross>=0&&/\bht\b|hors taxe/.test(norm(head[c.gross]))&&!/ttc/.test(norm(head[c.gross]))};
 }
 /* Panier moyen et commandes par jour, uniquement si le fichier les contient vraiment. */
 function volumes(read){
@@ -96,6 +99,73 @@ function coherence(read,per){
   return 'Ventes de la caisse sur '+esc(annee)+' : <b>'+eur0((ht))+' HT</b> · votre document comptable : '+eur0((fi.totals.revenue))+' HT — '+(rel<0.005?'<b>identique</b>.':rel<0.03?'proche (écart de '+eur0((Math.abs(gap)))+').':'<b>écart de '+eur0((Math.abs(gap)))+'</b> : la caisse ne contient peut-être pas toutes les ventes (livraison, traiteur, autre caisse).');
 }
 
+/* ───────── C193 — journées de caisse : lues dans l'export « ventes par article », jours d'ouverture lus dans les journées ───────── */
+function isoToday(){var t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+function dateLabel(iso){var j=+String(iso).slice(8,10);return (j===1&&!(root.LOCALE&&root.LOCALE!=='fr')?'1er':j)+' '+moisLocal(+String(iso).slice(5,7)-1)+' '+String(iso).slice(0,4);}
+/* Une journée venue d'une caisse (clôture, export) : jamais une saisie à la main ni la démonstration. */
+function journeeCaisse(r){var s=String(r&&r.source||'');return !!(r&&!r.demo&&/pos|csv|caisse|import|ticket/i.test(s)&&!/demo|manual/i.test(s));}
+/* CA TTC de chaque jour = somme des articles du jour (remboursements déduits) ; tickets seulement si le fichier les numérote. */
+function journees(read){
+  if(!read||!read.ok||!read.hasDate||!read.hasGross)return null;
+  var J={},max=isoToday();
+  read.rows.forEach(function(r){if(!r.date||r.date>max||r.gross==null)return;var g=r.refund?-Math.abs(r.gross):r.gross;if(read.grossHT)g=g*(1+(r.tva!=null?r.tva:tvaDefaut())/100);
+    var x=J[r.date]||(J[r.date]={ttc:0,tk:{}});x.ttc+=g;if(r.ticket)x.tk[r.ticket]=1;});
+  return Object.keys(J).sort().map(function(d){var n=Object.keys(J[d].tk).length;return {date:d,caJ:Math.round(J[d].ttc*100)/100,tkJ:read.hasTicket&&n?n:null};}).filter(function(x){return x.caJ>0;});
+}
+/* Ce que l'export apporte aux journées déjà connues : nouvelles, identiques, clôtures gardées, saisies remplacées par la caisse. */
+function planJournees(read){
+  var L=journees(read);if(!L||!L.length)return null;
+  var d=DB(),H=d&&d.histJour||[],idx={};H.forEach(function(r,i){if(r&&r.date)idx[r.date]=i;});
+  var P={rows:L,nouveaux:[],identiques:0,gardees:0,remplacees:[]};
+  L.forEach(function(x){var o=idx[x.date]!=null?H[idx[x.date]]:null;
+    if(!o)P.nouveaux.push(x);else if(Math.abs((num(o.caJ)||0)-x.caJ)<0.01)P.identiques++;else if(journeeCaisse(o)||o.demo)P.gardees++;else P.remplacees.push(x);});
+  var h=JSON.stringify(L.map(function(x){return [x.date,x.caJ,x.tkJ];}));P.fingerprint=typeof root.point5Hash==='function'?root.point5Hash(h):String(h.length);
+  return P;
+}
+function ligneJournee(x,at){return {date:x.date,jour:+x.date.slice(8),caJ:x.caJ,tkJ:x.tkJ,ca:null,tickets:null,source:'pos-articles',importedAt:at};}
+function appliquerJournees(P){
+  var d=DB();if(!d||!P||!(P.nouveaux.length||P.remplacees.length))return 0;
+  d.histJour=d.histJour||[];var at=new Date().toISOString(),faits=P.nouveaux.concat(P.remplacees);
+  P.nouveaux.forEach(function(x){d.histJour.push(ligneJournee(x,at));});
+  P.remplacees.forEach(function(x){var i=d.histJour.findIndex(function(r){return r&&r.date===x.date;});if(i<0)return;var o=d.histJour[i];
+    (d.dailyCorrections=d.dailyCorrections||[]).push({date:x.date,avant:{caJ:o.caJ,tkJ:o.tkJ,source:o.source||null},apres:{caJ:x.caJ,tkJ:x.tkJ},at:at,via:'ventes-par-article'});d.histJour[i]=ligneJournee(x,at);});
+  faits.forEach(function(x){d.moisPilotage=d.moisPilotage||{};d.moisPilotage[x.date.slice(0,7)]=true;d.ouvertsJours=d.ouvertsJours||[];if(d.ouvertsJours.indexOf(x.date)<0)d.ouvertsJours.push(x.date);});
+  d.dailyImports=d.dailyImports||[];d.dailyImports.push({fingerprint:P.fingerprint,at:at,rows:P.rows.length,added:P.nouveaux.length,replaced:P.remplacees.length,kept:P.gardees,source:'ventes-par-article'});if(d.dailyImports.length>120)d.dailyImports=d.dailyImports.slice(-120);
+  try{if(typeof root.dailyCsvRecompute==='function')root.dailyCsvRecompute();}catch(e){}
+  return faits.length;
+}
+/* Jours d'ouverture par semaine : le nombre de jours ouverts le plus fréquent sur les semaines entières couvertes par la caisse
+   (fermetures annuelles et jours fériés n'y changent rien). « extra » : journées sur le point d'être ajoutées. */
+function joursSemaine(extra){
+  var d=DB(),vu={};(d&&d.histJour||[]).forEach(function(r){if(r&&r.date&&journeeCaisse(r)&&num(r.caJ)>0)vu[String(r.date).slice(0,10)]=1;});
+  (extra||[]).forEach(function(x){if(x&&x.caJ>0)vu[x.date]=1;});
+  var dates=Object.keys(vu).filter(function(s){return /^\d{4}-\d{2}-\d{2}$/.test(s);}).sort();if(dates.length<28)return null;
+  var t0=Date.parse(dates[0]+'T00:00:00Z'),t1=Date.parse(dates[dates.length-1]+'T00:00:00Z'),W={};
+  dates.forEach(function(s){var t=Date.parse(s+'T00:00:00Z'),lundi=t-((new Date(t).getUTCDay()+6)%7)*864e5;if(lundi<t0||lundi+6*864e5>t1)return;W[lundi]=(W[lundi]||0)+1;});
+  var C={},n=0;Object.keys(W).forEach(function(k){C[W[k]]=(C[W[k]]||0)+1;n++;});if(n<8)return null;
+  var best=null;Object.keys(C).forEach(function(k){if(best==null||C[k]>C[best]||(C[k]===C[best]&&+k>+best))best=k;});
+  var j=+best;return {jours:j,journees:dates.length,semaines:n,debut:dates[0],fin:dates[dates.length-1],texte:j+' par semaine, lu'+(j>1?'s':'')+' dans vos '+int(dates.length)+' journées de caisse (du '+dateLabel(dates[0])+' au '+dateLabel(dates[dates.length-1])+')'};
+}
+function majJoursSemaine(){var d=DB(),js=joursSemaine();if(!d||!d.in||!js)return null;var avant=num(d.in.jsem);d.jsemSource={source:'caisse',jours:js.jours,journees:js.journees,at:new Date().toISOString()};if(avant===js.jours)return null;d.in.jsem=js.jours;return {avant:avant,apres:js.jours};}
+function jsemLigne(js){if(!js)return '';var d=DB(),avant=num(d&&d.in&&d.in.jsem);return 'Jours d’ouverture : <b>'+js.jours+' par semaine</b>, lus dans ces journées'+(avant!=null&&avant!==js.jours?' (vous aviez indiqué '+String(avant).replace('.',',')+')':'')+' : rien à saisir.';}
+function journeesLigne(P){
+  if(!P)return '';var n=P.nouveaux.length+P.remplacees.length;
+  if(!n)return 'Journées de caisse : déjà à jour ('+int(P.rows.length)+' jours'+(P.gardees?', '+int(P.gardees)+' clôture'+(P.gardees>1?'s':'')+' de caisse gardée'+(P.gardees>1?'s':'')+' telle'+(P.gardees>1?'s':'')+' quelle'+(P.gardees>1?'s':''):'')+').';
+  return '<b>'+int(n)+' journée'+(n>1?'s':'')+' de caisse</b> remplie'+(n>1?'s':'')+' depuis cet export, du '+esc(dateLabel(P.rows[0].date))+' au '+esc(dateLabel(P.rows[P.rows.length-1].date))+' : chiffre du jour TTC = somme des articles'+(P.rows.some(function(x){return x.tkJ!=null;})?', tickets comptés':'')+'.'+
+    (P.gardees?' '+int(P.gardees)+' clôture'+(P.gardees>1?'s':'')+' de caisse déjà importée'+(P.gardees>1?'s':'')+' : gardée'+(P.gardees>1?'s':'')+' telle'+(P.gardees>1?'s':'')+' quelle'+(P.gardees>1?'s':'')+'.':'')+
+    (P.remplacees.length?' '+int(P.remplacees.length)+' journée'+(P.remplacees.length>1?'s':'')+' saisie'+(P.remplacees.length>1?'s':'')+' à la main, différente'+(P.remplacees.length>1?'s':'')+' : la caisse fait foi (l’ancienne valeur est gardée dans l’historique des corrections).':'');
+}
+/* La carte « Journées de caisse » dans Importer mes chiffres : ce qui est déjà là, puis l'import des clôtures. */
+function jCard(){return doc.getElementById('a15-journees');}
+function jEtat(){var d=DB(),L=(d&&d.histJour||[]).filter(journeeCaisse).map(function(r){return String(r.date).slice(0,10);}).sort(),js=joursSemaine();
+  if(!L.length)return '<div class="a15-sum">Aucune journée de caisse pour l’instant. L’export « ventes par article » ci-dessus les remplit aussi.</div>';
+  return '<div class="a15-sum a15-ok"><b>'+int(L.length)+' journée'+(L.length>1?'s':'')+' de caisse</b>, du '+esc(dateLabel(L[0]))+' au '+esc(dateLabel(L[L.length-1]))+(js?' · '+js.jours+' jour'+(js.jours>1?'s':'')+' d’ouverture par semaine':'')+'.</div>';}
+function jRender(){var c=jCard();if(!c)return;var form=typeof root.dailyCsvHTML==='function'?String(root.dailyCsvHTML()).replace('<details class="card">','<details class="a15-det">'):'';
+  c.innerHTML='<h2 style="margin:0 0 4px">Journées de caisse</h2><p class="note" style="margin:0 0 6px">Le chiffre de chaque journée (clôture, ticket Z). Il suit vos ventes jour par jour à l’Accueil et donne vos jours d’ouverture.</p>'+jEtat()+form;}
+function jMount(){var p=card(),c=jCard();if(!p||!p.parentNode)return;
+  if(c){if(p.nextElementSibling!==c)p.parentNode.insertBefore(c,p.nextSibling);return;}
+  c=doc.createElement('section');c.id='a15-journees';c.className='card';c.setAttribute('data-guard-ignore','1');p.parentNode.insertBefore(c,p.nextSibling);jRender();}
+
 /* ───────── Vera complète : catégorie, plat proche, recette de départ ───────── */
 var CATS=[[/plat du jour|suggestion/,'Plat du jour'],[/cafe gourmand|the gourmand/,'Desserts'],[/petit.?dej|brunch|croissant|pain au choc|viennois/,'Petit-déjeuner'],[/supplement|extra|option|topping|sauce en plus/,'Suppléments'],[/biere|vin\b|rose\b|rouge\b|blanc\b|cocktail|spritz|mojito|champagne|pinte|demi|whisky|rhum|gin|vodka|aperol|pastis|kir/,'Boissons alcoolisées'],[/\beau\b|soda|soft|coca|jus|the\b|cafe|espresso|cappuccino|latte|chocolat chaud|limonade|perrier|sirop|smoothie|boisson/,'Boissons'],[/dessert|tiramisu|brulee|mousse|tarte|fondant|glace|sorbet|cafe gourmand|crumble|cheesecake|panna|cookie|brownie|gaufre|crepe sucree|pudding|riz au lait|compote|fromage blanc|muffin|banana bread|energy ball/,'Desserts'],[/fromage|camembert|plateau/,'Fromages'],[/burger|pizza|bowl|tacos|wrap|sandwich|kebab|steak|entrecote|tartare|cote de|magret|poulet|poisson|saumon|dorade|pates|risotto|lasagne|curry|wok|ramen|pho|bo bun|couscous|tajine|blanquette|bourguignon|moules|omelette|croque|quiche|galette|hot dog|plat\b/,'Plats'],[/frites|accompagnement|garniture|riz nature|legumes|salade verte|pommes de terre/,'Accompagnements'],[/menu|formule|combo/,'Menus'],[/salade/,'Salades'],[/entree|soupe|veloute|tartare|carpaccio|oeuf|terrine|rillette|bruschetta|nems|samoussa|houmous|tapas|planche|a partager/,'Entrées']];
 function guessCategory(nom,cats){
@@ -129,7 +199,8 @@ function css(){
   if(doc.getElementById('a15-css'))return;var st=doc.createElement('style');st.id='a15-css';
   st.textContent='#a15-passage{margin-top:14px}#a15-passage .a15-steps{display:flex;gap:6px;margin:10px 0 12px;flex-wrap:wrap}#a15-passage .a15-step{flex:1;min-width:120px;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line,#d6dde3);font-weight:700;font-size:13px}#a15-passage .a15-step b{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;background:rgba(127,127,127,.15)}#a15-passage .a15-step.ok{border-color:#16a34a;background:rgba(22,163,74,.08)}#a15-passage .a15-step.ok b{background:#16a34a;color:#fff}#a15-passage .a15-step.now{border-color:#d4a72c;background:rgba(212,167,44,.1)}#a15-passage .a15-step.now b{background:#d4a72c;color:#1a1200}'+
   '#a15-passage .a15-row{display:grid;grid-template-columns:auto minmax(0,1.4fr) 70px minmax(120px,1fr) 90px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line,#e5e9ee);font-size:14px}@media(max-width:640px){#a15-passage .a15-row{grid-template-columns:28px 1fr 1fr}#a15-passage .a15-row>span:nth-child(2),#a15-passage .a15-row .a15-q{grid-column:2/4}#a15-passage .a15-row select{grid-column:2/3}#a15-passage .a15-row input[type=text]{grid-column:3/4}#a15-passage .a15-why{margin-left:0;grid-column:2/4}}#a15-passage .a15-row input[type=checkbox]{width:18px;height:18px}#a15-passage .a15-row select,#a15-passage .a15-row input[type=text]{padding:7px 8px;border-radius:9px;border:1px solid var(--line,#d6dde3);background:transparent;color:inherit;font:600 13.5px system-ui;min-width:0;width:100%}#a15-passage .a15-why{grid-column:1/-1;font-size:12.5px;opacity:.75;margin:-4px 0 0 26px}'+
-  '#a15-passage .a15-sum{border-radius:14px;padding:11px 13px;background:rgba(212,167,44,.1);margin:10px 0;font-size:14px}#a15-passage .a15-ok{background:rgba(22,163,74,.1)}#a15-passage .a15-warn{background:rgba(249,115,22,.12)}#a15-passage .a15-vera{display:flex;gap:10px;align-items:center;margin:12px 0 6px}#a15-passage .a15-vera img{width:40px;height:40px;border-radius:50%;box-shadow:0 0 0 2px #d4a72c}#a15-passage .a15-vera b{font-size:15px}#a15-passage .a15-file{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}#a15-passage .a15-file select{padding:9px 10px;border-radius:10px;border:1px solid var(--line,#d6dde3);background:transparent;color:inherit;font:600 14px system-ui}#a15-passage label.a15-consent{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:8px 0}#a15-passage .a15-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}#a15-passage .a15-list{margin:6px 0 10px;padding-left:20px;font-size:14px}#a15-passage .a15-list li{margin:4px 0}#a15-passage .a15-ask{border:1.5px solid #d4a72c;border-radius:14px;padding:11px 13px;margin:10px 0;background:rgba(212,167,44,.08)}#a15-passage .a15-q1{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between;margin:8px 0;font-size:14px}#a15-passage .a15-q1in{display:flex;gap:8px;align-items:center;font-size:13px}#a15-passage .a15-q1 input{width:96px;padding:7px 8px;border-radius:9px;border:1px solid var(--line,#d6dde3);background:transparent;color:inherit;font:600 14px system-ui}#a15-passage details.a15-det{margin:8px 0}#a15-passage details.a15-det>summary{cursor:pointer;font-weight:750;font-size:14px;padding:6px 0}';
+  '#a15-passage .a15-sum{border-radius:14px;padding:11px 13px;background:rgba(212,167,44,.1);margin:10px 0;font-size:14px}#a15-passage .a15-ok{background:rgba(22,163,74,.1)}#a15-passage .a15-warn{background:rgba(249,115,22,.12)}#a15-passage .a15-vera{display:flex;gap:10px;align-items:center;margin:12px 0 6px}#a15-passage .a15-vera img{width:40px;height:40px;border-radius:50%;box-shadow:0 0 0 2px #d4a72c}#a15-passage .a15-vera b{font-size:15px}#a15-passage .a15-file{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}#a15-passage .a15-file select{padding:9px 10px;border-radius:10px;border:1px solid var(--line,#d6dde3);background:transparent;color:inherit;font:600 14px system-ui}#a15-passage label.a15-consent{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:8px 0}#a15-passage .a15-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}#a15-passage .a15-list{margin:6px 0 10px;padding-left:20px;font-size:14px}#a15-passage .a15-list li{margin:4px 0}#a15-passage .a15-ask{border:1.5px solid #d4a72c;border-radius:14px;padding:11px 13px;margin:10px 0;background:rgba(212,167,44,.08)}#a15-passage .a15-q1{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between;margin:8px 0;font-size:14px}#a15-passage .a15-q1in{display:flex;gap:8px;align-items:center;font-size:13px}#a15-passage .a15-q1 input{width:96px;padding:7px 8px;border-radius:9px;border:1px solid var(--line,#d6dde3);background:transparent;color:inherit;font:600 14px system-ui}#a15-passage details.a15-det{margin:8px 0}#a15-passage details.a15-det>summary{cursor:pointer;font-weight:750;font-size:14px;padding:6px 0}'+
+  '#a15-journees{margin-top:14px}#a15-journees .a15-sum{border-radius:14px;padding:11px 13px;background:rgba(212,167,44,.1);margin:10px 0;font-size:14px}#a15-journees .a15-ok{background:rgba(22,163,74,.1)}#a15-journees details.a15-det{margin:8px 0}#a15-journees details.a15-det>summary{cursor:pointer;font-weight:750;font-size:14px;padding:6px 0}';
   (doc.head||doc.documentElement).appendChild(st);
 }
 function avatar(){var i=doc.querySelector('img.v-help-avatar');return i&&i.src?i.src:'';}
@@ -137,11 +208,11 @@ function card(){return doc.getElementById('a15-passage');}
 function mount(){
   var fec=doc.getElementById('v44-fec'),host=doc.getElementById('v-in'),c0=card();
   /* La carte FEC peut arriver après : on se place toujours juste sous elle. */
-  if(c0){if(fec&&fec.parentNode&&fec.nextElementSibling!==c0)fec.parentNode.insertBefore(c0,fec.nextSibling);return true;}
+  if(c0){if(fec&&fec.parentNode&&fec.nextElementSibling!==c0)fec.parentNode.insertBefore(c0,fec.nextSibling);jMount();return true;}
   if(!host)return false;
   css();var c=doc.createElement('section');c.id='a15-passage';c.className='card';c.setAttribute('data-guard-ignore','1');
   if(fec&&fec.parentNode)fec.parentNode.insertBefore(c,fec.nextSibling);else host.appendChild(c);
-  render();return true;
+  render();jMount();return true;
 }
 function stepsHtml(){
   var f=fecDone(),k=caisseDone(),v=k&&!S.unknown.length;
@@ -160,7 +231,7 @@ function render(){
   var h='<h2 style="margin:0 0 4px">Un seul passage : fichier comptable + export de caisse</h2><p class="note" style="margin:0 0 6px">Vos deux notes d’un coup. Le fichier comptable (FEC) donne la <b>Structure</b> ; l’export « ventes par article » de votre caisse donne la <b>Carte</b>. Tout est lu ici, dans ce navigateur : rien n’est envoyé.</p>'+stepsHtml();
   if(!f){h+='<div class="a15-sum">Étape 1 : déposez votre fichier comptable dans la carte juste au-dessus. Vous pouvez aussi commencer par l’export de caisse ci-dessous : la note Carte n’attend pas la Structure.</div>';}
   else{var fi=d.fecImport;h+='<div class="a15-sum a15-ok">Fichier comptable lu : exercice '+esc(fi.period&&fi.period.year||'')+', chiffre d’affaires '+money(fi.totals.revenue)+'. Structure : '+(st.ready?'<b>score '+st.score+' / 100</b>':'<b>à compléter</b> — '+esc(st.missing.slice(0,4).join(', ')))+'</div>';}
-  if(S.applied){var a=S.applied;h+='<div class="a15-sum a15-ok"><b>Carte créée depuis votre caisse</b> · '+esc(periodLabel(a.period))+' : '+int(a.matched)+' plat'+(a.matched>1?'s':'')+' avec leurs ventes'+(a.created?' · '+int(a.created)+' fiche'+(a.created>1?'s':'')+' créée'+(a.created>1?'s':'')+' par Vera'+(a.vide?', sans recette':', à vérifier'):'')+(a.ajouts&&a.ajouts.length?' · '+int(a.ajouts.length)+' produit'+(a.ajouts.length>1?'s':'')+' ajouté'+(a.ajouts.length>1?'s':'')+' au catalogue avec un prix type':'')+(a.panier?' · panier moyen '+money(a.panier)+' et '+a.cmdj+' commandes par jour lus dans la caisse':'')+(a.dated?' · ventes datées conservées (écart matière théorique / réel)':'')+'.'+(a.complet&&!(a.manquent||[]).length?'<br>Toute la carte vendue est couverte, recettes comprises : l’Indice Carte se calcule.':'')+((a.manquent||[]).length?'<br><b>Reste à compléter :</b> '+esc(a.manquent.slice(0,5).join(', '))+(a.manquent.length>5?'…':'')+'. L’Indice Carte attend '+(a.manquent.length>1?'ces recettes':'cette recette')+'.':'')+'<br>Carte : '+int(ct.plats)+' plats, '+int(ct.withVol)+' avec ventes, '+int(ct.incomplete)+' recette'+(ct.incomplete>1?'s':'')+' à compléter.</div><div class="a15-actions"><button type="button" class="btn" data-a15="score">Voir mon score</button><button type="button" class="btn ghost" data-a15="carte">Compléter mes recettes</button><button type="button" class="btn ghost" data-a15="again">Un autre mois</button></div>';}
+  if(S.applied){var a=S.applied;h+='<div class="a15-sum a15-ok"><b>Carte créée depuis votre caisse</b> · '+esc(periodLabel(a.period))+' : '+int(a.matched)+' plat'+(a.matched>1?'s':'')+' avec leurs ventes'+(a.created?' · '+int(a.created)+' fiche'+(a.created>1?'s':'')+' créée'+(a.created>1?'s':'')+' par Vera'+(a.vide?', sans recette':', à vérifier'):'')+(a.ajouts&&a.ajouts.length?' · '+int(a.ajouts.length)+' produit'+(a.ajouts.length>1?'s':'')+' ajouté'+(a.ajouts.length>1?'s':'')+' au catalogue avec un prix type':'')+(a.panier?' · panier moyen '+money(a.panier)+' et '+a.cmdj+' commandes par jour lus dans la caisse':'')+(a.dated?' · ventes datées conservées (écart matière théorique / réel)':'')+(a.jours?' · '+int(a.jours)+' journée'+(a.jours>1?'s':'')+' de caisse remplie'+(a.jours>1?'s':''):'')+(a.jsem?' · '+a.jsem.apres+' jours d’ouverture par semaine, lus dans la caisse':'')+'.'+(a.complet&&!(a.manquent||[]).length?'<br>Toute la carte vendue est couverte, recettes comprises : l’Indice Carte se calcule.':'')+((a.manquent||[]).length?'<br><b>Reste à compléter :</b> '+esc(a.manquent.slice(0,5).join(', '))+(a.manquent.length>5?'…':'')+'. L’Indice Carte attend '+(a.manquent.length>1?'ces recettes':'cette recette')+'.':'')+'<br>Carte : '+int(ct.plats)+' plats, '+int(ct.withVol)+' avec ventes, '+int(ct.incomplete)+' recette'+(ct.incomplete>1?'s':'')+' à compléter.</div><div class="a15-actions"><button type="button" class="btn" data-a15="score">Voir mon score</button><button type="button" class="btn ghost" data-a15="carte">Compléter mes recettes</button><button type="button" class="btn ghost" data-a15="again">Un autre mois</button></div>';}
   else{
     h+='<label class="a15-consent"><input type="checkbox" id="a15-consent"><span>J’autorise l’analyse locale de cet export pour préremplir la carte de cet établissement. Le fichier n’est ni envoyé ni conservé.</span></label>'+
       '<div class="a15-file"><label class="btn" for="a15-file">Choisir l’export de caisse</label><input id="a15-file" type="file" accept=".csv,.txt,text/csv,text/plain" hidden><select id="a15-period" aria-label="Mois du fichier">'+monthOptions(S.period||addMonth(today(),-1))+'</select><span class="note" id="a15-fname">Colonnes minimales : article et quantité. La date, le montant, la TVA et la famille servent aussi : un export de plusieurs mois donne la carte de toute l’année, saisons comprises.</span></div><div id="a15-preview"></div>';
@@ -201,14 +272,16 @@ function preview(){
   S.unknown.sort(function(a,b){return b.qte-a.qte;});
   var U=S.unknown,prets=U.filter(function(u){return u.draft.kind==='copie'||u.fiche;}),manque=U.filter(function(u){return !(u.draft.kind==='copie'||u.fiche);});
   var nouveaux=produitsAjoutes(U),per=periodLabel(period),mo=lot.moyenne;
+  /* C193 — les journées de caisse viennent du même export, dans la même validation. */
+  S.jour=planJournees(read);var jl=journeesLigne(S.jour),jsl=S.jour?jsemLigne(joursSemaine(S.jour.nouveaux.concat(S.jour.remplacees))):'';
   var h='<div class="a15-sum">'+int(read.rows.length)+' lignes lues · <b>'+int(U.length+lot.matched.length)+' articles vendus</b>'+(mo?' · '+esc(per):' · '+esc(per))+(lot.matched.length?' · '+int(lot.matched.length)+' déjà sur votre carte':'')+(lot.invalid.length?' · '+int(lot.invalid.length)+' ligne'+(lot.invalid.length>1?'s':'')+' à corriger ('+esc(lot.invalid.slice(0,2).map(function(x){return x.reason;}).join(' ; '))+')':'')+(lot.duplicate?' · <b>fichier déjà importé</b>':'')+'.'+
-    (vol&&(vol.panier||vol.cmdj)?'<br>Lu dans la caisse : '+(vol.tickets?int(vol.tickets)+' tickets':'')+(vol.panier?' · panier moyen '+money(vol.panier)+' TTC':'')+(vol.cmdj?' · '+vol.cmdj+' commandes par jour sur '+int(vol.days)+' jours':'')+'.':'')+'</div>';
+    (vol&&(vol.panier||vol.cmdj)?'<br>Lu dans la caisse : '+(vol.tickets?int(vol.tickets)+' tickets':'')+(vol.panier?' · panier moyen '+money(vol.panier)+' TTC':'')+(vol.cmdj?' · '+vol.cmdj+' commandes par jour sur '+int(vol.days)+' jours':'')+'.':'')+(U.length?'':(jl?'<br>'+jl:'')+(jsl?'<br>'+jsl:''))+'</div>';
   if(U.length){
     var coh=coherence(read,period);
     h+='<div class="a15-vera">'+(avatar()?'<img alt="" src="'+esc(avatar())+'">':'')+'<div><b>Vera a préparé votre carte</b><div class="note">Tout vient de votre caisse : nom, prix, TVA, catégorie et ventes. Pour les recettes, Vera reprend un plat proche de votre carte ou les quantités habituelles d’une brasserie. Vous les vérifiez quand vous voulez : vos factures et votre document comptable les contrôlent.</div></div></div><ul class="a15-list">'+
       (prets.length?'<li><b>'+int(prets.length)+' fiche'+(prets.length>1?'s':'')+' prête'+(prets.length>1?'s':'')+'</b> : prix et TVA lus dans la caisse, recette '+(prets.some(function(u){return u.fiche;})?'type':'copiée d’un plat proche')+' à vérifier.</li>':'')+
       (nouveaux.length?'<li><b>'+int(nouveaux.length)+' produit'+(nouveaux.length>1?'s':'')+' ajouté'+(nouveaux.length>1?'s':'')+' à votre catalogue</b> avec un prix type ('+esc(nouveaux.slice(0,4).join(', '))+(nouveaux.length>4?'…':'')+') : vos factures le remplaceront.</li>':'')+
-      (coh?'<li>'+coh+'</li>':'')+'</ul>';
+      (coh?'<li>'+coh+'</li>':'')+(jl?'<li>'+jl+'</li>':'')+(jsl?'<li>'+jsl+'</li>':'')+'</ul>';
     if(manque.length){
       h+='<div class="a15-ask"><b>'+(manque.length>1?int(manque.length)+' informations manquent':'Une seule information manque')+'</b><div class="note">'+(manque.every(function(u){return u.variable;})?'Ce qui change chaque jour n’a pas de recette fixe : Verdict ne la devine pas.':'Pas de recette type pour '+(manque.length>1?'ces articles':'cet article')+' : Verdict ne la devine pas.')+' Un seul chiffre suffit.</div>';
       manque.forEach(function(u){var i=U.indexOf(u);h+='<label class="a15-q1"><span><b>'+esc(u.nom)+'</b> · '+fmtVol(u.qte,mo)+'</span><span class="a15-q1in">Marchandise d’une '+(u.variable?'assiette':'portion')+', en moyenne (€ HT) <input type="text" inputmode="decimal" data-a15-portion="'+i+'" placeholder="ex. 4,20"></span></label>';});
@@ -262,13 +335,14 @@ function apply(vide){
     var complet=periodeComplete(S.read,S.period)&&!lot.unknown.length;
     if(d.carteRef){d.carteRef.fullMonth=complet;d.carteRef.origine='export-caisse';if(lot.moyenne)d.carteRef.moyenne=lot.moyenne;else delete d.carteRef.moyenne;}
     var dated=false;if(S.read&&S.read.hasDate&&typeof root.verdictDishSalesImport==='function'){try{var r=root.verdictDishSalesImport(S.text);dated=!!(r&&r.ok);}catch(e){}}
+    var jours=appliquerJournees(S.jour),jsem=jours?majJoursSemaine():null;S.jour=null;
     var vol=volumes(S.read),used=null;
     if(vol&&vol.panier&&vol.cmdj){var q=d.in||(d.in={});if(num(q.panier)==null)q.panier=vol.panier;if(num(q.cmdj)==null)q.cmdj=vol.cmdj;used=vol;d.caisseVolumes={period:S.period,panier:vol.panier,cmdj:vol.cmdj,tickets:vol.tickets,days:vol.days,source:'export-caisse',at:new Date().toISOString()};}
-    S.applied={period:S.period,matched:lot.matched.length,created:created,ajouts:S.ajouts.slice(),manquent:manquent,complet:complet,vide:!!vide,panier:used&&used.panier,cmdj:used&&used.cmdj,dated:dated};
+    S.applied={period:S.period,matched:lot.matched.length,created:created,ajouts:S.ajouts.slice(),manquent:manquent,complet:complet,vide:!!vide,panier:used&&used.panier,cmdj:used&&used.cmdj,dated:dated,jours:jours,jsem:jsem};
     try{root.save('un-seul-passage');}catch(e){}
     try{root.fillInputs();}catch(e){}try{root.readInputs();}catch(e){}try{root.refreshAll();}catch(e){}
     try{if(root.VerdictSaveGuard&&root.VerdictSaveGuard.rebase)root.VerdictSaveGuard.rebase();}catch(e){}
-    S.unknown=[];render();toast('Carte créée depuis la caisse'+(created?' · '+created+' plat'+(created>1?'s':''):''));
+    S.unknown=[];render();jRender();toast('Carte créée depuis la caisse'+(created?' · '+created+' plat'+(created>1?'s':''):''));
   };
   if(typeof root.verdictBeforeRisk==='function'){root.verdictBeforeRisk('import-pos-items').then(function(ok){if(ok)go();});}else go();
 }
@@ -280,12 +354,17 @@ function doorNote(){
 function install(){
   if(!root.STORE||typeof root.point5CsvAnalyse!=='function'||!doc.getElementById('v-in'))return false;
   mount();doorNote();
-  var sv=root.save;if(typeof sv==='function'&&!sv._a15){var w=function(){var r=sv.apply(this,arguments);try{var reason=String(arguments[0]||'');if(/fec-import|amort-fec|restore|create-establishment|load-demo|reset-establishment/.test(reason)&&!S.applied)render();}catch(e){}return r;};w._a15=true;for(var k in sv)if(Object.prototype.hasOwnProperty.call(sv,k))w[k]=sv[k];root.save=w;}
-  var sw=root.switchEtab;if(typeof sw==='function'&&!sw._a15){var w2=function(){var r=sw.apply(this,arguments);S.applied=null;S.text='';S.lot=null;S.unknown=[];setTimeout(render,200);return r;};w2._a15=true;for(var k2 in sw)if(Object.prototype.hasOwnProperty.call(sw,k2))w2[k2]=sw[k2];root.switchEtab=w2;}
+  var sv=root.save;if(typeof sv==='function'&&!sv._a15){var w=function(){
+      /* C193 — import des clôtures de caisse : les jours d'ouverture se lisent dans les journées, au même enregistrement. */
+      var reason0=String(arguments[0]||''),js=null;if(reason0==='import-daily-pos'){try{js=majJoursSemaine();}catch(e){}}
+      var r=sv.apply(this,arguments);try{var reason=reason0;if(/fec-import|amort-fec|restore|create-establishment|load-demo|reset-establishment/.test(reason)&&!S.applied)render();if(/import-daily-pos|fec-import|restore|create-establishment|load-demo|reset-establishment/.test(reason))jRender();if(js)setTimeout(function(){toast(js.apres+' jours d’ouverture par semaine, lus dans vos journées de caisse');},900);}catch(e){}return r;};w._a15=true;for(var k in sv)if(Object.prototype.hasOwnProperty.call(sv,k))w[k]=sv[k];root.save=w;}
+  var sw=root.switchEtab;if(typeof sw==='function'&&!sw._a15){var w2=function(){var r=sw.apply(this,arguments);S.applied=null;S.text='';S.lot=null;S.unknown=[];S.jour=null;setTimeout(function(){render();jRender();},200);return r;};w2._a15=true;for(var k2 in sw)if(Object.prototype.hasOwnProperty.call(sw,k2))w2[k2]=sw[k2];root.switchEtab=w2;}
+  /* L'aperçu des clôtures dit aussi les jours d'ouverture qu'elles donnent, avant la validation. */
+  var dp=root.dailyCsvPreview;if(typeof dp==='function'&&!dp._a15){var w3=function(){var r=dp.apply(this,arguments);try{var L=root.DAILY_CSV_LOT,e=doc.getElementById('daily-csv-result');if(L&&L.ok&&e){var mode=(doc.getElementById('daily-csv-conflict')||{}).value||'replace',x=jsemLigne(joursSemaine(L.newRows.concat(mode==='replace'?L.conflicts.map(function(c){return c.incoming;}):[])));if(x)e.insertAdjacentHTML('beforeend','<p class="note" style="margin:6px 0">'+x.replace('lus dans ces journées','lus dans ces journées de caisse')+'</p>');}}catch(err){}return r;};w3._a15=true;root.dailyCsvPreview=w3;}
   if(root.MutationObserver){var t=0;new root.MutationObserver(function(){if(t)return;t=setTimeout(function(){t=0;mount();doorNote();},150);}).observe(doc.body,{childList:true,subtree:true});}
   return true;
 }
-root.VerdictPassageUnique={mois:mois,moyenneOption:moyenneOption,analyse:analyse,infosArticles:infosArticles,periodLabel:periodLabel,tvaNum:tvaNum,createDish:createDish,readCsv:readCsv,volumes:volumes,unitPrice:unitPrice,guessCategory:guessCategory,similarDish:similarDish,draftRecipe:draftRecipe,render:render,preview:preview,apply:apply,state:S,setText:function(t,per){S.text=String(t||'');if(per){S.period=per;S.periodChosen=true;}preview();}};
+root.VerdictPassageUnique={journees:journees,planJournees:planJournees,appliquerJournees:appliquerJournees,joursSemaine:joursSemaine,majJoursSemaine:majJoursSemaine,renderJournees:jRender,mois:mois,moyenneOption:moyenneOption,analyse:analyse,infosArticles:infosArticles,periodLabel:periodLabel,tvaNum:tvaNum,createDish:createDish,readCsv:readCsv,volumes:volumes,unitPrice:unitPrice,guessCategory:guessCategory,similarDish:similarDish,draftRecipe:draftRecipe,render:render,preview:preview,apply:apply,state:S,setText:function(t,per){S.text=String(t||'');if(per){S.period=per;S.periodChosen=true;}preview();}};
 function boot(n){if(install())return;if(n>0)setTimeout(function(){boot(n-1);},300);}
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',function(){boot(60);});else boot(60);
 })(window);

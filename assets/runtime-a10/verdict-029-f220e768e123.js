@@ -15663,7 +15663,7 @@ function drawPil(){
   /* Point 1 = situation ; point 4 = rythme à tenir ; puis seulement la saisie
      et les preuves du calendrier. L'ancien second bloc de quatre objectifs a
      été retiré : il répétait les mêmes chiffres avec des temporalités différentes. */
-  el.innerHTML=base+h+(typeof sourcesEtatHTML==='function'?sourcesEtatHTML():'')+dailyCsvHTML()+'<div id="point4-calendar">'+blocCalendrierJours(R)+'</div>'+_rap+blocCalendrier();
+  el.innerHTML=base+h+(typeof sourcesEtatHTML==='function'?sourcesEtatHTML():'')+/* C193 : l'import des journées de caisse est dans Importer mes chiffres */'<div id="point4-calendar">'+blocCalendrierJours(R)+'</div>'+_rap+blocCalendrier();
 }
 function enregistrerJourCalcule(j,caJ,tkJ){
   var cle=jourCle(j);
