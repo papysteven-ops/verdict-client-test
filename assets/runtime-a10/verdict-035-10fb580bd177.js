@@ -9,7 +9,7 @@
 
 var AU_YES=[['mesure','Oui, avec une mesure'],['part','En partie'],['non','Non'],['nsp','Je ne sais pas']];
 var AU_CTX_QUESTIONS=[
-  {id:'matiere_reelle',q:'Pouvez-vous rapprocher achats, stock et pertes sur une même période ?',o:AU_YES,why:'Le coût matière représente {fc} du CA. Le compte mesure le total, pas la cause de l’écart.',decides:'Distinguer hausse des prix, variation de stock et pertes réelles.',proof:'Achats + inventaires d’ouverture et de clôture + relevé des pertes sur la même période.'},
+  {id:'matiere_reelle',q:'Pouvez-vous rapprocher achats, stock et pertes sur une même période ?',o:AU_YES,why:'Les achats nourriture représentent {fc} du CA. Le compte mesure le total, pas la cause de l’écart.',decides:'Distinguer hausse des prix, variation de stock et pertes réelles.',proof:'Achats + inventaires d’ouverture et de clôture + relevé des pertes sur la même période.'},
   {id:'equipe_services',q:'Le coût complet de l’équipe est-il rapproché des ventes, service par service ?',o:AU_YES,why:'Le coût humain représente {ms} du CA. Un total annuel ne montre pas le service qui absorbe la marge.',decides:'Distinguer un sureffectif structurel d’un mauvais placement des heures.',proof:'Rapport caisse par service + heures réellement travaillées + coût chargé.'},
   {id:'canaux_nets',q:'La contribution nette est-elle calculée séparément pour chaque canal ?',o:AU_YES,why:'Les commissions saisies représentent {com} du CA. Une commission seule ne donne pas le coût complet du canal.',decides:'Identifier le canal qui apporte du résultat, pas seulement du volume.',proof:'CA HT, remises, commission, emballage, remboursement et coût matière par canal.'},
   {id:'engagements_fixes',q:'Les engagements futurs de trésorerie sont-ils documentés ?',o:AU_YES,why:'La rentabilité calculée est de {rn}. Elle ne prouve pas la trésorerie disponible après dette et investissements.',decides:'Séparer une structure rentable d’une trésorerie sous tension.',proof:'Échéancier d’emprunts, crédits-bails, investissements signés et dettes exigibles.'},
@@ -162,7 +162,7 @@ function auCtxHTML(R){
   var E=auCtxEtat(R),c=auCtx(),C=auCtxConstats(R),q=auCtxQuestionActive(R),h='';
   h+='<div class="au-sc v43-audit-refine" data-v12-terrain-questionnaire data-audit-optional><div class="au-tag">Questions stratégiques · facultatives · propres à votre modèle</div>'+
     '<h2 class="au-h">Seulement ce que les chiffres ne peuvent pas trancher</h2>'+
-    '<p class="au-p">Votre audit est déjà disponible. Verdict a sélectionné <b>'+E.total+' questions utiles</b> pour ce '+esc(auProfil().format)+' ; aucune question générique n’est ajoutée pour remplir un formulaire.</p>'+
+    '<p class="au-p">Votre audit est déjà disponible. Verdict a sélectionné <b>'+E.total+' questions utiles</b> pour votre modèle «\u00a0'+esc(auProfil().format)+'\u00a0» ; aucune question générique n’est ajoutée pour remplir un formulaire.</p>'+
     '<div class="au-refine-ready"><span class="au-refine-check" aria-hidden="true">✓</span><div><b>Le calcul reste indépendant</b><p>Vos réponses qualifient les causes et les preuves. Elles ne changent ni le score, ni les comptes, ni le chiffre minimum.</p></div></div>'+
     '<details class="au-refine-shell" '+(AU_CTX_UI_OPEN?'open ':'')+'ontoggle="auCtxToggle(this)"><summary><span><b>Affiner les causes</b><small>Facultatif · une question à la fois · '+E.n+' / '+E.total+'</small></span><span class="au-refine-action">'+(E.n===0?'Commencer':(E.n<E.total?'Reprendre':'Revoir'))+'</span></summary>'+
     '<div class="au-refine-body"><div class="v12-terrain-progress" role="progressbar" aria-label="Progression de l’affinage facultatif" aria-valuemin="0" aria-valuemax="'+E.total+'" aria-valuenow="'+E.n+'"><i style="width:'+E.pct+'%"></i></div>';
@@ -196,7 +196,7 @@ function auTruthLedgerHTML(R,P,dq){
     'CA HT analysé : '+eur(R.d.ca),
     'Solde de pilotage avant impôt : '+eur(R.d.res)+' · '+pct(R.v.rn),
     'Chiffre minimum annuel : '+(p.attainable?eur(p.breakEven):'non calculable'),
-    'Résultat après choc de CA −10 % : '+eur(R.d.ca*.9-R.d.cvT*.9-R.d.cf)
+    'Résultat après choc de CA −10 % : '+eur(stressStruct(R).ca10.res)
   ];
   var declared=[
     'Modèle : '+M.format,
@@ -204,7 +204,7 @@ function auTruthLedgerHTML(R,P,dq){
     'Mois actifs : '+(typeof R.d.mois==='number'&&isFinite(R.d.mois)?fr(R.d.mois,0):'— non renseigné')+' · jours ouverts : '+(typeof R.d.jAn==='number'&&isFinite(R.d.jAn)?fr(R.d.jAn,0):'— non renseigné'),
     'Origine : '+(sim?'modèle fictif estimatif':'données déclarées par le client')
   ];
-  var n1html=n1.ready?'<b style="color:'+(n1.res>=0?'#168f43':'#c43b45')+'">'+(n1.res>=0?'+':'−')+eur(Math.abs(n1.res))+' de résultat</b><p>'+n1.from.an+' → '+n1.to.an+' · CA '+(n1.ca>=0?'+':'−')+eur(Math.abs(n1.ca))+' · score '+(n1.score===null?'— non calculable':(n1.score>=0?'+':'')+fr(n1.score,0))+' pt(s).</p>':'<b>Comparaison N−1 non calculable</b><p>Aucune période annuelle consécutive et comparable n’est figée. Verdict refuse d’inventer une tendance. Ajoutez les deux exercices dans Trajectoire.</p><button type="button" class="btn sec" onclick="go(\'hist\')">Ouvrir Trajectoire</button>';
+  var n1html=n1.ready?'<b style="color:'+(n1.res>=0?'#168f43':'#c43b45')+'">'+(n1.res>=0?'+':'−')+eur(Math.abs(n1.res))+' de résultat</b><p>Exercice '+n1.from.an+' → exercice '+n1.to.an+' · CA '+(n1.ca>=0?'+':'−')+eur(Math.abs(n1.ca))+' · score '+(n1.score===null?'— non calculable':(n1.score>=0?'+':'')+fr(n1.score,0)+(Math.abs(n1.score)>=2?'\u00a0points':'\u00a0point'))+'.</p>':'<b>Comparaison N−1 non calculable</b><p>Aucune période annuelle consécutive et comparable n’est figée. Verdict refuse d’inventer une tendance. Ajoutez les deux exercices dans Trajectoire.</p><button type="button" class="btn sec" onclick="go(\'hist\')">Ouvrir Trajectoire</button>';
   return '<div class="au-sc au-truth-contract" data-audit-truth-ledger><div class="au-tag">Contrat de vérité · calculé, déclaré, à prouver</div><h2 class="au-h">Ce que l’audit sait — et ce qu’il refuse d’inventer</h2><p class="au-p">Chaque conclusion porte son niveau de preuve. Une réponse terrain reste une déclaration jusqu’à ce qu’une pièce ou une mesure comparable la confirme.</p>'+
     '<div class="au-truth-grid"><div class="au-truth-card calc"><span>CALCULÉ</span><b>Moteur Verdict</b>'+calculated.map(function(x){return '<p>✓ '+esc(x)+'</p>';}).join('')+'</div>'+
     '<div class="au-truth-card declared"><span>DÉCLARÉ</span><b>Entrées du dossier</b>'+declared.map(function(x){return '<p>• '+esc(x)+'</p>';}).join('')+'</div>'+
@@ -226,14 +226,14 @@ function auExternalSourcesHTML(R){
 function auSecteurPremiumHTML(R,P){
   var M=auProfil(),g=M.guide,q=P.reponses,lim=auFaible(R),key=auAuditModelKey();
   return '<div class="au-sc"><div class="au-tag">Votre modèle · '+esc(M.format)+'</div><h2 class="au-h">Une analyse construite pour ce métier, sans faux classement</h2>'+
-    '<div class="au-card au-model-card"><span class="au-k">Modèle déclaré</span><b style="font-size:20px">'+esc(M.format)+'</b><p class="au-p" style="margin:6px 0 0">Verdict adapte les contrôles et les preuves au modèle <b>'+esc(key)+'</b>. Les comptes et le score, eux, gardent exactement le même moteur.</p>'+
+    '<div class="au-card au-model-card"><span class="au-k">Modèle déclaré</span><b style="font-size:20px">'+esc(M.format)+'</b><p class="au-p" style="margin:6px 0 0">Verdict adapte les contrôles et les preuves à ce modèle. Les comptes et le score, eux, gardent exactement le même moteur.</p>'+
     '<div class="au-model-facts"><div><span>ANGLE</span><b>'+esc(g.angle)+'</b></div><div><span>QUESTION DIRECTRICE</span><b>'+esc(g.question)+'</b></div></div></div>'+
     '<div class="au-card"><span class="au-k">Réponses immédiates du dirigeant</span>'+
       '<div class="au-ok"><span style="flex:1"><b>Où part le plus d’argent ?</b><br><small>'+esc(q.poste.l)+'</small></span><b>'+eur(q.poste.eur)+' · '+pct(q.postePct)+'</b></div>'+
       '<div class="au-ok"><span style="flex:1"><b>Que reste-t-il ?</b><br><small>Solde avant impôt des postes saisis</small></span><b>'+eur(q.resultat)+' · '+pct(q.resultatPct)+'</b></div>'+
       '<div class="au-ok"><span style="flex:1"><b>Quel CA minimum ?</b><br><small>Chiffre minimum de la structure actuelle</small></span><b>'+eur(q.pointMort)+'</b></div>'+
       '<div class="au-ok"><span style="flex:1"><b>Par quoi commencer ?</b><br><small>Facteur le plus limitant du moteur</small></span><b>'+esc(AU_LIB[lim])+'</b></div>'+
-      '<div class="au-ok"><span style="flex:1"><b>Si le CA baisse de 10 % ?</b><br><small>Résultat mécanique, mêmes fixes</small></span><b>'+eur(R.d.ca*.9-R.d.cvT*.9-R.d.cf)+'</b></div></div>'+
+      '<div class="au-ok"><span style="flex:1"><b>Si le CA baisse de 10 % ?</b><br><small>Résultat mécanique, mêmes fixes</small></span><b>'+eur(stressStruct(R).ca10.res)+'</b></div></div>'+
     '<div class="au-card"><span class="au-k">Contrôles prioritaires propres à ce modèle</span>'+auCtxOrdre(R).slice(0,4).map(function(id){var x=auCtxQuestionById(id);return '<div class="au-ok"><span class="p" style="color:#2563eb">→</span><span>'+esc(x.decides)+'</span></div>';}).join('')+'</div>'+
     '<p class="note">Aucune comparaison locale n’est affichée sans concurrents documentés. Aucun repère sectoriel ne remplace vos données N−1, vos tickets, vos heures ou vos stocks.</p></div>';
 }

@@ -18,7 +18,7 @@
       jours pour le frais).
    6. La « magie » : marge supplémentaire projetée sur 12 mois et 3 ans, mois par mois selon la saison de l'établissement
       (historique pondéré : année précédente 60 %, celle d'avant 40 %), avec un curseur « part des conseils appliqués ».
-   Hypothèses prudentes et affichées : hausse de prix ≤ 8 % avec 0,5 point de volume perdu par point de hausse ; plat retiré
+   Hypothèses prudentes et affichées : hausse de prix ≤ 8 % avec 3 % de ventes en moins (C208 : celles du plan de prix, comme Décisions et Simuler) ; plat retiré
    : 70 % de ses ventes reportées sur les autres plats de la catégorie ; plat mis en avant : 10 % de ventes déplacées. */
 (function () {
   'use strict';
@@ -36,7 +36,7 @@
 
   /* ---------- Profil de l'établissement ---------- */
   var TYPES = { brasserie: 'Brasserie', traditionnel: 'Restaurant traditionnel', bistrot: 'Bistrot / ardoise', gastro: 'Gastronomique', pizzeria: 'Pizzeria', rapide: 'Restauration rapide', bar: 'Bar / café' };
-  var HAB = { village: 'Moins de 2 000 habitants', bourg: '2 000 à 20 000', ville: '20 000 à 100 000', grande: 'Plus de 100 000' };
+  var HAB = { village: 'Moins de 2 000 habitants', bourg: '2 000 à 20 000 habitants', ville: '20 000 à 100 000 habitants', grande: 'Plus de 100 000 habitants' };
   var TOUR = { non: 'Pas de saison touristique', ete: 'Haute saison l’été (juin à septembre)', hiver: 'Haute saison l’hiver (décembre à mars)', annee: 'Touristique toute l’année' };
   var SERV = { deux: 'Midi et soir', midi: 'Midi seulement', soir: 'Soir seulement' };
   function familleDe(t) { t = String(t || '').toLowerCase(); return /gastro|étoil|etoil|fine/.test(t) ? 'gastro' : /pizz/.test(t) ? 'pizzeria' : /snack|fast|burger|kebab|sandwich|rapide|boulang|dark|livraison/.test(t) ? 'rapide' : /bistro|ardoise|bouchon/.test(t) ? 'bistrot' : /\bbar\b|café|cafe|pub|tapas/.test(t) ? 'bar' : /tradition|italien|asiat|traiteur|bistro/.test(t) ? 'traditionnel' : /coffee|truck/.test(t) ? 'rapide' : 'brasserie'; }
@@ -84,10 +84,13 @@
     var plats = D.plats.filter(function (p) { return !p.cpArchived; }).map(function (p) {
       var c = null; try { c = w.platCalc(p); } catch (e) {}
       var vol = Number(p.vol) || 0, ok = !!(c && c.recetteComplete && c.ht > 0 && isFinite(c.marge));
-      return { p: p, id: p.id, nom: p.nom, cat: p.cat || 'Autres', ttc: Number(p.ttc) || 0, ht: c ? c.ht : null, cout: c ? c.cout : null, marge: ok ? c.marge : null, vol: vol, ok: ok, veg: vegetarien(p) };
+      /* C208 (V57) : la marge par plat est celle de Ma carte (contribution pondérée, commissions comprises) : 15,30 € partout.
+         (V38) : un plat sous son objectif de marge n'est jamais dit « rapporte bien ». */
+      var mg = ok ? (isFinite(c.contribPond) ? c.contribPond : c.marge) : null, sous = !!(ok && c.objPond > 0 && isFinite(c.contribPct) && c.contribPct < c.objPond);
+      return { p: p, id: p.id, nom: p.nom, cat: p.cat || 'Autres', ttc: Number(p.ttc) || 0, ht: c ? c.ht : null, cout: c ? c.cout : null, marge: mg, vol: vol, ok: ok, sousObj: sous, veg: vegetarien(p) };
     });
     var complets = plats.filter(function (x) { return x.ok && x.vol > 0; });
-    var R = { profil: P, profilOk: profilComplet(P), mois: m, plats: plats, complets: complets.length, pret: complets.length >= 6, cats: [], gainMois: 0, stockLibere: 0, alertes: [] };
+    var R = { profil: P, profilOk: profilComplet(P), mois: m, plats: plats, complets: complets.length, pret: complets.length >= 6, cats: [], gainMois: 0, gainPrix: 0, prixPlats: 0, stockLibere: 0, alertes: [] };
     if (!R.pret || !R.profilOk) return R;
     /* Utilisation croisée des ingrédients (règle « un ingrédient doit servir au moins deux fois »). */
     var usage = {}; complets.forEach(function (x) { lignes(x.p).forEach(function (l) { var k = String(l[0]); (usage[k] = usage[k] || []).push(x.id); }); });
@@ -103,8 +106,9 @@
         x.gain = 0;
         var pr = GPR[x.nom];
         if (pr && (x.classe === 'etoile' || x.classe === 'cheval')) {
-          var hp = pr.apres / x.ttc - 1, nhp = x.ht * (1 + hp); x.prix = pr.apres;
-          x.gain = x.vol * (1 - 0.5 * hp) * (x.marge + (nhp - x.ht)) - x.vol * x.marge;
+          /* C208 (V39) : le gain d'un prix conseillé est celui du plan de prix (cartePlan : +8 % au plus, 3 % de ventes en moins), comme Décisions et Simuler */
+          var hp = pr.apres / x.ttc - 1; x.prix = pr.apres;
+          x.gain = Number(pr.contribMois) || 0; x.gainPrix = x.gain;
           x.action = (x.classe === 'etoile' ? 'Garder en tête de catégorie, et passer' : 'Passer') + ' de ' + eur2(x.ttc) + ' à ' + eur2(pr.apres) + ' (+' + Math.round(hp * 100) + ' %) : sa marge est sous votre objectif (même prix que Décisions et Simuler)';
         }
         else if (x.classe === 'etoile') { x.action = 'Garder et placer en tête de la catégorie'; }
@@ -114,24 +118,24 @@
           var nouveau = Math.floor(x.ttc * (1 + hausse) * 10) / 10; if (nouveau <= x.ttc) nouveau = Math.round((x.ttc + 0.1) * 10) / 10; var h = nouveau / x.ttc - 1, nhT = x.ht * (1 + h); /* arrondi au dixième vers le bas : jamais plus de 8 % */
           x.prix = nouveau; x.gain = x.vol * (1 - 0.5 * h) * (x.marge + (nhT - x.ht)) - x.vol * x.marge;
           x.action = 'Passer de ' + eur2(x.ttc) + ' à ' + eur2(nouveau) + ' (+' + Math.round(h * 100) + ' %), ou réduire légèrement la portion';
-        } else if (x.classe === 'enigme') { x.gain = 0.10 * x.vol * (x.marge - mMoy); x.action = 'Mettre en avant : suggestion du serveur, haut de catégorie, nom et description plus parlants' + (pr ? ' ; et passer de ' + eur2(x.ttc) + ' à ' + eur2(pr.apres) + ' (marge sous votre objectif)' : ''); }
+        } else if (x.classe === 'enigme') { x.gainPrix = pr ? Number(pr.contribMois) || 0 : 0; if (pr) x.prix = pr.apres; x.gain = 0.10 * x.vol * (x.marge - mMoy) + x.gainPrix; x.action = 'Mettre en avant : suggestion du serveur, haut de catégorie, nom et description plus parlants' + (pr ? ' ; et passer de ' + eur2(x.ttc) + ' à ' + eur2(pr.apres) + ' (marge sous votre objectif, même prix que Décisions et Simuler)' : ''); }
         else {
           var autres = L.filter(function (y) { return y !== x; }), mAutres = autres.length ? autres.reduce(function (t, y) { return t + y.marge * y.vol; }, 0) / Math.max(1, autres.reduce(function (t, y) { return t + y.vol; }, 0)) : 0;
           var g = x.vol * (0.7 * mAutres - x.marge);
           if (g > 0 && (!ci || n - 1 >= ci.min)) { x.retirer = true; x.gain = g; x.action = 'Retirer : ses clients se reporteront sur les autres plats'; }
-          else { x.action = ci && n - 1 < ci.min ? 'Remplacer par un plat plus rentable (la catégorie est déjà courte)' : 'Revoir la recette ou le prix avant de décider'; }
+          else { x.action = ci && n - 1 < ci.min ? 'Remplacer par un plat plus rentable (la catégorie est déjà courte)' : 'Revoir la recette ou le prix avant de décider'; if (pr) { x.prix = pr.apres; x.gainPrix = Number(pr.contribMois) || 0; x.gain = x.gainPrix; x.action += ' ; en attendant, passer de ' + eur2(x.ttc) + ' à ' + eur2(pr.apres) + ' (marge sous votre objectif, même prix que Décisions et Simuler)'; } }
           /* Argent investi : ingrédients qui ne servent qu'à ce plat, ≈ une semaine de stock. */
           x.stock = 0; x.ingSeuls = [];
           lignes(x.p).forEach(function (l) { if ((usage[String(l[0])] || []).length === 1) { var cl = coutLigne(l); if (cl > 0) { x.stock += cl * x.vol * 7 / 30; x.ingSeuls.push(String(l[0])); } } });
           if (x.retirer) R.stockLibere += x.stock;
         }
-        R.gainMois += Math.max(0, x.gain);
+        R.gainMois += Math.max(0, x.gain); if (x.gainPrix > 0) { R.gainPrix += x.gainPrix; R.prixPlats++; }
       });
       /* Équilibre des prix (Omnès). */
       var prix = L.map(function (x) { return x.ttc; }).filter(function (v) { return v > 0; }), pmin = Math.min.apply(null, prix), pmax = Math.max.apply(null, prix);
       var lim = P.type === 'gastro' || n > 10 ? 3 : 2.5, amp = (pmax - pmin) / 3, zones = [0, 0, 0];
       prix.forEach(function (v) { zones[amp > 0 ? Math.min(2, Math.floor((v - pmin) / amp)) : 1]++; });
-      var omnes = { ouverture: pmax / pmin, limite: lim, okOuverture: pmax / pmin <= lim, zones: zones, okDispersion: zones[1] >= zones[0] + zones[2] || n < 4, pmin: pmin, pmax: pmax };
+      var omnes = { ouverture: pmax / pmin, limite: lim, okOuverture: pmax / pmin <= lim, zones: zones, okDispersion: zones[1] >= zones[0] + zones[2] || n < 4, pmin: pmin, pmax: pmax, mil1: pmin + amp, mil2: pmin + 2 * amp };
       var vegs = L.filter(function (x) { return x.veg; }).length;
       var retires = L.filter(function (x) { return x.retirer; }).length, apres = n - retires;
       var C = { cat: cat, regroupe: Object.keys(origines[cat] || {}).filter(function (k) { return k !== cat; }), role: r, n: n, apres: apres, cible: ci, plats: L.slice().sort(function (a, b) { var o = { etoile: 0, cheval: 1, enigme: 2, mort: 3 }; return o[a.classe] - o[b.classe] || b.vol - a.vol; }), omnes: omnes, vegs: vegs, mMoy: mMoy };
@@ -140,6 +144,14 @@
       R.cats.push(C);
     });
     var ordre = { e: 0, p: 1, d: 2, '': 3 }; R.cats.sort(function (a, b) { return ordre[a.role] - ordre[b.role]; });
+    /* C208 (V39) : les nouveaux prix comptent pour le montant que Simuler calcule (VerdictGainCarte, moteur rejoué) ;
+       si l'Idéale n'en reprend qu'une partie (petite catégorie, plat retiré), au prorata. */
+    var g = null; try { g = typeof w.VerdictGainCarte === 'function' ? w.VerdictGainCarte() : null; } catch (e) {}
+    R.gc = g;
+    if (g && g.fiable && g.rows && g.rows.length && R.gainPrix > 0) {
+      var tot = g.rows.reduce(function (t, r) { return t + (Number(r.contribMois) || 0); }, 0);
+      if (tot > 0) { var aj = Math.max(0, g.mois) * Math.min(1, R.gainPrix / tot); R.gainMois += aj - R.gainPrix; R.gainPrix = aj; R.prixTous = R.prixPlats >= g.rows.length; }
+    }
     R.saison = saison(D);
     R.formuleMidi = P.services !== 'soir' && (P.tourisme !== 'non' && !hauteSaison(P, m) || P.habitants === 'village');
     return R;
@@ -225,11 +237,23 @@
   }
   function motCat(c) { return /boisson|bière|biere|vin|cocktail|café|cafe|soft|apéritif|aperitif|digestif/i.test(String(c || '')) ? 'boisson' : 'plat'; }
   function plat(x) {
-    var c = CL[x.classe], h = '<div class="ci-pl" style="--ci-c:' + c[0] + '"><div class="h"><span class="n">' + esc(x.nom) + '</span><span class="ci-tag">' + c[1] + '</span></div>';
+    var c = CL[x.classe], col = c[0], lib = c[1];
+    /* C208 (V38) : « rapporte bien » se juge dans la catégorie ; un plat sous son objectif de marge ne l'est jamais
+       (l'Audit le range parmi les contributions à revoir, Décisions propose un prix). */
+    if (x.sousObj && (x.classe === 'etoile' || x.classe === 'enigme')) { col = CL.cheval[0]; lib = (x.classe === 'etoile' ? 'Très vendu' : 'Peu vendu') + ', marge sous votre objectif'; }
+    var h = '<div class="ci-pl" style="--ci-c:' + col + '"><div class="h"><span class="n">' + esc(x.nom) + '</span><span class="ci-tag">' + lib + '</span></div>';
     h += '<p class="d">' + eur2(x.ttc) + ' · marge ' + eur2(x.marge) + ' par ' + motCat(x.cat) + ' · ' + Math.round(x.vol) + ' vendus par mois (' + pct(x.part) + ' de la catégorie)' + (x.veg && motCat(x.cat) === 'plat' ? ' · végétarien' : '') + '</p>';
     h += '<p class="x">' + esc(x.action) + (x.gain > 0.5 ? ' · <span class="g">' + signe(x.gain) + ' par mois</span>' : '') + '</p>';
     if (x.ingSeuls && x.ingSeuls.length) h += '<p class="d">Argent investi pour ce seul plat : ' + esc(x.ingSeuls.slice(0, 3).join(', ')) + (x.stock > 0 ? ' (≈ ' + eur(x.stock) + ' de stock)' : '') + '</p>';
     return h + '<div class="ci-a"><button type="button" class="ci-b" data-cp-dish="' + esc(x.id) + '">Ouvrir le plat</button></div></div>';
+  }
+  /* C208 (V39) : l'Idéale, Décisions et Simuler disent d'où vient chaque euro des prix. */
+  function lienSimuler(R, part) {
+    var g = R.gc; if (!(R.gainPrix > 0.5) || !g || !g.fiable) return '';
+    return '<p class="ci-m" data-ci-lien style="margin-top:10px">Dont <b>' + signe(R.gainPrix * part) + ' par mois</b> par les nouveaux prix de ' + R.prixPlats + (R.prixPlats > 1 ? ' plats sous leur objectif' : ' plat sous son objectif') +
+      (R.prixTous ? ' : le chiffre du curseur « Prix de la carte » de Simuler' : ', calculés comme dans Simuler') + '. ' +
+      (g.retenu ? 'Ces prix sont compris dans votre plan Simuler.' : 'Votre plan Simuler (' + signe(g.plan) + ' par an) ne les ajoute pas' + (g.plafond ? ' : il atteint déjà le niveau des meilleurs établissements de votre format.' : '.')) +
+      (R.gainMois - R.gainPrix > 0.5 ? ' Le reste (' + signe((R.gainMois - R.gainPrix) * part) + ' par mois) vient des plats mis en avant ou retirés.' : '') + '</p>';
   }
   function dessiner() {
     var host = doc.getElementById('c-smart'); if (!host) return; css();
@@ -248,10 +272,11 @@
     var M = projection(R, part), m12 = M[11].cumul, m36 = M[35].cumul;
     h += '<div class="ci-sec ci-hero"><p class="ci-m" style="margin:0">Si vous appliquez ' + (part < 1 ? Math.round(part * 100) + ' % des' : 'les') + ' conseils ci-dessous dès ' + MOIS[R.mois - 1] + (P.demo ? ' · démonstration' : '') + '</p>' +
       '<div class="ci-big">' + signe(m12) + '</div><p class="ci-m" style="margin:2px 0 0;font-weight:700;color:var(--ci-t)">de marge en 12 mois · ' + signe(m36) + ' en 3 ans</p>' +
-      '<div class="ci-kpis"><div class="ci-k"><b>' + signe(R.gainMois * part) + '</b><span>par mois en moyenne</span></div><div class="ci-k"><b>' + eur(R.stockLibere * part) + '</b><span>d’argent libéré du stock</span></div><div class="ci-k"><b>' + R.cats.reduce(function (t, c) { return t + c.n; }, 0) + ' → ' + R.cats.reduce(function (t, c) { return t + c.apres; }, 0) + '</b><span>plats à la carte</span></div></div>' +
+      '<div class="ci-kpis"><div class="ci-k"><b>' + signe(R.gainMois * part) + '</b><span>par mois en moyenne</span></div><div class="ci-k"><b>' + eur(R.stockLibere * part) + '</b><span>d’argent libéré du stock</span></div><div class="ci-k"><b>' + R.plats.length + ' → ' + (R.plats.length - R.cats.reduce(function (t, c) { return t + c.n - c.apres; }, 0)) + '</b><span>plats à la carte</span></div></div>' + /* C208 (V37) : toute la carte, comme Ma carte */
+      lienSimuler(R, part) +
       graphe(R, M) +
       '<div class="ci-range"><label for="ciPart"><span>Part des conseils appliqués</span><span>' + Math.round(part * 100) + ' %</span></label><input id="ciPart" type="range" min="0" max="100" step="10" value="' + Math.round(part * 100) + '"></div>' +
-      '<p class="ci-m" style="margin-top:8px">Mois par mois selon la saison de votre établissement' + (R.saison.annees.length ? ' (' + R.saison.annees.join(' et ') + ', l’année la plus récente compte pour 60 %)' : '') + ' ; les points jaunes marquent vos mois forts. Hypothèses prudentes : hausse de prix limitée à 8 % avec un peu de ventes perdues, 70 % des clients d’un plat retiré reportés sur les autres.</p></div>';
+      '<p class="ci-m" style="margin-top:8px">Mois par mois selon la saison de votre établissement' + (R.saison.annees.length ? ' (' + R.saison.annees.join(' et ') + ', l’année la plus récente compte pour 60 %)' : '') + ' ; les points jaunes marquent vos mois forts. Hypothèses prudentes : hausse de prix limitée à 8 % avec 3 % de ventes en moins (comme Décisions et Simuler), 70 % des clients d’un plat retiré reportés sur les autres.</p></div>';
     h += '<div class="ci-sec"><h3>Votre établissement</h3><div class="ci-chips"><span class="ci-chip">' + esc(TYPES[P.type]) + '</span><span class="ci-chip">' + esc(HAB[P.habitants]) + '</span><span class="ci-chip">' + esc(TOUR[P.tourisme]) + '</span><span class="ci-chip">' + P.places + ' places</span><span class="ci-chip">' + Math.round(P.couverts) + ' couverts / jour</span><span class="ci-chip">' + esc(SERV[P.services]) + '</span></div>' +
       (R.formuleMidi ? '<p class="ci-m" style="margin-top:10px"><b>Conseil :</b> un menu du midi à prix d’appel (entrée et plat, ou plat et dessert) fidélise les habitants hors saison.</p>' : '') +
       '<div class="ci-a"><button type="button" class="ci-b" data-ci="profil">Modifier</button></div></div>';
@@ -259,7 +284,7 @@
       var ci = C.cible, o = C.omnes;
       h += '<div class="ci-sec"><div class="ci-cat"><b>' + esc(C.cat) + (C.regroupe && C.regroupe.length ? ' <small style="font-weight:600;color:var(--ci-m);font-size:13px">(' + esc(C.regroupe.join(', ')) + ')</small>' : '') + '</b><span class="ci-cnt">' + C.n + ' ' + motCat(C.cat) + (C.n > 1 ? 's' : '') + (C.apres !== C.n ? ' → ' + C.apres : '') + (ci ? ' · visé ' + ci.n + ' (' + ci.min + ' à ' + ci.max + ')' : '') + '</span></div>';
       if (ci) h += '<p class="ci-m">' + esc(ci.raisons.join(' · ')) + '.' + (C.ajouter ? ' <b>Ajouter ' + C.ajouter + ' ' + motCat(C.cat) + (C.ajouter > 1 ? 's' : '') + '</b> (Vera peut en proposer de saison).' : '') + (C.enlever ? ' <b>Encore ' + C.enlever + ' ' + motCat(C.cat) + (C.enlever > 1 ? 's' : '') + ' de trop</b> : la carte est trop longue pour votre salle.' : '') + '</p>';
-      h += '<p class="ci-m">Prix de ' + eur2(o.pmin) + ' à ' + eur2(o.pmax) + ' : le plus cher vaut ' + o.ouverture.toFixed(1).replace('.', ',') + ' fois le moins cher, ' + (o.okOuverture ? '<span class="ci-ok">c’est équilibré</span>' : '<span class="ci-ko">écart trop grand (conseillé : ' + String(o.limite).replace('.', ',') + ' fois au plus)</span>') + ' · ' + (o.okDispersion ? '<span class="ci-ok">assez de prix moyens</span>' : '<span class="ci-ko">trop peu de prix moyens (' + o.zones[1] + ', pour ' + (o.zones[0] + o.zones[2]) + ' moins chers ou plus chers)</span>') +
+      h += '<p class="ci-m">Prix de ' + eur2(o.pmin) + ' à ' + eur2(o.pmax) + ' : le plus cher vaut ' + o.ouverture.toFixed(1).replace('.', ',') + ' fois le moins cher, ' + (o.okOuverture ? '<span class="ci-ok">c’est équilibré</span>' : '<span class="ci-ko">écart trop grand (conseillé : ' + String(o.limite).replace('.', ',') + ' fois au plus)</span>') + ' · ' + (o.okDispersion ? '<span class="ci-ok">assez de plats au milieu de la gamme</span>' : '<span class="ci-ko">trop peu de plats au milieu de la gamme : ' + o.zones[1] + ' entre ' + eur2(o.mil1) + ' et ' + eur2(o.mil2) + ', contre ' + (o.zones[0] + o.zones[2]) + ' moins chers ou plus chers (conseillé : au moins autant au milieu)</span>') +
         (C.role === 'e' || C.role === 'p' ? ' · ' + (C.vegManque ? '<span class="ci-ko">aucun plat végétarien</span>' : '<span class="ci-ok">' + C.vegs + ' végétarien' + (C.vegs > 1 ? 's' : '') + '</span>') : '') + '</p>';
       C.plats.forEach(function (x) { h += plat(x); });
       if (C.ajouter && w.VerdictVeraCarte) h += '<div class="ci-a"><button type="button" class="ci-b" data-ci="vera">Vera propose des plats de saison</button></div>';
@@ -291,6 +316,8 @@
     if (!doc.getElementById('c-smart')) { var el = doc.createElement('div'); el.className = 'sv'; el.id = 'c-smart'; root.appendChild(el); }
     if (!nav.querySelector('[data-ci-onglet]')) { var b = doc.createElement('button'); b.type = 'button'; b.setAttribute('data-ci-onglet', '1'); b.innerHTML = '✨ Idéale<span class="ci-np"> <span style="font-size:10px;font-weight:800;padding:2px 6px;border-radius:999px;background:linear-gradient(135deg,#b45309,#92400e);color:#fff;vertical-align:1px">PRO</span></span>'; b.setAttribute('aria-label', 'Carte intelligente (Pro)'); css(); nav.appendChild(b); }
     var on = root.getAttribute('data-cp-page') === 'smart'; nav.querySelector('[data-ci-onglet]').classList.toggle('on', on);
+    /* C208 (V58) : un seul onglet plein — si la barre est reconstruite pendant l'Idéale, l'ancien onglet est éteint. */
+    if (on) [].forEach.call(nav.querySelectorAll('button:not([data-ci-onglet])'), function (x) { if (x.classList.contains('on')) x.classList.remove('on'); if (x.getAttribute('aria-current') === 'page') x.setAttribute('aria-current', 'false'); });
   }
   function ouvrir() {
     monter(); var root = doc.getElementById('v-carte'); if (!root) return;

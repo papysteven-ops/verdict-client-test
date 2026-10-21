@@ -187,22 +187,31 @@
     '@media (prefers-reduced-motion:reduce){.sh52-jm,.sh52-js::after{animation:none}}' +
     'html.vd-workspace-dark .sh52 .sh52-vert{color:#4ade80}html.vd-workspace-dark .sh52 .sh52-orange{color:#fb923c}html.vd-workspace-dark .sh52 .sh52-rouge{color:#f87171}' +
     '.sh52 .sh52-lien{margin:2px 0 10px;padding:9px 12px;border-radius:12px;background:rgba(148,163,184,.12);font-size:14px;line-height:1.45}.sh52 .sh52-c{display:none}.sh52 small.sh52-s{display:block;font-size:11px;font-weight:500;opacity:.7;margin-top:2px}.sh52 td{vertical-align:top}' +
-    '@media (max-width:520px){.sh52 table{font-size:13px}.sh52 th,.sh52 td{padding:6px 3px}.sh52 td:first-child{white-space:normal}.sh52 .sh52-hab,.sh52 .sh52-l{display:none}.sh52 .sh52-c{display:inline}.sh52 .sh52-p{min-width:0;padding:2px 5px}}';
+    '@media (max-width:520px){.sh52 table{font-size:13px}.sh52 th,.sh52 td{padding:6px 3px}.sh52 th,.sh52 td{white-space:normal}.sh52 .sh52-hab,.sh52 .sh52-l{display:none}.sh52 .sh52-c{display:inline}.sh52 .sh52-p{min-width:0;padding:2px 5px}}';
   function carteHTML(R) {
     var jour = R.periode === 'jour', aHab = jour && R.services.some(function (x) { return x.habituel != null; });
     var h = '<p class="kicker">Ventes et heures par service · ' + esc(libelle(R)) + (w.DB && (w.DB.demo || (w.DB.services || []).some(function (s) { return s && s.demo; })) ? ' · démonstration' : '') + '</p>' +
       '<p class="titre">' + esc(R.lourd && tropTotal(R) >= 0.5 ? 'L’équipe a coûté ' + eur(tropTotal(R)) + ' de trop' + (R.periode === 'jour' ? ' ce jour-là' : R.periode === 'mois' ? ' ce mois-ci' : ' sur l’année') : R.lourd ? cap(le(R.lourd.nom)) + ' coûte trop d’équipe' : R.total.part != null && R.total.part > R.repere + 0.005 ? 'L’équipe coûte ' + s100(R.total.part) + ', sur tous les services' : 'Équipe dans le conseillé, service par service') + '</p>' +
       jaugeHTML(R.total.part, R.repere) + lienHTML(R) + '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>Ventes</th><th>Équipe</th><th>En trop</th></tr></thead><tbody>';
     var plusieurs = R.services.length > 1;
-    R.services.concat(plusieurs ? [R.total] : []).forEach(function (x) {
-      var tot = x === R.total, trop = x.coutConnu && x.ht > 0 ? x.cout - R.repere * x.ht : null, ok = trop != null && trop < 0.5;
+    /* C205 (V17) : un service sous le conseillé montre son économie (« −299 € », en vert) au lieu de « OK », et la colonne
+       se recompte : la somme des services arrondis égale la ligne Total (écart d'arrondi au plus grand reste). */
+    var ecarts = (function () {
+      var v = R.services.map(function (x) { return x.coutConnu && x.ht > 0 ? x.cout - R.repere * x.ht : null; });
+      if (v.some(function (a) { return a == null; })) return v.map(function (a) { return a == null ? null : Math.round(a); });
+      var somme = Math.round(v.reduce(function (s, a) { return s + a; }, 0)), f = v.map(function (a) { return Math.floor(a); }), reste = somme - f.reduce(function (s, a) { return s + a; }, 0);
+      v.map(function (a, i) { return i; }).sort(function (i, j) { return (v[j] - f[j]) - (v[i] - f[i]); }).forEach(function (i) { if (reste > 0) { f[i]++; reste--; } });
+      return f;
+    })();
+    R.services.concat(plusieurs ? [R.total] : []).forEach(function (x, ix) {
+      var tot = x === R.total, brut = x.coutConnu && x.ht > 0 ? x.cout - R.repere * x.ht : null, trop = brut == null ? null : tot ? Math.round(brut) : ecarts[ix], ok = trop != null && trop <= 0;
       h += '<tr' + (tot ? ' class="sh52-tot"' : '') + '><td>' + esc(x.nom) + '</td>' +
         '<td>' + eur(x.ht) + (plusieurs && !tot && R.total.ht > 0 ? '<small class="sh52-s">' + pc(x.ht / R.total.ht) + ' des ventes</small>' : '') + '</td>' +
         '<td>' + (x.coutConnu ? eur(x.cout) : '—') + '<small class="sh52-s">' + hh(x.h) + ' de travail</small></td>' +
-        '<td><span class="sh52-p sh52-' + (trop == null ? 'info' : ok ? 'vert' : couleur(x.part, R.repere)) + '">' + (trop == null ? '—' : ok ? 'OK' : '+' + eur(trop)) + '</span>' +
+        '<td><span class="sh52-p sh52-' + (trop == null ? 'info' : ok ? 'vert' : couleur(x.part, R.repere)) + '">' + (trop == null ? '—' : trop < 0 ? '\u2212' + eur(-trop) : trop === 0 ? eur(0) : '+' + eur(trop)) + '</span>' +
         (x.part != null ? '<small class="sh52-s">' + Math.round(x.part * 100) + '\u00a0€ pour 100\u00a0€</small>' : '') + '</td></tr>';
     });
-    h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + esc((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Conseillé pour votre type d’établissement : ' + conseil(R) + ' d’équipe (salaires + cotisations) pour 100 € vendus. « En trop » = ce que l’équipe a coûté au-delà. Ventes sans la TVA.') + '</p>' +
+    h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + esc((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Conseillé pour votre type d’établissement : ' + conseil(R) + ' d’équipe (salaires + cotisations) pour 100 € vendus. « En trop » = ce que l’équipe a coûté au-delà ; en vert avec −, ce qu’elle a coûté en moins. Ventes sans la TVA.') + '</p>' +
       '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-equipe="1">Voir mon équipe, salarié par salarié</button><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
     return h;
   }

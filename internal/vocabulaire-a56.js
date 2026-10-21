@@ -35,12 +35,29 @@
     [/\bContribution % CA\b/g, 'Reste après achats (% des ventes)'], [/\b([Ll])a marge de contribution\b/g, '$1a marge après achats'], [/\b[Mm]arge de contribution\b/g, function (m) { return m.charAt(0) === 'M' ? 'Marge après achats' : 'marge après achats'; }],
     [/(\d+(?:,\d+)?)\s?pts?\b/g, function (m, n) { var v = Math.abs(Number(String(n).replace(',', '.'))); return n + '\u00a0point' + (v > 1 ? 's' : ''); }],
     [/(\d+)\.(\d+)\s?%/g, '$1,$2\u00a0%'],
+    /* C205 (V21) : le chiffre du jour est un MINIMUM (part du minimum du mois), jamais un « objectif » ; « objectif » reste
+       réservé à l'ambition (objectif de résultat, objectif choisi du mois). */
+    [/\bde l[’']objectif du jour\b/g, 'du minimum du jour'], [/\bl[’']objectif du jour\b/g, 'le minimum du jour'], [/\bL[’']objectif du jour\b/g, 'Le minimum du jour'],
+    [/\bObjectif du jour\b/g, 'Minimum du jour'], [/\bobjectif du jour\b/g, 'minimum du jour'], [/\bObjectif dépassé de\b/g, 'Minimum dépassé de'],
+    [/^Écart à l[’']objectif$/g, 'Écart au minimum'], [/Écart à l[’']objectif(?= ?:\s?[+−-])/g, 'Écart au minimum'] /* jamais « Écart à l’objectif matière » de la Carte, qui est une vraie cible */, [/\bObjectif non disponible\b/g, 'Minimum non disponible'], [/\bObjectif à recalculer\b/g, 'Minimum à recalculer'],
+    [/\bsur un objectif de\b/g, 'sur un minimum de'], [/ (sous|au-dessus de) cet objectif\b/g, ' $1 ce minimum'],
+    /* C205 (V55) : une seule orthographe */
+    [/\b([Pp])etit déjeuner\b/g, '$1etit-déjeuner'],
+    /* C205 (V43, V44) : écriture française des montants et des dates, partout à l'affichage.
+       Signe moins typographique devant un montant ou un pourcentage (« -23 € » → « −23 € ») ;
+       date ISO isolée → date en français (« 2026-10-20 » → « 20 octobre 2026 ») ; « 1 déc. » → « 1er déc. » ;
+       « 3 fiche(s) » → « 3 fiches », « 1 plat(s) » → « 1 plat ». */
+    [/(^|[\s(·:=≈→])-(?=\d[\d\s  ]*(?:,\d+)?\s?(?:€|%|k€| €| %| €))/g, '$1−'],
+    [/(^|[\s(·:])(20\d\d)-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])(?=$|[\s)·,;.])/g, function (m, a, y, mo, d) { var M = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'][Number(mo) - 1]; return a + (d === '01' ? '1er' : String(Number(d))) + ' ' + M + ' ' + y; }],
+    [/(^|[^\d\s  ,.])(\s| )1(\s| )(janv\.|févr\.|mars|avr\.|mai|juin|juil\.|août|sept\.|oct\.|nov\.|déc\.|janvier|février|avril|juillet|septembre|octobre|novembre|décembre)(?![\wÀ-ÿ])/g, '$1$21er$3$4'],
+    [/^1(\s| )(janv\.|févr\.|mars|avr\.|mai|juin|juil\.|août|sept\.|oct\.|nov\.|déc\.|janvier|février|avril|juillet|septembre|octobre|novembre|décembre)(?![\wÀ-ÿ])/g, '1er$1$2'],
+    [/(\d+)(\s| )([a-zéèêàç]+)\(s\)(?:(\s| )([a-zéèêàç]+)\(s\))?/g, function (m, n, s1, w1, s2, w2) { var p = Number(n) > 1; return n + s1 + w1 + (p ? 's' : '') + (w2 ? s2 + w2 + (p ? 's' : '') : ''); }],
     /* « unite » (sans accent, venu des unités de stock) */
     [/\bunite\b/g, 'unités'],
     /* C187 : une bouteille compte en « unités » partout (l'Inventaire dit unités, l'écart disait pièces) */
     [/(\d)(\s|\u00a0)pièces\b/g, '$1$2unités'], [/(\d)(\s|\u00a0)pièce\b/g, '$1$2unité']
   ];
-  var TEST = /co[uû]t humain|masse salariale|food cost|point mort|prime cost|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b|\dpièce|\d\spièce|contribution|\d\s?pts?\b|\d\.\d+\s?%/i;
+  var TEST = /\(s\)|(^|[\s(·:=≈→])-\d|20\d\d-\d\d-\d\d|(^|\s)1\s|objectif|etit déjeuner|co[uû]t humain|masse salariale|food cost|point mort|prime cost|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b|\dpièce|\d\spièce|contribution|\d\s?pts?\b|\d\.\d+\s?%/i;
   var EXCLU = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, SELECT: 1, OPTION: 1, NOSCRIPT: 1, CODE: 1, PRE: 1 };
   function francais(d) { try { var l = (d.defaultView && d.defaultView.LOCALE) || w.LOCALE || d.documentElement.lang || 'fr'; return /^fr/i.test(String(l)); } catch (e) { return true; } }
   function corriger(t) {

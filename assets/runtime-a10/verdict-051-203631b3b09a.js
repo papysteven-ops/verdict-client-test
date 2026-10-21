@@ -53,6 +53,11 @@
     pt:{jl:["à segunda-feira","à terça-feira","à quarta-feira","à quinta-feira","à sexta-feira","ao sábado","ao domingo"],fermeLe:"fechado {j}",et:" e ",sept:"aberto 7 dias por semana",repLu:"{e}: lido nos seus {n} dias de caixa.",repProp:"A sua caixa: {e} (lido nos seus {n} dias de caixa, em {s} semanas completas).",repAvant:"Tinha indicado: {a}. Nada muda sem o seu acordo.",repPrendre:"Usar a caixa: {e}",repGarder:"Manter o meu calendário",repGarde:"A sua caixa diz: {e}. Mantém o seu calendário.",repStruct:"Lido nos seus dias de caixa: {j} dias abertos / semana",repToast:"{e}, como a sua caixa"}
   };
   Object.keys(T3).forEach(function(l){if(T[l])Object.keys(T3[l]).forEach(function(k){T[l][k]=T3[l][k];});});
+  /* C210 (V41) : profil vierge — le calendrier de Mes services n'est pas encore réglé (aucun service, aucun jour fermé, rien lu dans la caisse).
+     Ses « 7 jours » ne sont alors qu'une valeur par défaut : ne pas les opposer aux 6 jours par défaut de la structure. */
+  var T4={fr:{defaut:"Par défaut : {j} jours ouverts / semaine, tant que Mes services n’indique pas vos jours de fermeture"},en:{defaut:"Default: {j} open days / week until My services shows your closing days"},es:{defaut:"Por defecto: {j} días abiertos / semana hasta que Mis servicios indique sus días de cierre"},it:{defaut:"Predefinito: {j} giorni aperti / settimana finché I miei servizi non indica i giorni di chiusura"},de:{defaut:"Standard: {j} offene Tage / Woche, bis Meine Services Ihre Ruhetage angibt"},nl:{defaut:"Standaard: {j} open dagen / week tot Mijn services uw sluitingsdagen aangeeft"},pt:{defaut:"Por defeito: {j} dias abertos / semana até Os meus serviços indicar os seus dias de fecho"}};
+  Object.keys(T4).forEach(function(l){if(T[l])Object.keys(T4[l]).forEach(function(k){T[l][k]=T4[l][k];});});
+  function calVierge(){var d=global.DB||{},sc=d.servicesConfig,n=sc&&sc.semaine?Object.keys(sc.semaine).length:0,fe=[];try{fe=global.fermesSem()||[];}catch(e){}return !n&&!fe.length&&!d.jsemSource;}
   function L(){var l=(typeof global.LOCALE==="string"?global.LOCALE:"fr");return T[l]||T.fr;}
   function tpl(s,v){return String(s).replace(/\{(\w+)\}/g,function(m,k){return v[k]!=null?v[k]:m;});}
   function fr(n){n=Math.round(Number(n)||0);var s=String(Math.abs(n)),o="";while(s.length>3){o="\u202f"+s.slice(-3)+o;s=s.slice(0,-3);}return (n<0?"\u2212":"")+s+o;}
@@ -85,7 +90,7 @@
   function verrouillerJsem(){var f=doc.getElementById("i-jsem");if(!f)return;var ouverts=7-(function(){try{return (global.fermesSem()||[]).length;}catch(e){return 0;}})();
     if(!f.readOnly)f.readOnly=true;if(f.getAttribute("aria-readonly")!=="true")f.setAttribute("aria-readonly","true");if(f.style.opacity!=="0.6")f.style.opacity=".6";var vj=String(Number(DBx().in&&DBx().in.jsem)||ouverts);if(f.value!==vj)f.value=vj;
     /* C195 : le libellé dit d'où vient le chiffre (caisse ou Mes services) et suit sa valeur ; écrit seulement s'il change */
-    var src=DBx().jsemSource,txt=src&&src.source==="caisse"&&Number(src.jours)===Number(vj)?tpl(L().repStruct,{j:vj}):tpl(L().deduit,{j:ouverts});
+    var src=DBx().jsemSource,txt=src&&src.source==="caisse"&&Number(src.jours)===Number(vj)?tpl(L().repStruct,{j:vj}):calVierge()?tpl(L().defaut,{j:vj}):tpl(L().deduit,{j:ouverts});
     var lab=f.closest("label");if(lab){var sm=lab.querySelector(".svc-deduit");if(!sm){sm=doc.createElement("small");sm.className="svc-deduit";lab.appendChild(sm);}if(sm.textContent!==txt)sm.textContent=txt;}}
   /* ---------- C195 : le jour de repos lu dans les journées de caisse (VerdictPassageUnique.etatRepos) ----------
      Proposé en un clic quand le calendrier ne le dit pas ; un choix du patron n'est jamais écrasé : il est dit, et gardé s'il le veut. */
@@ -112,7 +117,7 @@
     for(var w=0;w<7;w++){var row=el.querySelector('.svc-row[data-w="'+w+'"]'),b=row&&row.querySelector('.svc-ferme'),on=fe.indexOf(w)>=0;if(b){if(b.getAttribute("aria-pressed")!==String(on))b.setAttribute("aria-pressed",String(on));if(row.getAttribute("data-ferme")!==(on?"1":"0"))row.setAttribute("data-ferme",on?"1":"0");}} /* C190 : n'écrire que ce qui change (0 changement au repos) */
     var ouverts=7-fe.length,jsem=DBx().in&&Number(DBx().in.jsem),ba=el.querySelector(".svc-aligner"),R=reposCaisse();majCaisse(el,t,R);
     /* C195 : quand la caisse propose le jour de repos, « aligner » (qui effacerait ce qu'elle dit) laisse place à sa proposition */
-    if(isFinite(jsem)&&jsem!==ouverts&&!(R&&!R.egal&&!R.garde)){if(!ba){ba=doc.createElement("button");ba.type="button";ba.className="btn sec svc-aligner";el.appendChild(ba);ba.addEventListener("click",function(){alignerStructure(true);ba.remove();});}var tx=tpl(t.aligner,{j:jsem,c:ouverts});if(ba.textContent!==tx)ba.textContent=tx;}
+    if(isFinite(jsem)&&jsem!==ouverts&&!(R&&!R.egal&&!R.garde)&&!calVierge()){if(!ba){ba=doc.createElement("button");ba.type="button";ba.className="btn sec svc-aligner";el.appendChild(ba);ba.addEventListener("click",function(){alignerStructure(true);ba.remove();});}var tx=tpl(t.aligner,{j:jsem,c:ouverts});if(ba.textContent!==tx)ba.textContent=tx;}
     else if(ba)ba.remove();}
   function carteReglage(){var v=doc.getElementById("v-in");if(!v||v.offsetParent===null)return;var ex=doc.getElementById("svc-card");if(ex){majCarte(ex);return;}
     var ancre=v.querySelector(".card");if(!ancre)return;var t=L(),c=config();if(!c)return;
@@ -123,7 +128,7 @@
     h+='<div class="svc-row" data-w="all"><b>'+t.tous+'</b><span></span>'+IDS.map(function(id){return '<button type="button" class="svc-t" data-w="all" data-id="'+id+'" aria-pressed="false"></button>';}).join("")+'</div>';
     for(var w=0;w<7;w++){var s=servicesDu(w),fe=fermes().indexOf(w)>=0;h+='<div class="svc-row" data-w="'+w+'" data-ferme="'+(fe?1:0)+'"><b>'+t.jours[w]+'</b><button type="button" class="svc-t svc-ferme" data-w="'+w+'" data-id="ferme" aria-pressed="'+fe+'" aria-label="'+t.ferme+'"></button>'+IDS.map(function(id){return '<button type="button" class="svc-t" data-w="'+w+'" data-id="'+id+'" aria-pressed="'+(s.indexOf(id)>=0)+'"></button>';}).join("")+'</div>';}
     var ouverts=7-fermes().length,jsem=DBx().in&&Number(DBx().in.jsem),R=reposCaisse();
-    h+='</div><p class="note">'+t.noteFerme+'</p><p class="note svc-unseul">'+t.unSeul+'</p><div class="svc-caisse" hidden></div>'+(isFinite(jsem)&&jsem!==ouverts&&!(R&&!R.egal&&!R.garde)?'<button type="button" class="btn sec svc-aligner">'+tpl(t.aligner,{j:jsem,c:ouverts})+'</button>':'');
+    h+='</div><p class="note">'+t.noteFerme+'</p><p class="note svc-unseul">'+t.unSeul+'</p><div class="svc-caisse" hidden></div>'+(isFinite(jsem)&&jsem!==ouverts&&!(R&&!R.egal&&!R.garde)&&!calVierge()?'<button type="button" class="btn sec svc-aligner">'+tpl(t.aligner,{j:jsem,c:ouverts})+'</button>':'');
     h+=finsHtml(t);el.innerHTML=h;ancre.parentNode.insertBefore(el,ancre.nextSibling);lierFins(el);majCaisse(el,t,R);
     var ba=el.querySelector(".svc-aligner");if(ba)ba.addEventListener("click",function(){alignerStructure(true);ba.remove();});
     verrouillerJsem();

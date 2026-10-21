@@ -17,7 +17,9 @@
   var INIT = 'JFMAMJJASOND';
   var JOURS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
   function eur(v) { return Math.round(Number(v) || 0).toLocaleString('fr-FR') + ' €'; }
-  function pct(r) { return (Math.round(r * 1000) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
+  /* C204 : un chiffre sous son minimum ne s'arrondit jamais à 100 % (99,5 % s'écrit 99 %, pas 100 %). */
+  function ent(r) { var v = Math.round(r * 100); return r < 1 && v >= 100 ? 99 : v; }
+  function pct(r) { var v = Math.round(r * 1000) / 10; if (r < 1 && v >= 100) v = 99.9; return v.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
   function etat(r) { return r == null ? 'vide' : r >= 1 ? 'vert' : r >= 0.95 ? 'jaune' : r >= 0.9 ? 'orange' : 'rouge'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function moisCle() { try { return w.verdictOperationalClock().key.slice(0, 7); } catch (e) { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); } }
@@ -36,7 +38,7 @@
       if (d.preTracking) base.type = 'avant';
       else if (d.closed) base.type = 'repos';
       else if (d.ca == null || !(d.target > 0)) { base.type = 'vide'; base.cible = d.target > 0 ? d.target : null; }
-      else { base.type = 'reel'; base.valeur = d.ca; base.cible = d.target; base.r = d.ca / d.target; }
+      else { base.type = 'reel'; base.valeur = d.ca; base.cible = d.target; base.r = Math.round(d.ca) / Math.round(d.target); } /* C205 (V42) : le taux se lit sur les montants affichés */
       return base;
     });
     var reels = cols.filter(function (c) { return c.type === 'reel'; }), sel = cols.lastIndexOf(reels[reels.length - 1]);
@@ -52,7 +54,7 @@
       unite: 'minimum du jour'
     };
   }
-  function court(r) { return Math.round(r * 100) + '<small>\u202f%</small>'; }
+  function court(r) { return ent(r) + '<small>\u202f%</small>'; }
   function calendrier(m) {
     var h = '<div class="rx-cal" role="group" aria-label="' + esc(m.kicker) + '">';
     ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(function (j) { h += '<span class="rx-cj" aria-hidden="true">' + j + '</span>'; });
@@ -84,7 +86,7 @@
     });
   }
   function moisAnnee() {
-    var A = w.VerdictAnnualProjection, c = A.core(A.input()), an = moisCle().slice(0, 4), ad = aDate();
+    var A = w.VerdictAnnualProjection, c = A.coreN1(A.input(w.moteur())), an = moisCle().slice(0, 4), ad = aDate(); /* C204 : mêmes mois que la carte Année */
     var mois = c && c.months && c.months.length ? c.months : moisDuPlan(c, an);
     var cols = mois.map(function (m, i) {
       var lib = MOIS[i] + ' ' + an;
@@ -103,7 +105,7 @@
     };
   }
   function annees() {
-    var A = w.VerdictAnnualProjection, c = A.core(A.input()), an = Number(moisCle().slice(0, 4)), cible = Number(c.minimum) || 0;
+    var A = w.VerdictAnnualProjection, c = A.coreN1(A.input(w.moteur())), an = Number(moisCle().slice(0, 4)), cible = Number(c.minimum) || 0;
     var par = {}; (w.DB && w.DB.monthlyHistory || []).forEach(function (x) { var y = Number(String(x.period || '').slice(0, 4)); if (y && y < an && x.caTTC > 0) par[y] = (par[y] || 0) + Number(x.caTTC); });
     var cols = Object.keys(par).map(Number).sort().slice(-6).map(function (y) { return { lib: 'Année ' + y, axe: String(y), type: 'reel', valeur: par[y], cible: cible, r: cible > 0 ? par[y] / cible : null }; });
     if (!(c.expected > 0)) { /* C157 : projection indisponible → année à date reprise du plan mensuel et de l'historique. */
@@ -112,13 +114,30 @@
     }
     if (c.expected > 0) cols.push({ lib: 'Année ' + an + ' (en cours)', axe: String(an), type: 'encours', encours: true, valeur: c.actual, cible: c.expected, r: c.actual / c.expected });
     /* Évolution : même période de l'année précédente (janvier → mois en cours), à périmètre comparable. */
-    var mc = Number(moisCle().slice(5)), meme = 0; (w.DB && w.DB.monthlyHistory || []).forEach(function (x) { var p = String(x.period || ''); if (Number(p.slice(0, 4)) === an - 1 && Number(p.slice(5, 7)) <= mc && x.caTTC > 0) meme += Number(x.caTTC); });
-    var evo = meme > 0 && c.actual > 0 ? (c.actual - meme) / meme : null;
+    var cmp = memeDate(an), evo = cmp && cmp.avant > 0 && cmp.maintenant > 0 ? (cmp.maintenant - cmp.avant) / cmp.avant : null;
     return {
       kicker: 'Vos années · comparées à leur minimum, à la même date', cols: cols, sel: cols.length - 1,
-      resume: evo == null ? 'Historique en construction' : (evo >= 0 ? '+' : '−') + pct(Math.abs(evo)) + ' par rapport à ' + (an - 1) + ' à la même date (janvier → ' + MOIS[mc - 1] + ')',
+      resume: evo == null ? 'Historique en construction' : (evo >= 0 ? '+' : '−') + pct(Math.abs(evo)) + ' par rapport à ' + (an - 1) + ' ' + cmp.periode,
       unite: 'minimum annuel'
     };
+  }
+
+  /* C204 (V06) : « à la même date » = la même fenêtre dans les deux années. Avec la caisse jour par jour des deux années :
+     du premier jour suivi cette année au dernier jour saisi, et les mêmes dates l'an dernier. Sinon : les mois terminés
+     présents les deux années (historique mensuel), jamais octobre partiel face à octobre complet. */
+  function jourLong(k) { var j = Number(k.slice(8, 10)); return (j === 1 ? '1er' : String(j)) + ' ' + MOIS[Number(k.slice(5, 7)) - 1]; }
+  function memeDate(an) {
+    var rows = (w.DB && w.DB.histJour) || [], y = String(an), p = String(an - 1), auj = aujourdhui(), deb = null, fin = null, i;
+    rows.forEach(function (r) { var k = String(r && r.date || ''); if (k.slice(0, 4) !== y || typeof r.caJ !== 'number' || (auj && k > auj)) return; if (!deb || k < deb) deb = k; if (!fin || k > fin) fin = k; });
+    if (deb && fin) {
+      var a = p + deb.slice(4), b = p + fin.slice(4), avant = 0, maintenant = 0, jp = 0;
+      rows.forEach(function (r) { var k = String(r && r.date || ''); if (typeof r.caJ !== 'number') return; if (k >= deb && k <= fin) maintenant += r.caJ; else if (k >= a && k <= b) { avant += r.caJ; jp++; } });
+      if (jp > 0 && rows.some(function (r) { return String(r && r.date || '') <= a && String(r && r.date || '').slice(0, 4) === p; })) return { avant: avant, maintenant: maintenant, periode: 'à la même date (du ' + jourLong(deb) + ' au ' + jourLong(fin) + ')' };
+    }
+    var mc = Number(moisCle().slice(5)), h = {}, av = 0, ma = 0, n = 0, der = 0;
+    (w.DB && w.DB.monthlyHistory || []).forEach(function (x) { var k = String(x.period || '').slice(0, 7); if (x.caTTC > 0) h[k] = Number(x.caTTC); });
+    for (i = 1; i < mc; i++) { var kp = p + '-' + String(i).padStart(2, '0'), ky = y + '-' + String(i).padStart(2, '0'); if (h[kp] > 0 && h[ky] > 0) { av += h[kp]; ma += h[ky]; n++; der = i; } }
+    return n ? { avant: av, maintenant: ma, periode: 'sur les mois terminés (' + (n === der ? 'janvier → ' + MOIS[der - 1] : n + ' mois comparables') + ')' } : null;
   }
 
   /* ---------- Détail d'une colonne ---------- */
@@ -139,10 +158,14 @@
     '.rx{position:relative;margin:0 0 14px;padding:16px 16px 12px;border-radius:var(--r-mod,20px);border:1px solid var(--line,rgba(148,163,184,.18));background:var(--card,#fff);overflow:hidden}' +
     '.rx:before{content:"";position:absolute;inset:-40% -10% auto auto;width:70%;height:120%;background:radial-gradient(closest-side,var(--rx-glow,rgba(34,197,94,.16)),transparent 70%);pointer-events:none}' +
     '.rx[data-st="jaune"]{--rx-glow:rgba(234,179,8,.16)}.rx[data-st="orange"]{--rx-glow:rgba(249,115,22,.16)}.rx[data-st="rouge"]{--rx-glow:rgba(239,68,68,.16)}.rx[data-st="vide"]{--rx-glow:rgba(148,163,184,.12)}' +
+    /* C204 (V16) : couleur de TEXTE de chaque état, lisible d'emblée (mêmes teintes que le calendrier des journées) ;
+       le garde-contraste n'a donc plus à figer une couleur qui deviendrait fausse au mois suivant. */
+    '.rx[data-st="vert"]{--rx-t:#15803d}.rx[data-st="jaune"]{--rx-t:#a16207}.rx[data-st="orange"]{--rx-t:#c2410c}.rx[data-st="rouge"]{--rx-t:#b91c1c}.rx[data-st="vide"]{--rx-t:#64748b}' +
+    'html.vd-workspace-dark .rx[data-st="vert"]{--rx-t:#4ade80}html.vd-workspace-dark .rx[data-st="jaune"]{--rx-t:#facc15}html.vd-workspace-dark .rx[data-st="orange"]{--rx-t:#fb923c}html.vd-workspace-dark .rx[data-st="rouge"]{--rx-t:#f87171}html.vd-workspace-dark .rx[data-st="vide"]{--rx-t:#94a3b8}' +
     '.rx-k{margin:0;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut,#64748b)}' +
     '.rx-hero{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin:6px 0 0}' +
-    '.rx-big{font-size:40px;line-height:1;font-weight:850;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--rx-c,#16a34a);transition:color .3s}' +
-    '.rx-mot{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:800;color:var(--rx-c,#16a34a);background:color-mix(in srgb,var(--rx-c,#22c55e) 14%,transparent)}.rx-mot:empty{display:none}' +
+    '.rx-big{font-size:40px;line-height:1;font-weight:850;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--rx-t,var(--rx-c,#16a34a))}' +
+    '.rx-mot{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:800;color:var(--rx-t,var(--rx-c,#16a34a));background:color-mix(in srgb,var(--rx-c,#22c55e) 14%,transparent)}.rx-mot:empty{display:none}' +
     '.rx-lab{margin:6px 0 0;font-size:14px;line-height:1.4;color:var(--txt,inherit);font-weight:600}' +
     '.rx-sub{margin:2px 0 8px;font-size:13px;color:var(--mut,#64748b)}' +
     '.rx svg{display:block;width:100%;max-width:620px;margin:0 auto;height:auto;overflow:visible;touch-action:pan-y;-webkit-user-select:none;user-select:none}' +
@@ -192,7 +215,7 @@
       else {
         var col = COUL[etat(c.r)], yt = y(c.r), hgt = Math.max(2, B - yt);
         s += '<rect class="b" x="' + x.toFixed(1) + '" y="' + yt.toFixed(1) + '" width="' + larg.toFixed(1) + '" height="' + hgt.toFixed(1) + '" rx="' + Math.min(6, larg / 2).toFixed(1) + '" fill="' + col + '" stroke="' + col + '" style="--d:' + (anime ? (i * 0.035).toFixed(3) : 0) + 's' + (anime ? '' : ';animation:none') + '"/>';
-        s += '<text class="v" x="' + cx.toFixed(1) + '" y="' + (yt - 5).toFixed(1) + '" text-anchor="middle">' + Math.round(c.r * 100) + ' %</text>';
+        s += '<text class="v" x="' + cx.toFixed(1) + '" y="' + (yt - 5).toFixed(1) + '" text-anchor="middle">' + ent(c.r) + ' %</text>';
       }
       var proche = i !== m.sel && Math.abs(i - m.sel) < pasLib;
       if (((i % pasLib === 0 || i === n - 1) && !proche) || i === m.sel) s += '<text class="ax" x="' + cx.toFixed(1) + '" y="' + (B + 14) + '" text-anchor="middle">' + esc(c.axe) + '</text>';
@@ -214,6 +237,8 @@
   /* C183 (Steven, 20/10, vidéo : « de base le jour J ou le dernier jour enregistré ; mais si le client clique sur un jour,
      il revoit son détail complet — là ça reste sur la même journée ») : un jour touché dans « Vos journées » devient le
      jour affiché partout dans le chapitre Jour — carte de la journée, courbe des journées, ventes et heures par service. */
+  /* Retire une couleur figée par le garde-contraste pour l'état précédent (le texte garde la couleur de son état). */
+  function defiger(box) { [].forEach.call(box.querySelectorAll('.rx-big,.rx-mot'), function (e) { if (e.hasAttribute('data-vx44')) { e.style.removeProperty('color'); e.removeAttribute('data-vx44'); } }); }
   function changer(el, prop, v) { if (el && el[prop] !== v) el[prop] = v; }
   function appliquerJour(d) {
     var date = d.__vx46jour, box = d.querySelector('#vx40-jour section.rx'); if (!date || !box || !box.__m) return;
@@ -222,7 +247,7 @@
     changer(M.querySelector('.mod-h .kicker'), 'textContent', 'Journée d’exploitation du ' + nom);
     var reel = c.type === 'reel', ca = d.getElementById('jCA'), ve = d.getElementById('jVerdict'), so = d.getElementById('jSous');
     changer(ca, 'textContent', reel ? eur(c.valeur) : c.type === 'repos' ? 'Repos' : '—');
-    changer(ve, 'textContent', reel ? (c.valeur >= c.cible ? 'Minimum dépassé de ' + eur(c.valeur - c.cible) : 'Il manque ' + eur(c.cible - c.valeur) + ' pour couvrir le minimum') : c.type === 'repos' ? 'Jour de repos : aucun chiffre attendu' : c.avenir ? 'Journée à venir' : 'Journée pas encore saisie');
+    changer(ve, 'textContent', reel ? (c.valeur >= c.cible ? 'Minimum dépassé de ' + eur(Math.round(c.valeur) - Math.round(c.cible)) : 'Il manque ' + eur(Math.round(c.cible) - Math.round(c.valeur)) + ' pour couvrir le minimum') : c.type === 'repos' ? 'Jour de repos : aucun chiffre attendu' : c.avenir ? 'Journée à venir' : 'Journée pas encore saisie');
     changer(so, 'textContent', reel ? 'Coût de cette journée : ' + eur(c.cible) + ', soit ' + pct(c.r) + ' du minimum.' : '');
     var st = reel ? detail(c, box.__m.unite).st : 'info'; if (M.getAttribute('data-etat') !== st) M.setAttribute('data-etat', st);
   }
@@ -238,6 +263,7 @@
     var dt = detail(m.cols[i], m.unite);
     box.setAttribute('data-st', dt.st); box.style.setProperty('--rx-c', COUL[dt.st]);
     box.querySelector('.rx-big').textContent = dt.big; box.querySelector('.rx-lab').textContent = dt.lab; box.querySelector('.rx-mot').textContent = dt.mot;
+    defiger(box);
     [].forEach.call(box.querySelectorAll('g.col,.rx-j'), function (g) { var on = Number(g.getAttribute('data-i')) === i; g.classList.toggle('sel', on); g.setAttribute('tabindex', on ? '0' : '-1'); if (g.tagName === 'BUTTON') g.setAttribute('aria-pressed', String(on)); if (on && focus) g.focus(); });
   }
   /* Revenir au dernier jour enregistré : mêmes champs, mêmes mots (la page le remet aussi à sa prochaine mise à jour). */

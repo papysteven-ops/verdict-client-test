@@ -31,7 +31,7 @@
   function svg(p, cls) { return '<svg class="' + cls + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
 
   /* ── Les chapitres, dans l'ordre des thèmes ─────────────────────────────── */
-  var CH = [], lecteur = null, ouvert = -1, retourFocus = null;
+  var CH = [], lecteur = null, ouvert = -1, retourFocus = null, calme = 0;
   function relever() {
     var body = doc.getElementById('auditBody'); if (!body) return [];
     var bruts = [].slice.call(body.querySelectorAll('.av31-full .av31-full-body > .au-sc'));
@@ -54,6 +54,8 @@
     var body = doc.getElementById('auditBody'); if (!body) return;
     if (ouvert >= 0 && !force) return; /* pendant la lecture, rien ne bouge */
     var L = relever(); if (!L.length) return;
+    /* V28 (21/10) : la couverture du chapitre 1 dit le nombre réel de chapitres (elle écrivait « 20 » pour 27). */
+    [].forEach.call(body.querySelectorAll('[data-au-profondeur]'), function (e) { var t = L.length + ' chapitres · 4 exports'; if (e.textContent !== t) e.textContent = t; });
     var cle = L.map(function (x) { return x.t; }).join('|');
     var bib = doc.getElementById('vdBiblio');
     if (bib && bib.getAttribute('data-cle') === cle && bib.isConnected && !force) { CH = L; brancher(); return; }
@@ -120,6 +122,8 @@
       if (!ok) return; var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
       if (Math.abs(dx) > 70 && Math.abs(dy) < 45 && Date.now() - t0 < 600) aller(ouvert + (dx < 0 ? 1 : -1));
     }, { passive: true });
+    /* V32 : l'élan de la molette ou du trackpad (inertie du Mac) ne fait pas descendre le chapitre qui vient de s'ouvrir. */
+    L.querySelector('.lx-corps').addEventListener('wheel', function (e) { if (Date.now() < calme) e.preventDefault(); }, { passive: false });
     return L;
   }
   function sommaire(L) {
@@ -146,10 +150,15 @@
     av.disabled = i === 0; av.querySelector('b').textContent = i > 0 ? CH[i - 1].t : '';
     ap.querySelector('small').textContent = i < CH.length - 1 ? 'Suivant →' : 'Fin de l’audit';
     ap.querySelector('b').textContent = i < CH.length - 1 ? CH[i + 1].t : 'Retour à l’Audit';
+    /* V32 (21/10) : le sommaire défile seul jusqu'au chapitre lu (scrollIntoView faisait aussi défiler la page
+       derrière le lecteur), et chaque chapitre s'ouvre en haut. */
+    var som = lecteur.querySelector('.lx-som');
     [].forEach.call(lecteur.querySelectorAll('[data-lx-i]'), function (b) {
-      var on = +b.getAttribute('data-lx-i') === i; if (on) { b.setAttribute('aria-current', 'true'); try { b.scrollIntoView({ block: 'nearest' }); } catch (e) {} } else b.removeAttribute('aria-current');
+      var on = +b.getAttribute('data-lx-i') === i; if (!on) { b.removeAttribute('aria-current'); return; }
+      b.setAttribute('aria-current', 'true');
+      if (som.clientHeight) { var r = b.getBoundingClientRect(), s = som.getBoundingClientRect(); if (r.top < s.top || r.bottom > s.bottom) som.scrollTop += (r.top + r.bottom - s.top - s.bottom) / 2; }
     });
-    lecteur.querySelector('.lx-corps').scrollTop = 0;
+    lecteur.querySelector('.lx-corps').scrollTop = 0; calme = Date.now() + 350;
   }
   function rendreAuParent() {
     CH.forEach(function (y) { if (y.ph) { if (y.ph.parentNode) y.ph.parentNode.replaceChild(y.el, y.ph); else if (y.el.parentNode) y.el.parentNode.removeChild(y.el); y.ph = null; } });
@@ -172,6 +181,11 @@
     lecteur = creerLecteur(); if (!lecteur) return;
     retourFocus = depuis || doc.activeElement;
     sommaire(lecteur);
+    /* V02 (21/10) : l'animation d'entrée des vues (vwIn, remplissage « both ») reste active sur #v-audit ; Chrome
+       en fait alors le bloc conteneur du lecteur (position:fixed), qui prenait toute la hauteur de l'Audit au lieu
+       de l'écran : aucun chapitre ne défilait. L'animation est coupée jusqu'au prochain changement d'onglet
+       (lx-fige reste après la fermeture, sinon l'Audit rejouerait son entrée derrière le lecteur qui se ferme). */
+    var va = doc.getElementById('v-audit'); if (va) va.classList.add('lx-fige');
     doc.documentElement.classList.add('vd-lecture');
     lecteur.classList.add('on');
     rendre(i);
@@ -212,7 +226,14 @@
     };
   }
   /* Quitter l'Audit (bouton d'un chapitre qui mène ailleurs) ferme la lecture proprement. */
-  if (typeof w.go === 'function') { var go0 = w.go; w.go = function () { if (ouvert >= 0) fermer(true); return go0.apply(this, arguments); }; }
+  if (typeof w.go === 'function') {
+    var go0 = w.go;
+    w.go = function (v) {
+      if (ouvert >= 0) fermer(true);
+      var va = doc.getElementById('v-audit'); if (va && v !== 'audit') va.classList.remove('lx-fige'); /* V02 : l'entrée de l'Audit rejoue la prochaine fois */
+      return go0.apply(this, arguments);
+    };
+  }
   if (w.VerdictGainRealiste) { try { w.VerdictGainRealiste.ouvrirDetail = function () { ouvrir('gain realiste'); }; } catch (e) {} }
   w.av31OpenFull = function () { ouvrir(0); };
   var attente = 0;
@@ -259,6 +280,8 @@
       '#vdBiblio .bb-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}#vdBiblio .bb-tile{min-height:112px;grid-template-columns:auto 1fr;grid-template-areas:"n k" "n b" "n e";padding:18px 20px}#vdBiblio .bb-tile i{display:none}}' +
     /* Lecteur */
     'html.vd-lecture,html.vd-lecture body{overflow:hidden!important}html.vd-lecture #v-audit{transform:none!important;z-index:400!important}' +
+    /* V02 : sans animation active, #v-audit n'est plus le bloc conteneur du lecteur, qui se cale sur l'écran */
+    'html.vd-lecture #v-audit,#v-audit.lx-fige{animation:none!important}html.vd-lecture #v-audit{will-change:auto!important;filter:none!important}' +
     '#vdLecteur{--lx-bg:#f3f5f8;--lx-chrome:#ffffff;--lx-line:#e5e9ef;--lx-txt:#0f172a;--lx-sub:#64748b;--lx-paper:#ffffff;--lx-btn:#f1f4f8;position:fixed;inset:0;z-index:10;display:none;font-family:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif}' +
     'html.vd-workspace-dark #vdLecteur{--lx-bg:#080b10;--lx-chrome:#0e131a;--lx-line:#1e2733;--lx-txt:#f1f5f9;--lx-sub:#94a3b8;--lx-paper:#fbfbf8;--lx-btn:#161d26}' +
     '#vdLecteur.on{display:block}' +

@@ -14,6 +14,10 @@
 'use strict';
 if(w.VerdictGainRealiste||typeof w.moteur!=='function'||typeof w.DEC_DEFS==='undefined'||typeof w.deriv!=='function')return;
 
+/* C206 (V27) — démonstration : le bandeau dit « vos chiffres ne sont pas conservés ». Le scénario de Simuler qu'une visite
+   précédente de la démo avait gardé (stockage du navigateur, clé verdict:demo:decision:scenario:…) est oublié au
+   chargement de la page ; pendant la visite, il reste conservé d'un écran à l'autre. Un vrai établissement n'est pas touché. */
+try{var LS=w.localStorage,OUB=[];for(var li=0;li<LS.length;li++){var lk=LS.key(li);if(lk&&lk.indexOf('verdict:demo:decision:scenario:')===0)OUB.push(lk);}OUB.forEach(function(k){LS.removeItem(k);});}catch(e){}
 var CTRL={sal:1,fc:1,com:1,emb:1,fix:.5,panier:.5,carte:.5,cmd:1/3,jour:1/3};
 var CTRL_LIB={1:'élevé',0.5:'partiel'};
 var ORDER=['sal','fix','com','emb','fc','carte','panier','cmd'];
@@ -225,19 +229,46 @@ function installerSimuler(){
   var origRecap=w.decDrawRecap;
   if(typeof origRecap==='function'&&!origRecap.__c90){w.decDrawRecap=function(){var r=origRecap.apply(this,arguments);try{noteRecap();}catch(e){}return r;};w.decDrawRecap.__c90=true;}
   var origRender=w.decRender;
-  if(typeof origRender==='function'&&!origRender.__c88){w.decRender=function(id,v){var r=origRender.apply(this,arguments);try{noteLevier(id,v);}catch(e){}return r;};w.decRender.__c88=true;}
+  if(typeof origRender==='function'&&!origRender.__c88){w.decRender=function(id,v){var r=origRender.apply(this,arguments);try{noteLevier(id,v);autresNotes(id);}catch(e){}return r;};w.decRender.__c88=true;}
+  var origTotal=w.decDrawTotal;
+  if(typeof origTotal==='function'&&!origTotal.__c206){w.decDrawTotal=function(){var r=origTotal.apply(this,arguments);try{panneau();}catch(e){}return r;};w.decDrawTotal.__c206=true;}
 }
-function depasse(id,v,P){
-  var b=num(P&&P.bornes[id]);v=num(v);
-  if(id==='panier'||id==='cmd'||id==='carte')return v>b+1e-9;
-  if(id==='sal'||id==='fc'||id==='fix'||id==='com'||id==='emb')return v<b-1e-9;
-  return false;
+/* C206 (V25) — la borne d'un curseur dépend des autres curseurs réellement actifs, plus de la proposition de Verdict :
+   un panier à +0,20 € seul n'est plus « au-delà du réaliste » parce que la proposition, elle, ne l'utilisait pas.
+   Règle inchangée : chaque levier reste borné par le repère du format, et l'ensemble ne dépasse pas la rentabilité
+   des meilleurs établissements du format. Le moteur n'est rejoué que si l'ensemble des curseurs dépasse ce niveau. */
+var MONTE={panier:1,cmd:1,carte:1},BAISSE={sal:1,fc:1,fix:1,com:1,emb:1},BD={k:null,m:{}};
+function rnDe(st){var k=JSON.stringify(st);if(BD.k!==cle()){BD={k:cle(),m:{}};}if(BD.m[k]==null)BD.m[k]=w.moteur(overAll(st)).v.rn;return BD.m[k];}
+/* Comme la proposition : les leviers sont pris dans l'ordre (ce qui dépend le plus du client d'abord) ; un levier n'est
+   borné que par ceux qui le précèdent, et seul celui qui fait dépasser le niveau des meilleurs établissements est signalé. */
+function actifs(state,sauf){var o={},n=0,rang=sauf==null?99:ORDER.indexOf(sauf);for(var k in state){if(k===sauf||!(MONTE[k]||BAISSE[k]))continue;if(sauf!=null&&!(ORDER.indexOf(k)<rang))continue;var x=num(state[k]);if(x){o[k]=x;n++;}}return {st:o,n:n};}
+function borneDyn(id,state,P){
+  var cap=num(P&&P.bornesLevier[id]),haut=P.plafond.rn,out={b:cap,cap:cap,reduit:false,rnAutres:null,nAutres:0};
+  if(!cap||!(P.base.rn<haut))return out;
+  var A=actifs(state||{},id),t={};for(var q in A.st)t[q]=A.st[q];out.nAutres=A.n;t[id]=cap;
+  if(rnDe(t)<=haut+1e-9)return out;
+  var dd=def(id),pas=dd&&dd.step?dd.step:1,sg=cap<0?-1:1,lo=0,hi=Math.floor(Math.abs(cap)/pas+1e-9);
+  while(hi-lo>1){var mi=Math.floor((lo+hi)/2);t[id]=Math.round(sg*mi*pas*100)/100;if(rnDe(t)<=haut+1e-9)lo=mi;else hi=mi;}
+  out.b=Math.round(sg*lo*pas*100)/100;out.reduit=true;out.rnAutres=rnDe(A.st);return out;
 }
-function horsBornes(state){var P=plan(),o=[];if(!P||!state)return o;for(var k in state)if(depasse(k,state[k],P))o.push(k);return o;}
-function phrase(id,P){
-  var R=P.R,d=R.d,v=R.v,F=P.format,fam=F.fam,fmt=F.fmt,t=F.type?'des établissements « '+F.type+' »':'de la restauration traditionnelle',b=P.bornes[id],dd=def(id),coupe=P.plafond.atteint&&num(P.bornesLevier[id])!==num(b),au=(b?'Verdict compte au plus '+dd.fmt(b):(coupe?'Verdict ne l’ajoute pas':'Verdict ne compte aucun gain ici'))+(coupe?' : avec vos autres leviers, vous atteignez déjà '+pc(P.plafond.rn,0)+' de rentabilité, le niveau des meilleurs établissements '+t.replace(/^des établissements /,'')+'.':'.');
-  var fin=' Au-delà, ce n’est plus réaliste.';if(!b&&P.plafond.atteint&&num(P.bornesLevier[id])!==0)fin='';
+function depasse(id,v,P,state){
+  v=num(v);if(!P||!(MONTE[id]||BAISSE[id])||!v)return false;
+  var cap=num(P.bornesLevier[id]);
+  if(MONTE[id]&&v>cap+1e-9)return true;if(BAISSE[id]&&v<cap-1e-9)return true;
+  var s={};for(var k in (state||{}))s[k]=state[k];s[id]=v;var A=actifs(s,null);
+  if(!(P.base.rn<P.plafond.rn)||rnDe(A.st)<=P.plafond.rn+1e-9)return false;
+  var b=borneDyn(id,s,P).b;return MONTE[id]?v>b+1e-9:v<b-1e-9;
+}
+function horsBornes(state){var P=plan(),o=[];if(!P||!state)return o;for(var k in state)if(depasse(k,state[k],P,state))o.push(k);return o;}
+function phrase(id,P,B){
+  var R=P.R,d=R.d,v=R.v,F=P.format,fam=F.fam,fmt=F.fmt,t=F.type?'des établissements « '+F.type+' »':'de la restauration traditionnelle',dd=def(id);
+  B=B||{b:num(P.bornesLevier[id]),reduit:false};var b=B.b,t2=t.replace(/^des établissements /,''),meilleurs=pc(P.plafond.rn,0)+', le niveau des meilleurs établissements '+t2;
+  var au=!B.reduit?(b?'Verdict compte au plus '+dd.fmt(b)+'.':'Verdict ne compte aucun gain ici.')
+    :(b?'Avec vos autres leviers, Verdict compte au plus '+dd.fmt(b)+' : au-delà, la rentabilité dépasserait '+meilleurs+'.'
+       :'Verdict n’en compte pas davantage : avec vos autres leviers, la rentabilité est déjà de '+pc(B.rnAutres,1)+(B.rnAutres>=P.plafond.rn?', au-delà de ':' ; ce levier la ferait dépasser ')+meilleurs+'.');
+  var fin=B.reduit?'':' Au-delà, ce n’est plus réaliste.';
   if(id==='cmd')return 'Vous servez '+String(Math.round(num(d.cmdj)*10)/10).replace('.',',')+' commandes par jour'+(fmt?' ; repère Verdict '+t+' : '+fmt.cl[1]:'')+'. '+au+fin;
+  if(B.reduit&&id==='carte')return 'Verdict relève les prix d’au plus '+CARTE_CAP+' %, sans dépasser le plat le plus cher de la catégorie. '+au;
   if(id==='panier')return 'Votre panier moyen est de '+fr2(d.panierTTC)+' €'+(fmt?' ; repère Verdict '+t+' : '+fr2(fmt.tk[1])+' €':'')+'. '+au+fin;
   if(id==='carte')return 'Verdict relève les prix d’au plus '+CARTE_CAP+' %, sans dépasser le plat le plus cher de la catégorie.'+fin;
   if(id==='sal')return 'Votre équipe coûte '+pc(v.ms)+' du chiffre d’affaires ; repère Verdict '+t+' : '+pc(fam.ms[1],0)+'. '+au+fin;
@@ -249,13 +280,23 @@ function phrase(id,P){
 }
 function noteLevier(id,v){
   var box=document.getElementById('dr-'+id);if(!box)return;var n=document.getElementById('c88-note-'+id);
-  var P=plan(),msg='';v=num(v);
+  var P=plan(),msg='',st={};v=num(v);for(var k in (w.DEC_STATE||{}))st[k]=w.DEC_STATE[k];st[id]=v;
   if(id==='jour'&&v)msg='Un jour de plus : Verdict compte '+Math.round(JOUR_DEMANDE*100)+' % d’une journée moyenne, avec l’équipe nécessaire.';
-  else if(P&&depasse(id,v,P))msg=phrase(id,P);
+  else if(P&&depasse(id,v,P,st))msg=phrase(id,P,borneDyn(id,st,P));
   if(!msg){if(n)n.remove();return;}
   if(!n){n=document.createElement('p');n.id='c88-note-'+id;n.className='note c88-note';box.appendChild(n);}
   n.textContent=msg;
 }
+function autresNotes(id){(w.DEC_DEFS||[]).forEach(function(d){if(d.id===id||d.id==='jour')return;var v=num(w.DEC_STATE&&w.DEC_STATE[d.id]);if(v||document.getElementById('c88-note-'+d.id))noteLevier(d.id,v);});}
+/* C206 (V27) — le panneau flottant du total ne recouvre plus la lecture guidée : il se retire tant qu'elle est à l'écran
+   (elle montre les mêmes chiffres et les mêmes boutons), et revient dès qu'on la quitte. */
+function panneau(){
+  var bar=document.getElementById('decTotalBar');if(!bar)return;var sc=document.getElementById('decScene'),cache=false;
+  if(sc&&w.VIEW==='dec'&&bar.classList.contains('on')){var a=sc.getBoundingClientRect(),h=bar.getBoundingClientRect();cache=a.height>0&&a.bottom>h.top-8&&a.top<h.bottom;}
+  if(bar.classList.contains('c206-retire')!==cache)bar.classList.toggle('c206-retire',cache);
+}
+var PAN=0;w.addEventListener('scroll',function(){if(PAN)return;PAN=1;(w.requestAnimationFrame||setTimeout)(function(){PAN=0;try{panneau();}catch(e){}});},{passive:true});
+w.addEventListener('resize',function(){try{panneau();}catch(e){}},{passive:true});
 /* Enregistrement : on garde la version et l'origine du scénario (proposition de Verdict ou curseurs du client). */
 var SCEN='C90';
 function persist(reason){
@@ -387,10 +428,15 @@ css.textContent='.c88-best{background:rgba(0,0,0,.25);border-radius:12px;padding
   '.c88-amount strong{font-family:var(--mono);font-size:28px;font-weight:800;color:var(--green);letter-spacing:-.02em}.c88-amount strong small{font-size:14px;font-weight:700}.c88-amount em{font-style:normal;font-family:var(--mono);font-weight:700;color:var(--green)}'+
   '.c88-warn{color:#f59e0b!important}.c88-note{color:#f59e0b!important;margin:2px 0 8px}.c88-step .c88-eur{text-align:right;white-space:nowrap;color:var(--green)}.c88-step small{font-weight:600}'+
   '.c88-top{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}.c88-top li{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}.c88-top b{font-family:var(--mono);white-space:nowrap}'+
-  'html.vd-workspace-light #v-dec .c88-best{background:#f6f8fa!important}';
+  'html.vd-workspace-light #v-dec .c88-best{background:#f6f8fa!important}'+
+  /* C206 (V25) : vert et rouge vifs illisibles en 12 px sur fond clair (contraste 2,1) : teintes foncées, contraste ≥ 4,5 */
+  'html.vd-workspace-light #v-dec .dec-col b[style*="--green"],html.vd-workspace-light #v-dec .dec-gain[style*="--green"],html.vd-workspace-light #v-dec [id^="dval-"][style*="--green"]{color:#15803d!important}'+
+  'html.vd-workspace-light #v-dec .dec-col b[style*="--red"],html.vd-workspace-light #v-dec .dec-gain[style*="--red"],html.vd-workspace-light #v-dec [id^="dval-"][style*="--red"]{color:#b91c1c!important}'+
+  'html.vd-workspace-light #v-dec .c88-note{color:#92400e!important}'+
+  '#decTotalBar.c206-retire{opacity:0!important;pointer-events:none!important;transform:translateY(16px)!important;transition:opacity .2s ease,transform .2s ease}';
 (document.head||document.documentElement).appendChild(css);
 
-w.VerdictGainRealiste={version:'C91',plan:plan,cartePlan:cartePlan,horsBornes:horsBornes,carteFiable:carteFiable,overAll:overAll,
+w.VerdictGainRealiste={version:'C206',borneDyn:borneDyn,plan:plan,cartePlan:cartePlan,horsBornes:horsBornes,carteFiable:carteFiable,overAll:overAll,
   ouvrirSimuler:function(){var P=plan();if(!P)return;try{w.decDepuisPotentiel();}catch(e){w.DEC_STATE=w.decPotentialState(P);w.go('dec');}},
   ouvrirDetail:function(){var d=document.querySelector('[data-audit-full-report]');if(d)d.open=true;setTimeout(function(){var c=document.getElementById('auGainReel');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});},40);}};
 installerSimuler();installerAudit();

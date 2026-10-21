@@ -10,25 +10,47 @@
   var REDUIT = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches), E = 'cubic-bezier(.23,1,.32,1)';
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
-  function eur(v) { return Math.round(num(v)).toLocaleString('fr-FR') + ' €'; }
-  function pct1(v) { return num(v).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
+  /* C208 (V56, V57) : espace insécable avant « % » et « € », et le même arrondi que les pages Carte (75 %, 78,4 %). */
+  function eur(v) { return Math.round(num(v)).toLocaleString('fr-FR') + '\u00a0€'; }
+  function pct1(v) { return (Math.round(num(v) * 10) / 10).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + '\u00a0%'; }
   function teinte(pts) { return pts < 31 ? '#ef4444' : pts < 60 ? '#f97316' : pts < 75 ? '#eab308' : '#22c55e'; }
   function P() { return w.VerdictCartePages || null; }
 
+  /* C208 (V08, V39) : UN seul gain de carte, relu dans le moteur de Simuler (VerdictGainRealiste) :
+     - levier « Prix de la carte » retenu dans le plan : son gain dans le plan (Audit, Simuler, Priorités) ;
+     - non retenu (plan déjà au niveau des meilleurs établissements du format) : le gain du curseur seul, rejoué par
+       moteur(), et la raison est dite. Partagé par le récit, l'Idéale et Décisions. */
+  var GC = { P: null, v: null };
+  function gainCarte() {
+    var G = w.VerdictGainRealiste; if (!G || typeof G.plan !== 'function' || typeof w.moteur !== 'function') return null;
+    try {
+      if (!G.carteFiable()) return { fiable: false };
+      var P = G.plan(); if (!P) return null;
+      if (GC.P === P && GC.v) return GC.v;
+      var ret = (P.retenus || []).filter(function (x) { return x.id === 'carte'; })[0] || null;
+      var cap = ret ? (num(ret.v) || 8) : 8, cp = G.cartePlan(cap) || {};
+      var an = ret ? num(ret.gain) : num(w.moteur(G.overAll({ carte: cap })).d.res) - num(P.base && P.base.res);
+      var v = { fiable: true, retenu: !!ret, cap: cap, rows: cp.rows || [], sous: cp.sous || 0, an: an, mois: an / 12,
+        plan: num(P.central && P.central.gain), plafond: !!(P.plafond && P.plafond.atteint), rnHaut: P.plafond && P.plafond.rn };
+      GC = { P: P, v: v }; return v;
+    } catch (e) { return null; }
+  }
+  w.VerdictGainCarte = gainCarte;
+
   function donnees() {
     var p = P(); if (!p || typeof w.carteStats !== 'function' || typeof w.moteur !== 'function') return null;
-    var st, R, etat, apc = null, manque = null, plan = null, levier = null, fiable = false;
+    var st, R, etat, apc = null, manque = null, gain = null;
     try { st = w.carteStats(); R = w.moteur(); } catch (e) { return null; }
     if (!st || !(st.actifs > 0)) return null;
     try { etat = p.scoreState(); } catch (e) { etat = null; }
     try { apc = w.auditPremiumCalc(R).carte; } catch (e) {}
     try { if (typeof w.VerdictManqueCarte === 'function') manque = w.VerdictManqueCarte(); } catch (e) {}
-    try { if (typeof w.potentiel === 'function') levier = (w.potentiel().leviers || []).filter(function (l) { return l.id === 'carte' || /prix de la carte/i.test(l.n || ''); })[0] || null; } catch (e) {}
-    var cap = (levier && levier.over && Number(levier.over.carte)) || 8;
-    try { if (w.VerdictGainRealiste) { fiable = !!w.VerdictGainRealiste.carteFiable(); if (fiable) plan = w.VerdictGainRealiste.cartePlan(cap); } } catch (e) {}
+    gain = gainCarte();
     var obj = 75; try { var o = Number(w.DB && w.DB.reg && w.DB.reg.objp); if (o > 0) obj = o; } catch (e) {}
     var marge = num(st.margePond), theo = num(st.theoR), autres = Math.max(0, 100 - theo - marge);
-    return { st: st, etat: etat, apc: apc, manque: manque, plan: plan, levier: levier, fiable: fiable, cap: cap, obj: obj, marge: marge, theo: theo, autres: autres,
+    /* une seule « couverture des fiches » : celle de l'Audit et du plan de prix (plats à fiche complète ÷ plats actifs) */
+    var couv = apc && isFinite(Number(apc.couverture)) ? Number(apc.couverture) : (st.actifs ? Math.round(num(st.fiables) / st.actifs * 100) : 0);
+    return { st: st, etat: etat, apc: apc, manque: manque, gain: gain, couv: couv, obj: obj, marge: marge, theo: theo, autres: autres,
       nom: (w.DB && w.DB.etab) || 'Votre carte', mois: manque && manque.mois || '' };
   }
   function anneau(v, col) { var r = 70, c = 2 * Math.PI * r; return '<svg class="cr-ring" viewBox="0 0 180 180" aria-hidden="true"><circle cx="90" cy="90" r="' + r + '" class="cr-ring-bg"/><circle cx="90" cy="90" r="' + r + '" class="cr-ring-arc" style="stroke:' + col + ';stroke-dasharray:' + c.toFixed(1) + ';--off:' + (c * (1 - v / 100)).toFixed(1) + ';--len:' + c.toFixed(1) + '"/></svg>'; }
@@ -37,34 +59,38 @@
     var t = [], e = D.etat, pret = !!(e && e.ready && e.value != null), col = pret ? (e.color || teinte(e.value)) : '#94a3b8';
     /* 1 · Indice Carte */
     t.push('<section class="cr-card cr-c1" data-cr="1"><span class="cr-k">1 · Votre carte</span><h2>' + (pret ? (e.value >= 75 ? 'Une carte qui tient ses marges' : e.value >= 60 ? 'Une carte correcte, à affiner' : e.value >= 31 ? 'Une carte fragile' : 'Une carte qui perd de l’argent') : 'Indice Carte en construction') + '</h2>' +
-      '<div class="cr-dial">' + anneau(pret ? e.value : Math.round(num(D.st.partFiable)), col) + '<div class="cr-dial-n"><b data-cr-count="' + (pret ? e.value : Math.round(num(D.st.partFiable))) + '">0</b><small>' + (pret ? '/100' : '%') + '</small></div></div>' +
+      '<div class="cr-dial">' + anneau(pret ? e.value : Math.round(D.couv), col) + '<div class="cr-dial-n"><b data-cr-count="' + (pret ? e.value : Math.round(D.couv)) + '">' + (pret ? e.value : Math.round(D.couv)) + '</b><small>' + (pret ? '/100' : '%') + '</small></div></div>' +
       '<p class="cr-big"><b>' + pct1(D.marge) + '</b><small>de vos ventes vous restent une fois les produits payés · objectif ' + pct1(D.obj) + '</small></p>' +
       '<p class="cr-p">' + (pret ? 'Indice Carte, calculé avec vos fiches et vos ventes.' : D.st.fiables + ' plats exploitables sur ' + D.st.actifs + ' · l’indice s’affiche à 100 % des fiches et un mois complet.') + '</p><span class="cr-suite">Où va chaque 100 € ↓</span></section>');
     /* 2 · 100 € */
     t.push('<section class="cr-card cr-c2" data-cr="2"><span class="cr-k">2 · Sur chaque 100 € de carte</span><h2>Ce que vos plats gardent</h2>' +
-      '<div class="cr-stack"><i style="--w:' + D.theo.toFixed(2) + '%;--c:#f59e0b"><span><small>Matière</small>' + pct1(D.theo).replace(' %', ' €') + '</span></i>' + (D.autres > 0.05 ? '<i style="--w:' + D.autres.toFixed(2) + '%;--c:#c084fc"><span><small>Plateformes, emballages</small>' + pct1(D.autres).replace(' %', ' €') + '</span></i>' : '') + '<i class="cr-res" style="--w:' + D.marge.toFixed(2) + '%;--c:#22c55e"><span><small>Gardés</small>' + pct1(D.marge).replace(' %', ' €') + '</span></i></div>' +
-      '<p class="cr-big"><b data-cr-count="' + Math.round(D.marge) + '" data-cr-eur>0 €</b><small>gardés sur 100 € encaissés, avant l’équipe, le loyer et l’impôt</small></p>' +
-      '<p class="cr-p">Matière théorique des fiches : ' + pct1(D.theo) + (D.apc && D.apc.ecart != null && D.apc.theoNour != null ? ' · nourriture : ' + pct1(D.apc.theoNour) + ' sur les fiches, ' + pct1(D.apc.theoNour + D.apc.ecart) + ' achetée (écart ' + (D.apc.ecart > 0 ? '+' : '') + pct1(D.apc.ecart).replace(' %', ' pt') + ')' : '') + '.</p><span class="cr-suite">Vos plats vedettes ↓</span></section>');
+      '<div class="cr-stack"><i style="--w:' + D.theo.toFixed(2) + '%;--c:#f59e0b"><span><small>Matière</small>' + pct1(D.theo).replace('\u00a0%', '\u00a0€') + '</span></i>' + (D.autres > 0.05 ? '<i style="--w:' + D.autres.toFixed(2) + '%;--c:#c084fc"><span><small>Plateformes, emballages</small>' + pct1(D.autres).replace('\u00a0%', '\u00a0€') + '</span></i>' : '') + '<i class="cr-res" style="--w:' + D.marge.toFixed(2) + '%;--c:#22c55e"><span><small>Gardés</small>' + pct1(D.marge).replace('\u00a0%', '\u00a0€') + '</span></i></div>' +
+      '<p class="cr-big"><b data-cr-count="' + Math.round(D.marge) + '" data-cr-eur>' + eur(Math.round(D.marge)) + '</b><small>gardés sur 100 € encaissés, avant l’équipe, le loyer et l’impôt</small></p>' +
+      '<p class="cr-p">Matière théorique des fiches : ' + pct1(D.theo) + (D.apc && D.apc.ecart != null && D.apc.theoNour != null ? ' · nourriture : ' + pct1(D.apc.theoNour) + ' sur les fiches, ' + pct1(D.apc.theoNour + D.apc.ecart) + ' achetée (écart ' + (D.apc.ecart > 0 ? '+' : '') + pct1(D.apc.ecart).replace('\u00a0%', '\u00a0pt') + ')' : '') + '.</p><span class="cr-suite">Vos plats vedettes ↓</span></section>');
     /* 3 · Vedettes */
     var best = (D.apc && D.apc.best || []).slice(0, 3), max = Math.max.apply(null, [1].concat(best.map(function (b) { return num(b.contrib); }))), somme = best.reduce(function (s, b) { return s + num(b.contrib); }, 0);
     if (best.length) t.push('<section class="cr-card cr-c3" data-cr="3"><span class="cr-k">3 · Vos plats vedettes</span><h2>Ceux qui font vivre la maison</h2><ol class="cr-bars">' +
       best.map(function (b, i) { return '<li style="--i:' + i + '"><span class="cr-bl">' + esc(b.nom) + '<small>' + Math.round(num(b.vol)).toLocaleString('fr-FR') + ' vendus · marge matière ' + pct1(b.marge) + '</small></span><span class="cr-track"><i style="--w:' + (num(b.contrib) / max * 100).toFixed(1) + '%"></i></span><b>' + eur(b.contrib) + '</b></li>'; }).join('') + '</ol>' +
-      '<p class="cr-big"><b data-cr-count="' + Math.round(somme) + '" data-cr-eur>0 €</b><small>de contribution par mois pour ces trois plats</small></p><span class="cr-suite">L’écart à vos objectifs ↓</span></section>');
+      '<p class="cr-big"><b data-cr-count="' + Math.round(somme) + '" data-cr-eur>' + eur(Math.round(somme)) + '</b><small>de contribution par mois pour ces trois plats</small></p><span class="cr-suite">L’écart à vos objectifs ↓</span></section>');
     /* 4 · Écart */
     var m = D.manque;
     if (m && m.ready && m.totalC > 0) t.push('<section class="cr-card cr-c4" data-cr="4"><span class="cr-k">4 · L’écart à vos objectifs</span><h2>Là où la marge s’échappe</h2><ol class="cr-leaks">' +
       m.rows.slice(0, 3).map(function (r, i) { return '<li style="--i:' + i + '"><span class="cr-n">' + (i + 1) + '</span><div><b>' + esc(r.nom) + '</b><small>marge matière ' + pct1(r.marge) + ' · objectif ' + pct1(r.obj) + ' · ' + Math.round(num(r.vol)).toLocaleString('fr-FR') + ' vendus</small></div><strong>' + eur(r.totC / 100) + '<small>en ' + esc(m.mois) + '</small></strong></li>'; }).join('') + '</ol>' +
-      '<p class="cr-big"><b data-cr-count="' + Math.round(m.totalC / 100) + '" data-cr-eur>0 €</b><small>d’écart à vos objectifs de marge en ' + esc(m.mois) + ' — un écart, pas un gain promis' + (m.incompl ? ' · ' + m.incompl + ' fiche(s) incomplète(s)' : '') + '</small></p>' +
+      '<p class="cr-big"><b data-cr-count="' + Math.round(m.totalC / 100) + '" data-cr-eur>' + eur(Math.round(m.totalC / 100)) + '</b><small>d’écart à vos objectifs de marge en ' + esc(m.mois) + ', sur ' + m.rows.length + (m.rows.length > 1 ? ' plats sous leur objectif' : ' plat sous son objectif') + (m.rows.length > 3 ? ' (les 3 premiers ci-dessus)' : '') + ' — un écart, pas un gain promis' + (m.incompl ? ' · ' + m.incompl + ' fiche(s) incomplète(s)' : '') + '</small></p>' +
       '<button type="button" class="cr-btn" data-cr-go="plats">Où agir en premier</button><span class="cr-suite">Comment remonter ↓</span></section>');
     /* 5 · Remonter */
-    if (D.fiable && D.levier && D.plan && D.plan.rows && D.plan.rows.length) {
-      var rows = D.plan.rows.slice(0, 3);
+    var g = D.gain;
+    if (g && g.fiable && g.rows.length && g.an > 0) {
+      var rows = g.rows.slice(0, 3);
       t.push('<section class="cr-card cr-c5" data-cr="5"><span class="cr-k">5 · Comment remonter</span><h2>Des prix justes, plat par plat</h2><ol class="cr-prix">' +
-        rows.map(function (r, i) { return '<li style="--i:' + i + '"><span class="cr-bl">' + esc(r.nom) + '</span><span class="cr-av">' + num(r.avant).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €</span><span class="cr-fl">→</span><span class="cr-ap">' + num(r.apres).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €</span><small>+' + Math.round(num(r.hausse)) + ' %</small></li>'; }).join('') + '</ol>' +
-        '<p class="cr-big"><b data-cr-count="' + Math.round(num(D.levier.gain) / 12) + '" data-cr-eur>0 €</b><small>par mois, soit ' + eur(D.levier.gain) + ' par an — le même chiffre que dans l’Audit et Simuler</small></p>' +
-        '<p class="cr-p">Au plus +' + D.cap + ' %' + (D.cap < 8 ? ' (réduit pour ne pas dépasser le niveau des meilleurs établissements de votre format)' : '') + ', jamais au-dessus du plat le plus cher de la catégorie, avec 3 % de ventes en moins comptés.</p>' +
+        rows.map(function (r, i) { return '<li style="--i:' + i + '"><span class="cr-bl">' + esc(r.nom) + '</span><span class="cr-av">' + num(r.avant).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + '\u00a0€</span><span class="cr-fl">→</span><span class="cr-ap">' + num(r.apres).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + '\u00a0€</span><small>+' + Math.round(num(r.hausse)) + '\u00a0%</small></li>'; }).join('') + '</ol>' +
+        '<p class="cr-big"><b data-cr-count="' + Math.round(g.mois) + '" data-cr-eur>' + eur(g.mois) + '</b><small>par mois, soit ' + eur(g.an) + ' par an' + (g.retenu ? ' — le même chiffre que dans l’Audit et Simuler' : ' — le chiffre du curseur « Prix de la carte » de Simuler') + '</small></p>' +
+        (g.retenu ? '' : '<p class="cr-p">Votre plan Simuler (' + (g.plan >= 0 ? '+' : '−') + eur(Math.abs(g.plan)) + ' par an) ne l’ajoute pas' + (g.plafond && g.rnHaut ? ' : avec l’équipe, les charges fixes et les commissions, il atteint déjà ' + pct1(g.rnHaut) + ' de rentabilité, le niveau des meilleurs établissements de votre format. Ces prix restent une autre voie, à choisir dans Simuler.' : '.') + '</p>') +
+        '<p class="cr-p">Au plus +' + g.cap + '\u00a0%' + (g.cap < 8 ? ' (réduit pour ne pas dépasser le niveau des meilleurs établissements de votre format)' : '') + ', jamais au-dessus du plat le plus cher de la catégorie, avec 3\u00a0% de ventes en moins comptés.</p>' +
         '<button type="button" class="cr-btn" data-cr-go="simuler">Ouvrir dans Simuler</button><span class="cr-suite">Votre prochain pas ↓</span></section>');
-    } else t.push('<section class="cr-card cr-c5" data-cr="5"><span class="cr-k">5 · Comment remonter</span><h2>Complétez vos fiches</h2><p class="cr-big"><b data-cr-count="' + Math.round(num(D.st.partFiable)) + '">0</b><small>% de vos plats vendus ont une fiche complète · il en faut 80 % pour chiffrer un plan de prix</small></p><button type="button" class="cr-btn" data-cr-go="menu">Compléter mes fiches</button><span class="cr-suite">Votre prochain pas ↓</span></section>');
+    } else if (g && g.fiable) t.push('<section class="cr-card cr-c5" data-cr="5"><span class="cr-k">5 · Comment remonter</span><h2>Vos prix tiennent vos objectifs</h2><p class="cr-p">Aucun plat vendu n’est sous son objectif de marge : Verdict ne propose pas de hausse de prix.</p><span class="cr-suite">Votre prochain pas ↓</span></section>');
+    else if (D.couv >= 80) t.push('<section class="cr-card cr-c5" data-cr="5"><span class="cr-k">5 · Comment remonter</span><h2>Vos fiches sont prêtes</h2><p class="cr-big"><b data-cr-count="' + Math.round(D.couv) + '">' + Math.round(D.couv) + '</b><small>% de vos plats ont une fiche complète : c’est assez</small></p><p class="cr-p">Le plan de prix attend votre structure (document comptable ou Mes chiffres) : Verdict le chiffre avec le même calcul que Simuler et l’Audit.</p><span class="cr-suite">Votre prochain pas ↓</span></section>');
+    else t.push('<section class="cr-card cr-c5" data-cr="5"><span class="cr-k">5 · Comment remonter</span><h2>Complétez vos fiches</h2><p class="cr-big"><b data-cr-count="' + Math.round(D.couv) + '">' + Math.round(D.couv) + '</b><small>% de vos plats ont une fiche complète · il en faut 80\u00a0% pour chiffrer un plan de prix</small></p><button type="button" class="cr-btn" data-cr-go="menu">Compléter mes fiches</button><span class="cr-suite">Votre prochain pas ↓</span></section>');
     /* 6 · Prochain pas */
     t.push('<section class="cr-card cr-c6" data-cr="6"><span class="cr-k">6 · Votre prochain pas</span><h2>On fait évoluer la carte ?</h2><p class="cr-p">Vera compose des plats complets de saison avec vos produits, ou revoit toute la carte.</p>' +
       '<button type="button" class="cr-cta" data-cr-go="vera">✨ Vera propose</button><div class="cr-cta2"><button type="button" data-cr-go="rotation">Renouveler ma carte</button><button type="button" data-cr-go="sim">Tester un prix</button></div></section>');
@@ -72,19 +98,24 @@
   }
 
   function compter(el) {
-    var fin = Number(el.getAttribute('data-cr-count')) || 0, euro = el.hasAttribute('data-cr-eur');
+    /* C208 (V08) : le compteur suit l'horloge et finit toujours sur la vraie valeur. Avant, une image ralentie
+       (onglet en arrière-plan, appareil chargé) allongeait l'animation sans fin : « 1 378 € » et « 71 % » restaient
+       affichés pour 1 932 € et 100 %. */
+    var fin = Number(el.getAttribute('data-cr-count')) || 0, euro = el.hasAttribute('data-cr-eur'), fini = false;
     function aff(x) { el.textContent = euro ? eur(x) : String(Math.round(x)); }
-    if (REDUIT) return aff(fin);
-    var t0 = performance.now(), tPrec = null, duree = 1100;
-    (function tour(t) { if (tPrec !== null && t - tPrec > 34) t0 += (t - tPrec) - 16.7; tPrec = t; var p = Math.min(1, (t - t0) / duree), e = p === 1 ? 1 : 1 - Math.pow(2, -10 * p); aff(fin * e); if (p < 1) requestAnimationFrame(tour); })(t0);
+    function finir() { if (!fini) { fini = true; aff(fin); } }
+    if (REDUIT) return finir();
+    var t0 = performance.now(), duree = 1100;
+    (function tour(t) { if (fini) return; var p = Math.min(1, (t - t0) / duree); if (p >= 1) return finir(); aff(fin * (1 - Math.pow(2, -10 * p))); requestAnimationFrame(tour); })(t0);
+    setTimeout(finir, duree + 300);
   }
-  function jouer(card) { if (card.classList.contains('cr-on')) return; card.classList.add('cr-on'); [].forEach.call(card.querySelectorAll('[data-cr-count]'), function (el, i) { setTimeout(function () { compter(el); }, REDUIT ? 0 : 180 + i * 120); }); }
+  function jouer(card) { if (card.classList.contains('cr-on')) return; var L = card.querySelectorAll('[data-cr-count]'); if (!REDUIT) [].forEach.call(L, function (el) { el.textContent = el.hasAttribute('data-cr-eur') ? eur(0) : '0'; }); card.classList.add('cr-on'); [].forEach.call(L, function (el, i) { setTimeout(function () { compter(el); }, REDUIT ? 0 : 180 + i * 120); }); }
 
   function monter() {
     var p = P(), hote = doc.getElementById('c-menu'); if (!p || !hote) return;
     if (p.guided && p.guided()) { var ex = doc.getElementById('vdRecitCarte'); if (ex) ex.remove(); return; }
     var D = donnees(); if (!D) return;
-    var cle = [D.etat && D.etat.value, Math.round(D.marge * 10), Math.round(D.theo * 10), D.manque && D.manque.totalC, D.levier && Math.round(num(D.levier.gain)), D.st.actifs, D.st.fiables].join('|');
+    var cle = [D.etat && D.etat.value, Math.round(D.marge * 10), Math.round(D.theo * 10), D.manque && D.manque.totalC, D.gain && Math.round(num(D.gain.an)), D.couv, D.st.actifs, D.st.fiables].join('|');
     var box = doc.getElementById('vdRecitCarte');
     /* C176 (Steven, 20/10 : un ami : « je vais dans Carte, je veux voir ma carte ; là j'ai 6 images avant, sans voir ma
        carte. Voilà la carte, en bas : c'est ça que je veux voir, et après tes 6 images explicatives ») : le récit passe

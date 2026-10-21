@@ -27,10 +27,10 @@ function av31Action(lim){
 function av31MetricLabel(k){var m={fc:'Matière',ms:'Équipe',com:'Plateformes',rn:'Résultat',pm:'Chiffre minimum',sen:'Résistance',pc:'Cuisine + équipe'};return m[k]||k;}
 function av31TopCosts(R){
   var v=R.v||{},ca=Math.max(1,Number(R.d&&R.d.ca)||1),a=[
-    {k:'fc',l:'Matière',v:Number(v.fc)||0,c:'#f59e0b'},
+    {k:'fc',l:'Achats nourriture',v:Number(v.fc)||0,c:'#f59e0b'},
     {k:'ms',l:'Équipe',v:Number(v.ms)||0,c:'#3b82f6'},
     {k:'com',l:'Plateformes',v:Number(v.com)||0,c:'#a855f7'},
-    {k:'cf',l:'Charges fixes',v:(Number(R.d&&R.d.cf)||0)/ca*100,c:'#64748b'}
+    {k:'cf',l:'Charges fixes',v:Number(v.acf)||0, /* C205 : hors salaires, comme Structure (l’équipe a sa propre ligne) */c:'#64748b'}
   ];
   return a.filter(function(x){return x.v>0;}).sort(function(x,y){return y.v-x.v;}).slice(0,3);
 }

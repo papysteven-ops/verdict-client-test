@@ -234,6 +234,16 @@
   }
   planifier();
   global.addEventListener('load',planifier);
+  /* V05 (21/10) : au toucher d'un onglet (go) ou d'un sous-onglet de Structure (dsub), la lecture premium se pose dans le
+     même geste que la vue. L'observateur la posait 90 à 250 ms plus tard, davantage si le fil principal était occupé :
+     l'écran d'origine, avec ses propres calculs (Saisonnalité 51 662 €, repère 38,0 %), s'affichait entre les deux.
+     Pas pendant l'écran d'ouverture ni le parcours guidé, qui gardent leur rythme (C103). */
+  if(surface==='app'){
+    var poserAuToucher=function(nom){var f=global[nom];if(typeof f!=='function'||f.__p40Pose)return;
+      var w=function(){var r=f.apply(this,arguments);if(r!==false&&!doc.getElementById('splash')){var tour=false;try{tour=(typeof global.demoTourActif==='function'&&global.demoTourActif())||(doc.body&&doc.body.classList.contains('demo-tour-active'));}catch(e){}
+        if(!tour){if(minut!==null){global.clearTimeout(minut);minut=null;}try{appliquer();}catch(e){}}}return r;};
+      for(var k in f){try{w[k]=f[k];}catch(e){}}w.__p40Pose=true;global[nom]=w;};
+    poserAuToucher('go');poserAuToucher('dsub');}
   /* C103 : plus de relances à 900 et 2600 ms (la couche se recalculait 6 à 8 fois au lancement). */
 })(window);
 /* R199 point 47 (WCAG 3.1.1) : la langue du document hote suit celle du module affiche. Sans effet hors coque (pas de frame-verdict). */

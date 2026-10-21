@@ -21,6 +21,7 @@
   function svg(k, cls) { return '<svg class="' + (cls || 'vp-ic') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[k] + '</svg>'; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function demo() { try { return typeof w.getMode === 'function' && w.getMode() === 'demo'; } catch (e) { return false; } }
+  function modeleDemo() { try { return !w.VERDICT_TEST_SESSION && typeof w.modeleDansDemonstration === 'function' && !!w.modeleDansDemonstration(); } catch (e) { return false; } }
   var portail = typeof w.VERDICT_TEAM_PORTAL_URL === 'string' && !!w.VERDICT_TEAM_PORTAL_URL;
   var ACTIONS = {
     equipe: function () { w.go('planning'); },
@@ -36,7 +37,8 @@
     var g = [
       { t: 'Piloter', l: [['equipe', 'Équipe & services', 'Coût humain, planning et rentabilité des services'], ['budget', 'Budget de ventes', 'Objectifs datés, comparés à vos ventes réelles']] },
       { t: 'Données', l: [['caisse', 'Connexion de la caisse', 'Bientôt : vos ventes arriveront seules, sans saisie'], ['importer', 'Importer mes chiffres', 'Document comptable, saisie ou mise à jour']] },
-      { t: 'Établissement & compte', l: [['etabs', 'Établissements', 'Ajouter, renommer ou changer d’établissement']] }
+      /* C210 (V35) : en démonstration, ce bouton ouvre le choix des modèles fictifs (openEtabs → openModeles) : le dire. */
+      { t: 'Établissement & compte', l: [['etabs', 'Établissements', modeleDemo() ? 'Démonstration : changer de modèle d’établissement' : 'Ajouter, renommer ou changer d’établissement']] }
     ];
     if (demo() || portail) g[2].l.push(['acces', 'Accès du personnel', 'Inventaire pour votre équipe, droits choisis par vous']);
     g[2].l.push(['compte', 'Compte et abonnement', 'Accès, essai et facturation']);

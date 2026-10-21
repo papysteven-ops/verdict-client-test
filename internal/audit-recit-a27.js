@@ -70,9 +70,12 @@
       (D.rn > 0 ? '<i class="rc-res" style="--w:' + D.rn.toFixed(2) + '%;--c:#22c55e;--i:' + D.postes.length + '">' + dedans('Reste avant impôt', D.rn) + '</i>' : '');
     var leg = D.postes.map(function (x) { return '<li><i style="background:' + x.c + '"></i>' + esc(x.l) + '<b>' + (Math.round(x.v * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>'; }).join('') +
       '<li><i style="background:' + (D.rn > 0 ? '#22c55e' : '#ef4444') + '"></i>' + (D.rn >= 0 ? 'Reste avant impôt' : 'Il manque') + '<b>' + (D.rn >= 0 ? '' : '−') + Math.abs(Math.round(D.rn * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>';
-    t.push('<section class="rc-card rc-c2" data-rc="2"><span class="rc-k">2 · Où part l’argent</span><h2>Sur chaque 100 € encaissés</h2>' +
+    /* V51 (21/10) : les montants sont HT (« encaissés » laissait croire à du TTC) ; « le premier poste est l’équipe », avec l'article. */
+    var ART = { 'matière': 'la matière', 'équipe': 'l’équipe', 'plateformes': 'les plateformes', 'emballages': 'les emballages', 'structure': 'la structure', 'amortissements': 'les amortissements', 'loyer et autres charges': 'le loyer et les autres charges' };
+    var premier = D.postes.length ? D.postes.slice().sort(function (a, b) { return b.v - a.v; })[0].l.toLowerCase() : '';
+    t.push('<section class="rc-card rc-c2" data-rc="2"><span class="rc-k">2 · Où part l’argent</span><h2>Sur 100 € de chiffre d’affaires HT</h2>' +
       '<div class="rc-stack">' + seg + '</div><ul class="rc-leg">' + leg + '</ul>' +
-      '<p class="rc-p">' + (D.postes[0] ? 'Le premier poste est <b>' + esc(D.postes.slice().sort(function (a, b) { return b.v - a.v; })[0].l.toLowerCase()) + '</b>.' : '') + '</p><span class="rc-suite">Votre seuil ↓</span></section>');
+      '<p class="rc-p">' + (premier ? 'Le premier poste est <b>' + esc(ART[premier] || premier) + '</b>.' : '') + '</p><span class="rc-suite">Votre seuil ↓</span></section>');
     /* 3 · Le seuil */
     if (D.mini > 0) {
       var echelle = Math.max(D.ca, D.mini) * 1.08, pc = D.ca / echelle * 100, pm = D.mini / echelle * 100, ok = D.securite >= 0;
@@ -149,15 +152,29 @@
     caler(); if (!box.__rcCale) { box.__rcCale = true; w.addEventListener('resize', caler, { passive: true }); }
     var puces = box.querySelectorAll('[data-rc-nav]');
     [].forEach.call(puces, function (p) {
-      p.onclick = function () { var c = box.querySelector('[data-rc="' + p.getAttribute('data-rc-nav') + '"]'); if (c) { jouer(c); c.scrollIntoView({ behavior: REDUIT ? 'auto' : 'smooth', block: 'start' }); } };
+      p.onclick = function () { var c = box.querySelector('[data-rc="' + p.getAttribute('data-rc-nav') + '"]'); if (c) { box.__rcChoisi = p.getAttribute('data-rc-nav'); jouer(c); c.scrollIntoView({ behavior: REDUIT ? 'auto' : 'smooth', block: 'start' }); suivre(); } };
     });
-    if ('IntersectionObserver' in w) {
-      var suivi = new IntersectionObserver(function (es) {
-        caler(); es.forEach(function (e) { if (!e.isIntersecting) return; var n = e.target.getAttribute('data-rc');
-          [].forEach.call(puces, function (p) { if (p.getAttribute('data-rc-nav') === n) p.setAttribute('aria-current', 'true'); else p.removeAttribute('aria-current'); }); });
-      }, { rootMargin: '-35% 0px -55% 0px' });
-      [].forEach.call(cartes, function (c) { suivi.observe(c); });
+    /* V51 (21/10) : le sélecteur suit le défilement. Avant, seule une bande à 35-45 % de l'écran comptait : en bas de page,
+       les dernières images (plus courtes, côte à côte sur grand écran) ne la traversaient jamais et « 3 Seuil » restait allumé.
+       Image courante = la plus basse dont le haut a passé 40 % de l'écran ; fin du récit à l'écran = la dernière image visible. */
+    function suivre() {
+      var cs = box.querySelectorAll('.rc-card'), ps = box.querySelectorAll('[data-rc-nav]'); if (!cs.length || !box.isConnected) return;
+      var hauteur = w.innerHeight || doc.documentElement.clientHeight, ligne = hauteur * 0.4, cur = null, haut = -Infinity;
+      [].forEach.call(cs, function (c) { var r = c.getBoundingClientRect(); if (r.height && r.top <= ligne && r.top > haut + 24) { cur = c; haut = r.top; } /* même rangée (±24 px) : la première image */ });
+      if (box.getBoundingClientRect().bottom <= hauteur + 2) [].forEach.call(cs, function (c) { var r = c.getBoundingClientRect(); if (r.height && r.top < hauteur && r.bottom > 0) cur = c; });
+      /* Image choisie dans le sélecteur (« 3 » à côté de « 2 » sur grand écran) : elle reste allumée tant qu'elle est à l'écran. */
+      var choisie = box.__rcChoisi && box.querySelector('[data-rc="' + box.__rcChoisi + '"]');
+      if (choisie) { var rc = choisie.getBoundingClientRect(); if (rc.height && rc.top < hauteur && rc.bottom > 0) cur = choisie; }
+      var n = (cur || cs[0]).getAttribute('data-rc');
+      [].forEach.call(ps, function (p) { var on = p.getAttribute('data-rc-nav') === n; if (on && !p.hasAttribute('aria-current')) p.setAttribute('aria-current', 'true'); else if (!on && p.hasAttribute('aria-current')) p.removeAttribute('aria-current'); });
     }
+    if (!box.__rcSuivi) {
+      box.__rcSuivi = true; var prevu = 0;
+      doc.addEventListener('scroll', function () { if (!prevu) prevu = requestAnimationFrame(function () { prevu = 0; caler(); suivre(); }); }, { passive: true, capture: true });
+      /* L'utilisateur fait défiler lui-même : le choix fait au clic ne compte plus. */
+      ['wheel', 'touchstart', 'keydown'].forEach(function (t) { doc.addEventListener(t, function () { box.__rcChoisi = null; }, { passive: true, capture: true }); });
+    }
+    suivre();
     if (box.__rcSouris || REDUIT || !w.matchMedia || !w.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
     box.__rcSouris = true;
     var vise = null, image = 0, mx = 0, my = 0;

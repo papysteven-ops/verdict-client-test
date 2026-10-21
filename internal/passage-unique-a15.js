@@ -185,7 +185,13 @@ function journeesLigne(P){
 /* La carte « Journées de caisse » dans Importer mes chiffres : ce qui est déjà là, puis l'import des clôtures. */
 function jCard(){return doc.getElementById('a15-journees');}
 function jEtat(){var d=DB(),L=(d&&d.histJour||[]).filter(journeeCaisse).map(function(r){return String(r.date).slice(0,10);}).sort(),js=joursSemaine();
-  if(!L.length)return '<div class="a15-sum">Aucune journée de caisse pour l’instant. L’export « ventes par article » ci-dessus les remplit aussi.</div>';
+  /* C210 (V34) : en démonstration, les journées de caisse sont fictives (source « demo-pos ») ; à la main, elles sont saisies.
+     Ne plus écrire « aucune journée » quand l’Accueil en suit : dire ce qu’il y a et d’où cela vient. */
+  if(!L.length){var hj=(d&&d.histJour)||[],D=hj.filter(function(r){return r&&r.demo&&/pos|caisse/i.test(String(r.source||''))&&r.date;}).map(function(r){return String(r.date).slice(0,10);}).sort(),
+    M=hj.filter(function(r){return r&&!r.demo&&r.date&&!journeeCaisse(r)&&(+r.caJ>0||+r.ca>0);}).length;
+    if(D.length)return '<div class="a15-sum a15-ok"><b>'+int(D.length)+' journée'+(D.length>1?'s':'')+' de caisse de démonstration</b>, du '+esc(dateLabel(D[0]))+' au '+esc(dateLabel(D[D.length-1]))+(js?' · '+js.jours+' jour'+(js.jours>1?'s':'')+' d’ouverture par semaine'+(js.repos&&js.repos.length?', '+reposTexte(js.repos):''):'')+'. Avec vos chiffres, les clôtures de votre caisse les remplacent.</div>';
+    if(M)return '<div class="a15-sum">Aucune clôture de caisse importée pour l’instant : '+int(M)+' journée'+(M>1?'s':'')+' saisie'+(M>1?'s':'')+' à la main sui'+(M>1?'vent':'t')+' vos ventes à l’Accueil. L’export « ventes par article » ci-dessus apporte aussi les clôtures.</div>';
+    return '<div class="a15-sum">Aucune journée de caisse pour l’instant. L’export « ventes par article » ci-dessus les remplit aussi.</div>';}
   return '<div class="a15-sum a15-ok"><b>'+int(L.length)+' journée'+(L.length>1?'s':'')+' de caisse</b>, du '+esc(dateLabel(L[0]))+' au '+esc(dateLabel(L[L.length-1]))+(js?' · '+js.jours+' jour'+(js.jours>1?'s':'')+' d’ouverture par semaine'+(js.repos&&js.repos.length?', '+reposTexte(js.repos):''):'')+'.</div>';}
 function jRender(){var c=jCard();if(!c)return;var form=typeof root.dailyCsvHTML==='function'?String(root.dailyCsvHTML()).replace('<details class="card">','<details class="a15-det">'):'';
   c.innerHTML='<h2 style="margin:0 0 4px">Journées de caisse</h2><p class="note" style="margin:0 0 6px">Le chiffre de chaque journée (clôture, ticket Z). Il suit vos ventes jour par jour à l’Accueil et donne vos jours d’ouverture.</p>'+jEtat()+form;}

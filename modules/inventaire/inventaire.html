@@ -700,8 +700,8 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
 
 </style>
 <script data-mono="./shared-inventory-r32.js" src="../../assets/runtime-a10/inventory-010-6ed511ceeed6.js"></script>
-<script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/inventory-011-8f65498c291f.js"></script>
-<script src="../../assets/runtime-a10/inventory-012-c304cd96c12f.js"></script>
+<script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/inventory-011-b00023ca8807.js"></script>
+<script src="../../assets/runtime-a10/inventory-012-f812663014aa.js"></script>
 <script data-mono="./supplier-ordering-v1.js" src="../../assets/runtime-a10/inventory-013-679a03798c7f.js"></script>
 <script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-aa8c37adba3f.js"></script>
 <script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-236122e8e39f.js"></script>
@@ -1524,6 +1524,42 @@ html.p40-app .p41-detail{-webkit-tap-highlight-color:transparent;touch-action:ma
 }
 
 </style>
+<style id="inv-clair-c209">/* C209 (V11, 21/10/2026) — Inventaire en thème clair : la couche premium html.p40 ci-dessus impose un fond noir
+   (#0A0B0E!important) et des jetons sombres (--bg, --txt, --mut…) qui écrasent les jetons clairs de workspace-inventory.css.
+   Résultat : page claire déclarée, fond noir, titres gris sur noir, seuils Calme/Chargée illisibles. On remet les jetons
+   et les fonds clairs, uniquement quand le thème clair est actif (le thème sombre ne change pas). */
+html.p40.p40-inv.vd-workspace-light{color-scheme:light;--bg:#f3f5f7;--card:#fff;--card2:#f7f9fa;--line:#dfe5e9;--txt:#17212b;--mut:#435365;--mut2:#435365;--p40-mut:#435365;--p40-mut2:#435365;--chr-accent:#435365!important;--chr-rule:rgba(23,33,43,.12)!important;background:#f3f5f7!important}
+html.p40.p40-inv.vd-workspace-light body{background:#f3f5f7!important;color:#17212b}
+html.p40.p40-inv.vd-workspace-light .top{background:rgba(255,255,255,.92)!important;border-bottom-color:#dfe5e9!important}
+html.p40.p40-inv.vd-workspace-light :is(.mc,.step){background:#fff!important;color:#17212b!important;border-color:#cbd5dc!important}
+html.p40.p40-inv.vd-workspace-light #upBtn{background:#fff!important;color:#17212b!important;border:1px solid #cbd5dc!important}
+html.p40.p40-inv.vd-workspace-light .greet .st{color:#435365!important}
+html.p40.p40-inv.vd-workspace-light .tag.t-min{color:#9a4510!important}
+html.p40.p40-inv.vd-workspace-light .tag.t-rup{color:#b42828!important}
+/* V11 : sur ordinateur, la barre Compter · Commande · Analyse · Plus (order:1) passait sous « Activité » (sans order) et
+   flottait entre le niveau d'activité et le choix d'établissement. « Activité » rejoint les sélecteurs (order:2) :
+   la barre d'onglets reste en tête, juste sous l'en-tête. */
+@media (min-width:768px){html.p40.p40-inv body>.lvl{order:2}}
+/* V54 : l'étiquette de zone d'une ligne de commande (« Bar · Café · cafés 8 g ») passait en majuscules :
+   « CAFÉS 8 G » (8 grammes devenait 8 G). Elle garde la casse écrite, unités comprises. */
+html.p40.p40-inv .ord-zone{text-transform:none!important;letter-spacing:.01em!important}
+html.p40.p40-inv.vd-workspace-dark .tag.t-rup{color:#f87171!important}
+/* Petit écran (moins de 768 px), thème clair : la barre d'onglets flottante restait sombre, avec des libellés devenus
+   foncés (2,1 à 3,3 pour 1), et les cartes Analyse, Commande et Plus gardaient leur fond sombre (règles claires
+   prévues seulement pour l'ordinateur dans workspace-inventory.css). Mêmes couleurs claires sur toutes les largeurs. */
+html.p40.p40-inv.vd-workspace-light.premium-fixed-dock body nav.premium-adaptive-dock{background:rgba(255,255,255,.95)!important;border:1px solid #cbd5dc!important;box-shadow:0 10px 30px -14px rgba(20,35,50,.35)!important;color:#17212b!important}
+html.p40.p40-inv.vd-workspace-light.premium-fixed-dock body nav.premium-adaptive-dock>button{color:#435365!important}
+html.p40.p40-inv.vd-workspace-light.premium-fixed-dock body nav.premium-adaptive-dock>button.on{color:#17212b!important;background:#eaf0f4!important}
+html.p40.p40-inv.vd-workspace-light nav.premium-adaptive-dock :is(.premium-dock-label,.ic){color:inherit!important}
+html.p40.p40-inv.vd-workspace-light :is(.ord-intro,.ord-need,.v451-inv-plus,.v451-inv-card,.v451-inv-sheet){background:#fff!important;background-image:none!important;color:#17212b!important;border-color:#cbd5dc!important}
+html.p40.p40-inv.vd-workspace-light :is(.ord-intro p,.ord-need .sub,.v451-inv-card small,.v451-inv-sheet p,.v451-inv-state small){color:#435365!important}
+html.p40.p40-inv.vd-workspace-light :is(.v451-inv-card b,.v451-inv-sheet h2,.v451-inv-state b){color:#17212b!important}
+html.p40.p40-inv.vd-workspace-light .v451-inv-plus-k{color:#245782!important}
+html.p40.p40-inv.vd-workspace-light .kpi{background:#fff!important;background-image:none!important;color:#17212b!important;border:1px solid #cbd5dc!important}
+html.p40.p40-inv.vd-workspace-light .kpi :is(.k,.d){color:#435365!important}
+html.p40.p40-inv.vd-workspace-light .kpi .v{color:#173d76!important}
+html.p40.p40-inv.vd-workspace-light .v451-inv-state{background:#eef5fc!important;border-color:#b9d5ed!important;color:#17212b!important}
+</style>
 <script id="p40-js" data-mono="../../premium-r40.js" src="../../assets/runtime-a10/inventory-025-24da5cc61376.js"></script>
 <script id="pinv-js" data-mono="../../premium-inv-r74.js" src="../../assets/runtime-a10/inventory-026-ebffa541af5e.js"></script>
 <style  data-mono="../../control-ecarts-v1.css">
@@ -1550,5 +1586,7 @@ html.p40-app #v-pil.on.p41-on > #vc-main{display:block!important;order:2;scroll-
 <script src="../../internal/etab-lien-a38.js"></script>
 <script src="../../internal/sync-espace-inv-a42.js"></script>
 <script src="../../internal/contraste-a44.js"></script>
+<script src="../../internal/retour-verdict-a61.js"></script>
+<script src="../../internal/theme-auto-c209.js"></script>
 </body>
 </html>

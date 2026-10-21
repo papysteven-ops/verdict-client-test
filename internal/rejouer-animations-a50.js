@@ -12,13 +12,16 @@
   function css(d) { try { if (d && d.head && !d.getElementById('vx50-css')) { var s = d.createElement('style'); s.id = 'vx50-css'; s.textContent = CSS; d.head.appendChild(s); } } catch (e) {} }
   function rejouer(el) {
     if (!el || !el.classList) return; var d = el.ownerDocument, W = d && d.defaultView; if (!W) return;
-    css(d); el.classList.add('vx50-rej'); void el.offsetWidth;
-    W.requestAnimationFrame(function () { W.requestAnimationFrame(function () { el.classList.remove('vx50-rej'); }); });
+    /* V05 (21/10) : retrait dans le même geste, après un recalcul forcé (les animations repartent du début). Les deux images
+       d'attente duraient jusqu'à 0,7 s pendant le chargement d'un cadre, puis la vue repartait d'une opacité 0 : page vide. */
+    css(d); el.classList.add('vx50-rej'); void el.offsetWidth; el.classList.remove('vx50-rej');
   }
   /* L'écran visible : la vue active et ses cadres internes (dans l'Accueil, seulement le chapitre affiché). */
-  function ecranVisible() {
+  /* V05 (21/10) : au changement de page, la vue qui s'ouvre joue déjà ses animations d'arrivée : seuls ses cadres internes
+     (déjà dessinés, peut-être hors de la vue) sont rejoués. */
+  function ecranVisible(navigation) {
     var v = doc.querySelector('.view.on'); if (!v) return;
-    rejouer(v);
+    if (navigation !== true) rejouer(v);
     [].forEach.call(v.querySelectorAll('iframe'), function (f) {
       try { var fd = f.contentDocument; if (!fd || !fd.body || !f.getClientRects().length) return; rejouer(fd.querySelector('.vx40-ch:not([hidden])') || fd.body); } catch (e) {}
     });
@@ -33,7 +36,7 @@
   /* 3. Changement de page. */
   function brancher() {
     if (typeof w.go !== 'function' || w.go.__vx50) return;
-    var g0 = w.go, g = function () { var r = g0.apply(this, arguments); setTimeout(ecranVisible, 80); return r; };
+    var g0 = w.go, g = function () { var r = g0.apply(this, arguments); setTimeout(function () { ecranVisible(true); }, 80); return r; };
     for (var k in g0) { try { g[k] = g0[k]; } catch (e) {} } g.__vx50 = true; w.go = g;
   }
   var t = setInterval(brancher, 1000); if (t && t.unref) t.unref(); brancher();

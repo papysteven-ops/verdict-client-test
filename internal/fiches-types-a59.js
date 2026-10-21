@@ -12,7 +12,7 @@
   /* Produits utilisés par les fiches : [nom, unité, prix HT type, perte %]. Les produits de base existent déjà dans
      tout nouvel établissement ; ceux qui manquent (surtout les boissons) sont ajoutés avec ce prix type. */
   var PRODUITS = [
-    ['Bœuf haché 15%', 'KG', 9.9, 5], ['Bavette de bœuf', 'KG', 15.0, 10], ['Pomme de terre', 'KG', 1.1, 15], ['Frites surgelées', 'KG', 2.0, 0],
+    ['Bœuf haché 15 %', 'KG', 9.9, 5], ['Bavette de bœuf', 'KG', 15.0, 10], ['Pomme de terre', 'KG', 1.1, 15], ['Frites surgelées', 'KG', 2.0, 0],
     ['Œuf de poule', 'UNITE', 0.25, 0], ['Pavé de saumon', 'KG', 17.0, 5], ['Filet de cabillaud', 'KG', 19.86, 10], ['Poulet fermier', 'KG', 6.5, 15],
     ['Salade verte', 'KG', 3.5, 20], ['Tomate', 'KG', 2.5, 10], ['Pain burger', 'UNITE', 0.3, 0], ['Cheddar tranche', 'KG', 9.0, 0],
     ['Comté râpé', 'KG', 15.0, 0], ['Pain de mie', 'UNITE', 0.15, 0], ['Jambon blanc', 'KG', 10.0, 5], ['Beurre', 'KG', 8.0, 0],
@@ -38,7 +38,7 @@
     [/tartare/, 'Tartare de bœuf frites', 'Plats', 'cuisine', null, [['Bavette de bœuf', 210], ['Frites surgelées', 180], ['Oignon', 20], ['Œuf de poule', 1]]],
     [/entrecote/, 'Entrecôte frites', 'Plats', 'cuisine', null, [['Entrecôte de bœuf', 300], ['Frites surgelées', 250], ['Beurre', 25], ['Salade verte', 40]]],
     [/\bsteak\b|bavette|onglet|piece du boucher/, 'Steak frites', 'Plats', 'cuisine', null, [['Bavette de bœuf', 230], ['Frites surgelées', 200]]],
-    [/burger/, 'Burger maison frites', 'Plats', 'cuisine', null, [['Bœuf haché 15%', 180], ['Pain burger', 1], ['Cheddar tranche', 40], ['Salade verte', 20], ['Tomate', 30], ['Frites surgelées', 180]]],
+    [/burger/, 'Burger maison frites', 'Plats', 'cuisine', null, [['Bœuf haché 15 %', 180], ['Pain burger', 1], ['Cheddar tranche', 40], ['Salade verte', 20], ['Tomate', 30], ['Frites surgelées', 180]]],
     [/\bmoules?\b/, 'Moules-frites', 'Plats', 'cuisine', null, [['Moules de bouchot', 500], ['Frites surgelées', 250], ['Oignon', 40], ['Vin blanc de cuisine', 60], ['Crème liquide', 40], ['Beurre', 15]]],
     [/confit|cuisse de canard/, 'Confit de canard, pommes sarladaises', 'Plats', 'cuisine', null, [['Cuisse de canard confite', 1], ['Pomme de terre', 300], ['Beurre', 30], ['Salade verte', 30], ['Oignon', 20]]],
     [/saumon/, 'Pavé de saumon', 'Plats', 'cuisine', null, [['Pavé de saumon', 190], ['Pomme de terre', 180], ['Crème liquide', 30]]],

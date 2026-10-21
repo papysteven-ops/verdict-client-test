@@ -26,8 +26,8 @@
 
   /* ---------- Consommation réelle (fournie par l'Inventaire) ---------- */
   var DEMO_P = [['Entrecôte VBF', 'cuisine', 'kg', 22.5, 2016], ['Filet de saumon frais', 'cuisine', 'kg', 15.5, 817], ['Café en grains', 'bar', 'kg', 14.5, 160], ['Bière blonde fût 30 L', 'bar', 'L', 2.55, 611],
-    ['Bœuf haché frais 15%', 'cuisine', 'kg', 10.9, 1240], ['Comté AOP 12 mois', 'cuisine', 'kg', 16.5, 520], ['Cuisse de poulet', 'cuisine', 'kg', 4.2, 610], ['Pomme de terre', 'cuisine', 'kg', 1.25, 390],
-    ['Beurre doux plaquette', 'cuisine', 'kg', 10.8, 455], ['Crème liquide 35%', 'cuisine', 'L', 4.6, 330], ['Moules de bouchot (poids acheté)', 'cuisine', 'kg', 4.2, 470], ['Parmesan AOP', 'cuisine', 'kg', 19.5, 280],
+    ['Bœuf haché frais 15 %', 'cuisine', 'kg', 10.9, 1240], ['Comté AOP 12 mois', 'cuisine', 'kg', 16.5, 520], ['Cuisse de poulet', 'cuisine', 'kg', 4.2, 610], ['Pomme de terre', 'cuisine', 'kg', 1.25, 390],
+    ['Beurre doux plaquette', 'cuisine', 'kg', 10.8, 455], ['Crème liquide 35 %', 'cuisine', 'L', 4.6, 330], ['Moules de bouchot (poids acheté)', 'cuisine', 'kg', 4.2, 470], ['Parmesan AOP', 'cuisine', 'kg', 19.5, 280],
     ['Vin bouteille milieu de gamme', 'bar', 'unité', 11.5, 690], ['Pastis 1 L', 'bar', 'L', 15, 240], ['Soda 33 cl', 'bar', 'unité', 0.62, 180]];
   function consoDemo() {
     var now = new Date(), j = now.getDate(), J = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
