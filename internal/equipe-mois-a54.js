@@ -133,10 +133,16 @@
     '.em54-jl{position:relative;display:flex;justify-content:space-between;margin-top:8px;font-size:12px;opacity:.7;font-variant-numeric:tabular-nums}.em54-jl>span:nth-child(2){position:absolute;transform:translateX(-50%);font-weight:700;white-space:nowrap}' +
     '@keyframes em54In{from{left:0;opacity:0}}@media (prefers-reduced-motion:reduce){.em54-jm{animation:none}}' +
     '@media (max-width:520px){.em54 tr.em54-prev td{white-space:normal}.em54 table{font-size:13px}.em54 th,.em54 td{padding:6px 3px}.em54 td:first-child{white-space:normal}.em54 .em54-l{display:none}.em54 .em54-c{display:inline}}';
-  function carteHTML(A) {
+  /* C223 (Steven, 21/10 : « collées d’affilée, même info, doublons ») : dans Accueil › Mois, « Ventes et heures par service »
+     dit déjà l’équipe de ce mois-ci (titre, jauge, € de trop, service par service). Cette carte ne la redit pas : elle compare
+     les mois et anticipe le suivant. Elle garde « Équipe ce mois-ci » seulement quand la carte des services n’a pas ce mois. */
+  function moisDejaDit(A) {
+    try { var S = w.VerdictServicesHeures, R = S && S.etat ? S.etat('mois') : null; return !!(R && !R.vide && R.cle === A.mois && R.total && R.total.part != null); } catch (e) { return false; }
+  }
+  function carteHTML(A, dejaDit) {
     var P = A.prochain, demo = w.DB && (w.DB.demo || (w.DB.services || []).some(function (s) { return s && s.demo; }));
     var h = '<p class="kicker">Comparer les mois · anticiper l’équipe' + (demo ? ' · démonstration' : '') + '</p>' +
-      (A.direct && A.direct.part != null ? '<p class="titre">' + esc('Équipe ce mois-ci : ' + A.statut.mot + ' — ' + Math.round(A.direct.part * 100) + ' € pour 100 € vendus, à ce jour') + '</p>' + jaugeHTML(A.direct.part, A.rep) + '<p class="sous">' + esc(directPhrase(A)) + '</p><p class="kicker" style="margin-top:14px">Mois prochain</p>' : '') +
+      (A.direct && A.direct.part != null && !dejaDit ?'<p class="titre">' + esc('Équipe ce mois-ci : ' + A.statut.mot + ' — ' + Math.round(A.direct.part * 100) + ' € pour 100 € vendus, à ce jour') + '</p>' + jaugeHTML(A.direct.part, A.rep) + '<p class="sous">' + esc(directPhrase(A)) + '</p><p class="kicker" style="margin-top:14px">Mois prochain</p>' : '') +
       '<p class="titre">' + esc(P.h != null ? nomMois(P.m).replace(/^./, function (c) { return c.toUpperCase(); }) + ' : prévoir ' + (Math.abs(P.hHaut - P.hBas) >= 10 ? 'entre ' + hh(arr(P.hBas, 10)).replace('\u00a0h', '') + ' et ' + hh(arr(P.hHaut, 10)) : 'environ ' + hh(arr(P.h, 10))) + ' d’équipe' : 'Vos mois, côte à côte') + '</p>' +
       '<p class="sous">' + esc(phrase(A)) + '</p>' +
       '<table><thead><tr><th>Mois</th><th>Ventes HT</th><th>Heures</th><th><span class="em54-l">Ventes / heure</span><span class="em54-c">€/h</span></th><th><span class="em54-l">Équipe / ventes</span><span class="em54-c">Équipe</span></th></tr></thead><tbody>';
@@ -165,12 +171,14 @@
     if (!d.getElementById('em54-css')) { var s = d.createElement('style'); s.id = 'em54-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
     var A = null; try { A = etat(); } catch (e) {}
     var vieux = d.getElementById('modEquipeM');
-    if (!A || A.vide) { if (vieux) vieux.remove(); return; }
-    var html = carteHTML(A); if (vieux && vieux.__html === html) return;
-    var a = d.createElement('article'); a.className = 'mod em54'; a.id = 'modEquipeM'; a.setAttribute('data-etat', A.statut ? A.statut.k : 'info'); a.setAttribute('aria-label', 'Comparer les mois et anticiper l’équipe'); a.innerHTML = html; a.__html = html;
+    var dejaDit = A && !A.vide && moisDejaDit(A);
+    /* C223 : sans prévision ni mois passés à comparer, il ne resterait que la ligne du mois en cours, déjà dite au-dessus. */
+    if (!A || A.vide || (dejaDit && A.prochain.h == null && A.lignes.every(function (x) { return x.enCours; }))) { if (vieux) vieux.remove(); return; }
+    var html = carteHTML(A, dejaDit); if (vieux && vieux.__html === html) return;
+    var a = d.createElement('article'); a.className = 'mod em54'; a.id = 'modEquipeM'; a.setAttribute('data-etat', A.statut && !dejaDit ? A.statut.k : 'info'); a.setAttribute('aria-label', 'Comparer les mois et anticiper l’équipe'); a.innerHTML = html; a.__html = html;
     if (vieux) vieux.replaceWith(a); else col.appendChild(a);
     if (!d.__em54) { d.__em54 = true; d.addEventListener('click', function (ev) { if (ev.target.closest && ev.target.closest('[data-em54-heures]')) { ev.preventDefault(); ev.stopPropagation(); try { w.go('sal'); w.scrollTo(0, 0); } catch (er) {} } }, true); }
   }
   var t = setInterval(tour, 3000); if (t && t.unref) t.unref(); setTimeout(tour, 1600);
-  w.VerdictEquipeMois = { anticiper: anticiper, parMois: parMois, phrase: phrase, etat: etat, tour: tour };
+  w.VerdictEquipeMois = { anticiper: anticiper, parMois: parMois, phrase: phrase, etat: etat, tour: tour, carteHTML: carteHTML, moisDejaDit: moisDejaDit };
 })();

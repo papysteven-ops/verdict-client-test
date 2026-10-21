@@ -11,6 +11,7 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C223', date: '2026-10-21', titre: 'Accueil › Mois : l’équipe de ce mois-ci n’est plus dite deux fois. « Ventes et heures par service » la donne (jauge, € de trop) ; « Comparer les mois » commence par le mois prochain' },
     { id: 'C222', date: '2026-10-21', titre: 'Vos journées : un seul calendrier, clair. Chaque case dit son pourcentage du minimum, avec sa couleur Verdict : vert atteint ; jaune, orange ou rouge, il manque' },
     { id: 'C221', date: '2026-10-21', titre: 'Accueil › Mois : plus de journées ici. Touchez janvier, février… dans « Vos mois » : le détail de ce mois s’affiche (encaissé ou projeté, minimum, écart, jours, tickets, panier)' },
     { id: 'C219', date: '2026-10-21', titre: 'Toutes les langues à jour : les nouveautés de ces derniers jours (abonnement et offres Pilotage et Pro, type d’établissement, notes pas encore mesurées, minimums du jour, ajout d’un établissement, ouverture par empreinte) sont traduites dans les 7 langues ; la démonstration dit « 24 mois détaillés · journées depuis 2021 » et donne partout les mêmes chiffres ; plus de « fiches complètes » quand aucune fiche n’existe encore' },
