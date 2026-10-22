@@ -11,6 +11,9 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C287', date: '2026-10-22', titre: 'Carte : une nouveauté de « Vera propose » se distingue vraiment de vos plats — plus de carbonara à côté de vos pâtes carbonara ni de burger qui n’est que le vôtre avec un ingrédient de plus : Vera propose un autre produit principal ou une autre technique' },
+    { id: 'C286', date: '2026-10-22', titre: 'Retour d’une démonstration : l’Accueil apparaît directement mis en forme, sans passer un instant par une présentation brute avec des centimes' },
+    { id: 'C285', date: '2026-10-22', titre: 'Démonstration : la croix du bandeau le replie sans jamais retirer la sortie (« Quitter la démo » reste visible) ; chaque nouvelle démo rouvre le bandeau ; le sélecteur d’établissement propose aussi « Revenir à mon établissement »' },
     { id: 'C284', date: '2026-10-22', titre: 'Dans votre langue : la pastille d’essai de l’en-tête (« Trial 14 d », « Test 14 Tg. », « D-14 »…) ; Inventaire gratuit : le nom choisi dans « Faisons connaissance » apparaît tout de suite dans la barre et reste après rechargement' },
     { id: 'C283', date: '2026-10-22', titre: 'Retour d’une démonstration : l’Accueil passe à vos vrais chiffres en même temps que l’en-tête, sans montrer d’abord les chiffres fictifs' },
     { id: 'C282', date: '2026-10-22', titre: 'Carte : « Vera propose » tient chaque famille (que des salades dans « Salades »), ne présente plus une simple variante d’un plat de la carte comme une nouveauté, et dit « coût incomplet » avec une marge provisoire tant qu’un ingrédient manque' },

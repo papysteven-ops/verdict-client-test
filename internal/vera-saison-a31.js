@@ -114,6 +114,30 @@
     'vinaigrette': 'huile d’olive', "vinaigrette à l'échalote": 'huile d’olive', 'sauce vierge': 'huile d’olive', 'poulet pané': 'filet de poulet',
     'sauce tartare': 'mayonnaise', 'sauce césar': 'mayonnaise', 'rouille': 'mayonnaise', 'gaufre': 'farine', 'crumble': 'farine', 'churros': 'farine' };
   function faitMaison(generic, ing) { var b = FAIT_MAISON[norm(generic)] || FAIT_MAISON[generic]; return b ? trouver(b, ing) : null; }
+  /* C287 (T1 vague 12, R1) : une nouveauté se distingue vraiment du plat le plus proche de la carte — un autre produit principal
+     ou une autre technique. « Tagliatelles à la carbonara » face aux « Pâtes carbonara », « Burger montagnard » face au burger de
+     la carte : même produit principal et même plat → écartée, Vera en propose une autre.
+     Une terrine de porc reste une nouveauté face à une terrine de foie gras (produit principal différent). */
+  var MOTS_FAMILLE = /^(pizza|pate|pasta|spaghetti|tagliatelle|penne|linguine|rigatoni|salade|plat|assiette|pave|filet|dos|cuisse|supreme|tranche|planche|bowl|verrine|cassolette|maison|grille|grillee|roti|rotie|frai|fraiche|saison|cremeux|cremeuse|croustillant|croustillante|fondant|fondante|minute|chaud|chaude|froid|froide|facon|style|petit|petite|grand|grande|brasserie|bistrot|chef|signature|classique|tradition|traditionnel|traditionnelle|ancienne|ancien|jour)$/;
+  function motsPlat(s) { return motsDe(String(s || '').split(',')[0]).filter(function (m) { return m.length > 3 && !MOTS_FAMILLE.test(m); }); }
+  function tropProche(e, d, cat) {
+    var mn = motsPlat(e.g.nom), pr = e.principal ? norm(e.principal) : null;
+    return (d.plats || []).some(function (p) {
+      if (!p || p.cpArchived || !p.nom || (cat && p.cat && p.cat !== cat)) return false;
+      /* une autre famille n'est jamais « le même plat » (Burrata en entrée ≠ Pizza burrata) */
+      if ((familleGabarit(e.g) || null) !== (famillePlat(p.nom, true) || null)) return false;
+      var mp = motsPlat(p.nom), rec = (p.rec || []).map(function (l) { return norm(l[0]); }), memePrincipal = pr ? rec.indexOf(pr) >= 0 : false;
+      /* même plat : même nom de plat (burger, carbonara, tartare…) — avec une fiche, le même produit principal ; sans fiche, les
+         mêmes précisions ou aucune (« Burger montagnard » ≈ « Burger maison » ; « Tartare de saumon » ≠ « Tartare de bœuf ») */
+      if (mn[0] && mn[0] === mp[0]) {
+        if (rec.length) { if (!pr || memePrincipal) return true; }
+        else { var rn = mn.slice(1), rp = mp.slice(1); if (!rn.length || !rp.length || rn.some(function (m) { return rp.indexOf(m) >= 0; })) return true; }
+      }
+      /* les produits de base communs (beurre, œufs, sucre, crème) ne font pas le même plat : moelleux ≠ profiteroles */
+      return false;
+    });
+  }
+
   function trouver(generic, ing) {
     var w = web(), al = w && w.alias && w.alias[generic] && !SYN[generic] && !STRICT[generic] ? w.alias[generic] : null, mo = motsDe(generic);
     /* l'alias n'est suivi que s'il simplifie le nom (« blanc d'œuf » → « œuf »), jamais vers un autre produit (« veau » → « bœuf ») */
@@ -267,22 +291,23 @@
     function memeFamille(g) { var fg = familleGabarit(g); return fc ? fg === fc : !(fg && fams[fg]); }
     if (!gabs.length && fam !== 'brasserie') gabs = TG.filter(function (g) { return g.f.indexOf('brasserie') >= 0 && g.c.some(function (r) { return rangs.indexOf(r) >= 0; }) && !dejaALaCarte(g, d); });
     function evaluer(g, climatCible) {
-      var rec = [], avec = [], manque = [], poids = 0, couv = 0;
+      var rec = [], avec = [], manque = [], poids = 0, couv = 0, principal = null;
       g.comp.forEach(function (c) {
         var w = c[0] === 'piece' ? 2 : c[0] === 'touche' ? 0.5 : 1; poids += w;
         var trouve = trouver(c[1], ing), lib = trouve && trouve.nom, fm = !trouve && faitMaison(c[1], ing);
+        if (trouve && c[0] === 'piece' && !principal) principal = trouve.nom;
         if (fm) { trouve = fm; lib = fm.nom + ' (' + c[1] + ' maison)'; }
         if (trouve) { couv += w; rec.push([trouve.nom, c[2]]); if (avec.indexOf(lib) < 0) avec.push(lib); }
         else if (manque.indexOf(c[1]) < 0) manque.push(c[1]);
       });
       var couverture = poids ? couv / poids : 0, saison = g.s.indexOf(climatCible) >= 0 ? 1 : 0;
-      return { g: g, rec: rec, avec: avec, manque: manque, couverture: couverture, saison: saison, score: saison * 1.2 + couverture + (manque.length === 0 ? .3 : 0) - manque.length * .08 };
+      return { g: g, rec: rec, avec: avec, manque: manque, couverture: couverture, saison: saison, principal: principal, score: saison * 1.2 + couverture + (manque.length === 0 ? .3 : 0) - manque.length * .08 };
     }
     function meilleur(climatCible, exclure, mois) {
       /* un plat complet : au moins 3 composants nommés (jamais « mousse au chocolat » tout court) */
       var l = gabs.filter(function (g) { return g.s.indexOf(climatCible) >= 0 && exclure.indexOf(g) < 0 && g.comp.length >= 3 && g.nom.split(/[ ,]+/).length >= 3 && memeFamille(g) && deSaison(g, mois); }).map(function (g) { return evaluer(g, climatCible); })
         /* C276b : au moins deux produits de la maison, sinon ce n'est pas « composé avec vos produits » */
-        .filter(function (e) { return e.couverture >= .5 && e.manque.length <= 2 && e.rec.length >= 2; }).sort(function (a, b) { return b.score - a.score; });
+        .filter(function (e) { return e.couverture >= .5 && e.manque.length <= 2 && e.rec.length >= 2 && !tropProche(e, d, o.cat); }).sort(function (a, b) { return b.score - a.score; });
       return l[0] || null;
     }
     var out = [], e1 = meilleur(c1, [], m);
@@ -309,5 +334,5 @@
     return s;
   }
   function produitsDuMoment(m) { var a = saisonDe(m), b = saisonDe((m % 12) + 1); var l = []; ['legumes', 'fruits', 'mer', 'terre'].forEach(function (k) { (a[k] || []).forEach(function (x) { if (l.indexOf(x) < 0 && (b[k] || []).indexOf(x) >= 0) l.push(x); }); }); return l; }
-  root.VerdictSaison = { trouver: trouver, deSaison: deSaison, famillePlat: famillePlat, version: 'C105', dejaALaCarte: dejaALaCarte, tousGabarits: tousGabarits, saisonDe: saisonDe, TEMP: TEMP, MOIS: MOIS, SAISON: SAISON, gabarits: G, synonymes: SYN, famille: famille, nomFamille: function (f) { return NOM_FAMILLE[f] || f; }, climat: climat, composer: composer, trouver: trouver, phraseSaison: phraseSaison, produitsDuMoment: produitsDuMoment, moisReel: function () { return new Date().getMonth() + 1; }, rangLibelle: function (r) { return RANG_LIBELLE[r] || 'plat'; } };
+  root.VerdictSaison = { tropProche: tropProche, trouver: trouver, deSaison: deSaison, famillePlat: famillePlat, version: 'C105', dejaALaCarte: dejaALaCarte, tousGabarits: tousGabarits, saisonDe: saisonDe, TEMP: TEMP, MOIS: MOIS, SAISON: SAISON, gabarits: G, synonymes: SYN, famille: famille, nomFamille: function (f) { return NOM_FAMILLE[f] || f; }, climat: climat, composer: composer, trouver: trouver, phraseSaison: phraseSaison, produitsDuMoment: produitsDuMoment, moisReel: function () { return new Date().getMonth() + 1; }, rangLibelle: function (r) { return RANG_LIBELLE[r] || 'plat'; } };
 })(window);

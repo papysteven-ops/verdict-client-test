@@ -151,16 +151,48 @@
       var tries=[220,600,1200];tries.forEach(function(ms){global.setTimeout(function(){try{if(tourActif()||!el.isConnected||el.getClientRects().length===0)return;var vue=doc.querySelector('.view.on'),ong=vue&&(vue.querySelector('.actbar')||vue.querySelector(':scope > .chips'));var mb=doc.getElementById('modeBar'),base=(mb&&mb.getClientRects().length)?Math.max(0,mb.getBoundingClientRect().bottom):0;var want=base+(ong?ong.getBoundingClientRect().height:0)+10;var top=el.getBoundingClientRect().top;if(Math.abs(top-want)>6&&!global.__p40Touche)global.calerSur(el);}catch(e){}},ms);});return r;};w2.__p40=true;global.verdictSettleSubview=w2;}}
     envelopper();global.addEventListener('load',envelopper);global.setTimeout(envelopper,1500);
     try{if(global.parent&&global.parent!==global)doc.documentElement.setAttribute('data-p40-coque','1');}catch(e){}
-    /* R84 : le bandeau « Démonstration fictive » se ferme d'une croix, à tout moment ; le choix tient tant que la démonstration dure, et le bandeau n'existe plus dès que le client sort de la démonstration ou saisit ses vrais chiffres */
-    (function(){var CLE='vd_demobar_fermee';function ferme(){try{return global.localStorage.getItem(CLE)==='1';}catch(e){return false;}}
-      function appliquerMb(){var b=doc.getElementById('modeBar');if(!b)return;doc.documentElement.classList.toggle('p40-mb-fermee',ferme());
-        var lab=b.querySelector('.mb-label')||b;if(!b.querySelector('.p40-mb-x')){var x=doc.createElement('button');x.type='button';x.className='p40-mb-x';x.setAttribute('aria-label','Masquer ce bandeau');x.textContent='\u00d7';
-          x.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();try{global.localStorage.setItem(CLE,'1');}catch(e){}doc.documentElement.classList.add('p40-mb-fermee');try{if(typeof global.chipsTop==='function')global.chipsTop();}catch(e){}try{if(global.VerdictPremium&&global.VerdictPremium.hautOnglets)global.VerdictPremium.hautOnglets();}catch(e){}});
-          lab.appendChild(x);if(!b.__p40obs&&global.MutationObserver){b.__p40obs=new MutationObserver(function(){global.setTimeout(appliquerMb,30);});b.__p40obs.observe(b,{childList:true});}}}
-      function sortir(){try{global.localStorage.removeItem(CLE);}catch(e){}doc.documentElement.classList.remove('p40-mb-fermee');}
+    /* R84 : le bandeau « Démonstration fictive » se replie d'une croix ; C285 : il garde toujours la sortie (« Quitter la démo »), le repli ne vaut
+       que pour la démo en cours (jamais enregistré : chaque nouvelle démo rouvre le bandeau), et le sélecteur d'établissement propose aussi le retour au réel */
+    (function(){var CLE='vd_demobar_fermee',REPLI='p40-mb-replie';try{global.localStorage.removeItem(CLE);}catch(e){}
+      var TXT={fr:['Quitter la démo','Afficher le bandeau de démonstration','Replier ce bandeau','Revenir à mon établissement'],en:['Leave the demo','Show the demo banner','Fold this banner','Back to my business'],
+        es:['Salir de la demo','Mostrar la banda de demostración','Plegar esta banda','Volver a mi establecimiento'],it:['Esci dalla demo','Mostra la barra della demo','Riduci questa barra','Torna al mio locale'],
+        de:['Demo verlassen','Demo-Leiste anzeigen','Leiste einklappen','Zurück zu meinem Betrieb'],nl:['Demo verlaten','Demobalk tonen','Deze balk inklappen','Terug naar mijn zaak'],
+        pt:['Sair da demo','Mostrar a faixa da demonstração','Recolher esta faixa','Voltar ao meu estabelecimento']};
+      function t(i){var l='fr';try{l=String(doc.documentElement.lang||'fr').slice(0,2).toLowerCase();}catch(e){}return (TXT[l]||TXT.fr)[i];}
+      function sig(b){return b.getAttribute('aria-label')||'demo';}
+      function sortieDe(b){return b&&b.querySelector('button[onclick^="quitterDemo"]');}
+      function style(){if(doc.getElementById('p40-c285'))return;var s=doc.createElement('style');s.id='p40-c285';
+        s.textContent='html.p40-mb-replie #modeBar>*:not(.p40-mb-ouvrir):not(button[onclick^="quitterDemo"]){display:none!important}'+
+          'html:not(.p40-mb-replie) #modeBar>.p40-mb-ouvrir{display:none!important}'+
+          'html.p40-mb-replie #modeBar{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important}'+
+          'html.p40-mb-replie #modeBar>button[onclick^="quitterDemo"]{border-radius:999px!important;font-weight:700!important}'+
+          '#modeBar>.p40-mb-ouvrir{flex:none;min-width:32px;min-height:28px;border-radius:999px;cursor:pointer;color:inherit!important;opacity:1!important;font-size:15px!important;line-height:1!important}'+
+          '#etabBar .p40-etab-reel{white-space:nowrap}';(doc.head||doc.documentElement).appendChild(s);}
+      function rafraichir(){try{if(typeof global.chipsTop==='function')global.chipsTop();}catch(e){}try{if(global.VerdictPremium&&global.VerdictPremium.hautOnglets)global.VerdictPremium.hautOnglets();}catch(e){}}
+      function replier(b,v){b.__p40Replie=v?sig(b):'';appliquerMb();rafraichir();}
+      function etabReel(b){var bar=doc.getElementById('etabBar');if(!bar)return;var x=bar.querySelector('.p40-etab-reel');
+        if(!sortieDe(b)){if(x)x.remove();return;}
+        if(!x){x=doc.createElement('button');x.type='button';x.className='chip p40-etab-reel';x.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();if(typeof global.quitterDemo==='function')global.quitterDemo();});bar.insertBefore(x,bar.firstChild);}
+        var l='↩ '+t(3);if(x.textContent!==l)x.textContent=l;
+        if(!bar.__p40c285&&global.MutationObserver){bar.__p40c285=new MutationObserver(function(){global.setTimeout(appliquerMb,30);});bar.__p40c285.observe(bar,{childList:true});}}
+      function appliquerMb(){var b=doc.getElementById('modeBar');etabReel(b);
+        var r=!!(b&&sortieDe(b)&&b.__p40Replie===sig(b));if(doc.documentElement.classList.contains(REPLI)!==r)doc.documentElement.classList.toggle(REPLI,r);
+        if(doc.documentElement.classList.contains('p40-mb-fermee'))doc.documentElement.classList.remove('p40-mb-fermee');
+        if(!b)return;var q=sortieDe(b);if(!q){var v=b.querySelector('.p40-mb-x');if(v)v.remove();return;}style();
+        var lab=b.querySelector('.mb-label')||b;if(!b.querySelector('.p40-mb-x')){var x=doc.createElement('button');x.type='button';x.className='p40-mb-x';x.textContent='×';
+          x.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();replier(b,true);});lab.appendChild(x);}
+        var xb=b.querySelector('.p40-mb-x');if(xb.getAttribute('aria-label')!==t(2)){xb.setAttribute('aria-label',t(2));xb.title=t(2);}
+        var o=b.querySelector('.p40-mb-ouvrir');if(!o){o=doc.createElement('button');o.type='button';o.className='p40-mb-ouvrir';o.textContent='▾';
+          o.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();replier(b,false);});b.insertBefore(o,b.firstChild);}
+        if(o.getAttribute('aria-label')!==t(1)){o.setAttribute('aria-label',t(1));o.title=t(1);}
+        if(r){if(q.getAttribute('data-p40-txt')==null)q.setAttribute('data-p40-txt',q.textContent);if(q.textContent!==t(0))q.textContent=t(0);}
+        else if(q.getAttribute('data-p40-txt')!=null){q.textContent=q.getAttribute('data-p40-txt');q.removeAttribute('data-p40-txt');}
+        if(!b.__p40obs&&global.MutationObserver){b.__p40obs=new MutationObserver(function(){global.setTimeout(appliquerMb,30);});b.__p40obs.observe(b,{childList:true});}}
+      function sortir(){var b=doc.getElementById('modeBar');if(b)b.__p40Replie='';doc.documentElement.classList.remove(REPLI);}
       function envQuitter(){var q=global.quitterDemo;if(typeof q==='function'&&!q.__p40){var w=function(){sortir();return q.apply(this,arguments);};w.__p40=true;global.quitterDemo=w;}}
       appliquerMb();envQuitter();global.addEventListener('load',function(){appliquerMb();envQuitter();});global.setTimeout(function(){appliquerMb();envQuitter();},1500);
       if(global.MutationObserver&&doc.body)new MutationObserver(function(){appliquerMb();}).observe(doc.body,{childList:true,subtree:false});
+      if(global.MutationObserver)new MutationObserver(function(){appliquerMb();}).observe(doc.documentElement,{attributes:true,attributeFilter:['lang']});
       global.addEventListener('vd:demobar',appliquerMb);})();
     /* si le client a repris la main (il fait défiler), on ne recale plus */
     var tT=0;global.addEventListener('touchstart',function(){global.__p40Touche=true;global.clearTimeout(tT);tT=global.setTimeout(function(){global.__p40Touche=false;},1500);},{passive:true});
