@@ -129,8 +129,10 @@
     return null;
   }
   /* C276 (N3) : la famille de plats est respectée — pas de tagliatelles dans « Pizzas », pas de pizza dans « Pâtes ». */
-  function famillePlat(s) { var n = norm(s); return /pizza|calzone/.test(n) ? 'pizza' : /\b(pates?|pasta|spaghetti|tagliatelles?|penne|linguine|rigatoni|lasagnes?|raviolis?|gnocchis?|risotto)\b/.test(n) ? 'pates' : /burger/.test(n) ? 'burger' : null; }
-  function familleGabarit(g) { return famillePlat(g.nom) || (g.comp.some(function (c) { return norm(c[1]) === 'pate a pizza'; }) ? 'pizza' : null); }
+  /* C282 (N1) : « Salades » est une famille aussi — une catégorie Salades ne reçoit que des salades (pas d'arancini au prix
+     d'une Salade César), et un plat dont le nom commence par « Salade » va dans Salades quand la carte en a une. */
+  function famillePlat(s, gabarit) { var n = norm(s); if (gabarit ? /^salades?\b/.test(n) : /\bsalades?\b/.test(n)) return 'salade'; return /pizza|calzone/.test(n) ? 'pizza' : /\b(pates?|pasta|spaghetti|tagliatelles?|penne|linguine|rigatoni|lasagnes?|raviolis?|gnocchis?|risotto)\b/.test(n) ? 'pates' : /burger/.test(n) ? 'burger' : null; }
+  function familleGabarit(g) { return famillePlat(g.nom, true) || (g.comp.some(function (c) { return norm(c[1]) === 'pate a pizza'; }) ? 'pizza' : null); }
   /* C276 (N4) : la saison est réelle — un fruit ou un légume n'est proposé que le mois où il est de saison (pas de fraises en
      octobre) ; ce qui est conservé (tomates confites, séchées, marinées) reste possible toute l'année. */
   var SAISONNIERS = null;

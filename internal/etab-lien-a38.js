@@ -16,6 +16,8 @@
   function flag(n) { try { return !!w.eval('typeof ' + n + '!=="undefined"&&' + n); } catch (e) { return false; } }
   /* Relié à Verdict : cadre de la coquille, ni démonstration, ni équipe, ni inventaire partagé, ni formule Inventaire seul. */
   function relie() { return parentOk() && !flag('DEMO') && !flag('STAFF') && !flag('SHARED') && !flag('OWNER_TEAM') && !formuleInventaire(); }
+  /* C284 : le nom choisi dans l'Inventaire va aussi à Pilotage pendant la phase gratuite (formule Inventaire). */
+  function nommable() { return parentOk() && !flag('DEMO') && !flag('STAFF') && !flag('SHARED') && !flag('OWNER_TEAM'); }
   function db() { try { return w.eval('typeof DB!=="undefined"?DB:null'); } catch (e) { return null; } }
   function nomSite() { var d = db(); try { return (typeof w.siteName === 'function' && d) ? w.siteName(d.site) : (d && d.sites && d.sites[d.site] && d.sites[d.site].name) || ''; } catch (e) { return ''; } }
   function toast(t) { try { if (typeof w.toast === 'function') w.toast(t); } catch (e) {} }
@@ -66,7 +68,8 @@
     var d = ev && ev.data; if (!d || d.type !== 'verdict-unified-apply-context' || !d.context) return;
     setTimeout(function () {
       try {
-        if (!relie()) return; var c = d.context, base = db(); if (!base || !base.sites || c.demo) return;
+        if (!relie()) { if (!d.context.demo && parDefaut(d.context.name)) versVerdict(); return; }/* C284 : phase gratuite */
+        var c = d.context, base = db(); if (!base || !base.sites || c.demo) return;
         var id = String(c.siteId || ''), nom = String(c.name || '').trim().slice(0, 100); if (!id || !nom || !base.sites[id]) return;
         /* C218 (W75) : le nom par défaut de Verdict n'écrase jamais le vrai nom choisi dans l'Inventaire ; c'est l'inverse qui se fait. */
         if (parDefaut(nom) && !parDefaut(base.sites[id].name)) { versVerdict(); return; }
@@ -80,7 +83,7 @@
   function parDefaut(n) { n = String(n || '').trim(); return !n || /^(mon|nouvel) établissement$/i.test(n); }
   function versVerdict() {
     try {
-      if (!relie()) return false; var base = db(); if (!base || !base.sites || !base.site) return false;
+      if (!nommable()) return false; var base = db(); if (!base || !base.sites || !base.site) return false;
       var site = base.sites[base.site], nom = String(site && site.name || '').trim().slice(0, 100); if (parDefaut(nom)) return false;
       var f = w.parent.document.getElementById('frame-verdict'), V = f && f.contentWindow; if (!V || !V.STORE || !V.STORE.etabs) return false;
       var S = V.STORE, D = S.etabs[S.actif]; if (!D || D._demo && D._demo.active) return false;
@@ -97,5 +100,8 @@
   /* C258 (W75) : Pilotage peut s'ouvrir bien après l'Inventaire (compte créé d'abord) : les essais ne comptent qu'une fois le
      cadre Verdict présent ; une heure au plus. */
   var essaisNom = 0, tours = 0, minuteurNom = setInterval(function () { var f = null; try { f = w.parent !== w && w.parent.document.getElementById('frame-verdict'); } catch (e) {} if (versVerdict() || (f && ++essaisNom > 40) || ++tours > 2400) clearInterval(minuteurNom); }, 1500);
-  w.VerdictEtabLien = { relie: relie, versVerdict: versVerdict };
+  /* C284 : dès que « Faisons connaissance » enregistre le nom, la barre de la coque le reprend (sans attendre le minuteur). */
+  ['wSave', 'wDone'].forEach(function (n) { var f0 = w[n]; if (typeof f0 !== 'function' || f0.__c284) return;
+    var f = function () { var r = f0.apply(this, arguments); setTimeout(function () { try { versVerdict(); } catch (e) {} }, 0); return r; }; f.__c284 = true; w[n] = f; });
+  w.VerdictEtabLien = { relie: relie, versVerdict: versVerdict, nommable: nommable };
 })();

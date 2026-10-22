@@ -183,6 +183,17 @@
   function urlAvec(module) { var u = new URL(location.href); u.searchParams.set('module', module); u.searchParams.delete('plan'); u.searchParams.delete('profile'); return u.pathname + u.search + u.hash; }
 
   /* ── Application du verrou et de la pastille ── */
+  /* C284 : libellé court de la pastille (::after, attr(data-court)) dans la langue de la page ; le traducteur de la coque ne voit
+     pas les attributs data-*. Préfixes alignés sur la session Langues (« Trial · D-14 », « Test · T-14 », « Prova · G-14 »). */
+  var COURT = { en: ['D-', 'Trial 14 d', 'Trial ended', 'Subscription ended'], es: ['D-', 'Prueba 14 d', 'Prueba terminada', 'Suscripción terminada'],
+    it: ['G-', 'Prova 14 g', 'Prova terminata', 'Abbonamento terminato'], de: ['T-', 'Test 14 Tg.', 'Test beendet', 'Abo beendet'],
+    nl: ['D-', 'Proef 14 d', 'Proef beëindigd', 'Abonnement beëindigd'], pt: ['D-', 'Teste 14 d', 'Teste terminado', 'Assinatura terminada'] };
+  function courtLangue(s) {
+    var l = 'fr'; try { l = String(doc.documentElement.lang || 'fr').slice(0, 2).toLowerCase(); } catch (e) {}
+    var t = COURT[l]; if (!t || !s) return s;
+    if (/^J-\d+$/.test(s)) return t[0] + s.slice(2);
+    return s === 'Essai 14 j' ? t[1] : s === 'Essai terminé' ? t[2] : s === 'Abonnement terminé' ? t[3] : s;
+  }
   function badge() {
     var acts = doc.body; if (!acts) return;
     var b = doc.getElementById('vdPlanBadge'), E = etat();
@@ -192,7 +203,7 @@
     var texte = !actif() || E.abonne || E.niveau === 'inventaire' ? '' : (E.attente ? fin + ' · tout reste ouvert' : E.niveau === 'essai' ? 'Essai · J-' + E.jours : (E.decouverte ? 'Découverte · essai de 14 j avec un compte' : ''));
     /* C212 : libellé court pour la case de l'en-tête sur tablette ; C224 (X02) : posé en pseudo-élément (data-court), le texte
        du bouton n'a donc qu'un libellé, et son nom accessible est le libellé complet. */
-    var court = E.attente ? fin : E.niveau === 'essai' ? 'J-' + E.jours : E.decouverte ? 'Essai 14 j' : '';
+    var court = courtLangue(E.attente ? fin : E.niveau === 'essai' ? 'J-' + E.jours : E.decouverte ? 'Essai 14 j' : '');
     var tete = doc.querySelector('header.app-shell-header');
     /* C224 : classList.remove() réécrit l'attribut même sans la classe ; on ne touche à rien au repos. */
     if (!texte) { if (b) b.remove(); if (doc.documentElement.classList.contains('vd-plan-pastille')) doc.documentElement.classList.remove('vd-plan-pastille'); return; }
@@ -201,6 +212,7 @@
     var parent = tete || acts; if (b.parentNode !== parent) parent.appendChild(b);
     if (!doc.documentElement.classList.contains('vd-plan-pastille')) doc.documentElement.classList.add('vd-plan-pastille');
     /* C194 : appliquer() tourne toutes les 400 ms ; la pastille n'est réécrite que si son texte change (0 changement au repos) */
+    if (b.__vdTexte === texte && b.getAttribute('data-court') !== court) b.setAttribute('data-court', court);/* C284 : la langue a changé */
     if (b.__vdTexte !== texte) { b.__vdTexte = texte; b.innerHTML = '<i aria-hidden="true"></i><span class="vpb-l">' + texte + '</span>'; b.setAttribute('data-court', court); b.setAttribute('aria-label', texte); b.title = texte; }
   }
   /* C224 (X35) : Pilotage et Carte floutés pour le client de l'Inventaire gratuit. Le cadre tourne normalement mais il est

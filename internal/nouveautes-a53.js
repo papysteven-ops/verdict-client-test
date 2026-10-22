@@ -11,6 +11,9 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C284', date: '2026-10-22', titre: 'Dans votre langue : la pastille d’essai de l’en-tête (« Trial 14 d », « Test 14 Tg. », « D-14 »…) ; Inventaire gratuit : le nom choisi dans « Faisons connaissance » apparaît tout de suite dans la barre et reste après rechargement' },
+    { id: 'C283', date: '2026-10-22', titre: 'Retour d’une démonstration : l’Accueil passe à vos vrais chiffres en même temps que l’en-tête, sans montrer d’abord les chiffres fictifs' },
+    { id: 'C282', date: '2026-10-22', titre: 'Carte : « Vera propose » tient chaque famille (que des salades dans « Salades »), ne présente plus une simple variante d’un plat de la carte comme une nouveauté, et dit « coût incomplet » avec une marge provisoire tant qu’un ingrédient manque' },
     { id: 'C281', date: '2026-10-22', titre: 'La barre des onglets de Structure est la même partout : blanche, avec l’onglet ouvert en vert pâle bordé de vert, en thème clair comme en thème sombre, sur téléphone comme sur ordinateur' },
     { id: 'C280', date: '2026-10-22', titre: 'Vos documents font foi : les commandes par jour lues dans votre caisse entrent dans la même question que votre document comptable. Et si votre saisie retire la note, Verdict le dit clairement au lieu de parler d’une note non finale' },
     { id: 'C279', date: '2026-10-22', titre: 'Structure › Chiffre minimum : le mois où commence votre suivi dit « Minimum du reste du mois » et donne le mois entier à côté, comme l’Accueil' },

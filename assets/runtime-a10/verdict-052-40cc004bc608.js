@@ -550,9 +550,11 @@ function poser(k){
   var token=transition&&transition.busy()?transition.begin("Mise à jour de vos indicateurs…"):null;
   var generation=(frame.__vdGeneration||0)+1;frame.__vdGeneration=generation;
   var previous=frame.__vdWait;if(previous&&transition)transition.end(previous);frame.__vdWait=token;if(token)transition.attach(token,frame);
-  frame.onload=function(){if(frame.__vdGeneration!==generation||!frame.contentDocument||frame.contentDocument.documentElement.getAttribute("data-vd-generation")!==String(generation))return;var done=frame.__vdWait;frame.__vdWait=null;if(done&&transition)transition.paint().then(function(){transition.end(done);});};
-  frame.onerror=function(){if(token&&transition)transition.fail("L’affichage n’a pas pu se charger. Vos données doivent être vérifiées avant une nouvelle saisie.");};
-  frame.srcdoc=srcdoc(k,data).replace("<html ",'<html data-vd-generation="'+generation+'" ');
+  frame.onload=function(){if(frame.__vdGeneration!==generation||!frame.contentDocument||frame.contentDocument.documentElement.getAttribute("data-vd-generation")!==String(generation))return;frame.style.visibility="";var done=frame.__vdWait;frame.__vdWait=null;if(done&&transition)transition.paint().then(function(){transition.end(done);});};
+  frame.onerror=function(){frame.style.visibility="";if(token&&transition)transition.fail("L’affichage n’a pas pu se charger. Vos données doivent être vérifiées avant une nouvelle saisie.");};
+  /* C283 : autre établissement (démo ↔ réel, changement d’établissement) : l’ancien contenu est masqué jusqu’au chargement du nouveau. */
+   var ident=global.VERDICT_DEMO_SESSION?"demo:"+((global.DB&&global.DB.modele)||""):"reel:"+((global.STORE&&global.STORE.actif)||"");if(frame.__vdIdent&&frame.__vdIdent!==ident)frame.style.visibility="hidden";frame.__vdIdent=ident;
+   frame.srcdoc=srcdoc(k,data).replace("<html ",'<html data-vd-generation="'+generation+'" ');
 }
 global.addEventListener("message",function(ev){var d=ev.data;if(!d||d.p41!=="h")return;var f=doc.querySelector('.p41-cadre[data-key="'+d.id+'"] > iframe')||(HOST[d.id]&&(doc.querySelector('#'+HOST[d.id]+' > .p41-cadre > iframe')||doc.querySelector('.p41-cadre[data-for="'+d.id+'"] > iframe')));if(f&&d.h>40)f.style.height=Math.ceil(d.h)+"px";});
 /* Journées / Cumul : le graphique se redessine sur place. Son code fait ensuite défiler la page vers la carte
