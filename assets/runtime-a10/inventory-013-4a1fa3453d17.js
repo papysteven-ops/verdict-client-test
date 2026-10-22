@@ -240,8 +240,10 @@
     var minimum=Math.max(0,num(p&&p.minValue)||0),total=Math.max(0,num(group.total)||0);if(minimum>0&&total<minimum)add('minimum-not-met');
     return {ready:blockers.length===0,blockers:blockers};
   }
-  function formatDateTime(v){var d=localDate(v);if(!d)return '—';return DAYS[d.getDay()]+' '+pad(d.getDate())+'/'+pad(d.getMonth()+1)+' · '+pad(d.getHours())+':'+pad(d.getMinutes());}
-  function formatDelivery(win){if(!win)return 'Livraison inconnue';var a=localDate(win.deliveryAt),b=localDate(win.deliveryEndAt);if(!a)return 'Livraison inconnue';return DAYS[a.getDay()]+' '+pad(a.getDate())+'/'+pad(a.getMonth()+1)+' · '+pad(a.getHours())+':'+pad(a.getMinutes())+(b?'–'+pad(b.getHours())+':'+pad(b.getMinutes()):'');}
+  /* C261 : jour abrégé dans la langue de la page (français : DAYS, inchangé). */
+  function jourCourt(d){try{var l=typeof document!=='undefined'&&document.documentElement?String(document.documentElement.lang||'fr').slice(0,2).toLowerCase():'fr';if(l&&l!=='fr'&&typeof Intl!=='undefined'){var s=new Intl.DateTimeFormat(l,{weekday:'short'}).format(d);return s.charAt(0).toUpperCase()+s.slice(1);}}catch(e){}return DAYS[d.getDay()];}
+  function formatDateTime(v){var d=localDate(v);if(!d)return '—';return jourCourt(d)+' '+pad(d.getDate())+'/'+pad(d.getMonth()+1)+' · '+pad(d.getHours())+':'+pad(d.getMinutes());}
+  function formatDelivery(win){if(!win)return 'Livraison inconnue';var a=localDate(win.deliveryAt),b=localDate(win.deliveryEndAt);if(!a)return 'Livraison inconnue';return jourCourt(a)+' '+pad(a.getDate())+'/'+pad(a.getMonth()+1)+' · '+pad(a.getHours())+':'+pad(a.getMinutes())+(b?'–'+pad(b.getHours())+':'+pad(b.getMinutes()):'');}
   function safeUrl(v){try{var u=new URL(str(v),typeof location!=='undefined'?location.href:'https://verdict.invalid/');return /^https?:$/.test(u.protocol)?u.href:'';}catch(e){return '';}}
 
   /* Transition pure et traçable du dialogue d'urgence. Refuser la livraison

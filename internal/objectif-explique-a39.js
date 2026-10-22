@@ -154,12 +154,17 @@
   function montant(t) { var m = /([\d\u202f\u00a0 .]+(?:,\d{1,2})?)\s*€/.exec(t || ''); return m ? Number(m[1].replace(/[\s\u202f\u00a0.]/g, '').replace(',', '.')) : null; }
   /* C245 : jours d'ouverture inconnus (document comptable seul, question de l'Accueil sans réponse) : aucun minimum du jour inventé. */
   function joursInconnus() { try { return typeof w.verdictJoursInconnus === 'function' && !!w.verdictJoursInconnus(); } catch (e) { return false; } }
+  /* C256 : le mois où commence le suivi n'a pour minimum que la part restante ; on la nomme et on donne le mois entier à côté. */
+  function resteMois(min, date) { var s = String(w.DB && w.DB.performanceTrackingStartedAt || ''), k = String(date || '').slice(0, 7), full = null;
+    try { var ap = w.DB.performanceYearPlans[k.slice(0, 4)]; full = ap && ap.fullMonthlyTargets ? Number(ap.fullMonthlyTargets[k]) : null; } catch (e) {}
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s) && s.slice(0, 7) === k && s.slice(8) !== '01' && full > Number(min) + 0.5) return 'Minimum du reste du mois, depuis le ' + Number(s.slice(8)) + ' ' + MOIS[Number(s.slice(5, 7)) - 1] + ' : <b>' + eur(min) + '</b> (mois entier : ' + eur(full) + ').';
+    return 'Minimum du mois : <b>' + eur(min) + '</b>.'; }
   function clair(lp, c, S) {
     var t = montant(lp.textContent), base = Number(S.obj) || t, passe = /pour cette journée/.test(lp.textContent);
     if (!(t > 0)) return;
     if (joursInconnus()) { lp.className = 'vx53-o'; lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>à confirmer</b>';
       var ex0 = lp.nextElementSibling; if (!ex0 || !ex0.classList.contains('vx53-e')) { ex0 = lp.ownerDocument.createElement('p'); ex0.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex0); }
-      ex0.innerHTML = 'Il dépend de vos jours d’ouverture : répondez à « Combien de jours ouvrez-vous par semaine ? », en haut de l’Accueil.' + (c && c.input && Number(c.input.minimum) > 0 ? ' Le minimum du mois, lui, est connu : <b>' + eur(c.input.minimum) + '</b>.' : ''); return; }
+      ex0.innerHTML = 'Il dépend de vos jours d’ouverture : répondez à « Combien de jours ouvrez-vous par semaine ? », en haut de l’Accueil.' + (c && c.input && Number(c.input.minimum) > 0 ? ' ' + resteMois(c.input.minimum, S.cle || (c && c.next) || (function () { try { return String(w.verdictOperationalClock().key); } catch (e) { return ''; } })()) : ''); return; }
     var date = S.cle || (c && c.next), jourDate = S.cle || (function () { try { return String(w.verdictOperationalClock().key).slice(0, 10); } catch (e) { return date; } })(), jour = jourDate ? JOURS[jourSem(jourDate)] : 'jour', extra = Math.round(t) - Math.round(base); /* C240 : le jour de la carte (après la saisie, c.next est déjà demain) */
     var meme = c && c.exact && c.next === date, em = meme ? ecartMois(c) : { retard: 0, avance: 0 }, retard = em.retard, avance = em.avance, ouv = meme ? Number(c.openRemaining) || 0 : 0;
     /* C177 (Steven, 20/10 : « je comprends rien : 2 300 c'est quoi, si 1 676… là tu additionnes, mais pourquoi ? Je ne

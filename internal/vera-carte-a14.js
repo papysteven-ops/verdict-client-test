@@ -118,7 +118,10 @@ function qtyOn(p,monthsWanted,yearsBack){
   var total=0,byY={};Object.keys(H.months).forEach(function(per){if(per>=now)return;var m=monthOf(per);if(monthsWanted.indexOf(m)<0)return;if(yearsBack&&yearOf(now)-yearOf(per)>yearsBack)return;var q=H.months[per][p.id]||0;if(q){total+=q;var y=yearOf(per)-(m<monthsWanted[0]&&monthsWanted[0]>6?-1:0);byY[y]=(byY[y]||0)+q;}});
   var ys=Object.keys(byY);return {avg:ys.length?total/ys.length:0,total:total,years:ys.map(Number).sort(),best:ys.length?Math.max.apply(null,ys.map(function(y){return byY[y];})):0};
 }
-function last12(p){var H=ensureMemory(),now=currentPeriod();if(!H)return 0;var s=0;for(var i=1;i<=12;i++){var per=addMonth(now,-i);s+=(H.months[per]||{})[p.id]||0;}return s;}
+function last12(p){var H=ensureMemory(),now=currentPeriod();if(!H)return 0;var s=0;for(var i=1;i<=12;i++){var per=addMonth(now,-i);s+=(H.months[per]||{})[p.id]||0;}
+  /* C258 (T1 N5c) : dossier réel — la caisse donne la moyenne par mois sur n mois ; tant que la mémoire n'a pas ces mois, les ventes des 12 derniers mois sont celles de la caisse (1 581 cafés gourmands, jamais 0). */
+  var d=DB(),mo=d&&d.carteRef&&d.carteRef.moyenne,v=num(p&&p.vol);if(H.generated===false&&mo&&num(mo.mois)>0&&v>0){var c=Math.round(v*Math.min(12,num(mo.mois)));if(c>s)s=c;}
+  return s;}
 function bestSellers(year,monthsWanted,n){
   var H=ensureMemory(),now=currentPeriod();if(!H)return [];var acc={};Object.keys(H.months).forEach(function(per){if(yearOf(per)!==year||per>=now)return;if(monthsWanted&&monthsWanted.indexOf(monthOf(per))<0)return;var row=H.months[per];Object.keys(row).forEach(function(id){acc[id]=(acc[id]||0)+row[id];});});
   return Object.keys(acc).map(function(id){var p=dishById(id);if(!p||[1,2,3,4,5,8].indexOf(courseRank(p.cat))<0)return null;var k=calc(p);return {p:p,q:acc[id],contrib:num(k.contribPond)!=null?acc[id]*num(k.contribPond):null};}).filter(Boolean).sort(function(a,b){return b.q-a.q;}).slice(0,n||5);
@@ -194,6 +197,8 @@ function candidates(cat,o){
      suivant change de climat (« maintenant » et « quand il fera froid / chaud »). */
   var nouveaux=[];try{if(root.VerdictSaison)nouveaux=root.VerdictSaison.composer({db:d,cat:cat,rang:courseRank(cat),mois:m,tva:num(d&&d.reg&&d.reg.tvac)});}catch(e){nouveaux=[];}
   if(!nouveaux.length){var n0=newCreation(cat,m,o.price);if(n0)nouveaux=[n0];}
+  /* C258 (T1 N5d) : un produit déjà servi dans un plat de la carte garde la quantité de sa fiche (celle du plat le plus vendu) : le coût d'une nouveauté reste cohérent avec la fiche du même plat. */
+  nouveaux.forEach(function(n){(n.rec||[]).forEach(function(l){var k=norm(l[0]),best=null;(d.plats||[]).forEach(function(p){if(!active(p)||p.cat!==cat)return;(p.rec||[]).forEach(function(r){if(norm(r[0])===k&&num(r[1])>0&&(!best||(num(p.vol)||0)>(num(best.p.vol)||0)))best={p:p,q:num(r[1])};});});if(best)l[1]=best.q;});});
   nouveaux.forEach(function(n){prixSaison(n,cat,o.price);var pr=o.price||n.ttc,mg=marginAt(n,pr);
     /* une nouveauté dont le coût matière dépasse l'objectif de loin n'est pas proposée : Vera ne vend pas de rêve */
     if(mg&&mg.pct!=null&&mg.pct<Math.max(35,objective(n)-25))return;
@@ -226,7 +231,11 @@ function candidates(cat,o){
   });
   return list.sort(function(a,b){return b.score-a.score;});
 }
-function proposeDish(o){o=o||{};var cat=o.cat||catsOf()[0];var list=candidates(cat,o);var seen={},out=[];list.forEach(function(x){if(out.length<3&&!seen[x.origin+(x.origin==='active'?'':x.p.id)]){out.push(x);if(x.origin!=='active')seen[x.origin+x.p.id]=1;}});
+function proposeDish(o){o=o||{};var cat=o.cat||catsOf()[0];var list=candidates(cat,o);
+  /* C258 (T1 N5a) : Vera ne met jamais en avant un plat de la carte sous l'objectif ; il se corrige dans Décisions, pas ici. */
+  list=list.filter(function(x){return !(x.origin==='active'&&x.margin&&x.margin.pct<objective(x.p));});
+  /* Un ancien plat ou une nouveauté sous l'objectif n'est proposé que si la correction de C251 (prix +15 % au plus, portion −25 % au plus) l'y amène. */
+  var G=root.VerdictCarteGestes;if(G&&typeof G.corriger==='function')list=list.filter(function(x){if(x.origin==='active'||!x.margin||x.margin.pct>=objective(x.p))return true;try{var c=JSON.parse(JSON.stringify(x.p));c.ttc=x.price;var r=G.corriger(c);return !r||r.ok;}catch(e){return true;}});var seen={},out=[];list.forEach(function(x){if(out.length<3&&!seen[x.origin+(x.origin==='active'?'':x.p.id)]){out.push(x);if(x.origin!=='active')seen[x.origin+x.p.id]=1;}});
   /* Vera propose toujours au moins une vraie option : un ancien plat ou une nouveauté. */
   if(out.length===3&&out.every(function(x){return x.origin==='active';})){var alt=list.filter(function(x){return x.origin!=='active'&&(!x.margin||x.margin.pct>=0);})[0];if(alt)out[2]=alt;}
   /* C104 : les deux nouveautés de saison (maintenant, mois suivant) restent visibles, à la place des plats déjà à la carte. */
@@ -299,6 +308,8 @@ function css(){
   '@media(min-width:760px){#vc14{align-items:center}}'+
   '#vc14 .vc-sheet{width:min(820px,100%);max-height:94vh;overflow:auto;background:var(--card,#fff);color:var(--txt,#111827);border-radius:24px 24px 0 0;box-shadow:0 30px 80px rgba(0,0,0,.35);padding:18px 16px calc(22px + env(safe-area-inset-bottom,0px));font:500 15px/1.45 -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;animation:vcUp .35s cubic-bezier(.2,.8,.2,1)}'+
   '@media(min-width:760px){#vc14 .vc-sheet{border-radius:24px}}'+
+  /* C258 (T1 N7) : en thème clair, la fenêtre de Vera est claire (les variables --card/--txt du cadre restent sombres). */
+  'html.vd-workspace-light #vc14 .vc-sheet{background:#ffffff!important;color:#14202b!important;box-shadow:0 30px 80px rgba(16,24,40,.22)!important}html.vd-workspace-light #vc14 .vc-av{background:#f3f5f7}'+
   '@keyframes vcUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}'+
   '#vc14 .vc-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}#vc14 .vc-av{width:54px;height:54px;border-radius:50%;object-fit:cover;background:#111;box-shadow:0 0 0 3px #d4a72c,0 0 22px rgba(212,167,44,.55);animation:vcGlow 2.4s ease-in-out infinite}'+
   '@keyframes vcGlow{50%{box-shadow:0 0 0 3px #f2cf63,0 0 34px rgba(242,207,99,.8)}}'+
@@ -425,6 +436,8 @@ function install(){
   unfreeze();ensureMemory();watchCosts(true);
   var sv=root.save;if(typeof sv==='function'&&!sv._vc14){var ws=function(){var r=sv.apply(this,arguments);try{var d=DB();if(d&&d.cpDishHistory&&d.cpDishHistory.generated===false)accrue(d);}catch(e){}scheduleWatch();return r;};ws._vc14=true;for(var k in sv)if(Object.prototype.hasOwnProperty.call(sv,k))ws[k]=sv[k];root.save=ws;}
   var sw=root.switchEtab;if(typeof sw==='function'&&!sw._vc14){var wsw=function(){var r=sw.apply(this,arguments);setTimeout(function(){try{ensureMemory();watchCosts(true);}catch(e){}},300);return r;};wsw._vc14=true;for(var k2 in sw)if(Object.prototype.hasOwnProperty.call(sw,k2))wsw[k2]=sw[k2];root.switchEtab=wsw;}
+  /* C258 (T1 N5e) : la fenêtre de Vera se ferme quand on change d'écran. */
+  var gg=root.go;if(typeof gg==='function'&&!gg._vc258){var wg=function(){try{close();}catch(e){}return gg.apply(this,arguments);};wg._vc258=true;for(var k3 in gg)if(Object.prototype.hasOwnProperty.call(gg,k3))wg[k3]=gg[k3];root.go=wg;}
   if(root.MutationObserver){var t=0;new root.MutationObserver(function(){if(t)return;t=setTimeout(function(){t=0;mountButton();},120);}).observe(doc.body,{childList:true,subtree:true});}
   mountButton();return true;
 }

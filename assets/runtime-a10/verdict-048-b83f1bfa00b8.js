@@ -716,6 +716,9 @@
   function vyFill(t,o){return String(t).replace(/\{(\w+)\}/g,function(m,k){return o&&o[k]!=null?o[k]:m;});}
   function vyMonthName(i){try{return new Intl.DateTimeFormat(vyTag(),{month:'long'}).format(new Date(2026,i,1,12));}catch(e){return String(i+1);}}
   /* C250 : vert seulement avec une vraie marge (5 % ou plus au-dessus du minimum) ; de 100 à 105 %, le minimum est couvert de justesse. */
+  /* C256 : jours d'ouverture inconnus (document comptable seul) : aucun nombre de jours inventé. */
+  var VY_AC={fr:'à confirmer',en:'to be confirmed',es:'por confirmar',it:'da confermare',de:'noch zu bestätigen',nl:'nog te bevestigen',pt:'a confirmar'};
+  function vyJoursInc(){try{return typeof root.verdictJoursInconnus==='function'&&!!root.verdictJoursInconnus();}catch(e){return false;}}
   var VY_JUSTE={fr:{note:'Le minimum est couvert de justesse : moins de 5\u00a0% au-dessus, il ne reste presque pas de marge. Un mois faible suffit à repasser en dessous.',leg:'Couvert de justesse (moins de 5\u00a0% au-dessus)'},en:{note:'The minimum is only just covered: less than 5\u00a0% above it, there is almost no margin left. One weak month is enough to fall below.',leg:'Only just covered (less than 5\u00a0% above)'},es:{note:'El mínimo está cubierto por poco: menos de un 5\u00a0% por encima, casi no queda margen. Un mes flojo basta para quedar por debajo.',leg:'Cubierto por poco (menos de un 5\u00a0% por encima)'},it:{note:'Il minimo è coperto di misura: meno del 5\u00a0% sopra, non resta quasi margine. Basta un mese debole per scendere sotto.',leg:'Coperto di misura (meno del 5\u00a0% sopra)'},de:{note:'Das Minimum ist nur knapp gedeckt: weniger als 5\u00a0% darüber, es bleibt kaum Spielraum. Ein schwacher Monat reicht, um darunter zu fallen.',leg:'Knapp gedeckt (weniger als 5\u00a0% darüber)'},nl:{note:'Het minimum is maar net gedekt: minder dan 5\u00a0% erboven, er blijft bijna geen marge over. Eén zwakke maand is genoeg om eronder te zakken.',leg:'Net gedekt (minder dan 5\u00a0% erboven)'},pt:{note:'O mínimo está coberto à justa: menos de 5\u00a0% acima, quase não sobra margem. Basta um mês fraco para ficar abaixo.',leg:'Coberto à justa (menos de 5\u00a0% acima)'}};
   function vyEtat(r){var API=root.VerdictPerformanceIntegrated,st=API&&typeof API.ratioStatus==='function'?API.ratioStatus(r):(r>=1?'green':r>=.95?'yellow':r>=.9?'orange':'red');return st==='green'?(vyNum(r)&&Math.round(r*1e9)/1e9<1.05?'juste':'vert'):st==='yellow'?'jaune':st==='orange'?'orange':st==='red'?'rouge':'info';}
   var VY_COL={vert:'#22c55e',juste:'#0ea5e9',jaune:'#eab308',orange:'#f97316',rouge:'#ef4444',info:'#8A93A0'};
@@ -1055,8 +1058,9 @@
     var tiles=tile(C.tdMin,vyEsc(vyEur(rc.target)))+tile(mainL,vyEsc(vyEur(rc.value)));
     if(kind==='current'){tiles+=tile(C.tdCur,vyEsc(vyEur(m.actual)))+tile(C.tdLeft,vyEsc(vyEur(rc.left)));}
     tiles+=tile(C.tdGap,vyEsc((rc.gap>0?'+':rc.gap<0?'−':'')+vyEur(Math.abs(rc.gap))),';color:'+(rc.gap>=0?'#22c55e':'#ef4444'));
-    if(kind==='past'||kind==='current')tiles+=tile(C.tdDays,vyEsc(vyFill(C.tdDaysV,{a:v.extras.days[i],b:cap||'—'})));
-    else if(cap)tiles+=tile(C.tdDaysF,vyEsc(String(cap)));
+    var jInc=vyJoursInc(),jAc=VY_AC[vyLoc()]||VY_AC.fr;
+    if(kind==='past'||kind==='current')tiles+=tile(C.tdDays,vyEsc(vyFill(C.tdDaysV,{a:v.extras.days[i],b:jInc?jAc:(cap||'—')})));
+    else if(cap)tiles+=tile(C.tdDaysF,vyEsc(jInc?jAc:String(cap)));
     if(kind==='past'||kind==='current'){tiles+=tile(C.tdTk,rc.tickets?vyEsc(Math.round(rc.tickets).toLocaleString(vyTag())):vyEsc(C.tdNA))+tile(C.tdBasket,rc.basket!=null?vyEsc(vyEur2(rc.basket)):vyEsc(C.tdNA));}
     if(m.lastYear!=null&&kind!=='ref')tiles+=tile(vyFill(C.tdLY,{y:v.prevYear}),vyEsc(vyEur(m.lastYear)));
     if((m.method==='n1')&&vyNum(v.growth))tiles+=tile(C.tdG,vyEsc(vyGrowth(v.growth)+' '+vyFill(C.vsY,{y:v.prevYear})));

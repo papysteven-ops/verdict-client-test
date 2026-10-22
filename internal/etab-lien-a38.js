@@ -94,6 +94,8 @@
       return true;
     } catch (e) { return false; }
   }
-  var essaisNom = 0, minuteurNom = setInterval(function () { if (versVerdict() || ++essaisNom > 40) clearInterval(minuteurNom); }, 1500);
+  /* C258 (W75) : Pilotage peut s'ouvrir bien après l'Inventaire (compte créé d'abord) : les essais ne comptent qu'une fois le
+     cadre Verdict présent ; une heure au plus. */
+  var essaisNom = 0, tours = 0, minuteurNom = setInterval(function () { var f = null; try { f = w.parent !== w && w.parent.document.getElementById('frame-verdict'); } catch (e) {} if (versVerdict() || (f && ++essaisNom > 40) || ++tours > 2400) clearInterval(minuteurNom); }, 1500);
   w.VerdictEtabLien = { relie: relie, versVerdict: versVerdict };
 })();

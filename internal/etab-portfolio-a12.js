@@ -289,11 +289,33 @@ function ensureStyle(){
   '.ne12-prix{margin:0 0 12px;padding:9px 12px;border-radius:12px;background:rgba(22,163,74,.07);border:1px solid rgba(22,163,74,.3);font-size:12.5px;line-height:1.45}'+
   /* C241 (Y08) : « Ajouter un établissement » claire en thème clair, même sans le recoloriage de la coque. */
   'html.vd-workspace-light #mNewEtab12 .sheet{background:#ffffff!important;background-image:none!important;border-color:#d5dde5!important;box-shadow:0 18px 48px rgba(16,24,40,.18)!important;color:#14202b}html.vd-workspace-light #mNewEtab12 .sh-fermer{background:#f3f5f7!important;color:#14202b!important;border-color:#cfd8e1!important}html.vd-workspace-light #mNewEtab12 h3{color:#14202b}'+
+  /* C258 (T2) : « Ajouter un établissement réel » (029, #mNewEtab) claire aussi. */
+  'html.vd-workspace-light #mNewEtab .sheet{background:#ffffff!important;background-image:none!important;border-color:#d5dde5!important;box-shadow:0 18px 48px rgba(16,24,40,.18)!important;color:#14202b}html.vd-workspace-light #mNewEtab .sheet h3{color:#14202b}html.vd-workspace-light #mNewEtab .btn.ghost{color:#14202b!important;border-color:#cfd8e1!important}html.vd-workspace-light #mNewEtab .sh-fermer{background:#f3f5f7!important;color:#14202b!important;border-color:#cfd8e1!important}'+
   '.dup12{margin:0 0 14px;padding:14px 15px;border-radius:16px;border:1px solid rgba(234,179,8,.6);background:rgba(234,179,8,.08)}.dup12-k{font:800 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#a16207;margin-bottom:6px}.dup12 b{display:block;font-size:15.5px;margin-bottom:4px}.dup12 p{margin:0 0 10px;font-size:13px;line-height:1.5;opacity:.85}.dup12-actions{display:flex;flex-wrap:wrap;gap:8px}';
   doc.head.appendChild(st);
 }
 
-root.verdictNewEtabChooser=openChooser;root.verdictNewEtabModel=openModel;root.verdictNewEtabSame=openSame;root.verdictNewEtabFresh=openFresh;root.verdictNewEtabClose=closeSheet;
+/* C258 (W75, T3) : compte créé depuis la page Compte avant d'ouvrir Pilotage — la coque envoie le site du serveur
+   (« Brasserie V6 »), mais le dossier s'appelle encore « Mon établissement » et n'y est pas relié : applyContext() ne le trouve pas
+   et le nom n'était jamais repris. Un seul établissement réel, au nom par défaut, sans autre lien : il prend le nom du compte. */
+function parDefaut258(n){n=String(n||'').trim();return !n||/^(mon|nouvel) établissement$/i.test(n);}
+function nomDuCompte(c){
+  if(!c||c.demo)return false;var demo=false;try{demo=root.eval('typeof VERDICT_DEMO_SESSION!=="undefined"&&!!VERDICT_DEMO_SESSION');}catch(e){}if(demo)return false;
+  var nom=String(c.name||'').trim().slice(0,100),site=String(c.siteId||'');if(!nom||parDefaut258(nom)||!site)return false;
+  var S=root.STORE;if(!S||!S.etabs)return false;var ids=(Array.isArray(S.ordre)?S.ordre:Object.keys(S.etabs)).filter(function(id){return S.etabs[id];});
+  if(ids.some(function(id){var e=S.etabs[id]||{};return String(e.establishmentId||'')===site||String(e.inventoryLink&&e.inventoryLink.siteId||'')===site;}))return false;
+  var reels=ids.filter(function(id){var e=S.etabs[id];return !(e._demo&&e._demo.fictional)&&!e._testFiction&&!e.exempleCharge&&!e._personalModel&&!e.presentationProfile;});
+  if(reels.length!==1)return false;var D=S.etabs[reels[0]];if(!parDefaut258(D.etab))return false;var lien=D.inventoryLink&&D.inventoryLink.siteId;if(lien&&lien!==site)return false;
+  D.etab=nom;D.inventoryLink=Object.assign({},D.inventoryLink||{},{siteId:site,siteName:nom});
+  try{root.save('etab-nom-compte');}catch(e){}try{root.fillInputs&&root.fillInputs();}catch(e){}try{root.drawEtabs&&root.drawEtabs();}catch(e){}
+  try{if(typeof root.verdictInvalidateViews==='function')root.verdictInvalidateViews();root.refreshAll&&root.refreshAll();}catch(e){}try{publierContexte();}catch(e){}
+  return true;
+}
+root.addEventListener('message',function(ev){var d=ev&&ev.data;if(!d||!d.context||(d.type!=='verdict-unified-apply-context'&&d.type!=='verdict-unified-shell-ready'))return;try{if(ev.source!==root.parent)return;}catch(e){return;}setTimeout(function(){try{nomDuCompte(d.context);}catch(e){}},0);});
+/* C258 : en démonstration, la barre ne dit jamais « Mon établissement · RÉEL » (vu pendant le chargement de la démo,
+   chiffres de la Brasserie Collet affichés) : un dossier réel n'existe pas dans une session de démonstration. */
+(function(){var f=root.verdictEtabIdentity;if(typeof f!=='function'||f.__c258)return;var g=function(d){var r=f.apply(this,arguments);try{var demo=root.eval('typeof VERDICT_DEMO_SESSION!=="undefined"&&!!VERDICT_DEMO_SESSION');if(demo&&r&&r.kind==='RÉEL'){var x=d||{},nm=String(x.etab||'').trim();return {name:nm&&!/^mon établissement$/i.test(nm)?nm:'Démonstration',kind:'DÉMONSTRATION',context:'Démonstration fictive · aucune donnée réelle'};}}catch(e){}return r;};g.__c258=true;root.verdictEtabIdentity=g;})();
+root.VerdictNomCompte=nomDuCompte;root.verdictNewEtabChooser=openChooser;root.verdictNewEtabModel=openModel;root.verdictNewEtabSame=openSame;root.verdictNewEtabFresh=openFresh;root.verdictNewEtabClose=closeSheet;
 root.verdictNewEtabCreateSame=createSame;root.verdictNewEtabCreateBlank=createBlank;root.verdictEtabDuplicate=duplicate;root.verdictDupFec=goFec;root.verdictDupEntry=goEntry;
 root.VerdictEtabPortfolio={conceptKeys:CONCEPT_KEYS.slice(),duplicate:duplicate,duplicateRequestsKey:DUP_KEY,placeOf:placeOf};
 

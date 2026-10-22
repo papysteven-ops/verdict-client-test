@@ -90,7 +90,7 @@
     });
   }
   /* C213 (W11) : le mois où commence le suivi n'a pour minimum que la part de ses jours suivis ; on le dit, avec le mois entier. */
-  function partSuivie(an, i, dm) { if (i !== dm) return ''; try { var s = String(w.DB.performanceTrackingStartedAt || ''), yp = w.DB.performanceYearPlans[an], full = yp && yp.fullMonthlyTargets && Number(yp.fullMonthlyTargets[an + '-' + String(i + 1).padStart(2, '0')]); return ' · part des jours suivis depuis le ' + jourLong(s) + (full > 0 ? ' (mois entier : ' + eur(full) + ')' : ''); } catch (e) { return ''; } }
+  function partSuivie(an, i, dm) { if (i !== dm) return ''; try { var s = String(w.DB.performanceTrackingStartedAt || ''), yp = w.DB.performanceYearPlans[an], full = yp && yp.fullMonthlyTargets && Number(yp.fullMonthlyTargets[an + '-' + String(i + 1).padStart(2, '0')]); return ' · minimum du reste du mois, depuis le ' + jourLong(s) + (full > 0 ? ' (mois entier : ' + eur(full) + ')' : ''); } catch (e) { return ''; } }
   /* Mois du début du suivi dans l'année affichée (−1 si le suivi a commencé avant). */
   function moisDebut(inp, an) { var s = String(inp && inp.trackingStart || (w.DB && w.DB.performanceTrackingStartedAt) || ''); return /^\d{4}-\d{2}/.test(s) && s.slice(0, 4) === an ? Number(s.slice(5, 7)) - 1 : (s.slice(0, 4) > an ? 12 : -1); }
   function moisAnnee() {
@@ -160,7 +160,7 @@
     if (c.type === 'avant') return { big: '—', lab: c.lib + ' · avant le début du suivi', st: 'vide', mot: '' };
     /* C245 : jours d'ouverture inconnus (document comptable seul) : aucun minimum du jour inventé ; le mois et l'année restent justes. */
     if (c.type === 'vide' && unite === 'minimum du jour' && typeof w.verdictJoursInconnus === 'function' && w.verdictJoursInconnus()) return { big: 'À confirmer', lab: c.lib + ' · minimum du jour à confirmer : il dépend de vos jours d’ouverture', st: 'vide', mot: '' };
-    if (c.type === 'vide') return { big: c.cible ? eur(c.cible) : '—', lab: c.lib + (c.cible ? (c.avenir || c.auj ? ' · ' + unite + ' à réaliser' : ' · ' + unite + ', chiffre à saisir') : ' · pas encore de chiffre'), st: 'vide', mot: c.cible ? (c.avenir ? 'À venir' : c.auj && c.encours ? 'En cours' : 'À saisir') : '' }; /* C213 (W17) : l'unité du chapitre, jamais « du jour » sur un mois */
+    if (c.type === 'vide') return { big: c.cible ? eur(c.cible) : '—', lab: c.lib + (c.cible ? (c.avenir || c.auj ? ' · ' + (/reste du mois/.test(c.lib) ? '' : unite + ' ') + 'à réaliser' : ' · ' + unite + ', chiffre à saisir') : ' · pas encore de chiffre'), st: 'vide', mot: c.cible ? (c.avenir ? 'À venir' : c.auj && c.encours ? 'En cours' : 'À saisir') : '' }; /* C213 (W17) : l'unité du chapitre, jamais « du jour » sur un mois */
     var lab = c.type === 'encours' ? c.lib + ' · ' + eur(c.valeur) + ' encaissés pour ' + eur(c.cible) + ' attendus à cette date'
       : c.lib + ' · ' + (c.type === 'projete' ? eur(c.valeur) + ' projetés' : eur(c.valeur)) + ' pour ' + eur(c.cible) + ' (' + unite + ')';
     /* La couleur n'est jamais seule (WCAG 1.4.1) : un mot dit l'état. */
@@ -175,6 +175,8 @@
     return { n: n, ca: ca, tickets: tkN === n && tk > 0 ? tk : null };
   }
   function ligne(lib, val, sous, cls) { return '<div class="rx-ml"><span>' + esc(lib) + (sous ? '<small>' + esc(sous) + '</small>' : '') + '</span><b' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(val) + '</b></div>'; }
+  /* C256 : mois où commence le suivi (après le 1er) : la part suivie et le mois entier, chacun sous son nom. */
+  function partMois(cle, mm) { try { var s = String(w.DB.performanceTrackingStartedAt || ''), yp = w.DB.performanceYearPlans[String(cle).slice(0, 4)], full = yp && yp.fullMonthlyTargets ? Number(yp.fullMonthlyTargets[cle]) : 0; if (/^\d{4}-\d{2}-\d{2}$/.test(s) && s.slice(0, 7) === cle && s.slice(8) !== '01' && full > Number(mm) + 0.5) return { depuis: jourLong(s), full: full }; } catch (e) {} return null; }
   function detailMoisHTML(c) {
     if (!c) return '';
     var nom = c.lib.replace(/ \(en cours\).*$/, ''), h = '<p class="rx-mk">' + esc(nom.charAt(0).toUpperCase() + nom.slice(1)) + ' · ' + esc({ reel: 'mois terminé', encours: 'en cours', projete: 'projeté', vide: c.avenir ? 'à venir' : c.encours ? 'en cours' : 'chiffre à saisir', repos: 'fermé', avant: 'avant le début du suivi' }[c.type] || '') + '</p>';
@@ -183,16 +185,16 @@
     var j = joursDuMois(c.cle), mm = c.minMois > 0 ? c.minMois : c.cible;
     if (c.type === 'reel') {
       var e = Math.round(c.valeur) - Math.round(mm);
-      h += ligne('Encaissé TTC', eur(c.valeur), '', 'ok') + ligne('Minimum du mois TTC', eur(mm)) + ligne('Écart avec le minimum', e >= 0 ? eur(e) + ' au-dessus' : 'il manque ' + eur(-e), '', e >= 0 ? 'ok' : 'ko');
+      h += ligne('Encaissé TTC', eur(c.valeur), '', 'ok') + (function () { var p = partMois(c.cle, mm); return p ? ligne('Minimum du reste du mois TTC', eur(mm), 'depuis le ' + p.depuis + ' · mois entier : ' + eur(p.full)) : ligne('Minimum du mois TTC', eur(mm)); })() + ligne('Écart avec le minimum', e >= 0 ? eur(e) + ' au-dessus' : 'il manque ' + eur(-e), '', e >= 0 ? 'ok' : 'ko');
     } else if (c.type === 'encours') {
-      h += ligne('Encaissé à ce jour', eur(c.valeur), j.n ? j.n + ' journée' + (j.n > 1 ? 's' : '') + ' saisie' + (j.n > 1 ? 's' : '') : '', 'ok') + ligne('Attendu à cette date', eur(c.cible)) + ligne('Minimum du mois entier TTC', eur(mm));
+      h += ligne('Encaissé à ce jour', eur(c.valeur), j.n ? j.n + ' journée' + (j.n > 1 ? 's' : '') + ' saisie' + (j.n > 1 ? 's' : '') : '', 'ok') + ligne('Attendu à cette date', eur(c.cible)) + (function () { var p = partMois(c.cle, mm); return p ? ligne('Minimum du reste du mois TTC', eur(mm), 'depuis le ' + p.depuis) + ligne('Minimum du mois entier TTC', eur(p.full)) : ligne('Minimum du mois entier TTC', eur(mm)); })();
       var av = Math.round(c.valeur) - Math.round(c.cible); h += ligne(av >= 0 ? 'Avance à ce jour' : 'Retard à ce jour', (av >= 0 ? '+' : '−') + eur(Math.abs(av)), '', av >= 0 ? 'ok' : 'ko');
       if (c.fin) h += ligne('Fin de mois estimée', eur(c.fin), 'même estimation que l’onglet Année');
     } else if (c.type === 'projete') {
       var ep = Math.round(c.valeur) - Math.round(mm);
-      h += ligne('Projeté TTC', eur(c.valeur), c.methode === 'n1' && c.n1 ? 'même mois l’an dernier (' + eur(c.n1) + ') × votre évolution à date' : 'votre rythme × le minimum du mois') + ligne('Minimum du mois TTC', eur(mm)) + ligne('Écart projeté', ep >= 0 ? eur(ep) + ' au-dessus' : 'il manque ' + eur(-ep), '', ep >= 0 ? 'ok' : 'ko');
+      h += ligne('Projeté TTC', eur(c.valeur), c.methode === 'n1' && c.n1 ? 'même mois l’an dernier (' + eur(c.n1) + ') × votre évolution à date' : 'votre rythme × le minimum du mois') + (function () { var p = partMois(c.cle, mm); return p ? ligne('Minimum du reste du mois TTC', eur(mm), 'depuis le ' + p.depuis + ' · mois entier : ' + eur(p.full)) : ligne('Minimum du mois TTC', eur(mm)); })() + ligne('Écart projeté', ep >= 0 ? eur(ep) + ' au-dessus' : 'il manque ' + eur(-ep), '', ep >= 0 ? 'ok' : 'ko');
     } else {
-      h += ligne('Minimum du mois TTC', eur(mm)) + '<p class="rx-mn">' + esc(c.avenir ? 'Mois à venir : il sera projeté dès que la méthode a assez de données.' : 'Aucun chiffre saisi pour ce mois.') + '</p>';
+      h += (function () { var p = partMois(c.cle, mm); return p ? ligne('Minimum du reste du mois TTC', eur(mm), 'depuis le ' + p.depuis + ' · mois entier : ' + eur(p.full)) : ligne('Minimum du mois TTC', eur(mm)); })() + '<p class="rx-mn">' + esc(c.avenir ? 'Mois à venir : il sera projeté dès que la méthode a assez de données.' : 'Aucun chiffre saisi pour ce mois.') + '</p>';
     }
     if ((c.type === 'reel' || c.type === 'encours') && j.n) {
       h += ligne('Jours ouverts saisis', String(j.n)) + ligne('Moyenne par jour ouvert', eur(j.ca / j.n));

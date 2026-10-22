@@ -2098,7 +2098,7 @@ function aboActionsInject(){
   sub.insertAdjacentHTML('afterend',h+'</div>');
 }
 function aboDateTxt(sec){var n=Number(sec);if(!(n>0))return '';var d=new Date(n*1000);return (d.getDate()===1?'1er':String(d.getDate()))+' '+['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'][d.getMonth()]+' '+d.getFullYear();}
-function aboFormuleTxt(c){return {essai:'Essai de Verdict Pro',pilotage:'Verdict Pilotage',pro:'Verdict Pro',inventaire:'Inventaire gratuit',activation:'Abonnement en cours d’activation'}[c.formule]||(c.essai?'Essai de Verdict Pro':'Votre compte');}
+function aboFormuleTxt(c){if(c&&c.formule==='pro'&&c.fondateur&&!c.essai)return 'Verdict Pro · tarif fondateur';/* C257 (T2) */return {essai:'Essai de Verdict Pro',pilotage:'Verdict Pilotage',pro:'Verdict Pro',inventaire:'Inventaire gratuit',activation:'Abonnement en cours d’activation'}[c.formule]||(c.essai?'Essai de Verdict Pro':'Votre compte');}
 function aboEtatTxt(c){
   var ouvert=VERDICT_PUBLIC_OPEN?' Pendant le lancement, toutes les fonctions restent ouvertes.':'',per=c.periode==='annual'?'Paiement annuel':(c.periode==='monthly'?'Paiement mensuel':'');
   if(c.essai){var n=Number(c.joursRestants)||0;return 'Essai de 14 jours : encore '+n+' jour'+(n>1?'s':'')+(c.essaiFin?', jusqu’au '+aboDateTxt(c.essaiFin):'')+'. Tout est ouvert pendant l’essai, sans carte.';}
@@ -2138,7 +2138,9 @@ function drawAbonnement(){
   set('aboTierDesc',accessDesc);
   set('aboInclH',t('abo.included'));
   var il=document.getElementById('aboInclList');
-  if(il){ var h='';for(var i2=1;i2<=5;i2++)h+='<li>&#10003; '+t('abo.i'+i2)+'</li>';il.innerHTML=h; }/* C214 (W28) : l'Inventaire gratuit n'est pas un ajout de Pro (il est dans la grille au-dessus) */
+  if(il){ var h='';for(var i2=1;i2<=5;i2++)h+='<li>&#10003; '+t('abo.i'+i2)+'</li>';il.innerHTML=h; }
+  /* C257 (T2) : un abonné Pro a déjà tout ce que Pro ajoute ; la carte « Ce que Pro ajoute à Pilotage » ne lui est plus montrée (gardée pendant l'essai et en Pilotage). */
+  try{var _ih=document.getElementById('aboInclH'),_ic=_ih&&(_ih.closest('.card')||_ih.parentNode);if(_ic)_ic.style.display=(_C&&_C.formule==='pro'&&!_C.essai)?'none':'';}catch(e){}/* C214 (W28) : l'Inventaire gratuit n'est pas un ajout de Pro (il est dans la grille au-dessus) */
   set('aboUpH',t('abo.upTitle')); set('aboUpSub',t('abo.unlock')); set('aboUpBtn',t('abo.activate'));
   var l=document.getElementById('aboProList'); if(l)l.innerHTML=proBenefitsHTML();
   set('aboProH',demo?demoCopy.active:t('abo.proActive')); set('aboProSub',demo?demoCopy.sub:t('abo.allOpen')); set('aboDownBtn',demo?demoCopy.back:(VERDICT_ACCOUNT_STATE.auth?'Gérer mon abonnement':t('abo.back')));
@@ -3466,6 +3468,7 @@ function switchEtab(id){
      établissement, puis on restaure le chapitre/la position du client. */
   try{ go(ctx.v); }catch(e){ go('pil'); ctx.v='pil'; ctx.y=0; }
   etabRestaurerContexte(ctx);
+  try{if(onboardingFait())verdictFermerBienvenue();}catch(e){}/* C257 : l'établissement ouvert est configuré, la Bienvenue d'un autre ne reste pas par-dessus */
   if(ctx.v==='pil')verdictScrollHomeTop();
   try{ toast(verdictEtabIdentity(DB).name); }catch(e){}
   return true;
@@ -5341,7 +5344,10 @@ function etabIndicesHTML(id){return verdictIndicesHTML(etabScoreMeta(id),etabCar
 function modeleResume(k){
   if(!MODELES[k])return '';
   /* C205 (V09) : le modèle actif montre les chiffres que l’appli affiche (même moteur, même dossier chargé), jamais ceux du modèle brut. */
-  var actif=DB&&DB.modele===k,prev=DB,r=null,d=actif?DB:freshDB(k),p=null;
+  /* C257 (T4 N11) : les autres modèles aussi, par le même chemin que le chargement (modeleDossierDemo), sans rien enregistrer. */
+  var actif=DB&&DB.modele===k,prev=DB,prevM=MODELE_ACTIF,r=null,d=null,p=null;
+  try{d=actif?DB:modeleDossierDemo(k,true);}catch(e){d=null;}finally{MODELE_ACTIF=prevM;}
+  if(!d)return '';
   try{DB=d;r=moteur();if(r&&r.ready)p={score:Math.round(r.score),final:true};}catch(e){}finally{DB=prev;}
   return verdictIndicesHTML(p,etabCarteMeta(d))+(r&&r.ready?'<span style="display:block;margin-top:7px;font-size:12px;color:var(--mut)">'+eur(Math.round(r.d.ca/1000)*1000)+' &middot; '+String(pc(r.v.rn,1)).replace(/^-/,'\u2212')+'</span>'/* C210 (V53) : CA arrondi au millier comme les autres modèles, vrai signe moins */:'');
 }
@@ -5415,8 +5421,11 @@ function retourPortefeuilleDepuisModele(){
   VERDICT_DEMO_FROM_PORTFOLIO=false;VERDICT_DEMO_PORTFOLIO_MODEL_ACTIVE=false;
   try{go('pil');window.scrollTo(0,0);}catch(e){}
 }
-function appliquerModele(k,demoActif){
-  var M=MODELES[k]; if(!M)return false;
+/* C257 (T4 N11) : le dossier d'un modèle de démonstration est fabriqué par UNE seule fonction, pour le chargement comme pour la
+   liste des modèles : la carte de la liste montre donc les chiffres que l'appli affiche une fois le modèle chargé (avant : la
+   liste calculait le modèle brut, sans amortissements ni journées, soit environ 1,2 point de marge et 2 à 5 points d'Indice de plus). */
+function modeleDossierDemo(k,demoActif){
+  var M=MODELES[k]; if(!M)return null;
   var d=freshDB(k);
   /* Un changement de modèle pendant la démonstration reste entièrement dans
      l'univers fictif. Sans ces marqueurs, Dark kitchen était calculée, mais
@@ -5426,8 +5435,13 @@ function appliquerModele(k,demoActif){
   }
   d.exempleCharge=true; d.userMode='demo'; d.onboardingDone=true;
   if(demoActif){d._demo={fictional:true,billable:false,persistent:false,canonical:String(k||'model')};d._billing=d._billing||{};d._billing.active=true;d._billing.entitlementLocked=false;}
-  /* on remplace le contenu de l'établissement actif, sans casser la référence */
   verdictCompleteDemo(d);
+  return d;
+}
+function appliquerModele(k,demoActif){
+  var M=MODELES[k]; if(!M)return false;
+  var d=modeleDossierDemo(k,demoActif);
+  /* on remplace le contenu de l'établissement actif, sans casser la référence */
   STORE.etabs[STORE.actif]=d; DB=d; MODELE_ACTIF=k;
   verdictModelMarkStarted(STORE.actif);
   save("load-demo-model"); fillInputs(); readInputs(); drawEtabs(); refreshAll();
@@ -6754,6 +6768,9 @@ function go(v){
      au lieu de l'onglet de rattachement (Accueil, Structure). */
   var ownNav=document.querySelector('nav button[data-v="'+v+'"]'),fromNav=document.querySelector('nav button.on[data-v="plus"]');
   if((!ownNav||!ownNav.getClientRects().length)&&fromNav&&fromNav.getClientRects().length)navView="plus";
+  /* C257 (T1 N8) : À faire, Alertes, Équipe n'ont pas d'onglet propre ; elles gardent l'onglet d'où l'on vient (Accueil, Plus…)
+     au lieu d'allumer « Structure », qui n'est pas l'écran ouvert. Sans onglet de départ (ouverture directe), le rattachement reste. */
+  else if((!ownNav||!ownNav.getClientRects().length)&&/^(priorities|reco|alertes|org)$/.test(v)){var dep=document.querySelector('nav button.on[data-v]');if(dep&&dep.getClientRects().length)navView=dep.getAttribute('data-v');}
   for(i=0;i<bs.length;i++){
     var navOn=bs[i].getAttribute("data-v")===navView;
     bs[i].classList.toggle("on",navOn);
@@ -7237,7 +7254,7 @@ function diagChemin(){
   var v=R.v, L=diagEval(), etapes=[], resp=null;
   /* 1 — le symptôme : ce que le dirigeant constate sur son compte */
   etapes.push({t:'Votre r\u00e9sultat', d:pct(v.rn)+' du chiffre d\u2019affaires',
-    n:(v.rn<0?'perte':((Math.round(v.rn*10)/10)<verdictRepereRN().repere?'sous le rep\u00e8re m\u00e9dian de votre format ('+verdictRepereRNNum(verdictRepereRN().repere)+' %)':'au niveau du rep\u00e8re de votre format'))});
+    n:(v.rn<0?'perte':((Math.round(v.rn*10)/10)<verdictRepereRN().repere?'sous le rep\u00e8re m\u00e9dian de votre format ('+verdictRepereRNNum(verdictRepereRN().repere)+' %)':((Math.round(v.rn*10)/10)>=verdictRepereRN().cible?'au-dessus du rep\u00e8re des meilleurs de votre format ('+verdictRepereRNNum(verdictRepereRN().cible)+' %)':'au-dessus du rep\u00e8re m\u00e9dian de votre format ('+verdictRepereRNNum(verdictRepereRN().repere)+' %)')))});/* C257 (T1 N4) : 15,2 % n'est pas « au niveau » du repère */
   /* 2 — la conséquence structurelle */
   etapes.push({t:'Votre chiffre minimum \u00e0 r\u00e9aliser', d:pct(v.pm)+' du chiffre d\u2019affaires',
     n:(v.pm>85?'il tombe tard dans le mois : peu de jours produisent du r\u00e9sultat':'il tombe t\u00f4t : les jours suivants rapportent')});
@@ -10904,6 +10921,14 @@ function verdictSiteTrialNoteHTML(){
   return '<div class="trial-entry-note" data-site-trial-entry="true" data-validation-requested="'+(VERDICT_VALIDATION_REQUESTED?'1':'0')+'"><strong>'+z[0]+'</strong><span>'+detail+'</span></div>';
 }
 
+/* C257 (T2, reproduit au clic) : la fenêtre Bienvenue d'un nouvel établissement n'avait aucune sortie et masquait la barre des
+   établissements ; revenir au premier n'était plus possible au clic, et un retour par la fonction laissait la fenêtre par-dessus.
+   Quand un autre établissement est déjà configuré : un bouton « Revenir à … », et un changement d'établissement la ferme. */
+function verdictAutreEtabPret(){try{var ids=Object.keys(STORE.etabs||{});for(var i=0;i<ids.length;i++){var e=STORE.etabs[ids[i]];if(ids[i]!==STORE.actif&&e&&(e.onboardingDone===true||e.exempleCharge))return ids[i];}}catch(x){}return null;}
+function verdictRetourEtabHTML(){var id=verdictAutreEtabPret();if(!id)return '';var nom='';try{nom=verdictEtabIdentity(STORE.etabs[id]).name;}catch(e){nom=STORE.etabs[id].etab||'';}
+  return '<button type="button" class="btn sec" data-retour-etab="'+esc(id)+'" style="margin-top:10px" onclick="verdictRetourEtab(this.getAttribute(\'data-retour-etab\'))">'+esc('Revenir à « '+nom+' »')+'</button>';}
+function verdictFermerBienvenue(){var r=document.getElementById('refSh');if(!r||!r.classList.contains('on')||!document.querySelector('#refP [data-entry-door]'))return;window.__VERDICT_START_ENTRY_SELECTED__=true;try{document.body.classList.remove('verdict-entry-locked');}catch(e){}refClose();}
+function verdictRetourEtab(id){if(!id||!STORE.etabs[id])return;verdictFermerBienvenue();switchEtab(id);}
 function openRef(premier){
   var el=refSheet(), p=document.getElementById('refP');
   var verrouPremier=false;
@@ -10921,7 +10946,8 @@ function openRef(premier){
     '<button type="button" class="ch" data-entry-door="creation" onclick="choisirMode(\'creation\')">\ud83d\ude80 '+entryT('projectTitle')+'<span>'+entryT('projectDesc')+infoBrouillon('creation')+'</span></button>'+
     /* C214 (W36) : l'Inventaire gratuit a sa porte, comme sur la grille des offres. */
     (premier?'<button type="button" class="ch" data-entry-door="inventaire" onclick="choisirInventaireGratuit()">\ud83d\udce6 Je veux seulement l’Inventaire (gratuit)<span>Compter, valoriser et commander, sans limite de durée. Pilotage et Pro restent à un clic quand vous le voulez.</span></button>':'')+
-    (premier?'<button type="button" class="ch" data-entry-door="demo" onclick="choisirMode(\'demo\')">\ud83d\udc41 '+entryT('demoTitle')+'<span>'+entryT('demoDesc')+'</span></button>':'<button type="button" class="btn ghost mini" data-return-entry-root="1" style="margin-top:4px" onclick="openRef(true)">'+entryT('back')+'</button>');
+    (premier?'<button type="button" class="ch" data-entry-door="demo" onclick="choisirMode(\'demo\')">\ud83d\udc41 '+entryT('demoTitle')+'<span>'+entryT('demoDesc')+'</span></button>':'<button type="button" class="btn ghost mini" data-return-entry-root="1" style="margin-top:4px" onclick="openRef(true)">'+entryT('back')+'</button>')+
+    verdictRetourEtabHTML();/* C257 (T2) : un 2e établissement ne retient jamais le client dans sa fenêtre Bienvenue */
   try{ if(typeof translateDOM==='function')translateDOM(p); }catch(e){}
   try{ veraApplySeason(p); }catch(e){}
   el.classList.add('on');
@@ -22812,6 +22838,8 @@ function quitterDemo(clientOnly){
   "Simulation Verdict : votre résultat avant impôt atteint le repère médian de votre format ({m} % du chiffre d’affaires). Ce n’est ni une moyenne officielle ni un gain garanti.":["Verdict simulation: your pre-tax result reaches the median benchmark for your type of business ({m}% of revenue). It is neither an official average nor a guaranteed gain.", "Simulación Verdict: su resultado antes de impuestos alcanza la referencia mediana de su tipo de establecimiento ({m} % de las ventas). No es una media oficial ni una ganancia garantizada.", "Simulazione Verdict: il risultato ante imposte raggiunge il riferimento mediano del suo tipo di locale ({m}% del fatturato). Non è una media ufficiale né un guadagno garantito.", "Verdict-Simulation: Ihr Ergebnis vor Steuern erreicht den Median-Richtwert Ihres Betriebstyps ({m} % des Umsatzes). Das ist weder ein offizieller Durchschnitt noch ein garantierter Gewinn.", "Verdict-simulatie: uw resultaat vóór belasting bereikt de mediane richtwaarde voor uw type zaak ({m}% van de omzet). Dit is geen officieel gemiddelde en geen gegarandeerde winst.", "Simulação Verdict: o seu resultado antes de impostos atinge a referência mediana do seu tipo de estabelecimento ({m}% da receita). Não é uma média oficial nem um ganho garantido."],
   "Bon niveau visé : garder {m} € sur 100 € vendus, comme le repère médian de votre format ; les meilleurs gardent {h} €.":["Target level: keep €{m} out of every €100 sold, like the median for your type of business; the best keep €{h}.", "Nivel objetivo: conservar {m} € de cada 100 € vendidos, como la mediana de su tipo de establecimiento; los mejores conservan {h} €.", "Livello obiettivo: tenere {m} € ogni 100 € venduti, come la mediana del suo tipo di locale; i migliori tengono {h} €.", "Zielniveau: {m} € von 100 € Umsatz behalten, wie der Median Ihres Betriebstyps; die Besten behalten {h} €.", "Beoogd niveau: {m} € houden op elke 100 € verkocht, zoals de mediaan voor uw type zaak; de besten houden {h} €.", "Nível visado: guardar {m} € em cada 100 € vendidos, como a mediana do seu tipo de estabelecimento; os melhores guardam {h} €."],
   "sous le repère médian de votre format ({m} %)":["below the median benchmark for your type of business ({m}%)", "por debajo de la referencia mediana de su tipo de establecimiento ({m} %)", "sotto il riferimento mediano del suo tipo di locale ({m}%)", "unter dem Median-Richtwert Ihres Betriebstyps ({m} %)", "onder de mediane richtwaarde voor uw type zaak ({m}%)", "abaixo da referência mediana do seu tipo de estabelecimento ({m}%)"],
+  "au-dessus du repère des meilleurs de votre format ({h} %)":["above the benchmark of the best in your type of business ({h}%)","por encima de la referencia de los mejores de su tipo de establecimiento ({h} %)","sopra il riferimento dei migliori del suo tipo di locale ({h}%)","über dem Richtwert der Besten Ihres Betriebstyps ({h} %)","boven de richtwaarde van de besten in uw type zaak ({h}%)","acima da referência dos melhores do seu tipo de estabelecimento ({h}%)"],
+  "au-dessus du repère médian de votre format ({m} %)":["above the median benchmark for your type of business ({m}%)","por encima de la referencia mediana de su tipo de establecimiento ({m} %)","sopra il riferimento mediano del suo tipo di locale ({m}%)","über dem Median-Richtwert Ihres Betriebstyps ({m} %)","boven de mediane richtwaarde voor uw type zaak ({m}%)","acima da referência mediana do seu tipo de estabelecimento ({m}%)"],
   "au niveau du repère de votre format":["at the benchmark for your type of business", "al nivel de la referencia de su tipo de establecimiento", "al livello del riferimento del suo tipo di locale", "auf dem Richtwert Ihres Betriebstyps", "op de richtwaarde voor uw type zaak", "ao nível da referência do seu tipo de estabelecimento"],
   "Au niveau du repère de votre format":["At the benchmark for your type of business", "Al nivel de la referencia de su tipo de establecimiento", "Al livello del riferimento del suo tipo di locale", "Auf dem Richtwert Ihres Betriebstyps", "Op de richtwaarde voor uw type zaak", "Ao nível da referência do seu tipo de estabelecimento"],
   "Sous le repère de votre format ({m} %, les meilleurs {h} %)":["Below the benchmark for your type of business ({m}%, the best {h}%)", "Por debajo de la referencia de su tipo de establecimiento ({m} %, los mejores {h} %)", "Sotto il riferimento del suo tipo di locale ({m}%, i migliori {h}%)", "Unter dem Richtwert Ihres Betriebstyps ({m} %, die Besten {h} %)", "Onder de richtwaarde voor uw type zaak ({m}%, de besten {h}%)", "Abaixo da referência do seu tipo de estabelecimento ({m}%, os melhores {h}%)"],
