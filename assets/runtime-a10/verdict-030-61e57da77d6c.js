@@ -22,7 +22,14 @@ css.textContent =
 '.v5lock .li{font-size:34px;margin-bottom:12px}'+
 'html.vd-pil-attente #v-pil.on:not(.p41-on){visibility:hidden}'+
 '#v-abo .autoline .k{flex:0 0 auto;white-space:nowrap}'+
-'html.vd-p41-attente #v-priorities.on #priorities-container{visibility:hidden}'+/* C239 (Y09) *//* C239 (Y15) : l'étiquette « Accès » ne se coupe plus en « Accè / s » */
+'html.vd-p41-attente #v-priorities.on #priorities-container{visibility:hidden}'+/* C239 (Y09) */
+/* Thème clair, tour du 21/10 (TOUR-THEME-CLAIR) : A1 ancienne carte « ACTION N°1 » sous les priorités, A4 grille de Plus › Budget,
+   A8 bandeau « Carte à construire ». Leurs fonds sombres (style en ligne ou règle sombre) passent en clair, textes lisibles. */
+'html.vd-workspace-light #priorities-container article.card.p11-main{background:#fff!important;background-image:linear-gradient(155deg,rgba(249,115,22,.07),#fff 45%)!important;color:#17212b!important}'+
+'html.vd-workspace-light #priorities-container article.card.p11-main .au-k{color:#3f4d5b!important}html.vd-workspace-light #priorities-container article.card.p11-main .note,html.vd-workspace-light #priorities-container article.card.p11-main span:not([class]){color:#526171!important}'+
+'html.vd-workspace-light #objBody .kpis{background:transparent!important}html.vd-workspace-light #objBody .kpis .kpi{background:#fff!important;background-image:none!important;border:1px solid #dbe2e8!important}'+
+'html.vd-workspace-light #objBody .kpis .kpi .k,html.vd-workspace-light #objBody .kpis .kpi .d{color:#526171!important}'+
+'html.vd-workspace-light .chr-cockpit-state.chr-menu-empty{background:#fff7ed!important;background-image:none!important;border-color:#fed7aa!important;color:#3f4d5b!important}html.vd-workspace-light .chr-cockpit-state.chr-menu-empty b{color:#17212b!important}'+/* C239 (Y15) : l'étiquette « Accès » ne se coupe plus en « Accè / s » */
 'html.vd-workspace-light #mBackupReminder .sheet{background:#fff!important;border-color:#dbe2e8!important;color:#17212b!important}html.vd-workspace-light #mBackupReminder h3{color:#17212b!important}html.vd-workspace-light #mBackupReminder .sub{color:#40566d!important}'+/* C239 (Y08b) : « Protégez votre historique » lisible en thème clair */
 '.v5lock p{max-width:430px;font-weight:800;font-size:16px;line-height:1.45;color:#f4f6f8!important;background:rgba(12,14,18,.94);padding:16px 18px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.28)}'+/* C226 (X12) : lisible en thème clair comme en sombre */
 '.v5lock small{display:block;color:#d4dae2!important;font-weight:500;font-size:13px;margin-top:8px;line-height:1.55}'+
@@ -184,7 +191,7 @@ function v5recos(){
   }
   if(v.pm<999 && v.pm>85 && v.rn>=0){
     list.push({id:'pm',rank:3,t:'Point mort tardif : '+pc(v.pm,0)+' du CA',
-      p:'\u2248 '+Math.round(v.pm/100*d.jMois)+' jours d\u2019ouverture sur '+d.jMois+' pour couvrir les charges \u2014 le r\u00e9sultat se joue sur la fin de mois. Chaque point de charges fixes gagn\u00e9 rapproche le seuil.',
+      p:(d.jMois>0?'\u2248 '+Math.round(v.pm/100*d.jMois)+' jours d\u2019ouverture sur '+d.jMois+' pour couvrir les charges':'Il faut '+pc(v.pm,0)+' du mois pour couvrir les charges')+' \u2014 le r\u00e9sultat se joue sur la fin de mois. Chaque point de charges fixes gagn\u00e9 rapproche le seuil.',
       why:'Au-dessus de 85 %, la moindre semaine molle met le mois en danger.',
       urg:52, imp:Math.round(0.02*ca), fac:40, conf:confBase});
   }

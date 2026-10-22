@@ -345,6 +345,36 @@
   (doc.head || doc.documentElement).appendChild(css);
 
   w.VerdictRecit = { monter: monter }; /* C99 : appelé dans la même image que l'Audit (plus de flash de l'ancien) */
+
+  /* C249 (reste de C208) : le chapitre « Diagnostic Carte » de l'analyse complète classait les 3 plus faibles contributions
+     de toute la carte, catégories mélangées (une assiette de fromages comparée à un plat). Il montre désormais, pour chaque
+     catégorie d'au moins 2 plats vendus, le plat qui contribue le moins, et le titre le dit. Même calcul que l'Audit
+     (contribution pondérée × ventes du mois) ; seules la sélection et la phrase changent. */
+  function faiblesParCategorie() {
+    var D = w.DB, parCat = {};
+    if (!D || !Array.isArray(D.plats) || typeof w.platCalc !== 'function') return null;
+    D.plats.forEach(function (p) {
+      var vol = +p.vol || 0; if (vol <= 0) return;
+      var k = null; try { k = w.platCalc(p); } catch (e) {} if (!k || !k.complete) return;
+      var cat = String(p.cat || 'Autres'); (parCat[cat] = parCat[cat] || []).push({ nom: p.nom || 'Plat', cat: cat, vol: vol, marge: k.contribPct, contrib: k.contribPond * vol });
+    });
+    var out = [];
+    Object.keys(parCat).forEach(function (cat) { var L = parCat[cat]; if (L.length < 2) return; L.sort(function (a, b) { return a.contrib - b.contrib; }); var x = L[0]; out.push({ nom: x.nom + ' · ' + cat, cat: cat, vol: x.vol, marge: x.marge, contrib: x.contrib }); });
+    out.sort(function (a, b) { return a.contrib - b.contrib; });
+    return out.slice(0, 3);
+  }
+  (function brancherFaibles(n) {
+    var calc = w.auditPremiumCalc, html = w.auCartePremiumHTML;
+    if (typeof calc !== 'function' || typeof html !== 'function') { if (n > 0) setTimeout(function () { brancherFaibles(n - 1); }, 250); return; }
+    if (!calc.__c249) {
+      var c249 = function () { var r = calc.apply(this, arguments); try { if (r && r.carte && r.carte.ok) { var f = faiblesParCategorie(); if (f) r.carte.weak = f; } } catch (e) {} return r; };
+      c249.__c249 = true; for (var k in calc) { try { c249[k] = calc[k]; } catch (e) {} } w.auditPremiumCalc = c249;
+    }
+    if (!html.__c249) {
+      var h249 = function () { var r = html.apply(this, arguments); try { r = String(r).replace('Contributions les plus faibles à revoir', 'La plus faible contribution de chaque catégorie, à revoir'); } catch (e) {} return r; };
+      h249.__c249 = true; w.auCartePremiumHTML = h249;
+    }
+  })(40);
   var attente = 0;
   function planifier() { clearTimeout(attente); attente = setTimeout(monter, 60); }
   try { var a = doc.getElementById('v-audit'); if (a) new MutationObserver(function (l) { for (var i = 0; i < l.length; i++) { var t = l[i].target; if (t && t.closest && t.closest('#vdRecit')) continue; return planifier(); } }).observe(a, { childList: true, subtree: true }); } catch (e) {}

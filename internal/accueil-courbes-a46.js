@@ -5,7 +5,7 @@
      Jour  → les journées du mois en cours, chacune face à son objectif du jour ;
      Mois  → les mois de l'année, chacun face à son minimum (réalisé, en cours projeté, à venir projeté) ;
      Année → les années (historique saisi) face au minimum annuel d'aujourd'hui, l'année en cours projetée.
-   Colonnes lumineuses animées (montée en cascade), couleur selon l'écart (vert ≥ 100 %, jaune ≥ 95 %, orange ≥ 90 %,
+   Colonnes lumineuses animées (montée en cascade), couleur selon l'écart (vert ≥ 105 %, bleu « de justesse » de 100 à 105 %, jaune ≥ 95 %, orange ≥ 90 %,
    rouge en dessous), ligne « objectif · 100 % », colonne sélectionnée mise en avant. Un appui (ou les flèches du
    clavier) sur une colonne affiche son détail en euros. Chiffres TTC, issus des mêmes moteurs que le reste de Verdict
    (VerdictPerformanceIntegrated, VerdictAnnualProjection, historique mensuel) : aucun chiffre n'est inventé ; une journée
@@ -20,7 +20,8 @@
   /* C204 : un chiffre sous son minimum ne s'arrondit jamais à 100 % (99,5 % s'écrit 99 %, pas 100 %). */
   function ent(r) { var v = Math.round(r * 100); return r < 1 && v >= 100 ? 99 : v; }
   function pct(r) { var v = Math.round(r * 1000) / 10; if (r < 1 && v >= 100) v = 99.9; return v.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
-  function etat(r) { return r == null ? 'vide' : r >= 1 ? 'vert' : r >= 0.95 ? 'jaune' : r >= 0.9 ? 'orange' : 'rouge'; }
+  /* C250 : vert seulement avec une vraie marge (5 % ou plus au-dessus du minimum) ; de 100 à 105 %, le minimum est couvert de justesse. */
+  function etat(r) { if (r != null) r = Math.round(r * 1e9) / 1e9; return r == null ? 'vide' : r >= 1.05 ? 'vert' : r >= 1 ? 'juste' : r >= 0.95 ? 'jaune' : r >= 0.9 ? 'orange' : 'rouge'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function moisCle() { try { return w.verdictOperationalClock().key.slice(0, 7); } catch (e) { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); } }
 
@@ -157,11 +158,13 @@
     if (!c) return { big: '—', lab: '', st: 'vide' };
     if (c.type === 'repos') return { big: 'Repos', lab: c.lib + ' · fermé, aucun chiffre attendu', st: 'vide', mot: '' };
     if (c.type === 'avant') return { big: '—', lab: c.lib + ' · avant le début du suivi', st: 'vide', mot: '' };
+    /* C245 : jours d'ouverture inconnus (document comptable seul) : aucun minimum du jour inventé ; le mois et l'année restent justes. */
+    if (c.type === 'vide' && unite === 'minimum du jour' && typeof w.verdictJoursInconnus === 'function' && w.verdictJoursInconnus()) return { big: 'À confirmer', lab: c.lib + ' · minimum du jour à confirmer : il dépend de vos jours d’ouverture', st: 'vide', mot: '' };
     if (c.type === 'vide') return { big: c.cible ? eur(c.cible) : '—', lab: c.lib + (c.cible ? (c.avenir || c.auj ? ' · ' + unite + ' à réaliser' : ' · ' + unite + ', chiffre à saisir') : ' · pas encore de chiffre'), st: 'vide', mot: c.cible ? (c.avenir ? 'À venir' : c.auj && c.encours ? 'En cours' : 'À saisir') : '' }; /* C213 (W17) : l'unité du chapitre, jamais « du jour » sur un mois */
     var lab = c.type === 'encours' ? c.lib + ' · ' + eur(c.valeur) + ' encaissés pour ' + eur(c.cible) + ' attendus à cette date'
       : c.lib + ' · ' + (c.type === 'projete' ? eur(c.valeur) + ' projetés' : eur(c.valeur)) + ' pour ' + eur(c.cible) + ' (' + unite + ')';
     /* La couleur n'est jamais seule (WCAG 1.4.1) : un mot dit l'état. */
-    var mot = c.r >= 1 ? (c.type === 'projete' ? 'Projeté atteint' : 'Atteint') : '−' + pct(1 - c.r).replace(' %', ' %') + ' sous le minimum';
+    var mot = c.r >= 1 ? (etat(c.r) === 'juste' ? (c.type === 'projete' ? 'Projeté de justesse' : 'De justesse') : c.type === 'projete' ? 'Projeté atteint' : 'Atteint') : '−' + pct(1 - c.r).replace(' %', ' %') + ' sous le minimum';
     return { big: pct(c.r), lab: lab, st: etat(c.r), mot: mot };
   }
 
@@ -203,11 +206,11 @@
   var CSS =
     '.rx{position:relative;margin:0 0 14px;padding:16px 16px 12px;border-radius:var(--r-mod,20px);border:1px solid var(--line,rgba(148,163,184,.18));background:var(--card,#fff);overflow:hidden}' +
     '.rx:before{content:"";position:absolute;inset:-40% -10% auto auto;width:70%;height:120%;background:radial-gradient(closest-side,var(--rx-glow,rgba(34,197,94,.16)),transparent 70%);pointer-events:none}' +
-    '.rx[data-st="jaune"]{--rx-glow:rgba(234,179,8,.16)}.rx[data-st="orange"]{--rx-glow:rgba(249,115,22,.16)}.rx[data-st="rouge"]{--rx-glow:rgba(239,68,68,.16)}.rx[data-st="vide"]{--rx-glow:rgba(148,163,184,.12)}' +
+    '.rx[data-st="jaune"]{--rx-glow:rgba(234,179,8,.16)}.rx[data-st="orange"]{--rx-glow:rgba(249,115,22,.16)}.rx[data-st="rouge"]{--rx-glow:rgba(239,68,68,.16)}.rx[data-st="vide"]{--rx-glow:rgba(148,163,184,.12)}.rx[data-st="juste"]{--rx-glow:rgba(14,165,233,.16)}' +
     /* C204 (V16) : couleur de TEXTE de chaque état, lisible d'emblée (mêmes teintes que le calendrier des journées) ;
        le garde-contraste n'a donc plus à figer une couleur qui deviendrait fausse au mois suivant. */
-    '.rx[data-st="vert"]{--rx-t:#15803d}.rx[data-st="jaune"]{--rx-t:#a16207}.rx[data-st="orange"]{--rx-t:#c2410c}.rx[data-st="rouge"]{--rx-t:#b91c1c}.rx[data-st="vide"]{--rx-t:#64748b}' +
-    'html.vd-workspace-dark .rx[data-st="vert"]{--rx-t:#4ade80}html.vd-workspace-dark .rx[data-st="jaune"]{--rx-t:#facc15}html.vd-workspace-dark .rx[data-st="orange"]{--rx-t:#fb923c}html.vd-workspace-dark .rx[data-st="rouge"]{--rx-t:#f87171}html.vd-workspace-dark .rx[data-st="vide"]{--rx-t:#94a3b8}' +
+    '.rx[data-st="vert"]{--rx-t:#15803d}.rx[data-st="jaune"]{--rx-t:#a16207}.rx[data-st="orange"]{--rx-t:#c2410c}.rx[data-st="rouge"]{--rx-t:#b91c1c}.rx[data-st="vide"]{--rx-t:#64748b}.rx[data-st="juste"]{--rx-t:#0369a1}' +
+    'html.vd-workspace-dark .rx[data-st="vert"]{--rx-t:#4ade80}html.vd-workspace-dark .rx[data-st="jaune"]{--rx-t:#facc15}html.vd-workspace-dark .rx[data-st="orange"]{--rx-t:#fb923c}html.vd-workspace-dark .rx[data-st="rouge"]{--rx-t:#f87171}html.vd-workspace-dark .rx[data-st="vide"]{--rx-t:#94a3b8}html.vd-workspace-dark .rx[data-st="juste"]{--rx-t:#38bdf8}' +
     '.rx-k{margin:0;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut,#64748b)}' +
     '.rx-hero{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin:6px 0 0}' +
     '.rx-big{font-size:40px;line-height:1;font-weight:850;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--rx-t,var(--rx-c,#16a34a))}' +
@@ -224,26 +227,26 @@
     '.rx line.g{stroke:var(--line,rgba(148,163,184,.25));stroke-width:1}' +
     '.rx .repos{fill:var(--mut,#94a3b8);opacity:.55}.rx .vide{fill:var(--mut,#94a3b8);opacity:.3}' +
     /* C222 : une seule grille des journées ; C222 ter (Steven : « je préfère cette version plus claire ; j’aime la fonction de la jauge ») : la case claire d’origine (fond teinté, numéro, %), plus une fine jauge en bas */
-    '.rx-j{position:relative}.rx-j.st-vert{--rx-n:#22c55e}.rx-j.st-jaune{--rx-n:#eab308}.rx-j.st-orange{--rx-n:#f97316}.rx-j.st-rouge{--rx-n:#ef4444}' +
+    '.rx-j{position:relative}.rx-j.st-vert{--rx-n:#22c55e}.rx-j.st-jaune{--rx-n:#eab308}.rx-j.st-orange{--rx-n:#f97316}.rx-j.st-rouge{--rx-n:#ef4444}.rx-j.st-juste{--rx-n:#0ea5e9}' +
     '.rx-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:14px 0 2px;max-width:560px}' +
     '.rx-cj{text-align:center;font-size:11px;font-weight:800;color:var(--mut,#64748b);letter-spacing:.04em;padding-bottom:2px}' +
     '.rx-j{appearance:none;-webkit-appearance:none;font:inherit;margin:0;min-width:0;min-height:50px;padding:5px 2px;border-radius:12px;border:1.5px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;color:var(--txt,#0f172a);background:rgba(148,163,184,.10);transition:transform .12s ease,box-shadow .2s ease;-webkit-tap-highlight-color:transparent}' +
     '.rx-j:active{transform:scale(.95)}.rx-j b{font-size:15px;font-weight:800;line-height:1.1}.rx-j span{font-size:11px;font-weight:800;line-height:1.1;white-space:nowrap;min-height:12px}' +
-    '.rx-j.st-vert{background:rgba(34,197,94,.16)}.rx-j.st-vert span{color:#15803d}.rx-j.st-jaune{background:rgba(234,179,8,.20)}.rx-j.st-jaune span{color:#a16207}' +
+    '.rx-j.st-vert{background:rgba(34,197,94,.16)}.rx-j.st-vert span{color:#15803d}.rx-j.st-jaune{background:rgba(234,179,8,.20)}.rx-j.st-jaune span{color:#a16207}.rx-j.st-juste{background:rgba(14,165,233,.16)}.rx-j.st-juste span{color:#0369a1}' +
     '.rx-j.st-orange{background:rgba(249,115,22,.18)}.rx-j.st-orange span{color:#c2410c}.rx-j.st-rouge{background:rgba(239,68,68,.16)}.rx-j.st-rouge span{color:#b91c1c}' +
     '.rx-j.st-repos{background:rgba(148,163,184,.22)}.rx-j.st-repos b,.rx-j.st-repos span{color:var(--mut,#64748b)}.rx-j.st-repos span{font-size:10px;font-weight:700}' +
     '.rx-j.st-vide,.rx-j.st-avant{background:transparent;border-color:rgba(148,163,184,.30)}.rx-j.st-avant{opacity:.45}.rx-j.st-vide b{color:var(--mut,#64748b)}' +
     '.rx-j.auj{border-color:var(--txt,#0f172a)}.rx-j.sel{box-shadow:0 0 0 2.5px var(--rx-c,#22c55e),0 6px 16px -8px var(--rx-c,#22c55e);transform:translateY(-1px)}' +
     '.rx-j small{font-size:inherit}@media (max-width:360px){.rx-cal{gap:3px}.rx-j{border-radius:10px}.rx-j b{font-size:14px}.rx-j small{display:none}.rx-j.st-repos span{font-size:9px}}' +
     '.rx-j:focus-visible{outline:2px solid var(--rx-c,#22c55e);outline-offset:2px}' +
-    'html.vd-workspace-dark .rx-j.st-vert span{color:#4ade80}html.vd-workspace-dark .rx-j.st-jaune span{color:#facc15}html.vd-workspace-dark .rx-j.st-orange span{color:#fb923c}html.vd-workspace-dark .rx-j.st-rouge span{color:#f87171}' +
+    'html.vd-workspace-dark .rx-j.st-vert span{color:#4ade80}html.vd-workspace-dark .rx-j.st-juste span{color:#38bdf8}html.vd-workspace-dark .rx-j.st-jaune span{color:#facc15}html.vd-workspace-dark .rx-j.st-orange span{color:#fb923c}html.vd-workspace-dark .rx-j.st-rouge span{color:#f87171}' +
     '.rx-md{margin:12px 0 4px;padding:12px 14px;border-radius:14px;background:rgba(148,163,184,.08)}.rx-mk{margin:0 0 6px;font-weight:800;font-size:15px}.rx-mn{margin:6px 0 0;font-size:13px;color:var(--mut,#64748b)}' +
     '.rx-ml{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:8px 0;border-top:1px dashed rgba(148,163,184,.3);font-size:14px}.rx-ml:first-of-type{border-top:0}.rx-ml small{display:block;font-size:12px;color:var(--mut,#64748b);margin-top:2px}.rx-ml b{font-variant-numeric:tabular-nums;white-space:nowrap}.rx-ml b.ok{color:#16a34a}.rx-ml b.ko{color:#dc2626}html.vd-workspace-dark .rx-ml b.ok{color:#4ade80}html.vd-workspace-dark .rx-ml b.ko{color:#f87171}' +
     '.rx-leg{display:flex;flex-wrap:wrap;gap:6px 12px;margin:8px 0 0;font-size:11.5px;color:var(--mut,#64748b)}.rx-leg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}' +
     'html.vd-workspace-dark .rx text.obj{fill:#facc15}' +
     '@keyframes rxMonte{from{transform:scaleY(0)}to{transform:scaleY(1)}}' +
     '@media (prefers-reduced-motion:reduce){.rx .col rect.b{animation:none}}';
-  var COUL = { vert: '#22c55e', jaune: '#eab308', orange: '#f97316', rouge: '#ef4444', vide: '#94a3b8' };
+  var COUL = { vert: '#22c55e', juste: '#0ea5e9', jaune: '#eab308', orange: '#f97316', rouge: '#ef4444', vide: '#94a3b8' };
 
   function svg(m, anime) {
     var W = 340, H = 168, G = 34, D = 8, B = 136, T = 22, n = m.cols.length || 1;
@@ -280,7 +283,7 @@
     box.innerHTML = '<p class="rx-k">' + esc(m.kicker) + '</p>' +
       '<div class="rx-hero"><b class="rx-big">' + esc(dt.big) + '</b><span class="rx-mot">' + esc(dt.mot) + '</span></div><p class="rx-lab" aria-live="polite">' + esc(dt.lab) + '</p>' +
       '<p class="rx-sub">' + esc(m.resume) + '</p>' + (m.vue === 'cal' ? calendrier(m) : svg(m, anime)) + (m.detailMois ? '<div class="rx-md" aria-live="polite"></div>' : '') +
-      '<div class="rx-leg"><span><i style="background:#22c55e"></i>Minimum atteint</span><span><i style="background:#eab308"></i>Il manque moins de 5 %</span><span><i style="background:#f97316"></i>Il manque 5 à 10 %</span><span><i style="background:#ef4444"></i>Il manque plus de 10 %</span>' +
+      '<div class="rx-leg"><span><i style="background:#22c55e"></i>Minimum atteint avec 5 % de marge ou plus</span><span><i style="background:#0ea5e9"></i>Couvert de justesse (moins de 5 % au-dessus)</span><span><i style="background:#eab308"></i>Il manque moins de 5 %</span><span><i style="background:#f97316"></i>Il manque 5 à 10 %</span><span><i style="background:#ef4444"></i>Il manque plus de 10 %</span>' +
       (m.vue === 'cal' ? '<span><i style="background:rgba(148,163,184,.35)"></i>Repos</span><span><i style="background:transparent;border:2px solid currentColor;border-radius:50%"></i>Aujourd’hui</span>' : '<span><i style="width:14px;height:0;border-radius:0;border-top:2px dashed #d4a017;vertical-align:3px"></i>Minimum</span>') +
       (m.cols.some(function (c) { return c.type === 'projete'; }) ? '<span><i style="background:transparent;border:1.5px dashed #94a3b8"></i>Projeté</span>' : '') +
       (m.cols.some(function (c) { return c.type === 'encours'; }) ? '<span><i style="background:transparent;border:1.5px solid currentColor"></i>En cours</span>' : '') + '</div>';

@@ -12,6 +12,8 @@
   function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
   /* C208 (V56, V57) : espace insécable avant « % » et « € », et le même arrondi que les pages Carte (75 %, 78,4 %). */
   function eur(v) { return Math.round(num(v)).toLocaleString('fr-FR') + '\u00a0€'; }
+  /* C249 (reste de C208) : un même chiffre, un seul arrondi. L'image 2 écrivait « 76 € » sous la barre « 75,7 € ». */
+  function eur1(v) { return (Math.round(num(v) * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '\u00a0€'; }
   function pct1(v) { return (Math.round(num(v) * 10) / 10).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + '\u00a0%'; }
   function teinte(pts) { return pts < 31 ? '#ef4444' : pts < 60 ? '#f97316' : pts < 75 ? '#eab308' : '#22c55e'; }
   function P() { return w.VerdictCartePages || null; }
@@ -65,7 +67,7 @@
     /* 2 · 100 € */
     t.push('<section class="cr-card cr-c2" data-cr="2"><span class="cr-k">2 · Sur chaque 100 € de carte</span><h2>Ce que vos plats gardent</h2>' +
       '<div class="cr-stack"><i style="--w:' + D.theo.toFixed(2) + '%;--c:#f59e0b"><span><small>Matière</small>' + pct1(D.theo).replace('\u00a0%', '\u00a0€') + '</span></i>' + (D.autres > 0.05 ? '<i style="--w:' + D.autres.toFixed(2) + '%;--c:#c084fc"><span><small>Plateformes, emballages</small>' + pct1(D.autres).replace('\u00a0%', '\u00a0€') + '</span></i>' : '') + '<i class="cr-res" style="--w:' + D.marge.toFixed(2) + '%;--c:#22c55e"><span><small>Gardés</small>' + pct1(D.marge).replace('\u00a0%', '\u00a0€') + '</span></i></div>' +
-      '<p class="cr-big"><b data-cr-count="' + Math.round(D.marge) + '" data-cr-eur>' + eur(Math.round(D.marge)) + '</b><small>gardés sur 100 € encaissés, avant l’équipe, le loyer et l’impôt</small></p>' +
+      '<p class="cr-big"><b data-cr-count="' + (Math.round(D.marge * 10) / 10) + '" data-cr-eur data-cr-dec>' + eur1(D.marge) + '</b><small>gardés sur 100 € encaissés, avant l’équipe, le loyer et l’impôt</small></p>' +
       '<p class="cr-p">Matière théorique des fiches : ' + pct1(D.theo) + (D.apc && D.apc.ecart != null && D.apc.theoNour != null ? ' · nourriture : ' + pct1(D.apc.theoNour) + ' sur les fiches, ' + pct1(D.apc.theoNour + D.apc.ecart) + ' achetée (écart ' + (D.apc.ecart > 0 ? '+' : '') + pct1(D.apc.ecart).replace('\u00a0%', '\u00a0pt') + ')' : '') + '.</p><span class="cr-suite">Vos plats vedettes ↓</span></section>');
     /* 3 · Vedettes */
     var best = (D.apc && D.apc.best || []).slice(0, 3), max = Math.max.apply(null, [1].concat(best.map(function (b) { return num(b.contrib); }))), somme = best.reduce(function (s, b) { return s + num(b.contrib); }, 0);
@@ -101,8 +103,8 @@
     /* C208 (V08) : le compteur suit l'horloge et finit toujours sur la vraie valeur. Avant, une image ralentie
        (onglet en arrière-plan, appareil chargé) allongeait l'animation sans fin : « 1 378 € » et « 71 % » restaient
        affichés pour 1 932 € et 100 %. */
-    var fin = Number(el.getAttribute('data-cr-count')) || 0, euro = el.hasAttribute('data-cr-eur'), fini = false;
-    function aff(x) { el.textContent = euro ? eur(x) : String(Math.round(x)); }
+    var fin = Number(el.getAttribute('data-cr-count')) || 0, euro = el.hasAttribute('data-cr-eur'), dec = el.hasAttribute('data-cr-dec'), fini = false;
+    function aff(x) { el.textContent = euro ? (dec ? eur1(x) : eur(x)) : String(Math.round(x)); }
     function finir() { if (!fini) { fini = true; aff(fin); } }
     if (REDUIT) return finir();
     var t0 = performance.now(), duree = 1100;

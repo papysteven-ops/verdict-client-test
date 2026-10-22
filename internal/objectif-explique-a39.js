@@ -54,7 +54,7 @@
   /* C126/C130 — Détail d'un jour passé : écart du mois avant ce jour, ce qu'il y avait à réaliser ce jour-là (base ±
      ajustement glissant), et l'écart du mois après ce jour. */
   function lignesJour(input, date) {
-    if (!input || !w.VerdictCHR) return '';
+    if (!input || !w.VerdictCHR || joursInconnus()) return ''; /* C245 */
     var jour = input.days.filter(function (d) { return d.date === date; })[0]; if (!jour || jour.ca == null) return '';
     var c; try { c = w.VerdictCHR.calculate({ minimum: input.minimum, today: date, days: input.days.map(function (d) { return Object.assign({}, d, { ca: d.date >= date ? null : d.ca }); }) }); } catch (e) { return ''; }
     if (!c || !c.exact || c.next !== date) return '';
@@ -81,7 +81,7 @@
   function report(input) { var g = input && input.glissant; if (!g || !g.ecartAnnee) return null; return { ecartAnnee: g.ecartAnnee, partMois: g.partMois, moisRestants: g.moisRestants }; }
   var ouverts = {}; /* l'ouverture survit aux redessins du module */
   function bloc(input, date, aujourdHui) {
-    if (!input || !Array.isArray(input.days) || !w.VerdictCHR) return '';
+    if (!input || !Array.isArray(input.days) || !w.VerdictCHR || joursInconnus()) return ''; /* C245 : pas de part du jour tant que les jours sont inconnus */
     var jour = input.days.filter(function (d) { return d.date === date; })[0]; if (!jour) return '';
     var c; try { c = w.VerdictCHR.calculate({ minimum: input.minimum, today: date, days: input.days.map(function (d) { return Object.assign({}, d, { ca: d.date >= date ? null : d.ca }); }) }); } catch (e) { return ''; }
     if (!c || !c.exact || c.next !== date) return '';
@@ -152,9 +152,14 @@
      charges d'un dimanche + 181 € pour rattraper le retard du mois (2 796 € à combler sur 13 jours ouverts…) ».
      Montants à l'euro près dans la carte du jour. */
   function montant(t) { var m = /([\d\u202f\u00a0 .]+(?:,\d{1,2})?)\s*€/.exec(t || ''); return m ? Number(m[1].replace(/[\s\u202f\u00a0.]/g, '').replace(',', '.')) : null; }
+  /* C245 : jours d'ouverture inconnus (document comptable seul, question de l'Accueil sans réponse) : aucun minimum du jour inventé. */
+  function joursInconnus() { try { return typeof w.verdictJoursInconnus === 'function' && !!w.verdictJoursInconnus(); } catch (e) { return false; } }
   function clair(lp, c, S) {
     var t = montant(lp.textContent), base = Number(S.obj) || t, passe = /pour cette journée/.test(lp.textContent);
     if (!(t > 0)) return;
+    if (joursInconnus()) { lp.className = 'vx53-o'; lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>à confirmer</b>';
+      var ex0 = lp.nextElementSibling; if (!ex0 || !ex0.classList.contains('vx53-e')) { ex0 = lp.ownerDocument.createElement('p'); ex0.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex0); }
+      ex0.innerHTML = 'Il dépend de vos jours d’ouverture : répondez à « Combien de jours ouvrez-vous par semaine ? », en haut de l’Accueil.' + (c && c.input && Number(c.input.minimum) > 0 ? ' Le minimum du mois, lui, est connu : <b>' + eur(c.input.minimum) + '</b>.' : ''); return; }
     var date = S.cle || (c && c.next), jourDate = S.cle || (function () { try { return String(w.verdictOperationalClock().key).slice(0, 10); } catch (e) { return date; } })(), jour = jourDate ? JOURS[jourSem(jourDate)] : 'jour', extra = Math.round(t) - Math.round(base); /* C240 : le jour de la carte (après la saisie, c.next est déjà demain) */
     var meme = c && c.exact && c.next === date, em = meme ? ecartMois(c) : { retard: 0, avance: 0 }, retard = em.retard, avance = em.avance, ouv = meme ? Number(c.openRemaining) || 0 : 0;
     /* C177 (Steven, 20/10 : « je comprends rien : 2 300 c'est quoi, si 1 676… là tu additionnes, mais pourquoi ? Je ne

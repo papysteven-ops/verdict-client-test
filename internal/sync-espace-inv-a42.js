@@ -58,6 +58,8 @@
         try { if (d && d._safety && j.data && typeof j.data === 'object') j.data._safety = JSON.parse(JSON.stringify(d._safety)); } catch (e) {}
         var ok = w.applyCloud({ ok: true, data: j.data, rev: rev }, eva('ACCOUNT_ID'), !!(meta.dirty && aDesDonnees(d)));
         if (ok && (eva('readSyncMeta(false)') || {}).dirty) planifier(); /* la fusion a gardé des saisies locales : on les renvoie */
+        /* C248 : accueil de première ouverture refermé si le compte apporte un profil déjà fait (rien n'est enregistré). */
+        if (ok) { try { var wl = w.document.getElementById('welcome'), pf = (DB() || {}).profile; if (wl && wl.classList.contains('on') && pf && pf.done && typeof w.wClose === 'function') w.wClose(w.renderGreet); } catch (e) {} }
         return ok;
       });
     }).catch(function () { return false; });

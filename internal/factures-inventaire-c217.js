@@ -560,19 +560,29 @@
   function cleComptage() { return 'verdict:equipe:comptage:' + (g('EQUIPE_ETAB') || ''); }
   function noterComptage() { if (!equipeLien()) return; var m = {}; rows().forEach(function (x) { if (x.p.stock != null && x.p.stock !== '') m[x.p.id] = [x.p.stock, x.p.countedAt || '']; }); try { sessionStorage.setItem(cleComptage(), JSON.stringify(m)); } catch (e) {} }
   function reprendreComptage() { if (!equipeLien() || !g('AUTHED')) return; var m = null; try { m = JSON.parse(sessionStorage.getItem(cleComptage()) || 'null'); } catch (e) {} if (!m) return; var n = 0; rows().forEach(function (x) { var v = m[x.p.id]; if (v && x.p.stock !== v[0]) { x.p.stock = v[0]; x.p.countedAt = v[1] || new Date().toISOString(); n++; } }); if (n) redessiner(); }
-  function envoyerComptage() {
+  function nbInstantanes() { var D = DBi(); return (D && D.snapshots || []).length; }
+  /* C253 : « avant » = nombre d'instantanés lu avant finishCount (comptage complet : l'instantané est ajouté pendant l'appel ;
+     partiel : après la question « Enregistrer ce comptage ? »). Envoi dès qu'un nouvel instantané existe. */
+  function envoyerComptage(avantAppel) {
     if (!equipeLien() || typeof w.staffSubmitForReview !== 'function') return;
-    var D = DBi(), avant = (D && D.snapshots || []).length, essais = 0;
-    (function attendre() { var apres = (DBi().snapshots || []).length; if (apres > avant) { w.staffSubmitForReview(0); return; } if (essais++ < 100) setTimeout(attendre, 300); })();
+    var avant = typeof avantAppel === 'number' ? avantAppel : nbInstantanes(), essais = 0;
+    (function attendre() {
+      if (nbInstantanes() > avant) { w.staffSubmitForReview(0); return; }   /* nouveau comptage enregistré : envoi */
+      var q = doc.getElementById('mAsk'), ouverte = !!(q && q.classList.contains('on'));
+      if (ouverte) { if (essais++ < 600) setTimeout(attendre, 300); return; }   /* « Enregistrer ce comptage ? » : on attend la réponse */
+      /* rien de nouveau, aucune question : comptage déjà enregistré (ou annulé). Renvoyé seulement si son envoi avait échoué. */
+      if (essais === 0 && w.__c253NonEnvoye) w.staffSubmitForReview(0);
+    })();
   }
   function equipeResultat() {
     var o = w.staffSubmissionResult; if (typeof o !== 'function' || o.__c229) return;
-    var f = function (r) { try { o.apply(this, arguments); } catch (e) {} if (!equipeLien()) return; if (r && r.ok) { try { sessionStorage.removeItem(cleComptage()); } catch (e) {} try { w.toast('Comptage envoyé à votre responsable ✓'); } catch (e) {} } else if (!w.__equipeAvis) { try { w.toast((r && r.error) || 'Envoi impossible pour l’instant : votre comptage reste sur cet appareil.'); } catch (e) {} } };
+    var f = function (r) { try { o.apply(this, arguments); } catch (e) {} if (!equipeLien()) return; if (r && r.ok) { w.__c253NonEnvoye = false; try { sessionStorage.removeItem(cleComptage()); } catch (e) {} try { w.toast('Comptage envoyé à votre responsable ✓'); } catch (e) {} } else { w.__c253NonEnvoye = true; } if (!(r && r.ok) && !w.__equipeAvis) { try { w.toast((r && r.error) || 'Envoi impossible pour l’instant : votre comptage reste sur cet appareil.'); } catch (e) {} } };
     f.__c229 = true; w.staffSubmissionResult = f;
   }
 
   /* ── Branchements : Compter (reprise), Analyse (factures, Pilotage à la demande), rien d'autre ── */
-  function envelopper(nom, apres) { var o = w[nom]; if (typeof o !== 'function' || o.__c217) return; var f = function () { var r = o.apply(this, arguments); try { apres(); } catch (e) {} return r; }; f.__c217 = true; w[nom] = f; }
+  /* C253 : « avant » (facultatif) est lu avant l'appel et transmis à « apres ». */
+  function envelopper(nom, apres, avant) { var o = w[nom]; if (typeof o !== 'function' || o.__c217) return; var f = function () { var b; try { b = avant ? avant() : undefined; } catch (e) {} var r = o.apply(this, arguments); try { apres(b); } catch (e) {} return r; }; f.__c217 = true; w[nom] = f; }
   /* La carte se pose en tête de Compter (sous « Que faut-il faire maintenant ? ») et de Plus (la liste des produits). */
   function poserReprise() {
     var h = carteReprise();
@@ -582,14 +592,16 @@
       if (!h) { if (old) old.remove(); return; }
       var hh = h.replace('id="repriseVerdict"', 'id="' + id + '"'); if (old && old.outerHTML === hh) return;
       var t = doc.createElement('div'); t.innerHTML = hh; var el = t.firstChild;
-      if (old) old.replaceWith(el); else { var pinv = doc.getElementById('pinv'); if (vid === 'v-count' && pinv && pinv.parentNode === host) pinv.after(el); else host.insertBefore(el, host.firstChild); }
+      /* C248 : jamais de saut d'écran : à sa place si l'écran est déjà affiché, sinon en tête (sous « Que faut-il faire maintenant ? »). */
+      var affiche = host.classList.contains('on') && doc.visibilityState === 'visible' && host.getClientRects().length && (w.performance ? w.performance.now() > 1500 : true);
+      if (old) old.replaceWith(el); else if (affiche) host.appendChild(el); else { var pinv = doc.getElementById('pinv'); if (vid === 'v-count' && pinv && pinv.parentNode === host) pinv.after(el); else host.insertBefore(el, host.firstChild); }
     });
   }
   function installer() {
     envelopperFactures(); envelopperValidation();
     envelopper('drawCount', poserReprise); envelopper('drawProd', poserReprise);
     envelopper('drawStats', function () { if (!verdictF()) verdictDemande(); });
-    envelopper('setStock', noterComptage); envelopper('commitStockEdit', noterComptage); envelopper('firstRun', reprendreComptage); envelopper('finishCount', envoyerComptage); equipeResultat();
+    envelopper('setStock', noterComptage); envelopper('commitStockEdit', noterComptage); envelopper('firstRun', reprendreComptage); envelopper('finishCount', envoyerComptage, nbInstantanes); equipeResultat();
   }
   installer(); w.addEventListener('load', function () { installer(); setTimeout(function () { try { poserReprise(); repriseEtDemande(); } catch (e) {} }, 1500); /* C229 (X31) : Pilotage n'est préparé qu'une fois l'Inventaire affiché et l'appareil au repos (jamais pendant l'ouverture). */ var auRepos = w.requestIdleCallback || function (f) { return setTimeout(f, 1); }; setTimeout(function () { auRepos(function () { try { verdictDemande(); } catch (e) {} }, { timeout: 15000 }); }, 6000); });
   /* Le cadre Pilotage peut arriver après l'Inventaire : on vérifie quelques fois, sans boucle permanente. */
