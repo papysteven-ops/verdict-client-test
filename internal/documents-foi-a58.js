@@ -110,6 +110,8 @@
       var ca = caDeclare(D);
       if (!D.docRef && ca != null && differe(ca, C.ht) && !(acc.caCaisse != null && !differe(acc.caCaisse, ca))) out.push({ k: 'caCaisse', lib: 'Chiffre d’affaires HT ' + an, saisie: ca, doc: C.ht, source: 'votre caisse (' + C.jours + ' journées)' });
       if (C.panier && !vide(D.in.panier) && Math.abs(num(D.in.panier) - C.panier) > C.panier * 0.05 && !tranche(D, 'panier', num(D.in.panier))) out.push({ k: 'panier', lib: 'Panier moyen TTC', saisie: num(D.in.panier), doc: C.panier, source: 'votre caisse', cents: true });
+      /* C280 (T4 vague 10) : les commandes par jour lues dans la caisse font foi aussi, dans la même question globale (90 saisies contre 74,4 lues ne déclenchaient rien). */
+      if (C.cmdj && !vide(D.in.cmdj) && Math.abs(num(D.in.cmdj) - C.cmdj) > C.cmdj * 0.05 && !tranche(D, 'cmdj', num(D.in.cmdj))) out.push({ k: 'cmdj', lib: 'Commandes par jour', saisie: num(D.in.cmdj), doc: Math.round(C.cmdj * 10) / 10, source: 'votre caisse (' + C.jours + ' journées)', nombre: true });
     }
     return out;
   }
@@ -123,6 +125,7 @@
     var R = D.docRef && D.docRef.in;
     if (e.k === 'caCaisse') { D.refSource = D.refSource || {}; D.refSource.ca = Math.round(e.doc * 100) / 100; if (D.ref) D.ref.ca = D.refSource.ca; D.refSource.caSource = 'caisse'; }
     else if (e.k === 'panier') { D.in.panier = Math.round(e.doc * 100) / 100; }
+    else if (e.k === 'cmdj') { D.in.cmdj = Math.round(e.doc * 10) / 10; }/* C280 */
     else if (e.k === 'ca') { D.refSource.ca = D.docRef.ca; if (D.ref) D.ref.ca = D.docRef.ca; }
     else if (R) {
       var champs = { nour: ['nour'], boi: ['boi'], amort: ['amort'], equipe: ['salb', 'salt', 'dirb', 'dirt', 'dirn', 'saln'], loyer: ['f1'], autres: ['f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10'] }[e.k] || [];
@@ -147,7 +150,7 @@
     D.docChangements = D.docChangements || {}; D.docAccords = D.docAccords || {};
     (E || differences(D)).forEach(function (e) {
       if (e.k === 'ca' || e.k === 'caCaisse') { appliquerDocument(D, e); return; }
-      D.docChangements[e.k] = { lib: e.lib, saisie: e.saisie, doc: e.doc, depuis: depuis || null, raison: (raisons && raisons[e.k]) || null, cents: !!e.cents };
+      D.docChangements[e.k] = { lib: e.lib, saisie: e.saisie, doc: e.doc, depuis: depuis || null, raison: (raisons && raisons[e.k]) || null, cents: !!e.cents, nombre: !!e.nombre };
       delete D.docAccords[e.k];
     });
     D.docChoix = { cle: cleDocuments(D), choix: 'changements' }; majVerrou(D); enregistrer(true);
@@ -173,7 +176,7 @@
   /* ——— La question (une seule, jamais pendant qu'il tape) ——— */
   var ETAT = { ouvert: null, bilan: null, remplis: {} };
   function fermer() { var m = doc.getElementById('df58-m'); if (m) m.remove(); ETAT.ouvert = null; }
-  function montant(e, x) { return e.cents ? x.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : eur(x); }
+  function montant(e, x) { if (e.nombre) return x.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' / jour'; return e.cents ? x.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : eur(x); }
   var SUITE = '<p>Erreur ou oubli dans la saisie ? Verdict conseille de prendre vos documents : ce sont vos vrais chiffres. Si vous gardez votre saisie sans raison, votre note sera une <b>lecture non finale</b> ; vous pourrez changer d’avis à tout moment dans Mes chiffres.</p>';
   function questionHTML(E) {
     var D = w.DB, an = anneeDoc(D), auj = new Date(), mois = [], y, m;
@@ -245,17 +248,21 @@
     /* C274 (T4 vague 9) : après « Garder toute ma saisie », la première ligne disait encore que le document fait foi pour tout,
        juste au-dessus de « Vous gardez votre saisie… ». Une seule lecture : elle nomme les postes où le document fait encore foi,
        ou dit que la saisie a été retenue à sa place ; la ligne suivante nomme les postes gardés. */
-    var ART = { ca: 'le chiffre d’affaires', nour: 'les achats de nourriture', boi: 'les achats de boissons', equipe: 'l’équipe', loyer: 'le loyer', autres: 'les autres charges fixes', amort: 'les amortissements' };
+    var ART = { ca: 'le chiffre d’affaires', nour: 'les achats de nourriture', boi: 'les achats de boissons', equipe: 'l’équipe', loyer: 'le loyer', autres: 'les autres charges fixes', amort: 'les amortissements', cmdj: 'les commandes par jour', panier: 'le panier moyen' };
     var nommer = function (L) { L = L.map(function (p) { return ART[p.k] || p.lib.charAt(0).toLowerCase() + p.lib.slice(1); }); return L.length > 1 ? L.slice(0, -1).join(', ') + ' et ' + L[L.length - 1] : L.join(''); };
-    var gardes = POSTES.filter(function (p) { return acc.indexOf(p.k) >= 0; }), restent = POSTES.filter(function (p) { return acc.indexOf(p.k) < 0; });
+    var gardes = POSTES.concat([{ k: 'cmdj', lib: 'Commandes par jour' }, { k: 'panier', lib: 'Panier moyen TTC' }]).filter(function (p) { return acc.indexOf(p.k) >= 0; }), restent = POSTES.filter(function (p) { return acc.indexOf(p.k) < 0; });
     if (D.docRef) t.push(!gardes.length ? '✓ Document comptable ' + (D.docRef.year || '') + ' : il fait foi pour vos ventes, achats, équipe et charges.' : restent.length ? '✓ Document comptable ' + (D.docRef.year || '') + ' : il fait foi pour ' + nommer(restent) + '.' : 'Document comptable ' + (D.docRef.year || '') + ' : votre saisie a été retenue à sa place.');
     if (C) { var ca = caDeclare(D), e = ca ? (C.ht - ca) / ca : 0; /* C216 (W49) : « identique » seulement à l'euro près ; sinon l'écart est dit en euros (et en % au-delà de 1 %). */
       var gap = ca ? C.ht - ca : 0;
       t.push('✓ Caisse ' + an + ' : ' + C.jours + ' journées, ' + eur(C.ht) + ' HT' + (ca ? (Math.abs(gap) < 1 ? ', identique à votre chiffre d’affaires' : Math.abs(e) <= 0.01 ? ', à ' + eur(Math.abs(gap)) + ' près de votre chiffre d’affaires (' + (gap > 0 ? '+' : '−') + (Math.round(Math.abs(e) * 10000) / 100).toLocaleString('fr-FR') + ' %)' : ', ' + (e > 0 ? '+' : '−') + Math.abs(Math.round(e * 1000) / 10).toLocaleString('fr-FR') + ' % par rapport à votre chiffre d’affaires' + (D.docRef ? ' : vérifiez avec votre comptable (ventes hors caisse, avoirs)' : '')) : '') + '. Panier moyen ' + (C.panier ? C.panier.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : '—') + '.'); }
-    if (acc.length) { k = 'ko'; var nd = noteDocuments(D); t.push((gardes.length ? 'Vous gardez votre saisie pour ' + nommer(gardes) : 'Vous gardez votre saisie plutôt que vos documents') + ' : votre note est une lecture non finale.' + (nd != null ? ' Avec vos documents, votre note serait ' + nd + ' / 100.' : '')); }
+    if (acc.length) { k = 'ko'; var nd = noteDocuments(D), Rg = null, raison = ''; try { Rg = w.moteur && w.moteur(); } catch (e) {}
+      /* C280 (T4 vague 10) : si la saisie gardée fait retirer l'Indice (garde-fou C190, ex. marge exceptionnellement élevée), on ne parle pas d'une « note non finale » qui n'est plus affichée. */
+      try { raison = (w.anomaliesNonConfirmees ? w.anomaliesNonConfirmees() : []).map(function (a) { var l = String(a.lb || ''); l = l.replace(/^Marge avant imp(ô|\u00f4)t /, 'marge '); return l.charAt(0).toLowerCase() + l.slice(1) + ' à vérifier'; }).join(' ; '); } catch (e) {}
+      var garde = gardes.length ? 'Vous gardez votre saisie pour ' + nommer(gardes) : 'Vous gardez votre saisie plutôt que vos documents';
+      t.push(Rg && !Rg.ready ? garde + '. Avec votre saisie, Verdict n’affiche pas de note' + (raison ? ' (' + raison + ')' : '') + '.' + (nd != null ? ' Avec vos documents, votre note serait ' + nd + ' / 100.' : '') : garde + ' : votre note est une lecture non finale.' + (nd != null ? ' Avec vos documents, votre note serait ' + nd + ' / 100.' : '')); }
     var ch = D.docChangements || {}, chk = Object.keys(ch);
     if (chk.length) { var ndc = noteDocuments(D), anr = anneeDoc(D);
-      t.push('Changements depuis ' + anr + ' pris en compte : ' + chk.map(function (x) { var c = ch[x], f = function (v) { return c.cents ? v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : eur(v); }; return c.lib.toLowerCase() + ' ' + f(c.doc) + ' → ' + f(c.saisie) + (c.raison || c.depuis ? ' (' + [c.raison, c.depuis ? 'depuis ' + moisLib(c.depuis) : null].filter(Boolean).join(', ') + ')' : ''); }).join(' ; ') + '.');
+      t.push('Changements depuis ' + anr + ' pris en compte : ' + chk.map(function (x) { var c = ch[x], f = function (v) { if (c.nombre) return v.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' / jour'; return c.cents ? v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : eur(v); }; return c.lib.toLowerCase() + ' ' + f(c.doc) + ' → ' + f(c.saisie) + (c.raison || c.depuis ? ' (' + [c.raison, c.depuis ? 'depuis ' + moisLib(c.depuis) : null].filter(Boolean).join(', ') + ')' : ''); }).join(' ; ') + '.');
       t.push('Votre note en tient compte.' + (ndc != null ? ' D’après vos seuls documents ' + anr + ' : ' + ndc + ' / 100.' : '')); }
     if (!D.docRef && !C) { k = D.docVerrou ? 'ko' : 'info'; /* C216 (W56) : sur un profil vide, il n'y a ni note ni saisie : on ne le prétend pas. */
       var pret = false; try { var Rm = w.moteur && w.moteur(); pret = !!(Rm && Rm.ready); } catch (e) {}

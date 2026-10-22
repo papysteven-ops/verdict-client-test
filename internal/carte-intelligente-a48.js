@@ -472,7 +472,13 @@
     var c = prixConseille(p); if (c == null) return null;
     var plafond = Math.ceil(avant.ttc * 1.15 * 10 - 1e-9) / 10, out = { avant: avant, obj: k.objPond }, mc = maxCat(p.cat, p);
     if (mc && mc < plafond) { plafond = Math.max(avant.ttc, mc); out.parCarte = true; }
-    if (c <= plafond) setPrix(p, c);
+    /* C276 (T1 vague 10, N2) : le coût d'abord — la portion du produit le plus cher baisse (−25 % au plus), le prix reste ;
+       si cela ne suffit pas, recette d'origine et correction par le prix, dans les limites de la carte. */
+    var L0 = lignePlusChere(p);
+    if (L0) { var q00 = num(p.rec[L0.i][1]); for (var f0 = 0.95; f0 > 0.74; f0 = Math.round((f0 - 0.05) * 100) / 100) { p.rec[L0.i][1] = Math.max(5, Math.round(q00 * f0 / 5) * 5); if (okMarge(calc(p))) break; }
+      if (okMarge(calc(p))) out.portion = { nom: L0.nom, de: q00, a: p.rec[L0.i][1], u: unite(L0.type) }; else p.rec[L0.i][1] = q00; }
+    if (out.portion) {}
+    else if (c <= plafond) setPrix(p, c);
     else {
       if (plafond > avant.ttc) setPrix(p, plafond);
       var L = lignePlusChere(p);
@@ -655,6 +661,10 @@
       if (!card.querySelector('[data-add]')) return;
       var kp = {}; [].forEach.call(card.querySelectorAll('.vc-kpi span'), function (s) { var b = s.querySelector('b'); if (b) kp[s.firstChild && String(s.firstChild.textContent).trim()] = lireEur(b.firstChild ? b.firstChild.textContent : b.textContent); });
       var prix = kp['Prix'], cout = kp['Coût matière'], ctb = kp['Contribution'], obj = num(mo[1]);
+      /* C276 (N2) : un ancien plat retrouvé dans la mémoire est corrigé exactement comme à l'ajout (le coût d'abord). */
+      var h3 = card.querySelector('h3'), nomC = h3 ? h3.textContent.trim() : '', srcP = nomC && ((D().cpMemoryDishes || []).concat(D().plats || []).filter(function (x) { return x && x.nom === nomC; })[0]);
+      if (srcP && prix > 0) { var clo = JSON.parse(JSON.stringify(srcP)); clo.ttc = prix; delete clo.cpArchived; delete clo.cpArchivedAt; clo.id = 'c276-' + clo.id; var cc = corriger(clo);
+        if (cc) { var el2 = doc.createElement('div'); el2.className = 'c251-vera'; el2.innerHTML = '✓ <b>' + (cc.ok ? 'Version corrigée prête' : 'Correction partielle') + '</b> : ' + esc(texteCorrection(clo, cc)) + ' « Ajouter à ma carte » ajoute cette version ; la version d’origine reste à un clic.'; card.insertBefore(el2, card.querySelector('.vc-act') || null); return; } }
       if (!(prix > 0) || !(cout >= 0) || ctb == null || !(obj > 0 && obj < 100)) return;
       var ratio = prix / (ctb + cout), cons = Math.ceil(cout / (1 - obj / 100) * ratio * 10 - 1e-9) / 10, plafond = Math.ceil(prix * 1.15 * 10 - 1e-9) / 10;
       var vcat = (doc.querySelector('#vc-cat') || {}).value, mcv = vcat ? maxCat(vcat, null) : null, parCarte = false; if (mcv && mcv < plafond) { plafond = Math.max(prix, mcv); parCarte = true; }
@@ -947,6 +957,9 @@
       '.c251-d{font-variant-numeric:tabular-nums;opacity:.75;font-size:12px}.c251-d small{display:block;opacity:.8}.c251-ev small{opacity:.75}.c251-corr{display:block;margin-top:3px;color:#16a34a;opacity:1!important}' +
       '.c251-vera{margin:10px 0 0;padding:9px 12px;border-radius:12px;background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.35);font-size:12.5px;line-height:1.45}' +
       'html.vd-workspace-light #c251-geste .sheet' + CL + 'html.vd-workspace-light #c251-hist .sheet' + CL +
+      /* C276 (N5) : l'en-tête « Ma carte » est clair dès son rendu en thème clair (il restait sombre tant que la décoration
+         « p40-lise » n'était pas reposée, par exemple juste après un rechargement). */
+      'html.vd-workspace-light #v-carte.cp-active .cp-menuhead,html.vd-workspace-light #v-carte.cp-active .cp-detail-title{background-image:radial-gradient(120% 85% at 0% 0%,rgba(var(--cp-rgb,34,197,94),.14),transparent 60%)!important;box-shadow:inset 3px 0 0 var(--cp-result,#22c55e),0 2px 8px rgba(15,23,42,.05)!important}' +
       /* C258 (T1 N7, T2) : la confirmation « Retirer … de la carte ? » (#mAsk, commune à l'appli) claire en thème clair. */
       'html.vd-workspace-light #mAsk .sheet' + CL + 'html.vd-workspace-light #mAsk .sh-fermer,html.vd-workspace-light #c251-geste .sh-fermer,html.vd-workspace-light #c251-hist .sh-fermer{background:#f3f5f7!important;color:#14202b!important;border-color:#cfd8e1!important}html.vd-workspace-light #mAsk .btn.sec{background:#f3f5f7!important;color:#14202b!important;border-color:#cfd8e1!important}html.vd-workspace-light #mAsk .grab{background:#cfd8e1!important}' +
       'html.vd-workspace-light #c251-bandeau{background:#ffffff;color:#14202b;box-shadow:0 18px 48px rgba(16,24,40,.18)}html.vd-workspace-light .c251-croix{background:#ffffff;color:#14202b}';

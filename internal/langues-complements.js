@@ -2436,7 +2436,25 @@
     '{num} Produkts zu zählen': ['{num} Produkte zu zählen', '{num} Produkte zu zählen', '{num} Produkte zu zählen', '{num} Produkte zu zählen', '{num} Produkte zu zählen', '{num} Produkte zu zählen'],
 
     /* ── C273 : notification de commande de la coque (« {fournisseur} · limite {date} », C272 de L6) ── */
-    '{x} · limite {y}': ['{x} · deadline {y}', '{x} · límite {y}', '{x} · scadenza {y}', '{x} · Frist {y}', '{x} · deadline {y}', '{x} · limite {y}']
+    '{x} · limite {y}': ['{x} · deadline {y}', '{x} · límite {y}', '{x} · scadenza {y}', '{x} · Frist {y}', '{x} · deadline {y}', '{x} · limite {y}'],
+
+    /* ── C278 : prochains passages de la fiche fournisseur, titre du panneau de notification ── */
+    'Notifications': ['Notifications', 'Notificaciones', 'Notifiche', 'Mitteilungen', 'Meldingen', 'Notificações'],
+    '{x} · Jour ouvert': ['{x} · Open day', '{x} · Día abierto', '{x} · Giorno di apertura', '{x} · Öffnungstag', '{x} · Openingsdag', '{x} · Dia aberto'],
+    '{x} · Réception à contrôler': ['{x} · Receipt to check', '{x} · Recepción por controlar', '{x} · Ricevimento da controllare', '{x} · Wareneingang prüfen', '{x} · Ontvangst te controleren', '{x} · Receção a controlar'],
+    '{x} · Équipe présente': ['{x} · Team on site', '{x} · Equipo presente', '{x} · Team presente', '{x} · Team vor Ort', '{x} · Team aanwezig', '{x} · Equipa presente'],
+    'Aucun passage possible dans les 60 prochains jours. Vérifiez le calendrier, les saisons, les exceptions et les horaires fournisseur.': ['No possible slot in the next 60 days. Check the calendar, seasons, exceptions and supplier schedules.', 'Ningún pase posible en los próximos 60 días. Revise el calendario, las temporadas, las excepciones y los horarios del proveedor.', 'Nessun passaggio possibile nei prossimi 60 giorni. Verifichi calendario, stagioni, eccezioni e orari del fornitore.', 'Kein möglicher Termin in den nächsten 60 Tagen. Prüfen Sie Kalender, Saisons, Ausnahmen und Lieferzeiten.', 'Geen mogelijk tijdslot in de komende 60 dagen. Controleer de kalender, seizoenen, uitzonderingen en leverancierstijden.', 'Nenhuma passagem possível nos próximos 60 dias. Verifique o calendário, as épocas, as exceções e os horários do fornecedor.'],
+
+    /* ── C278 : barre de la coque (connexions, bouton du thème, case de l’offre) ── */
+    'Connexions': ['Connections', 'Conexiones', 'Connessioni', 'Verbindungen', 'Verbindingen', 'Ligações'],
+    'Mes connexions': ['My connections', 'Mis conexiones', 'Le mie connessioni', 'Meine Verbindungen', 'Mijn verbindingen', 'As minhas ligações'],
+    'Fermer': ['Close', 'Cerrar', 'Chiudi', 'Schließen', 'Sluiten', 'Fechar'],
+    'Passer en mode sombre': ['Switch to dark mode', 'Cambiar al modo oscuro', 'Passa alla modalità scura', 'Zum dunklen Modus wechseln', 'Naar donkere modus', 'Mudar para o modo escuro'],
+    'Passer en mode clair': ['Switch to light mode', 'Cambiar al modo claro', 'Passa alla modalità chiara', 'Zum hellen Modus wechseln', 'Naar lichte modus', 'Mudar para o modo claro'],
+    'Passer en mode sombre (apparence de l’appareil active)': ['Switch to dark mode (device appearance on)', 'Cambiar al modo oscuro (apariencia del dispositivo activa)', 'Passa alla modalità scura (aspetto del dispositivo attivo)', 'Zum dunklen Modus wechseln (Geräte-Darstellung aktiv)', 'Naar donkere modus (weergave van het toestel actief)', 'Mudar para o modo escuro (aparência do dispositivo ativa)'],
+    'Passer en mode clair (apparence de l’appareil active)': ['Switch to light mode (device appearance on)', 'Cambiar al modo claro (apariencia del dispositivo activa)', 'Passa alla modalità chiara (aspetto del dispositivo attivo)', 'Zum hellen Modus wechseln (Geräte-Darstellung aktiv)', 'Naar lichte modus (weergave van het toestel actief)', 'Mudar para o modo claro (aparência do dispositivo ativa)'],
+    'Découverte · essai de {num} j avec un compte': ['Discovery · {num}-day trial with an account', 'Descubrimiento · prueba de {num} días con una cuenta', 'Scoperta · prova di {num} giorni con un account', 'Kennenlernen · {num} Tage Test mit Konto', 'Kennismaking · proefperiode van {num} dagen met een account', 'Descoberta · teste de {num} dias com uma conta'],
+    'Essai · J-{num}': ['Trial · D-{num}', 'Prueba · D-{num}', 'Prova · G-{num}', 'Test · T-{num}', 'Proef · D-{num}', 'Teste · D-{num}']
   };
 
   /* ── Normalisation identique au moteur de Pilotage (trNorm) ── */

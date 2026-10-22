@@ -1238,7 +1238,7 @@ function openProd(id){
     document.getElementById("pTitle").textContent="Nouveau produit";
     ["pName","pGoal","pMin","pPrice","pPack","pMinOrder","pLead","pShelf","pId"].forEach(function(k){ document.getElementById(k).value=""; });
     document.getElementById("pSup").value="";/* C272 : jamais le dernier fournisseur saisi */
-    document.getElementById("pUnit").value=DB.lastUnit||"";
+    document.getElementById("pUnit").value="";/* C277 : jamais la dernière unité saisie (exemple « kg, btl, sac… » affiché) */
     del.style.display="none";
   }
   drawGoals();

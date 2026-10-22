@@ -11,6 +11,12 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C281', date: '2026-10-22', titre: 'La barre des onglets de Structure est la même partout : blanche, avec l’onglet ouvert en vert pâle bordé de vert, en thème clair comme en thème sombre, sur téléphone comme sur ordinateur' },
+    { id: 'C280', date: '2026-10-22', titre: 'Vos documents font foi : les commandes par jour lues dans votre caisse entrent dans la même question que votre document comptable. Et si votre saisie retire la note, Verdict le dit clairement au lieu de parler d’une note non finale' },
+    { id: 'C279', date: '2026-10-22', titre: 'Structure › Chiffre minimum : le mois où commence votre suivi dit « Minimum du reste du mois » et donne le mois entier à côté, comme l’Accueil' },
+    { id: 'C278', date: '2026-10-22', titre: 'Dans votre langue : les prochains passages de la fiche fournisseur (« Open day », « Öffnungstag »…) et le titre du panneau de notification (« Mitteilungen », « Notifiche »…)' },
+    { id: 'C277', date: '2026-10-22', titre: 'Notifications et Inventaire : l’heure limite d’une commande et l’heure de chaque notification s’écrivent dans votre langue (« Fri 23/10 · 11:50 », « 22. Okt., 17:37 ») ; « Ajouter un produit » part sans l’unité du produit précédent' },
+    { id: 'C276', date: '2026-10-22', titre: 'Carte : « Vera propose » prend les bons produits — un œuf n’est plus confondu avec du bœuf, un produit absent est dit « à compléter » au lieu d’être remplacé par un voisin ; les pizzas restent dans « Pizzas », les pâtes dans « Pâtes », les fruits et légumes suivent la vraie saison ; un ancien plat se corrige d’abord par la portion, au même prix' },
     { id: 'C275', date: '2026-10-22', titre: 'Page Compte : le bloc « Équipe et établissements » est là dès la création du compte ; vous pouvez ajouter votre équipe tout de suite, et le choix des rôles s’ouvre dès que votre établissement est dans votre compte' },
     { id: 'C274', date: '2026-10-22', titre: 'Mes chiffres : quand vous gardez votre saisie pour un poste, Verdict dit clairement pour quels postes votre document comptable fait encore foi, sans se contredire' },
     { id: 'C273', date: '2026-10-22', titre: 'Inventaire et notifications dans votre langue : « Sans fournisseur », la valeur partielle, les prochains passages, le bas de Plus (accès, seuil d’alerte) et le panneau de notification (source, « Tout marquer comme lu », « Ouvrir Inventaire », « Marquer comme lue ») sont traduits' },

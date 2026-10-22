@@ -2451,6 +2451,8 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
   if(originalDrawData)root.drawData=function(){var result=originalDrawData.apply(this,arguments);applyChrome();renderAccounting();renderPointMortR36();return result;};
 
 
+  /* C279 : le mois où commence le suivi n'a pour minimum que la part restante ; on la nomme et on donne le mois entier (même libellé que l'Accueil, C256). */
+  var PM_RESTE_C279={fr:['Minimum du reste du mois','Minimum du mois entier'],en:['Minimum for the rest of the month','Minimum for the whole month'],es:['Mínimo del resto del mes','Mínimo del mes completo'],it:['Minimo del resto del mese','Minimo del mese intero'],de:['Minimum für den Rest des Monats','Minimum für den ganzen Monat'],nl:['Minimum voor de rest van de maand','Minimum voor de hele maand'],pt:['Mínimo do resto do mês','Mínimo do mês inteiro']};
   var POINT_MORT_R36_COPY={
   "fr": [
     "Point mort",
@@ -2766,7 +2768,8 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
       html+='<div class="v36-pm-timeline" role="img" aria-label="'+esc(title)+'"><div class="v36-pm-track">';
       month.days.forEach(function(day){var recorded=day.ca!==null&&day.ca!==undefined,cls=day.closed?'closed':recorded?'recorded':'forecast';html+='<i class="'+cls+(mark===day.day?' crossing':'')+'" title="'+esc(new Intl.DateTimeFormat(locale(),{weekday:'short',day:'numeric',month:'long'}).format(new Date(day.date+'T12:00:00')))+'"></i>';});
       html+='</div><div class="v36-pm-ends"><span>'+esc(text(32))+'</span><span>'+esc(text(33))+'</span></div><div class="v36-pm-legend"><span>● '+esc(text(11))+'</span><span>┄ '+esc(text(12))+'</span>'+(date?'<b>'+esc(date)+'</b>':'')+'</div></div>';
-      html+='<dl class="v36-pm-metrics">'+[[8,timeline.minimum],[9,timeline.actual],[10,timeline.remaining]].map(function(row){return '<div><dt>'+esc(text(row[0]))+'</dt><dd>'+esc(row[1]===null?'—':money(row[1]))+'</dd></div>';}).join('')+'</dl>';
+      var pmFull=(function(){try{var s0=String(root.DB.performanceTrackingStartedAt||''),mk=clock.key.slice(0,7),yp=root.DB.performanceYearPlans[mk.slice(0,4)],full=yp&&yp.fullMonthlyTargets?Number(yp.fullMonthlyTargets[mk]):0;return /^\d{4}-\d{2}-\d{2}$/.test(s0)&&s0.slice(0,7)===mk&&s0.slice(8)!=='01'&&full>Number(timeline.minimum)+0.5?full:null;}catch(e){return null;}})(),pmL=PM_RESTE_C279[locale()]||PM_RESTE_C279.fr;
+      html+='<dl class="v36-pm-metrics">'+(pmFull!==null?[[pmL[0],timeline.minimum],[pmL[1],pmFull],[text(9),timeline.actual],[text(10),timeline.remaining]]:[[text(8),timeline.minimum],[text(9),timeline.actual],[text(10),timeline.remaining]]).map(function(row){return '<div><dt>'+esc(row[0])+'</dt><dd>'+esc(row[1]===null?'—':money(row[1]))+'</dd></div>';}).join('')+'</dl>';
     }
     html+='<p class="v36-explanation">'+esc(timeline.status==='unknown'?text(14):text(15))+'</p><details class="v36-pm-method"><summary>'+esc(text(22))+'</summary><p>'+esc(text(13))+'</p><p>'+esc(text(35))+'</p><p>'+esc(text(18,{days:daysFor(p)===null?'—':fmt.format(daysFor(p)),total:fmt.format(p.activeDays)}))+'</p></details><div class="v36-pm-buttons"><button type="button" class="btn" data-v36-pm="days">'+esc(text(19))+'</button><button type="button" class="btn sec" data-v36-pm="stress">'+esc(text(20))+'</button><button type="button" class="btn sec" data-v36-pm="season">'+esc(text(21))+'</button></div>';
     view.innerHTML=html;

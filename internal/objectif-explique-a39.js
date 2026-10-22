@@ -228,7 +228,7 @@
   /* C143 — HT ou TTC dit à chaque minimum. Le pilotage du jour et du mois compte en TTC (comme la caisse et la saisie) ;
      Structure, Audit et Simuler comptent en HT. Sans la mention, 643 593 € (TTC) et 574 390 € (HT) semblaient se
      contredire. Les étiquettes de minimum issues du pilotage reçoivent « TTC ». */
-  var LIBELLES_TTC = { 'Minimum du mois': 1, 'Minimum annuel': 1, 'Minimum à couvrir': 1, 'Minimum de structure ce jour': 1, 'Minimum du jour': 1, 'Reste pour couvrir le minimum': 1, 'Encaissé à ce jour': 1 };
+  var LIBELLES_TTC = { 'Minimum du mois': 1, 'Minimum annuel': 1, 'Minimum à couvrir': 1, 'Minimum du reste du mois': 1, 'Minimum du mois entier': 1, 'Minimum de structure ce jour': 1, 'Minimum du jour': 1, 'Reste pour couvrir le minimum': 1, 'Encaissé à ce jour': 1 };
   function mentionTTC(d) {
     if (!d) return;
     [].forEach.call(d.querySelectorAll('small, .k, dt, span, b, div'), function (e) {
