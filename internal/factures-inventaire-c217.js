@@ -417,9 +417,11 @@
   function empreinte(list, props) { return list.map(function (x) { return norm(x.ing.nom); }).sort().join('|') + '#' + (props || []).map(function (p) { return p.produit.id + '=' + norm(p.ing.nom); }).join('|'); }
   function dernierFournisseur(V, nom) { var k = norm(nom), a = (V.achats || []).filter(function (x) { return norm(x.art) === k || norm(x.produitId) === k; }); a.sort(function (x, y) { return String(x.d || '').localeCompare(String(y.d || '')); }); return a.length ? a[a.length - 1].four || '' : ''; }
   function texteBouton(n, m) { return (n - m > 0 ? 'Ajouter les ' + (n - m) + ' produit' + (n - m > 1 ? 's' : '') : 'Valider') + (m ? (n - m > 0 ? ' et relier ' : ' : relier ') + m + ' produit' + (m > 1 ? 's' : '') + ' déjà compté' + (m > 1 ? 's' : '') : ''); }
+  /* C266 : Carte d'exemple (formule Inventaire, ou modèle de démonstration chargé dans Pilotage) : rien n'est repris. */
+  function carteExemple(F) { if (planInventaire()) return true; try { return !!(F && typeof F.modeleDansDemonstration === 'function' && F.modeleDansDemonstration()); } catch (e) { return false; } }
   function carteReprise() {
     if (demo() || equipe()) return '';
-    var F = verdictF(); if (!F) return '';
+    var F = verdictF(); if (!F || carteExemple(F)) return '';
     var list = ingredientsAbsents(F); if (!list.length) return '';
     var props = propositions(list), emp = empreinte(list, props);
     var ign = ''; try { ign = localStorage.getItem(CLE_IGN + ':' + DBi().site) || ''; } catch (e) {}
@@ -459,7 +461,7 @@
     var last = dates[dates.length - 1]; return last ? { de: ajoute(last, -55), a: last, nature: 'dernières connues' } : null;
   }
   function calculerDemande(force) {
-    var F = verdictF(), V = F && F.DB, D = DBi(); if (!V || !D || demo() || equipe()) return false;
+    var F = verdictF(), V = F && F.DB, D = DBi(); if (!V || !D || demo() || equipe() || carteExemple(F)) return false;
     var ventes = Array.isArray(V.dishSales) ? V.dishSales : []; if (!ventes.length) return false;
     var prods = rows(), byNom = {}; prods.forEach(function (x) { byNom[norm(x.p.name)] = x.p; if (x.p.ingredient) byNom[norm(x.p.ingredient)] = x.p; }); if (!prods.length) return false;
     var dates = ventes.map(function (s) { return String(s.date || '').slice(0, 10); }).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); }); dates = Array.from(new Set(dates)).sort();

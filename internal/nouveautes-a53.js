@@ -11,6 +11,10 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C267', date: '2026-10-22', titre: 'Inventaire dans votre langue : l’onglet Inventaire de la barre, les créneaux et la fiche des fournisseurs, l’historique des quantités et la ligne d’offre sont traduits ; en anglais, les montants estimés gardent le même format que le total, et le temps restant s’écrit « 20h 10m remaining »' },
+    { id: 'C266', date: '2026-10-22', titre: 'Inventaire : la langue se choisit aussi dans Plus, et un changement de langue s’applique à tout l’écran, sans mélange. Sans Carte à vous, l’Inventaire ne propose plus de produits tirés de la carte d’exemple' },
+    { id: 'C265', date: '2026-10-22', titre: 'Vos documents font foi : quand votre saisie ne dit pas la même chose que votre document comptable, la note reste celle du document tant que vous n’avez pas répondu à la question' },
+    { id: 'C264', date: '2026-10-22', titre: 'Année : la fourchette de fin d’année n’est affichée que si elle a vraiment tenu au moins 8 fois sur 10 sur vos années passées, et jamais plus étroite que l’erreur mesurée ; l’avance de l’exercice de référence est dite TTC ; « Pourquoi ce montant » parle du minimum du reste du mois' },
     { id: 'C262', date: '2026-10-22', titre: 'Thème clair : le « Passeport établissement » (vos 6 choix, dans « J’ai ouvert récemment », « J’ai un exercice clôturé » et Mes chiffres) est clair et lisible' },
     { id: 'C261', date: '2026-10-22', titre: 'Inventaire dans votre langue : les jours des livraisons fournisseurs, l’exemple de contrôle des écarts et les commandes ne mélangent plus le français et votre langue' },
     { id: 'C260', date: '2026-10-22', titre: 'La fenêtre « Accès du personnel » se lit aussi en thème clair, et l’Inventaire reçoit de nouvelles traductions dans les 6 autres langues' },

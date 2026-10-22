@@ -4001,8 +4001,20 @@ function verdictWeightedScore(d){
 
   return {v:v,s:s,n1:n1,n2:n2,n3:n3,cap:cap,score:isFinite(score)?score:0};
 }
+/* C265 (T4 N13) : les documents font foi tant que le patron n'a pas répondu à la question unique (C190/C191). Avant, une saisie
+   qui contredit le FEC donnait sa note (98, « calcul final ») dans l'en-tête et dans Structure, derrière la fenêtre de la question.
+   Tant qu'un écart n'est pas tranché, le calcul prend les valeurs du document pour ces postes (ce que donnerait « Prendre tous mes
+   documents ») ; la saisie reste dans Mes chiffres et la réponse décide. Les simulations (moteur(over)) ne sont pas concernées. */
+var VERDICT_DOC_CHAMPS={nour:['nour'],boi:['boi'],amort:['amort'],equipe:['salb','salt','dirb','dirt','dirn','saln'],loyer:['f1'],autres:['f2','f3','f4','f5','f6','f7','f8','f9','f10']};
+function verdictDocumentsEnAttenteOver(){
+  try{var F=window.VerdictDocumentsFoi;if(!F||typeof F.ecarts!=='function'||typeof DB==='undefined'||!DB||!DB.docRef||!DB.docRef.in)return null;
+    var E=F.ecarts(DB)||[];if(!E.length)return null;var R=DB.docRef.in,o={},n=0;
+    E.forEach(function(e){(VERDICT_DOC_CHAMPS[e.k]||[]).forEach(function(c){if(Object.prototype.hasOwnProperty.call(R,c)){o[c]=R[c];n++;}});});
+    return n?o:null;}catch(e){return null;}
+}
 function moteur(over){
-  var d=deriv(over), ca=d.ca;
+  var _docAttente=null;if(over==null){_docAttente=verdictDocumentsEnAttenteOver();if(_docAttente)over=_docAttente;}
+  var d=deriv(over), ca=d.ca;if(_docAttente)d.documentsEnAttente=true;
   var validation=validate(d);
   d.validation=validation;
   var weighted=verdictWeightedScore(d),v=weighted.v,s=weighted.s,n1=weighted.n1,n2=weighted.n2,n3=weighted.n3,cap=weighted.cap,score=weighted.score;
