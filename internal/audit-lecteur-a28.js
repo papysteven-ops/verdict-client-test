@@ -328,3 +328,49 @@
   (doc.head || doc.documentElement).appendChild(css);
   construire(true);
 })();
+/* C270 (V28, VERIFICATION-COMPLETE-APPLI 21/10) : l'Audit annonçait « 20 chapitres » (« Profondeur 20 chapitres · 4 exports »,
+   « 20 chapitres, contexte terrain… », « 19 chapitres vous attendent »…) alors que la lecture complète en compte 27, en 5 thèmes.
+   Le nombre affiché partout est celui des chapitres réellement présents dans l'analyse complète, relevés par le lecteur ;
+   il est retenu sur l'appareil pour les écrans qui en parlent avant l'ouverture de l'Audit (offre, aperçu, exports, aide).
+   Tant que l'Audit n'a jamais été compté, la phrase est dite sans nombre plutôt qu'avec un nombre faux. */
+(function () {
+  'use strict';
+  var w = window, doc = document; if (w.__c270) return; w.__c270 = true;
+  var CLE = 'verdict:audit-chapitres', MOTS = 'chapitres|chapters|capítulos|capitoli|Kapitel|hoofdstukken';
+  var TROUVE = new RegExp('(19|20|27)(\\s|\\u00a0)(' + MOTS + ')|chapitres · preuves, méthode et exports');
+  var RE = new RegExp('(^|[^\\d.,])(19|20|27)(\\s|\\u00a0)(' + MOTS + ')', 'g');
+  /* Sans compte connu : les phrases françaises de l'offre, de l'aperçu, des exports et de l'aide, dites sans nombre. */
+  var SANS = [[/\b(20|27) chapitres · 4 exports/g, 'Tous les chapitres · 4 exports'], [/\b(19|20|26|27) chapitres vous attendent/g, 'Les autres chapitres vous attendent'],
+    [/Les (20|27) chapitres,/g, 'Tous les chapitres,'], [/\b(20|27) chapitres, contexte terrain/g, 'Tous les chapitres, contexte terrain'],
+    [/audit Premium complet · (20|27) chapitres/g, 'audit Premium complet'], [/ en (20|27) chapitres([.,])/g, ', chapitre par chapitre$2'],
+    [/Audit Premium : (20|27) chapitres · 4 formats/g, 'Audit Premium complet · 4 formats'], [/^(20|27) chapitres$/g, 'Tous les chapitres']];
+  function compte() {
+    var n = 0; try { n = w.VerdictLecteur && w.VerdictLecteur.chapitres ? w.VerdictLecteur.chapitres().length : 0; } catch (e) {}
+    if (n > 0) { try { if (localStorage.getItem(CLE) !== String(n)) localStorage.setItem(CLE, String(n)); } catch (e) {} return n; }
+    try { var v = +localStorage.getItem(CLE); return v > 0 ? v : null; } catch (e) { return null; }
+  }
+  /* 19 ne sert qu'à l'aperçu (« 19 chapitres vous attendent » : un chapitre est déjà montré). */
+  function corriger(t, n) {
+    /* Le résumé « Analyse complète » comptait les seules sections (24), sans les preuves ni les sources du lecteur. */
+    if (n) return t.replace(RE, function (m, a, x, sp, mot) { return a + (x === '19' ? n - 1 : n) + sp + mot; }).replace(/\b\d+(\s|\u00a0)chapitres · preuves, méthode et exports/, n + '$1chapitres · preuves, méthode et exports');
+    var s = t; SANS.forEach(function (r) { s = s.replace(r[0], r[1]); }); return s;
+  }
+  function passe() {
+    if (!doc.body) return; var n = compte(), L = [], x;
+    var it = doc.createTreeWalker(doc.body, 4, { acceptNode: function (t) { return TROUVE.test(t.nodeValue) ? 1 : 3; } });
+    while ((x = it.nextNode())) L.push(x);
+    L.forEach(function (t) { var v = corriger(t.nodeValue, n); if (v !== t.nodeValue) t.nodeValue = v; });
+  }
+  var prevu = 0;
+  function plus() { if (!prevu) prevu = setTimeout(function () { prevu = 0; try { passe(); } catch (e) {} }, 120); }
+  function boot() {
+    passe();
+    if (typeof MutationObserver === 'function') new MutationObserver(function (l) {
+      for (var i = 0; i < l.length; i++) { var r = l[i], s = r.type === 'characterData' ? r.target.nodeValue : '';
+        if (!s) for (var j = 0; j < r.addedNodes.length && !s; j++) s = r.addedNodes[j].textContent || '';
+        if (s && TROUVE.test(s)) return plus(); }
+    }).observe(doc.body, { childList: true, subtree: true, characterData: true });
+  }
+  if (doc.body) boot(); else doc.addEventListener('DOMContentLoaded', boot);
+  w.VerdictAuditChapitres = { compte: compte, corriger: corriger };
+})();

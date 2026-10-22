@@ -174,9 +174,21 @@ function newCreation(cat,m,priceTarget){
   var p={id:'vera-new-'+hash(cat+twist.nom+m).toString(36),nom:String(base.nom).split(/[·(]/)[0].trim()+' · '+String(twist.nom).toLowerCase().split(/[,(]/)[0].replace(/\b\d+([.,]\d+)?\s*(%|cl|ml|l|kg|g|cm|mm)?(?=\s|$)/g,'').replace(/\s+/g,' ').trim(),cat:cat,tva:base.tva,rec:rec,preps:JSON.parse(JSON.stringify(base.preps||[])),pf:base.pf,pfttc:base.pfttc,pfshare:base.pfshare,vol:null,cpVeraNew:true,cpBase:base.id,cpTwist:twist.nom,cpWarmth:COLD.test(norm(twist.nom))?1:HOT.test(norm(twist.nom))?-1:warmth(base)};
   var co=corridor(cat),k=calc(Object.assign({},p,{ttc:num(base.ttc)||10})),c=num(k.cout)||0;
   var target=priceTarget||null;
-  if(!target){var needHT=c/(1-objective(base)/100);target=Math.max(co?co.med:num(base.ttc)||10,round05(needHT*(1+vat(p)/100)+.25));if(co)target=Math.min(target,round05(co.max*1.05));}
+  if(!target){var needHT=c/(1-objective(base)/100);target=Math.max(co?co.med:num(base.ttc)||10,round05(needHT*(1+vat(p)/100)+.25));if(co)target=Math.min(target,round05(co.max*1.05));target=dansLaCarte(p,cat,target);p.ttc=Math.round(target*10)/10;if(!coutAuPrix(p,p.ttc))return null;return p;}
   p.ttc=round05(target);return p;
 }
+/* C268 (Steven, 22/10 : « 37 € c'est trop cher ») — une nouveauté reste dans les prix de la carte : au plus le plat le plus
+   cher de sa catégorie, et proche du plat équivalent (même produit principal) : son prix, +10 % au plus. Si l'objectif de
+   marge ne tient pas à ce prix, Vera agit sur le coût (portion du produit principal, −25 % au plus) et le dit ; sinon la
+   nouveauté n'est pas proposée. Jamais un prix hors carte, jamais « vendez plus ». */
+function lignePrincipale(n){var d=DB(),best=null;(n.rec||[]).forEach(function(l,i){var g=(d.ing||[]).filter(function(x){return x&&norm(x.nom)===norm(l[0]);})[0];if(!g)return;var q=num(l[1])||0,u=String(g.type||'KG').toUpperCase(),pe=num(g.perte)||0,c=(u==='UNITE'?num(g.prix):num(g.prix)/1000)*q/(1-Math.min(pe,90)/100);if(c>0&&(!best||c>best.c))best={i:i,nom:l[0],c:c,u:u};});return best;}
+function equivalent(n,cat){var L=lignePrincipale(n);if(!L)return null;var k=norm(L.nom),eq=null;(DB().plats||[]).forEach(function(p){if(!active(p)||p===n||p.cat!==cat||!(num(p.ttc)>0))return;if((p.rec||[]).some(function(r){return norm(r[0])===k;})&&(!eq||(num(p.vol)||0)>(num(eq.vol)||0)))eq=p;});return eq;}
+function dansLaCarte(n,cat,target){var co=corridor(cat),eq=equivalent(n,cat),hi=co?co.max:null;
+  if(eq){var e=num(eq.ttc),near=Math.max(e,Math.floor(e*1.10*2+1e-9)/2);hi=hi?Math.min(hi,near):near;target=Math.max(target,e);}
+  if(hi)target=Math.min(target,hi);n.cpCarte={max:co?co.max:null,eq:eq?{nom:eq.nom,ttc:num(eq.ttc)}:null};return target;}
+function coutAuPrix(n,price){var obj=objective(n),mg=marginAt(n,price);if(!mg||mg.pct>=obj)return true;var L=lignePrincipale(n);if(!L||L.u==='UNITE')return false;
+  var q0=num(n.rec[L.i][1]);for(var f=.95;f>.74;f=Math.round((f-.05)*100)/100){n.rec[L.i][1]=Math.max(5,Math.round(q0*f/5)*5);var m2=marginAt(n,price);if(m2&&m2.pct>=obj){n.cpCoutCorrige={nom:L.nom,de:q0,a:n.rec[L.i][1],u:L.u==='L'?'ml':'g'};return true;}}
+  n.rec[L.i][1]=q0;return false;}
 /* C104 — prix d'une nouveauté : coût matière + objectif de marge, dans le couloir des autres plats de la catégorie ; sans coût
    complet (un ingrédient à acheter), le milieu du couloir, sinon la fourchette du gabarit. */
 function prixSaison(n,cat,priceTarget){
@@ -185,7 +197,8 @@ function prixSaison(n,cat,priceTarget){
   if(complet){var needHT=c/(1-objective(n)/100);target=round05(needHT*(1+vat(n)/100)+.25);if(co)target=Math.max(target,co.min);if(ref)target=Math.max(target,ref[0]);}
   else target=co?co.med:(ref?(ref[0]+ref[1])/2:12);
   if(co)target=Math.min(target,round05(co.max*1.05));if(ref)target=Math.min(Math.max(target,ref[0]),ref[1]*1.15);
-  n.ttc=round05(target);
+  target=dansLaCarte(n,cat,target);
+  n.ttc=Math.round(target*10)/10;
 }
 function candidates(cat,o){
   var d=DB(),m=moisReel(),mm=o.samePeriod?[m,(m%12)+1]:null,list=[];
@@ -199,7 +212,7 @@ function candidates(cat,o){
   if(!nouveaux.length){var n0=newCreation(cat,m,o.price);if(n0)nouveaux=[n0];}
   /* C258 (T1 N5d) : un produit déjà servi dans un plat de la carte garde la quantité de sa fiche (celle du plat le plus vendu) : le coût d'une nouveauté reste cohérent avec la fiche du même plat. */
   nouveaux.forEach(function(n){(n.rec||[]).forEach(function(l){var k=norm(l[0]),best=null;(d.plats||[]).forEach(function(p){if(!active(p)||p.cat!==cat)return;(p.rec||[]).forEach(function(r){if(norm(r[0])===k&&num(r[1])>0&&(!best||(num(p.vol)||0)>(num(best.p.vol)||0)))best={p:p,q:num(r[1])};});});if(best)l[1]=best.q;});});
-  nouveaux.forEach(function(n){prixSaison(n,cat,o.price);var pr=o.price||n.ttc,mg=marginAt(n,pr);
+  nouveaux.forEach(function(n){prixSaison(n,cat,o.price);if(!o.price&&!n.cpCoutCorrige&&!coutAuPrix(n,n.ttc))return;var pr=o.price||n.ttc,mg=marginAt(n,pr);
     /* une nouveauté dont le coût matière dépasse l'objectif de loin n'est pas proposée : Vera ne vend pas de rêve */
     if(mg&&mg.pct!=null&&mg.pct<Math.max(35,objective(n)-25))return;
     list.push({p:n,origin:'new',qty:null,years:[],price:pr,margin:mg,shared:sharedShare(n),fit:seasonFit(n,m),k:calc(n)});});
@@ -221,6 +234,8 @@ function candidates(cat,o){
     else if(x.origin==='new')why.push('Nouveauté cohérente : recette de « '+(dishById(x.p.cpBase)||{}).nom+' », '+String(x.p.cpTwist).toLowerCase()+' déjà acheté pour d’autres plats (zéro nouvel achat)');
     if(x.margin)why.push('À '+money(x.price)+' : '+money(x.margin.contrib)+' de contribution par vente, marge matière '+pct(x.margin.pct,0)+(x.margin.pct>=objective(x.p)?' (objectif '+pct(objective(x.p),0)+' atteint)':' (sous l’objectif '+pct(objective(x.p),0)+')'));
     var wm=warmth(x.p);
+    if(x.origin==='new'&&x.p.cpCarte&&x.p.cpCarte.eq&&!o.price)why.push('Prix au niveau de votre « '+x.p.cpCarte.eq.nom+' » ('+money(x.p.cpCarte.eq.ttc)+')'+(x.p.cpCoutCorrige?' : pour tenir l’objectif à ce prix, '+x.p.cpCoutCorrige.nom+' '+int(x.p.cpCoutCorrige.a)+' '+x.p.cpCoutCorrige.u+' au lieu de '+int(x.p.cpCoutCorrige.de)+' '+x.p.cpCoutCorrige.u:''));
+    else if(x.origin==='new'&&x.p.cpCoutCorrige&&!o.price)why.push('Pour tenir l’objectif au prix de vos autres plats : '+x.p.cpCoutCorrige.nom+' '+int(x.p.cpCoutCorrige.a)+' '+x.p.cpCoutCorrige.u+' au lieu de '+int(x.p.cpCoutCorrige.de)+' '+x.p.cpCoutCorrige.u);
     if(x.origin==='new'&&x.p.cpVeraSaison)why.push('Saison : '+phraseSaison(m));
     else if(x.fit>.4)why.push('De saison : '+phraseSaison(m)+(wm>0?' — ce plat se vend mieux quand il fait bon':' — plat réconfortant'));
     else if(x.fit<-.4)why.push('Hors saison : '+(wm>0?'plat d\u2019été':'plat d\u2019hiver')+' — '+phraseSaison(m));
@@ -441,7 +456,7 @@ function install(){
   if(root.MutationObserver){var t=0;new root.MutationObserver(function(){if(t)return;t=setTimeout(function(){t=0;mountButton();},120);}).observe(doc.body,{childList:true,subtree:true});}
   mountButton();return true;
 }
-root.VerdictVeraCarte={version:'C104',open:open,close:close,ensureMemory:ensureMemory,proposeDish:proposeDish,proposeMenu:proposeMenu,applyMenu:applyMenu,addToMenu:addToMenu,watchCosts:watchCosts,bestSellers:bestSellers,qtyOn:qtyOn,seasonFit:seasonFit,warmth:warmth,isSimulated:isSimulated,_newCreation:newCreation};
+root.VerdictVeraCarte={_prixNouveaute:function(n,cat){prixSaison(n,cat,null);var ok=coutAuPrix(n,n.ttc);return {ttc:n.ttc,ok:ok,marge:marginAt(n,n.ttc),corrige:n.cpCoutCorrige||null,carte:n.cpCarte||null};},version:'C104',open:open,close:close,ensureMemory:ensureMemory,proposeDish:proposeDish,proposeMenu:proposeMenu,applyMenu:applyMenu,addToMenu:addToMenu,watchCosts:watchCosts,bestSellers:bestSellers,qtyOn:qtyOn,seasonFit:seasonFit,warmth:warmth,isSimulated:isSimulated,_newCreation:newCreation};
 function boot(n){if(install())return;if(n>0)setTimeout(function(){boot(n-1);},300);}
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',function(){boot(60);});else boot(60);
 })(window);

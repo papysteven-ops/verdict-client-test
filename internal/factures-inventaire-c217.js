@@ -387,8 +387,8 @@
   function ingredientsAbsents(F) {
     var V = F && F.DB; if (!V || !Array.isArray(V.ing)) return [];
     var deja = {}; rows().forEach(function (x) { deja[norm(x.p.name)] = 1; if (x.p.ingredient) deja[norm(x.p.ingredient)] = 1; });
-    var esp = {}; (V.plats || []).forEach(function (p) { (p.rec || []).forEach(function (r) { var k = norm(Array.isArray(r) ? r[0] : r && (r.nom || r.name)); if (k) { esp[k] = esp[k] || {}; esp[k][p.esp || 'cuisine'] = (esp[k][p.esp || 'cuisine'] || 0) + 1; } }); });
-    return V.ing.filter(function (i) { return i && i.nom && !deja[norm(i.nom)] && !NON_COMPTABLE.test(i.nom); }).map(function (i) { var e = esp[norm(i.nom)] || {}; return { ing: i, esp: (e.bar || 0) > (e.cuisine || 0) ? 'bar' : (e.cuisine ? 'cuisine' : null) }; });
+    var esp = {}; platsPropres(F).forEach(function (p) { (p.rec || []).forEach(function (r) { var k = norm(Array.isArray(r) ? r[0] : r && (r.nom || r.name)); if (k) { esp[k] = esp[k] || {}; esp[k][p.esp || 'cuisine'] = (esp[k][p.esp || 'cuisine'] || 0) + 1; } }); });
+    return V.ing.filter(function (i) { return i && i.nom && esp[norm(i.nom)] && !deja[norm(i.nom)] && !NON_COMPTABLE.test(i.nom); }).map(function (i) { var e = esp[norm(i.nom)] || {}; return { ing: i, esp: (e.bar || 0) > (e.cuisine || 0) ? 'bar' : (e.cuisine ? 'cuisine' : null) }; });
   }
   /* C229 (X24) : un produit déjà compté sous un autre nom (« Entrecote VBF ») est proposé pour l'ingrédient de la fiche
      (« Entrecôte de bœuf ») : même premier mot, même grandeur (kg, litre ou pièce), un seul candidat. Relié = pas de doublon,
@@ -418,7 +418,9 @@
   function dernierFournisseur(V, nom) { var k = norm(nom), a = (V.achats || []).filter(function (x) { return norm(x.art) === k || norm(x.produitId) === k; }); a.sort(function (x, y) { return String(x.d || '').localeCompare(String(y.d || '')); }); return a.length ? a[a.length - 1].four || '' : ''; }
   function texteBouton(n, m) { return (n - m > 0 ? 'Ajouter les ' + (n - m) + ' produit' + (n - m > 1 ? 's' : '') : 'Valider') + (m ? (n - m > 0 ? ' et relier ' : ' : relier ') + m + ' produit' + (m > 1 ? 's' : '') + ' déjà compté' + (m > 1 ? 's' : '') : ''); }
   /* C266 : Carte d'exemple (formule Inventaire, ou modèle de démonstration chargé dans Pilotage) : rien n'est repris. */
-  function carteExemple(F) { if (planInventaire()) return true; try { return !!(F && typeof F.modeleDansDemonstration === 'function' && F.modeleDansDemonstration()); } catch (e) { return false; } }
+  /* C272 : plats du client = plats de Pilotage hors carte d'exemple (SEED_PLATS) ; sans plat à lui, rien n'est repris, quelle que soit la formule. */
+  function platsPropres(F) { var V = F && F.DB; if (!V || !Array.isArray(V.plats)) return []; var ex = {}; try { (F.SEED_PLATS || []).forEach(function (s) { ex[norm(Array.isArray(s) ? s[0] : s && s.nom)] = 1; }); } catch (e) {} return V.plats.filter(function (p) { return p && p.nom && !ex[norm(p.nom)]; }); }
+  function carteExemple(F) { try { if (F && typeof F.modeleDansDemonstration === 'function' && F.modeleDansDemonstration()) return true; } catch (e) { return true; } return !platsPropres(F).length; }
   function carteReprise() {
     if (demo() || equipe()) return '';
     var F = verdictF(); if (!F || carteExemple(F)) return '';

@@ -2408,7 +2408,35 @@
     '{num} produit à commander · montant estimé': ['{num} product to order · estimated amount', '{num} producto por pedir · importe estimado', '{num} prodotto da ordinare · importo stimato', '{num} Produkt zu bestellen · geschätzter Betrag', '{num} product te bestellen · geschat bedrag', '{num} produto a encomendar · montante estimado'],
     '{num} produit à commander · montant estimé · valeur partielle': ['{num} product to order · estimated amount · partial value', '{num} producto por pedir · importe estimado · valor parcial', '{num} prodotto da ordinare · importo stimato · valore parziale', '{num} Produkt zu bestellen · geschätzter Betrag · Teilwert', '{num} product te bestellen · geschat bedrag · gedeeltelijke waarde', '{num} produto a encomendar · montante estimado · valor parcial'],
     '{a} avant {h} → {b}': ['{a} before {h} → {b}', '{a} antes de las {h} → {b}', '{a} entro le {h} → {b}', '{a} vor {h} → {b}', '{a} vóór {h} → {b}', '{a} antes das {h} → {b}'],
-    '{a} avant {h} → {b} · période {c} à {d}': ['{a} before {h} → {b} · period {c} to {d}', '{a} antes de las {h} → {b} · periodo del {c} al {d}', '{a} entro le {h} → {b} · periodo dal {c} al {d}', '{a} vor {h} → {b} · Zeitraum {c} bis {d}', '{a} vóór {h} → {b} · periode {c} tot {d}', '{a} antes das {h} → {b} · período de {c} a {d}']
+    '{a} avant {h} → {b} · période {c} à {d}': ['{a} before {h} → {b} · period {c} to {d}', '{a} antes de las {h} → {b} · periodo del {c} al {d}', '{a} entro le {h} → {b} · periodo dal {c} al {d}', '{a} vor {h} → {b} · Zeitraum {c} bis {d}', '{a} vóór {h} → {b} · periode {c} tot {d}', '{a} antes das {h} → {b} · período de {c} a {d}'],
+
+    /* ── C273 : Inventaire (sans fournisseur, valeur partielle, passages, bas de Plus), panneau de notification, pluriel allemand ── */
+    'Sans fournisseur': ['No supplier', 'Sin proveedor', 'Senza fornitore', 'Ohne Lieferant', 'Zonder leverancier', 'Sem fornecedor'],
+    'À compter': ['To count', 'Por contar', 'Da contare', 'Zu zählen', 'Te tellen', 'A contar'],
+    'Renseignez un fournisseur réel avant de pouvoir confirmer cette commande.': ['Enter a real supplier before you can confirm this order.', 'Indique un proveedor real antes de poder confirmar este pedido.', 'Indichi un fornitore reale prima di poter confermare questo ordine.', 'Geben Sie einen echten Lieferanten an, bevor Sie diese Bestellung bestätigen können.', 'Vul een echte leverancier in voordat u deze bestelling kunt bevestigen.', 'Indique um fornecedor real antes de poder confirmar esta encomenda.'],
+    'Valeur partielle : les références non comptées ou sans prix ne sont jamais assimilées à 0.': ['Partial value: items not counted or without a price are never treated as 0.', 'Valor parcial: las referencias sin contar o sin precio nunca se toman como 0.', 'Valore parziale: le referenze non contate o senza prezzo non valgono mai 0.', 'Teilwert: nicht gezählte Artikel oder Artikel ohne Preis werden nie als 0 gewertet.', 'Gedeeltelijke waarde: niet-getelde artikelen of artikelen zonder prijs tellen nooit als 0.', 'Valor parcial: as referências não contadas ou sem preço nunca são tratadas como 0.'],
+    'Jour ouvert': ['Open day', 'Día abierto', 'Giorno di apertura', 'Öffnungstag', 'Openingsdag', 'Dia aberto'],
+    'Accès ouvert · données enregistrées sur cet appareil · sauvegarde recommandée': ['Open access · data saved on this device · backup recommended', 'Acceso abierto · datos guardados en este dispositivo · copia de seguridad recomendada', 'Accesso libero · dati salvati su questo dispositivo · backup consigliato', 'Offener Zugang · Daten auf diesem Gerät gespeichert · Sicherung empfohlen', 'Open toegang · gegevens op dit toestel opgeslagen · back-up aanbevolen', 'Acesso aberto · dados guardados neste dispositivo · cópia de segurança recomendada'],
+    'alerte si moins de {num} {u}': ['alert below {num} {u}', 'alerta por debajo de {num} {u}', 'avviso sotto {num} {u}', 'Warnung unter {num} {u}', 'waarschuwing onder {num} {u}', 'alerta abaixo de {num} {u}'],
+    'alerte si moins de {num}': ['alert below {num}', 'alerta por debajo de {num}', 'avviso sotto {num}', 'Warnung unter {num}', 'waarschuwing onder {num}', 'alerta abaixo de {num}'],
+    'unités': ['units', 'unidades', 'unità', 'Stück', 'stuks', 'unidades'],
+    'INVENTAIRE': ['INVENTORY', 'INVENTARIO', 'INVENTARIO', 'INVENTUR', 'INVENTARIS', 'INVENTÁRIO'],
+    'VERDICT': ['VERDICT', 'VERDICT', 'VERDICT', 'VERDICT', 'VERDICT', 'VERDICT'],
+    'INVENTAIRE · signalé par {x}': ['INVENTORY · reported by {x}', 'INVENTARIO · indicado por {x}', 'INVENTARIO · segnalato da {x}', 'INVENTUR · gemeldet von {x}', 'INVENTARIS · gemeld door {x}', 'INVENTÁRIO · assinalado por {x}'],
+    'VERDICT · signalé par {x}': ['VERDICT · reported by {x}', 'VERDICT · indicado por {x}', 'VERDICT · segnalato da {x}', 'VERDICT · gemeldet von {x}', 'VERDICT · gemeld door {x}', 'VERDICT · assinalado por {x}'],
+    'Commande préparée à valider': ['Prepared order to approve', 'Pedido preparado por validar', 'Ordine preparato da convalidare', 'Vorbereitete Bestellung zu bestätigen', 'Voorbereide bestelling te bevestigen', 'Encomenda preparada a validar'],
+    'Commande préparée à valider — ouvrir': ['Prepared order to approve — open', 'Pedido preparado por validar — abrir', 'Ordine preparato da convalidare — apri', 'Vorbereitete Bestellung zu bestätigen — öffnen', 'Voorbereide bestelling te bevestigen — openen', 'Encomenda preparada a validar — abrir'],
+    'Tout marquer comme lu': ['Mark all as read', 'Marcar todo como leído', 'Segna tutto come letto', 'Alle als gelesen markieren', 'Alles als gelezen markeren', 'Marcar tudo como lido'],
+    'Ouvrir Inventaire': ['Open Inventory', 'Abrir Inventario', 'Apri Inventario', 'Inventur öffnen', 'Inventaris openen', 'Abrir Inventário'],
+    'Ouvrir Verdict': ['Open Verdict', 'Abrir Verdict', 'Apri Verdict', 'Verdict öffnen', 'Verdict openen', 'Abrir Verdict'],
+    'Marquer comme lue': ['Mark as read', 'Marcar como leída', 'Segna come letta', 'Als gelesen markieren', 'Als gelezen markeren', 'Marcar como lida'],
+    'Lue': ['Read', 'Leída', 'Letta', 'Gelesen', 'Gelezen', 'Lida'],
+    'démonstration fictive': ['fictional demo', 'demostración ficticia', 'dimostrazione fittizia', 'fiktive Demo', 'fictieve demo', 'demonstração fictícia'],
+    '{num} Produkts zu bestellen': ['{num} Produkte zu bestellen', '{num} Produkte zu bestellen', '{num} Produkte zu bestellen', '{num} Produkte zu bestellen', '{num} Produkte zu bestellen', '{num} Produkte zu bestellen'],
+    '{num} Produkts zu zählen': ['{num} Produkte zu zählen', '{num} Produkte zu zählen', '{num} Produkte zu zählen', '{num} Produkte zu zählen', '{num} Produkte zu zählen', '{num} Produkte zu zählen'],
+
+    /* ── C273 : notification de commande de la coque (« {fournisseur} · limite {date} », C272 de L6) ── */
+    '{x} · limite {y}': ['{x} · deadline {y}', '{x} · límite {y}', '{x} · scadenza {y}', '{x} · Frist {y}', '{x} · deadline {y}', '{x} · limite {y}']
   };
 
   /* ── Normalisation identique au moteur de Pilotage (trNorm) ── */
@@ -2630,12 +2658,14 @@
   function exclu(el) { return !el || /^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(el.tagName) || (el.closest && el.closest('[contenteditable="true"],[data-i18n-preserve],.nm,.suph,.item .name,.item .nm')); }
   /* C267 : l'exemple d'une zone de texte (placeholder d'un TEXTAREA) se traduit ; son contenu, jamais. */
   function excluAttr(el) { return !el || (el.closest && el.closest('[contenteditable="true"],[data-i18n-preserve],.nm,.suph,.item .name,.item .nm')); }
+  /* C273 : libellés de l'appli posés à la place d'une donnée absente (titre de groupe fournisseur…) : traduits même dans une zone de données. */
+  var LIBRES = { 'Sans fournisseur': 1, 'À compter': 1, 'Référence supprimée': 1 };
   function passer(racine, ix) {
     if (!racine) return;
     if (racine.nodeType === 3) racine = racine.parentNode;
     if (!racine || racine.nodeType !== 1) return;
     var wk = doc.createTreeWalker(racine, NodeFilter.SHOW_TEXT, null, false), n, liste = [];
-    while ((n = wk.nextNode())) if (!exclu(n.parentNode)) liste.push(n);
+    while ((n = wk.nextNode())) if (!exclu(n.parentNode) || (LIBRES[norm(n.nodeValue).trim()] && !/^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(n.parentNode.tagName))) liste.push(n);
     liste.forEach(function (t) {
       var src = ORIG.has(t) && ORIG.get(t).trad === t.nodeValue ? ORIG.get(t).fr : t.nodeValue;
       var tr = traduire(src, ix);

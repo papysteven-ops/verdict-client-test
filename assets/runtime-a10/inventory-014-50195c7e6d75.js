@@ -92,7 +92,7 @@
     now=now instanceof Date?now:new Date(now||Date.now());var open=(snapshot.incidents||[]).filter(function(x){return x.open;});
     if(open.length){var x=open[0];return {kind:'incident',level:'critical',title:'Rupture à décider',detail:x.productName+(x.requiredAt?' · nécessaire '+x.requiredAt:''),route:'inventory',sourceId:x.id,actorName:txt(x.actorName,100),reportedAt:txt(x.reportedAt,40)};}
     var prepared=(snapshot.orders||[]).filter(function(x){return x.status==='prepared';}).sort(function(a,b){return dateMs(a.cutoffAt)-dateMs(b.cutoffAt);});
-    if(prepared.length){var p=prepared[0],ms=dateMs(p.cutoffAt)-now.getTime();return {kind:'order',level:ms<=3*3600000?'critical':'warning',title:'Commande préparée à valider',detail:p.supplier+(p.cutoffAt?' · limite '+p.cutoffAt:''),route:'inventory',sourceId:p.id};}
+    if(prepared.length){var p=prepared[0],ms=dateMs(p.cutoffAt)-now.getTime();return {kind:'order',level:ms<=3*3600000?'critical':'warning',title:'Commande préparée à valider',detail:p.supplier+(p.cutoffAt?' · limite '+(function(v){try{var O=typeof globalThis!=='undefined'&&globalThis.VerdictOrdering;if(O&&typeof O.formatDateTime==='function')return O.formatDateTime(v);}catch(e){}return String(v).replace('T',' ');})(p.cutoffAt):''),route:'inventory',sourceId:p.id};}
     var sent=(snapshot.orders||[]).filter(function(x){return x.status==='sent';});
     if(sent.length)return {kind:'order',level:'warning',title:'Commande envoyée · confirmation attendue',detail:sent[0].supplier,route:'inventory',sourceId:sent[0].id};
     var partial=(snapshot.orders||[]).filter(function(x){return x.status==='partial';});

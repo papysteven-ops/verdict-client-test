@@ -242,11 +242,17 @@
   function banniere(D) {
     var vue = doc.getElementById('v-in') || null; if (!vue) return;
     var an = (D.refSource && D.refSource.exerciseYear) || (D.ref && D.ref.exercice), C = an ? caisse(D, an) : null, acc = Object.keys(D.docAccords || {}), t = [], k = 'ok';
-    if (D.docRef) t.push('✓ Document comptable ' + (D.docRef.year || '') + ' : il fait foi pour vos ventes, achats, équipe et charges.');
+    /* C274 (T4 vague 9) : après « Garder toute ma saisie », la première ligne disait encore que le document fait foi pour tout,
+       juste au-dessus de « Vous gardez votre saisie… ». Une seule lecture : elle nomme les postes où le document fait encore foi,
+       ou dit que la saisie a été retenue à sa place ; la ligne suivante nomme les postes gardés. */
+    var ART = { ca: 'le chiffre d’affaires', nour: 'les achats de nourriture', boi: 'les achats de boissons', equipe: 'l’équipe', loyer: 'le loyer', autres: 'les autres charges fixes', amort: 'les amortissements' };
+    var nommer = function (L) { L = L.map(function (p) { return ART[p.k] || p.lib.charAt(0).toLowerCase() + p.lib.slice(1); }); return L.length > 1 ? L.slice(0, -1).join(', ') + ' et ' + L[L.length - 1] : L.join(''); };
+    var gardes = POSTES.filter(function (p) { return acc.indexOf(p.k) >= 0; }), restent = POSTES.filter(function (p) { return acc.indexOf(p.k) < 0; });
+    if (D.docRef) t.push(!gardes.length ? '✓ Document comptable ' + (D.docRef.year || '') + ' : il fait foi pour vos ventes, achats, équipe et charges.' : restent.length ? '✓ Document comptable ' + (D.docRef.year || '') + ' : il fait foi pour ' + nommer(restent) + '.' : 'Document comptable ' + (D.docRef.year || '') + ' : votre saisie a été retenue à sa place.');
     if (C) { var ca = caDeclare(D), e = ca ? (C.ht - ca) / ca : 0; /* C216 (W49) : « identique » seulement à l'euro près ; sinon l'écart est dit en euros (et en % au-delà de 1 %). */
       var gap = ca ? C.ht - ca : 0;
       t.push('✓ Caisse ' + an + ' : ' + C.jours + ' journées, ' + eur(C.ht) + ' HT' + (ca ? (Math.abs(gap) < 1 ? ', identique à votre chiffre d’affaires' : Math.abs(e) <= 0.01 ? ', à ' + eur(Math.abs(gap)) + ' près de votre chiffre d’affaires (' + (gap > 0 ? '+' : '−') + (Math.round(Math.abs(e) * 10000) / 100).toLocaleString('fr-FR') + ' %)' : ', ' + (e > 0 ? '+' : '−') + Math.abs(Math.round(e * 1000) / 10).toLocaleString('fr-FR') + ' % par rapport à votre chiffre d’affaires' + (D.docRef ? ' : vérifiez avec votre comptable (ventes hors caisse, avoirs)' : '')) : '') + '. Panier moyen ' + (C.panier ? C.panier.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : '—') + '.'); }
-    if (acc.length) { k = 'ko'; var nd = noteDocuments(D); t.push('Vous gardez votre saisie plutôt que vos documents : votre note est une lecture non finale.' + (nd != null ? ' Avec vos documents, votre note serait ' + nd + ' / 100.' : '')); }
+    if (acc.length) { k = 'ko'; var nd = noteDocuments(D); t.push((gardes.length ? 'Vous gardez votre saisie pour ' + nommer(gardes) : 'Vous gardez votre saisie plutôt que vos documents') + ' : votre note est une lecture non finale.' + (nd != null ? ' Avec vos documents, votre note serait ' + nd + ' / 100.' : '')); }
     var ch = D.docChangements || {}, chk = Object.keys(ch);
     if (chk.length) { var ndc = noteDocuments(D), anr = anneeDoc(D);
       t.push('Changements depuis ' + anr + ' pris en compte : ' + chk.map(function (x) { var c = ch[x], f = function (v) { return c.cents ? v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : eur(v); }; return c.lib.toLowerCase() + ' ' + f(c.doc) + ' → ' + f(c.saisie) + (c.raison || c.depuis ? ' (' + [c.raison, c.depuis ? 'depuis ' + moisLib(c.depuis) : null].filter(Boolean).join(', ') + ')' : ''); }).join(' ; ') + '.');

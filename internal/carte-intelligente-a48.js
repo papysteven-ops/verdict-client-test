@@ -463,14 +463,18 @@
   }
   function unite(t) { return t === 'L' ? ' ml' : ' g'; }
   /* La version améliorée d'un plat proposé par Vera ; null si la marge est déjà bonne ou si le plat n'est pas chiffré. */
+  /* C268 (Steven, 22/10 : « 37 € c'est trop cher ») : un prix conseillé ne dépasse jamais le plat le plus cher de la même
+     catégorie ; au-delà, Verdict agit sur la portion. */
+  function maxCat(cat, sauf) { var m = 0; (D() && D().plats || []).forEach(function (x) { if (x && x !== sauf && (!sauf || x.id !== sauf.id) && actif(x) && x.cat === cat && num(x.ttc) > m) m = num(x.ttc); }); return m || null; }
   function corriger(p) {
     var k = calc(p); if (!k.complete || okMarge(k) || !(num(p.ttc) > 0)) return null;
     var avant = { ttc: num(p.ttc), pfttc: p.pfttc, rec: JSON.parse(JSON.stringify(p.rec || [])), pct: k.contribPct, parVente: k.contribPond };
     var c = prixConseille(p); if (c == null) return null;
-    var plafond = Math.ceil(avant.ttc * 1.15 * 10 - 1e-9) / 10, out = { avant: avant, obj: k.objPond };
+    var plafond = Math.ceil(avant.ttc * 1.15 * 10 - 1e-9) / 10, out = { avant: avant, obj: k.objPond }, mc = maxCat(p.cat, p);
+    if (mc && mc < plafond) { plafond = Math.max(avant.ttc, mc); out.parCarte = true; }
     if (c <= plafond) setPrix(p, c);
     else {
-      setPrix(p, plafond);
+      if (plafond > avant.ttc) setPrix(p, plafond);
       var L = lignePlusChere(p);
       if (L) {
         var q0 = num(p.rec[L.i][1]), f = 0.95;
@@ -484,10 +488,12 @@
     return out;
   }
   function texteCorrection(p, c) {
-    var t = (c.portion || !c.ok ? 'Prix ' + eur(c.apres.ttc) + ' (+15 % au plus)' : 'Prix conseillé ' + eur(c.apres.ttc)) + ' au lieu de ' + eur(c.avant.ttc);
+    var mot = String(p && p.cat || 'plats').toLowerCase();
+    var t = c.apres.ttc === c.avant.ttc ? 'Prix gardé à ' + eur(c.avant.ttc) + (c.parCarte ? ' (le plus haut de vos ' + mot + ')' : '')
+      : (c.portion || !c.ok ? 'Prix ' + eur(c.apres.ttc) + (c.parCarte ? ' (le prix le plus haut de vos ' + mot + ')' : ' (+15 % au plus)') : 'Prix conseillé ' + eur(c.apres.ttc)) + ' au lieu de ' + eur(c.avant.ttc);
     if (c.portion) t += ', ' + c.portion.nom + ' : ' + nb(c.portion.a, 0) + c.portion.u + ' au lieu de ' + nb(c.portion.de, 0) + c.portion.u;
     t += (c.portion ? ' ; il reste ' : ' : il reste ') + pct(c.apres.pct) + ' une fois les produits payés au lieu de ' + pct(c.avant.pct) + ' (' + eur(c.apres.parVente) + ' par vente au lieu de ' + eur(c.avant.parVente) + ')';
-    if (!c.ok) t += '. L’objectif de ' + pct(c.obj) + ' n’est pas encore atteint (il faudrait ' + eur(c.conseil) + ' avec la recette d’origine)' + (c.cher ? ' : remplacez ' + c.cher.nom + ' (' + eur(c.cher.cout) + ' par portion) par un produit moins cher' : '') + ', ou retirez ce plat';
+    if (!c.ok) t += '. L’objectif de ' + pct(c.obj) + ' n’est pas encore atteint' + (c.parCarte ? '' : ' (il faudrait ' + eur(c.conseil) + ' avec la recette d’origine)') + (c.cher ? ' : remplacez ' + c.cher.nom + ' (' + eur(c.cher.cout) + ' par portion) par un produit moins cher' : '') + ', ou retirez ce plat';
     return t + '.';
   }
 
@@ -642,7 +648,7 @@
       var vu = card.querySelector('[data-open]'), pa = vu && platById(D(), vu.getAttribute('data-open'));
       if (pa) {
         /* C258 (T1 N5b) : jamais un prix conseillé irréaliste (+15 % au plus, comme la correction de C251). */
-        var cp = prixConseille(pa); if (!(cp > 0) || cp <= num(pa.ttc) || cp > Math.ceil(num(pa.ttc) * 1.15 * 10 - 1e-9) / 10) return; var kc = calc(prixAvec(pa, cp)), el0 = doc.createElement('div'); el0.className = 'c251-vera';
+        var cp = prixConseille(pa), mcp = maxCat(pa.cat, pa); if (!(cp > 0) || cp <= num(pa.ttc) || cp > Math.ceil(num(pa.ttc) * 1.15 * 10 - 1e-9) / 10 || (mcp && cp > mcp)) return; var kc = calc(prixAvec(pa, cp)), el0 = doc.createElement('div'); el0.className = 'c251-vera';
         el0.innerHTML = '✓ <b>Prix conseillé ' + esc(eur(cp)) + '</b> au lieu de ' + esc(eur(num(pa.ttc))) + ' : il reste ' + esc(pct(kc.contribPct)) + ' une fois les produits payés (' + esc(eur(kc.contribPond)) + ' par vente), objectif atteint. <button type="button" class="c251-b c251-p" data-c251-prix="' + esc(pa.id) + '" data-c251-val="' + cp + '">Passer à ' + esc(eur(cp)) + '</button>';
         card.insertBefore(el0, card.querySelector('.vc-act') || null); return;
       }
@@ -651,9 +657,10 @@
       var prix = kp['Prix'], cout = kp['Coût matière'], ctb = kp['Contribution'], obj = num(mo[1]);
       if (!(prix > 0) || !(cout >= 0) || ctb == null || !(obj > 0 && obj < 100)) return;
       var ratio = prix / (ctb + cout), cons = Math.ceil(cout / (1 - obj / 100) * ratio * 10 - 1e-9) / 10, plafond = Math.ceil(prix * 1.15 * 10 - 1e-9) / 10;
+      var vcat = (doc.querySelector('#vc-cat') || {}).value, mcv = vcat ? maxCat(vcat, null) : null, parCarte = false; if (mcv && mcv < plafond) { plafond = Math.max(prix, mcv); parCarte = true; }
       var el = doc.createElement('div'); el.className = 'c251-vera';
       if (cons <= plafond) { var ht = cons / ratio; el.innerHTML = '✓ <b>Prix conseillé ' + esc(eur(cons)) + '</b> au lieu de ' + esc(eur(prix)) + ' : il reste ' + esc(pct((ht - cout) / ht * 100)) + ' une fois les produits payés (' + esc(eur(ht - cout)) + ' par vente), objectif atteint. « Ajouter à ma carte » l’ajoute à ce prix.'; }
-      else el.innerHTML = '✓ <b>Version corrigée prête</b> : prix ' + esc(eur(plafond)) + ' (+15 % au plus) et portion de l’ingrédient le plus cher ajustée. Le détail et l’effet en euros s’affichent à l’ajout ; la version d’origine reste à un clic.';
+      else el.innerHTML = '✓ <b>Version corrigée prête</b> : ' + (plafond > prix ? 'prix ' + esc(eur(plafond)) + (parCarte ? ' (le prix le plus haut de vos ' + esc(String(vcat).toLowerCase()) + ')' : ' (+15 % au plus)') + ' et ' : 'prix gardé à ' + esc(eur(prix)) + ', ') + 'portion de l’ingrédient le plus cher ajustée. Le détail et l’effet en euros s’affichent à l’ajout ; la version d’origine reste à un clic.';
       var act = card.querySelector('.vc-act'); card.insertBefore(el, act || null);
     });
   }

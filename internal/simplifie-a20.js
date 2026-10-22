@@ -89,7 +89,15 @@
     /* C243 (T1, vague 5 : « Tester une décision » gardait en clair son dégradé sombre écrit dans la carte, titre gris sur gris) */
     'html.vd-workspace-light #v-org #point9-organization{background:#fff!important;border:1px solid #cfe0f5!important;box-shadow:0 6px 18px rgba(20,35,50,.06)!important}' +
     'html.vd-workspace-light #v-org #point9-organization h3{color:#17212b!important}html.vd-workspace-light #v-org #point9-organization p.note{color:#526171!important}' +
-    'html.vd-workspace-light #v-org #point9-organization [style*="color:#93c5fd"]{color:#1d4ed8!important}';
+    'html.vd-workspace-light #v-org #point9-organization [style*="color:#93c5fd"]{color:#1d4ed8!important}' +
+    /* C269 (Steven, 22/10 : « le module sombre, on peut ne pas le distinguer en scroll : fond plus clair, écriture plus
+       sombre, contraste ») : en thème sombre, la barre des sous-onglets de Structure, collée en haut, se fondait dans les
+       cartes de même couleur qui défilent dessous. Elle reprend l'aspect du thème clair
+       (« l'inverse du clair, cohérent, premium ») : fond blanc, texte foncé, onglet ouvert vert pâle bordé de vert
+       (#e8f6ee, contour 2 px #15803d : le vert des onglets clairs de la Carte, que Steven trouve « beau, premium »), jamais de vert vif. */
+    'html:not(.vd-workspace-light) body #v-data #dchips.chips.verdict-structure-tabs,html:not(.vd-workspace-light) body #v32ModuleDock .chips.verdict-structure-tabs{background:#fff!important;border:1px solid #d5dde5!important;box-shadow:0 10px 24px rgba(0,0,0,.5)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}' +
+    'html:not(.vd-workspace-light) body #v-data #dchips.chips.verdict-structure-tabs button,html:not(.vd-workspace-light) body #v32ModuleDock .chips.verdict-structure-tabs button{background:transparent!important;color:#14202b!important;box-shadow:none!important}' +
+    'html:not(.vd-workspace-light) body #v-data #dchips.chips.verdict-structure-tabs button.on,html:not(.vd-workspace-light) body #v-data #dchips.chips.verdict-structure-tabs button[aria-current="page"],html:not(.vd-workspace-light) body #v32ModuleDock .chips.verdict-structure-tabs button.on{background:#e8f6ee!important;color:#14532d!important;box-shadow:inset 0 0 0 2px #15803d!important}';
   /* C76 — Simuler commence au « Point de départ calculé » (demande de Steven) : rien au-dessus ; puis les curseurs et
      le total ; le registre des décisions et le journal des gains (seulement ici) passent tout en bas. */
   css.textContent +=
