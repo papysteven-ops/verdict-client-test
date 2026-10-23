@@ -14,7 +14,9 @@ var GESTURE_MS=1500;
 /* C216 (W53) : l'assistant de bienvenue (#refP) a sa propre validation (« Créer ma référence ») : ses champs ne déclenchent ni barre ni seconde demande. */
 var IGNORE_FIELDS='[type=search],[data-guard-ignore],#refP *,#sg13-ask *,#sg13-bar *,.cmp12-sheet *,[id*=search],[id*=Search],[id*=filtre],[id*=Filtre],[id*=recherche],[id*=query],#ntfCenter *,.ntf-center *';
 var COMMIT_BUTTON=/enregistr|valider|confirmer|appliquer|terminer|importer ces|ajouter au|cr[eé]er (ma|mon|mes|la|le|les|un|une)\b/i;
-var EXPLICIT_REASON=/^(etab-lien|fec-import|recent-apply|ref-valider|create-establishment|archive-establishment|restore-establishment|delete-archived-establishment|duplicate-establishment|bar-visibility|restore|file-restore|load-demo|reset-establishment|demo-|sg13-|switch)/;
+/* C300 (V15-022, avec L7) : le remplissage venu des documents (documents-foi, un-seul-passage) est une opération du programme,
+   enregistrée comme un import : « Enregistrer ? → Non » au changement d'établissement ne l'annule plus. */
+var EXPLICIT_REASON=/^(etab-lien|fec-import|recent-apply|ref-valider|create-establishment|archive-establishment|restore-establishment|delete-archived-establishment|duplicate-establishment|bar-visibility|restore|file-restore|load-demo|reset-establishment|demo-|sg13-|switch|documents-foi|un-seul-passage)/;
 var LABELS_VERDICT={etab:'Nom de l’établissement',etabVille:'Ville',etabQuartier:'Arrondissement / quartier',etabType:'Type d’établissement',
   plats:'Carte et recettes',ing:'Ingrédients',preparations:'Préparations',supp:'Suppléments',reg:'Réglages de la carte',histJour:'Saisies du jour',
   achats:'Achats',suivi:'Suivi mensuel',monthlyHistory:'Historique mensuel',establishmentProfile:'Profil de l’établissement',services:'Services',

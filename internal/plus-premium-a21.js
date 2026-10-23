@@ -9,6 +9,7 @@
   if (doc.getElementById('vd-plus-css')) return;
   var ICONES = {
     afaire: '<path d="M9 11l3 3 8-8"/><path d="M20 12v6a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h9"/>',
+    conso: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
     equipe: '<path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3.5"/><path d="M22 19v-1a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
     budget: '<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="m9 15 2 2 4-4"/>',
     caisse: '<path d="M7 7h13l-3-3"/><path d="M17 17H4l3 3"/>',
@@ -30,6 +31,9 @@
        Pro « Coût par service ». « À faire » et les Alertes, compris dans Pilotage, ont enfin un chemin visible. */
     equipe: function () { w.go(pilotage() ? 'sal' : 'planning'); },
     afaire: function () { w.go('priorities'); },
+    /* C305 (V15-117) : « Consommation » (internal/limites-conso-pilotage-a47.js) est rendue ici, avec les autres lignes ; elle
+       était ajoutée environ 60 ms après l'affichage et faisait descendre les lignes du dessous sous le doigt. */
+    conso: function () { w.go('conso'); },
     budget: function () { w.go('obj'); },
     caisse: function () { if (w.VerdictFluxV451 && w.VerdictFluxV451.openConnection) w.VerdictFluxV451.openConnection(); else w.go('in'); },
     importer: function () { w.go('in'); },
@@ -40,7 +44,7 @@
   };
   function groupes() {
     var g = [
-      { t: 'Piloter', l: [['afaire', 'À faire et alertes', 'Ce qui compte aujourd’hui, et ce qui demande votre attention'], ['equipe', 'Équipe & services', pilotage() ? 'Coût de l’équipe, à l’année et au mois' : 'Coût humain, planning et rentabilité des services'], ['budget', 'Budget de ventes', 'Objectifs datés, comparés à vos ventes réelles']] },
+      { t: 'Piloter', l: [['afaire', 'À faire et alertes', 'Ce qui compte aujourd’hui, et ce qui demande votre attention'], ['equipe', 'Équipe & services', pilotage() ? 'Coût de l’équipe, à l’année et au mois' : 'Coût humain, planning et rentabilité des services'], ['budget', 'Budget de ventes', 'Objectifs datés, comparés à vos ventes réelles'], ['conso', 'Consommation', 'Limites par produit, kg et euros, bar et cuisine', 'PRO']] },
       { t: 'Données', l: [['caisse', 'Connexion de la caisse', 'Bientôt : vos ventes arriveront seules, sans saisie'], ['importer', 'Importer mes chiffres', 'Document comptable, saisie ou mise à jour']] },
       /* C210 (V35) : en démonstration, ce bouton ouvre le choix des modèles fictifs (openEtabs → openModeles) : le dire. */
       { t: 'Établissement & compte', l: [['etabs', 'Établissements', modeleDemo() ? 'Démonstration : changer de modèle d’établissement' : 'Ajouter, renommer ou changer d’établissement']] }
@@ -60,7 +64,7 @@
       '<input id="plusSearchQ21" type="search" autocomplete="off" enterkeyhint="search" placeholder="Demander à Vera…" aria-label="Demander à Vera"><button type="submit">Trouver</button></form>' +
       groupes().map(function (gr) {
         return '<div class="vp-group"><h2>' + esc(gr.t) + '</h2><div class="vp-list">' + gr.l.map(function (r) {
-          return '<button type="button" class="vp-row" data-vp="' + r[0] + '"><span class="vp-tile">' + svg(r[0]) + '</span><span class="vp-txt"><b>' + esc(r[1]) + '</b><small>' + esc(r[2]) + '</small></span><span class="vp-chev" aria-hidden="true">›</span></button>';
+          return '<button type="button" class="vp-row" data-vp="' + r[0] + '"><span class="vp-tile">' + svg(r[0]) + '</span><span class="vp-txt"><b>' + esc(r[1]) + (r[3] ? ' <span class="vp-badge">' + esc(r[3]) + '</span>' : '') + '</b><small>' + esc(r[2]) + '</small></span><span class="vp-chev" aria-hidden="true">›</span></button>';
         }).join('') + '</div></div>';
       }).join('');
     [].forEach.call(box.querySelectorAll('[data-vp]'), function (b) { b.onclick = function () { var f = ACTIONS[b.getAttribute('data-vp')]; if (f) try { f(); } catch (e) {} }; });
@@ -84,6 +88,7 @@
     '#vd-plus .vp-row+.vp-row{border-top:1px solid var(--vp-line)}#vd-plus .vp-row:active,#vd-plus .vp-row:hover{background:rgba(22,163,74,.06)}' +
     '#vd-plus .vp-tile{display:flex;align-items:center;justify-content:center;width:42px;height:42px;flex:0 0 42px;border-radius:12px;background:var(--vp-tile);color:var(--vp-ic)}#vd-plus .vp-ic{width:22px;height:22px}' +
     '#vd-plus .vp-txt{flex:1;min-width:0}#vd-plus .vp-txt b{display:block;font:700 16px/1.25 -apple-system,system-ui,sans-serif;color:var(--vp-txt)}#vd-plus .vp-txt small{display:block;margin-top:3px;font:400 13.5px/1.35 -apple-system,system-ui,sans-serif;color:var(--vp-sub)}' +
+    '#vd-plus .vp-badge{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:999px;background:linear-gradient(135deg,#b45309,#92400e);color:#fff;font:800 10.5px/1.3 -apple-system,system-ui,sans-serif;letter-spacing:.06em;vertical-align:2px}' +
     '#vd-plus .vp-chev{font:400 26px/1 -apple-system,system-ui,sans-serif;color:var(--vp-sub);opacity:.7}' +
     '@media (min-width:900px){#vd-plus{padding-top:18px}#vd-plus .vp-head h1{font-size:40px}}';
   (doc.head || doc.documentElement).appendChild(css);

@@ -48,6 +48,12 @@
     [/^(\d+(?:,\d+)?)([\s\u00a0\u202f])%([\s\u00a0\u202f])de l[’']objectif$/g, '$1$2%$3du minimum'],
     [/ : objectif dépassé de\b/g, ' : minimum dépassé de'], [/ : objectif atteint\b/g, ' : minimum atteint'], [/(^|\s)à son (propre )?objectif\b(?! choisi| de résultat)/g, '$1à son $2minimum'],
     [/(€|\u00a0€) au-dessus de l[’']objectif$/g, '$1 au-dessus du minimum'],
+    /* C299 (L5, V15-127) : les mots d'un patron, pas ceux du moteur */
+    [/\bContribution matière pondérée\b/g, 'Marge moyenne des plats vendus'], [/\bobjectif interne pondéré\b/g, 'objectif moyen des plats vendus'],
+    [/\bSolde de pilotage avant impôt\b/g, 'Résultat avant impôt'], [/\bsensibilité mécanique\b/g, 'effet direct'],
+    [/\bVera explique ; le moteur Verdict calcule\./g, 'Vera explique ; Verdict fait les calculs.'], [/\btrois occurrences comparables\b/g, 'au moins trois services comparables'],
+    [/\bde l[’']application CHR\b/g, 'de Verdict'], [/\bsans exposer les données au personnel Inventaire\b/g, 'sans montrer ces chiffres à l’équipe qui fait l’inventaire'],
+    [/\bstatistique FIBEN publiée\b/g, 'statistique publiée par la Banque de France'], [/\bstatistique sectorielle FIBEN\b/g, 'statistique sectorielle de la Banque de France'],
     /* C205 (V55) : une seule orthographe */
     [/\b([Pp])etit déjeuner\b/g, '$1etit-déjeuner'],
     /* C205 (V43, V44) : écriture française des montants et des dates, partout à l'affichage.
@@ -64,7 +70,7 @@
     /* C187 : une bouteille compte en « unités » partout (l'Inventaire dit unités, l'écart disait pièces) */
     [/(\d)(\s|\u00a0)pièces\b/g, '$1$2unités'], [/(\d)(\s|\u00a0)pièce\b/g, '$1$2unité']
   ];
-  var TEST = /\(s\)|(^|[\s(·:=≈→])-\d|20\d\d-\d\d-\d\d|(^|\s)1\s|objectif|etit déjeuner|co[uû]t humain|masse salariale|food cost|point mort|prime cost|cuisine \+ salaires|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b|\dpièce|\d\spièce|contribution|\d\s?pts?\b|\d\.\d+\s?%/i;
+  var TEST = /\(s\)|(^|[\s(·:=≈→])-\d|20\d\d-\d\d-\d\d|(^|\s)1\s|objectif|etit déjeuner|co[uû]t humain|masse salariale|food cost|point mort|prime cost|cuisine \+ salaires|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b|\dpièce|\d\spièce|contribution|\d\s?pts?\b|\d\.\d+\s?%|pilotage avant|mécanique|Vera explique|occurrences comparables|application CHR|personnel Inventaire|FIBEN/i;/* C299 (V15-127) */
   var EXCLU = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, SELECT: 1, OPTION: 1, NOSCRIPT: 1, CODE: 1, PRE: 1 };
   function francais(d) { try { var l = (d.defaultView && d.defaultView.LOCALE) || w.LOCALE || d.documentElement.lang || 'fr'; return /^fr/i.test(String(l)); } catch (e) { return true; } }
   function corriger(t) {

@@ -162,7 +162,7 @@
   /* C298 (V15-070) : la date de la journée de la carte de saisie (une journée passée choisie par « Corriger cette journée » ; avec tous, aussi aujourd'hui). */
   function cleSaisie(S, tous) { if (!S || (!S.passe && !tous) || S.cle || !(S.n >= 1)) return null; var k; try { k = String(w.verdictOperationalClock().key).slice(0, 8); } catch (e) { return null; } return k + (S.n < 10 ? '0' : '') + S.n; }
   function clair(lp, c, S) {
-    var t = montant(lp.textContent), base = Number(S.obj) || t, passe = /pour cette journée/.test(lp.textContent);
+    var att = function (k) { return lp.getAttribute ? lp.getAttribute(k) : null; }, t = Number(att('data-montant')) || montant(lp.textContent), base = Number(S.obj) || t, passe = att('data-passe') != null ? att('data-passe') === '1' : /pour cette journée/.test(lp.textContent);
     if (!(t > 0)) return;
     if (joursInconnus()) { lp.className = 'vx53-o'; lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>à confirmer</b>';
       var ex0 = lp.nextElementSibling; if (!ex0 || !ex0.classList.contains('vx53-e')) { ex0 = lp.ownerDocument.createElement('p'); ex0.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex0); }
@@ -201,7 +201,7 @@
     try { uneSeuleAvance(d, cw.VD.chr); uneSeuleAvance(doc, cw.VD.chr); mentionTTC(d); } catch (e) {}
     /* Saisie du jour : le prochain jour ouvert à faire. */
     var saisie = d.getElementById('modSaisie'), next = cw.VD.chr.next, cleS = cleSaisie(cw.VD.saisie), quand = cleS || next; /* C298 (V15-070) */
-    if (saisie) { var lp = [].filter.call(saisie.querySelectorAll('.day-total p'), function (p) { return /^À réaliser (aujourd|pour cette journée)/.test((p.textContent || '').trim()); })[0];
+    if (saisie) { var lp = saisie.querySelector('.day-total p.day-a-realiser') /* C298 : reconnue dans toutes les langues */ || [].filter.call(saisie.querySelectorAll('.day-total p'), function (p) { return /^À réaliser (aujourd|pour cette journée)/.test((p.textContent || '').trim()); })[0];
       if (lp) clair(lp, cw.VD.chr, cw.VD.saisie || {}); arrondir(saisie); }
     if (saisie && quand) {
       var ex = saisie.querySelector('.vx39');

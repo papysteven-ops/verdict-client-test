@@ -512,3 +512,24 @@ if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',function()
   }
   if(!brancher()&&typeof root.setInterval==='function'){var k=0,iv=root.setInterval(function(){if(brancher()||++k>40)root.clearInterval(iv);},250);}
 })(window);
+
+/* C301 (aide, demande de L1) — « Inventaire (en haut) », « Audit, barre du bas » : vrai sur téléphone, faux sur ordinateur (onglets
+   à gauche). Les fiches d'aide (AIDE_V104) nomment l'onglet sans le situer ; la traduction déjà faite est reprise (TR). */
+(function(root){
+  'use strict';
+  var NOUV={
+    'Accueil (en haut de l’écran) ; le détail est dans Audit, barre du bas.':'Accueil ; le détail est dans l’onglet Audit.',
+    'Audit, barre du bas. Les définitions utilisées sont rappelées à côté des indicateurs.':'Onglet Audit. Les définitions utilisées sont rappelées à côté des indicateurs.',
+    'Carte ; Inventaire (en haut) pour les achats et le stock ; Plus → Équipe & services.':'Carte ; module Inventaire pour les achats et le stock ; Plus → Équipe & services.',
+    'Simuler, barre du bas → Jours d’ouverture → « Ouvrir Organisation & équipe ».':'Onglet Simuler → Jours d’ouverture → « Ouvrir Organisation & équipe ».',
+    'Barre des établissements en haut → roue dentée → Comparer, ou Centre d’aide → Mes établissements.':'Barre des établissements → roue dentée → Comparer, ou Centre d’aide → Mes établissements.',
+    'Audit, barre du bas → « Exporter ce rapport » ou « Export comptable ».':'Onglet Audit → « Exporter ce rapport » ou « Export comptable ».'};
+  function corriger(){
+    var A=root.AIDE_V104;if(!A||!A.length)return false;
+    var TR=root.TR&&typeof root.TR==='object'?root.TR:null;
+    A.forEach(function(x){if(!x||typeof x.o!=='string')return;var n=NOUV[x.o]||x.o.replace(/ \(en haut de l’écran\)| \(en haut\)/g,'').replace(/, barre du bas/g,'');
+      if(n!==x.o){if(TR&&TR[x.o]&&!TR[n])TR[n]=TR[x.o];x.o=n;}});
+    return true;
+  }
+  if(!corriger()&&typeof root.setInterval==='function'){var k=0,iv=root.setInterval(function(){if(corriger()||++k>40)root.clearInterval(iv);},250);}
+})(window);

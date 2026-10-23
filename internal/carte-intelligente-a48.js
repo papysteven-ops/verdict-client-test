@@ -303,7 +303,7 @@
     var g = R.gc; if (!(R.gainPrix > 0.5) || !g || !g.fiable) return '';
     return '<p class="ci-m" data-ci-lien style="margin-top:10px">Dont <b>' + signe(R.gainPrix * part) + ' par mois</b> par les nouveaux prix de ' + R.prixPlats + (R.prixPlats > 1 ? ' plats sous leur objectif' : ' plat sous son objectif') +
       (R.prixTous ? ' : le chiffre du curseur « Prix de la carte » de Simuler' : ', calculés comme dans Simuler') + '. ' +
-      (g.retenu ? 'Ces prix sont compris dans votre plan Simuler.' : 'Votre plan Simuler (' + signe(g.plan) + ' par an) ne les ajoute pas' + (g.plafond ? ' : il atteint déjà le niveau des meilleurs établissements de votre format.' : '.')) +
+      (g.retenu ? 'Ces prix sont compris dans votre plan Simuler.' : g.texte ? g.texte /* C301 (V15-042) : la même phrase que le récit */ : 'Votre plan Simuler (' + signe(g.plan) + ' par an) ne les ajoute pas.') +
       (R.gainMois - R.gainPrix > 0.5 ? ' ' + resteTxt(R, part) : '') + '</p>';
   }
   function dessiner() {

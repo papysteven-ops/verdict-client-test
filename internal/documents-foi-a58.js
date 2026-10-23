@@ -39,7 +39,9 @@
      saisonnier) alors que le moteur compte 12 mois : trois montants pour la même saisie (86 100 / 147 600 / 179 700 €), et le
      document lui-même faussé (« Vos documents 104 825 € » = 179 700 × 7 ÷ 12 ; le FEC porte 179 700 €). La question compte
      désormais exactement comme le moteur : un seul total partout. */
-  function moisEquipe(I) { return 12; }
+  /* Décision 3 (Steven, 23/10 ; moteur 029 de L3) : l'équipe d'un saisonnier compte ses mois travaillés, jamais × 12 ; le
+     loyer et les autres charges restent sur l'année. */
+  function moisEquipe(I) { var m = num(I && I.mois); return m >= 1 && m <= 12 ? m : 12; }
   function valeurs(D, I) {
     I = I || D.in || {}; var mois = moisEquipe(I), f = function (k) { return num(I[k]); }, autres = 0;
     for (var i = 2; i <= 10; i++) autres += f('f' + i);
@@ -50,7 +52,7 @@
   function detailEquipe(I) {
     I = I || {}; var s = num(I.salb) * (1 + num(I.salt) / 100), d = num(I.dirb) * (1 + num(I.dirt) / 100), L = [];
     if (s) L.push(eur(s) + '/mois de salariés'); if (d) L.push(eur(d) + '/mois de dirigeant');
-    return L.length ? L.join(' + ') + ' × ' + moisEquipe(I) + ' mois' : '';
+    var m = moisEquipe(I); return L.length ? L.join(' + ') + ' × ' + m + ' mois' + (m < 12 ? ' travaillés' : '') : '';
   }
   function valeursFEC(t) { return { ca: num(t.revenue), nour: num(t.food), boi: num(t.beverage), emb: num(t.packaging), com: num(t.commissions), equipe: num(t.payroll), loyer: num(t.rent), autres: num(t.other_fixed), amort: num(t.amortization) }; }
   function resultat(v) { return v.ca == null ? null : v.ca - num(v.nour) - num(v.boi) - num(v.emb) - num(v.com) - v.equipe - v.loyer - v.autres - num(v.amort); }
@@ -265,6 +267,7 @@
     /* C300 (V15-085) : deux onglets ouverts — l'onglet caché, resté sur une version ancienne du dossier, écrivait à chaque tour
        (remplissage, verrou de la note) et provoquait « le dossier a changé dans un autre onglet » : seul l'onglet visible agit. */
     if (doc.hidden === true) return;
+    try { migrerEquipe(D); } catch (e) {}
     /* démonstration : la note est déjà une simulation, rien à vérifier ni à afficher */
     if (D._demo || (D.dataProvenance && D.dataProvenance.nature === 'model_estimate')) { var bd = doc.getElementById('df58-ban'); if (bd) bd.remove(); return; }
     /* l'état de la note change (finale ↔ non finale) : on enregistre et on redessine l'écran tout de suite */
@@ -550,6 +553,14 @@
       return R.apply(this, arguments); }; g.__df58 = true; w.verdictEnregistrerDate = g; }
   }
 
+  function migrerEquipe(D) {
+    var fi = D && D.fecImport, t = fi && fi.totals, I = D && D.in, m = num(I && I.mois); if (!t || !I || D.equipeMoisC300 || !(m >= 1 && m < 12)) return;
+    var avant = (num(I.salb) + num(I.dirb)) * 12; D.equipeMoisC300 = true;
+    if (Math.abs(avant - num(t.payroll)) <= Math.max(50, num(t.payroll) * 0.01)) {
+      ['salb', 'dirb'].forEach(function (k) { if (!vide(I[k])) I[k] = Math.round(num(I[k]) * 12 / m * 100) / 100; if (D.docRef && D.docRef.in && !vide(D.docRef.in[k])) D.docRef.in[k] = Math.round(num(D.docRef.in[k]) * 12 / m * 100) / 100; });
+    }
+    enregistrer(true);
+  }
   try { protegerJournees(); } catch (e) {}
   function boucle() { try { etiquette(); } catch (e) {} try { envelopper(); } catch (e) {} try { protegerJournees(); if (w.DB) nettoyerApresCaisse(w.DB); } catch (e) {} try { css(); tour(); } catch (e) {} }
   var it = setInterval(boucle, 1000); if (it && it.unref) it.unref();

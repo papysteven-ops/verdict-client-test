@@ -367,7 +367,8 @@
     for(var prior=Number(year)-1;prior>=Number(year)-5;prior--){
       var complete=true,values=[],fromFec=false;
       yearMonths(prior).forEach(function(key){var value=null,snapshot=latestClosure(key),capacity=monthOpenCapacity(key);
-        if(snapshot&&snapshot.coverage===100&&hasNumber(snapshot.actual))value=Number(snapshot.actual);
+        if(fec&&hasNumber(fec[key])){value=fec[key];fromFec=true;} /* C298 (B31) : le document comptable fait foi pour un mois qu’il couvre */
+        else if(snapshot&&snapshot.coverage===100&&hasNumber(snapshot.actual))value=Number(snapshot.actual);
         else{var records=monthRecords(key),known=Object.keys(records).filter(function(date){return records[date].ca!=null;});if(known.length&&capacity>0&&known.length>=capacity)value=known.reduce(function(total,date){return total+Number(records[date].ca);},0);}
         if(value==null&&fec&&hasNumber(fec[key])){value=fec[key];fromFec=true;}
         if(value==null&&(!!(d.moisPilotage&&d.moisPilotage[key]===false)||capacity===0))value=0;
@@ -381,7 +382,7 @@
      pour « Vos années ». Aucune année partielle n'est montrée comme une année. */
   function knownYearMonths(year,R){var ev=seasonEvidence(Number(year)+1,R);if(ev.years.indexOf(String(year))<0)return null;var fec=fecMonthsTTC(R),out=[],fromFec=0;
     yearMonths(year).forEach(function(key){var snapshot=latestClosure(key),records=monthRecords(key),known=Object.keys(records).filter(function(date){return records[date].ca!=null;}),capacity=monthOpenCapacity(key),value=null;
-      if(snapshot&&snapshot.coverage===100&&hasNumber(snapshot.actual))value=Number(snapshot.actual);else if(known.length&&capacity>0&&known.length>=capacity)value=known.reduce(function(t,date){return t+Number(records[date].ca);},0);
+      if(fec&&hasNumber(fec[key])){value=fec[key];fromFec++;} /* C298 (B31) : le document comptable fait foi pour un mois qu’il couvre */else if(snapshot&&snapshot.coverage===100&&hasNumber(snapshot.actual))value=Number(snapshot.actual);else if(known.length&&capacity>0&&known.length>=capacity)value=known.reduce(function(t,date){return t+Number(records[date].ca);},0);
       if(value==null&&fec&&hasNumber(fec[key])){value=fec[key];fromFec++;}out.push(Math.round((Number(value)||0)*100)/100);});
     out.source=fromFec===12?"fec":fromFec?"mixte":"caisse";return out;}
   function knownYear(year,R){var months=knownYearMonths(year,R);if(!months)return null;return {year:String(year),total:Math.round(months.reduce(function(a,b){return a+b;},0)*100)/100,source:months.source};}

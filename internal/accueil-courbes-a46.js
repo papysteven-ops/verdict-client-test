@@ -15,6 +15,10 @@
   var w = window, doc = document; if (w.__vdAccueilRythme) return; w.__vdAccueilRythme = true;
   var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   var INIT = 'JFMAMJJASOND';
+  /* C298 : initiales des jours et des mois dans la langue choisie ; la langue entre dans la signature du dessin. */
+  function lng() { try { var l = String(w.LOCALE || 'fr').slice(0, 2); return INITJ[l] ? l : 'fr'; } catch (e) { return 'fr'; } }
+  var INITJ = { fr: 'LMMJVSD', en: 'MTWTFSS', es: 'LMXJVSD', it: 'LMMGVSD', de: 'MDMDFSS', nl: 'MDWDVZZ', pt: 'STQQSSD' }, INITM = { fr: INIT, en: INIT, es: 'EFMAMJJASOND', it: 'GFMAMGLASOND', de: INIT, nl: INIT, pt: INIT };
+  function initMois() { return INITM[lng()]; }
   var JOURS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
   function eur(v) { return Math.round(Number(v) || 0).toLocaleString('fr-FR') + ' €'; }
   /* C204 : un chiffre sous son minimum ne s'arrondit jamais à 100 % (99,5 % s'écrit 99 %, pas 100 %). */
@@ -58,7 +62,7 @@
   function court(r) { return ent(r) + '<small>\u202f%</small>'; }
   function calendrier(m) {
     var h = '<div class="rx-cal" role="group" aria-label="' + esc(m.kicker) + '">';
-    ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(function (j) { h += '<span class="rx-cj" aria-hidden="true">' + j + '</span>'; });
+    INITJ[lng()].split('').forEach(function (j) { h += '<span class="rx-cj" aria-hidden="true">' + j + '</span>'; });
     var prem = m.cols[0] ? m.cols[0].dow : 0; for (var k = 0; k < prem; k++) h += '<span class="rx-c0"></span>';
     m.cols.forEach(function (c, i) {
       var st = c.type === 'reel' ? etat(c.r) : c.type, v = c.type === 'reel' ? court(c.r) : c.type === 'repos' ? 'Repos' : c.type === 'avant' ? '' : c.avenir ? '' : '—';
@@ -99,12 +103,12 @@
     var cols = mois.map(function (m, i) { var c0 = colMois(m, i); c0.cle = an + '-' + String(i + 1).padStart(2, '0'); c0.minMois = Number(m.target) || 0; c0.methode = m.method || null; c0.n1 = m.lastYear || null; c0.fin = m.kind === 'current' && Number(m.value) > 0 ? Number(m.value) : null; return c0; });
     function colMois(m, i) {
       var lib = MOIS[i] + ' ' + an;
-      if (i < dm) return { lib: lib, axe: INIT[i], type: 'avant' }; /* C213 (W10) : avant le début du suivi, rien n'est attendu */
-      if (!(m.target > 0)) return { lib: lib, axe: INIT[i], type: 'repos' };
-      if (m.kind === 'past') return m.actual == null ? { lib: lib, axe: INIT[i], type: 'vide', cible: m.target } : { lib: lib, axe: INIT[i], type: 'reel', valeur: m.actual, cible: m.target, r: m.actual / m.target };
-      if (m.kind === 'current') return ad.attendu > 0 ? { lib: lib + ' (en cours)', axe: INIT[i], type: 'encours', encours: true, valeur: ad.encaisse, cible: ad.attendu, r: ad.encaisse / ad.attendu } : { lib: lib + ' (en cours)' + partSuivie(an, i, dm), axe: INIT[i], type: 'vide', encours: true, auj: true, cible: m.target };
-      if (m.value == null) return { lib: lib, axe: INIT[i], type: 'vide', cible: m.target, avenir: true };
-      return { lib: lib, axe: INIT[i], type: 'projete', valeur: m.value, cible: m.target, r: m.value / m.target };
+      if (i < dm) return { lib: lib, axe: initMois()[i], type: 'avant' }; /* C213 (W10) : avant le début du suivi, rien n'est attendu */
+      if (!(m.target > 0)) return { lib: lib, axe: initMois()[i], type: 'repos' };
+      if (m.kind === 'past') return m.actual == null ? { lib: lib, axe: initMois()[i], type: 'vide', cible: m.target } : { lib: lib, axe: initMois()[i], type: 'reel', valeur: m.actual, cible: m.target, r: m.actual / m.target };
+      if (m.kind === 'current') return ad.attendu > 0 ? { lib: lib + ' (en cours)', axe: initMois()[i], type: 'encours', encours: true, valeur: ad.encaisse, cible: ad.attendu, r: ad.encaisse / ad.attendu } : { lib: lib + ' (en cours)' + partSuivie(an, i, dm), axe: initMois()[i], type: 'vide', encours: true, auj: true, cible: m.target };
+      if (m.value == null) return { lib: lib, axe: initMois()[i], type: 'vide', cible: m.target, avenir: true };
+      return { lib: lib, axe: initMois()[i], type: 'projete', valeur: m.value, cible: m.target, r: m.value / m.target };
     }
     var passes = cols.filter(function (x) { return x.type === 'reel'; }), ok = passes.filter(function (x) { return x.r >= 1; }).length;
     var sel = cols.findIndex(function (x) { return x.encours; }); if (sel < 0) sel = Math.min(cols.length - 1, Number(moisCle().slice(5)) - 1); /* C213 (W17) : le mois en cours, pas décembre */
@@ -327,7 +331,7 @@
   function appliquerDefaut(d, c, m) { d.__vx46jour = c.date; appliquerJour(d); d.__vx46jour = null; }
   function poser(d, chap, m) {
     var ch = d.getElementById('vx40-' + chap), col = ch && ch.querySelector('.vx40-p'); if (!col || !m || !m.cols.length) return;
-    var box = col.querySelector(':scope > section.rx'), sig = JSON.stringify(m.cols.map(function (c) { return [c.type, Math.round((c.valeur || 0)), Math.round((c.cible || 0))]; }));
+    var box = col.querySelector(':scope > section.rx'), sig = lng() + JSON.stringify(m.cols.map(function (c) { return [c.type, Math.round((c.valeur || 0)), Math.round((c.cible || 0))]; }));
     if (box && box.__sig === sig) return;
     var premier = !box;
     if (!box) {

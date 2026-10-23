@@ -47,6 +47,8 @@ function ecartMatiere(R,st){
   var reel=(avec?num(d.nour)+num(d.boi):num(d.nour))/ca*100,theo=avec?num(st.theoR):tn,pts=reel-theo;
   return {perimetre:avec?'nourriture + boissons':'nourriture',avecBoissons:avec,reel:reel,theo:theo,pts:pts,eur:pts/100*ca,compte:pts>=4,tiers:pts>=4?pts/3/100*ca:0,periode:periodeAchats(R),ca:ca};
 }
+/* C301 (V15-002, phrase) : la phrase de la décision de Steven, la même que l'Audit (verdictGainPanier, traduite par L3) */
+function reglePanier(){try{var g=typeof w.verdictGainPanier==='function'?w.verdictGainPanier(1):null;if(g&&g.hypothese)return g.hypothese;}catch(e){}return 'À volume constant, une hausse de prix ne coûte pas de matière ; seules la TVA et les commissions suivent.';}
 function pts1(x){return (Math.round(x*10)/10).toLocaleString(tag(),{minimumFractionDigits:1,maximumFractionDigits:1})+' point'+(Math.abs(x)>=2?'s':'');}
 w.VerdictEcartMatiere=ecartMatiere;
 
@@ -107,7 +109,10 @@ function overAll(state){
   state=state||w.DEC_STATE;
   var over={},d0=w.deriv(),vP=etat(state,'panier'),vC=etat(state,'cmd'),vJ=etat(state,'jour'),vK=etat(state,'carte');
   /* 1. leviers de chiffre d'affaires */
-  if(vP)over.panier=inp('panier')+vP;
+  /* C301 bis (panier exact) : +X € de panier ajoute exactement tickets × X ÷ (1 + TVA) de CA HT, comme verdictGainPanier (l'Audit) ;
+     le moteur part du panier arrondi saisi (29,80 € pour 29,798 € réels) : la hausse est calibrée sur ce CA. */
+  if(vP){var pb=inp('panier'),cible=num(d0.cmdAn)*vP/(1+num(d0.tva)),essai=w.deriv({panier:pb+vP}),pente=(num(essai.ca)-num(d0.ca))/vP;
+    over.panier=pb+(cible>0&&pente>0?cible/pente:vP);}
   var jsem=inp('jsem')||6,cmdj=inp('cmdj');
   if(vC)over.cmdj=Math.max(0,cmdj+vC);
   if(vJ){var nj=Math.max(1,Math.min(7,jsem+vJ)),dj=nj-jsem;over.jsem=nj;
@@ -179,7 +184,7 @@ function plan(){
   var bornePanier=0;
   if(pa>0){var vp=Math.floor(pa*PANIER_PCT*10)/10;bornePanier=vp;}
   if(pa>0&&vp>0&&!(cp&&cp.dContribAn>0)){
-    add('panier',vp,'Panier '+fr2(pa)+' € TTC. Verdict compte au plus +'+Math.round(PANIER_PCT*100)+' % de votre propre panier, auprès des clients déjà là : à volume constant, une hausse de prix ne consomme pas de matière ; la TVA et les commissions suivent.',txt('p11BasketAction',type)||'Entrées, desserts et boissons mis en avant, sans toucher aux prix affichés.');}
+    add('panier',vp,'Panier '+fr2(pa)+' € TTC. Verdict compte au plus +'+Math.round(PANIER_PCT*100)+' % de votre propre panier, auprès des clients déjà là. '+reglePanier(),txt('p11BasketAction',type)||'Entrées, desserts et boissons mis en avant, sans toucher aux prix affichés.');}
   /* C218 (W70) : le nombre de commandes n'est jamais proposé (doctrine C189 : on ne dit pas « vendez plus » quand la
      clientèle n'est pas là ; la fréquentation ne se décide pas). Le curseur reste dans Simuler, comme une hypothèse. */
   L.sort(function(a,b){return ORDER.indexOf(a.id)-ORDER.indexOf(b.id);});
@@ -226,7 +231,7 @@ function installerSimuler(){
     var fb0=fcd.dispBase;if(typeof fb0==='function')fcd.dispBase=function(){var r=fb0.apply(this,arguments);try{var R=w.moteur(),ca=num(R.d.ca),m=num(R.d.mat);if(ca>0&&m>0)r=String(r)+' · nourriture seule ; avec les boissons : '+pc(m/ca*100);}catch(e){}return r;};}
   var p=def('panier');if(p)p.step=0.1;
   /* C301 (V15-002, écran) : la règle du panier est écrite sous le curseur, la même que l'Audit (verdictGainPanier) */
-  if(p&&!p.__c301){p.__c301=true;var pb0=p.dispBase;if(typeof pb0==='function')p.dispBase=function(){/* C301 (V15-078) : aucun ticket lu = panier inconnu, jamais 0,00 € */if(!(inp('panier')>0))return 'inconnu : aucun ticket lu dans votre caisse';var r=pb0.apply(this,arguments);return String(r)+' · volume constant : pas de matière en plus ; la TVA et les commissions suivent';};}var sl=def('sal');if(sl)sl.step=50;var c=def('cmd');if(c){c.step=0.5;c.fmt=function(v){return (v>0?'+':v<0?'\u2212':'')+String(Math.abs(Math.round(v*10)/10)).replace('.',',')+' / jour';};}var x=def('fix');if(x)x.step=1;
+  if(p&&!p.__c301){p.__c301=true;var pb0=p.dispBase;if(typeof pb0==='function')p.dispBase=function(){/* C301 (V15-078) : aucun ticket lu = panier inconnu, jamais 0,00 € */if(!(inp('panier')>0))return 'inconnu : aucun ticket lu dans votre caisse';var r=pb0.apply(this,arguments);return String(r)+' · '+reglePanier();};}var sl=def('sal');if(sl)sl.step=50;var c=def('cmd');if(c){c.step=0.5;c.fmt=function(v){return (v>0?'+':v<0?'\u2212':'')+String(Math.abs(Math.round(v*10)/10)).replace('.',',')+' / jour';};}var x=def('fix');if(x)x.step=1;
   if(!def('carte')){
     var at=w.DEC_DEFS.indexOf(def('panier'))+1;
     w.DEC_DEFS.splice(at,0,{id:'carte',t:'Prix de la carte',icon:'🍽️',step:1,min:0,max:CARTE_CAP,def:0,
@@ -270,6 +275,10 @@ function installerSimuler(){
     lev.sort(function(a,c){return c.gain-a.gain;});
     return {base:b.score,baseRes:b.res,leviers:lev,max:{score:P.central.score,res:P.central.res},state:P.state,realiste:P};
   };
+  /* C301 bis (panier exact, suite) : le moteur arrondit le panier HT au centime (marches de CA de plusieurs centaines d'euros) ;
+     l'impact du levier panier et le total de Simuler lisent donc la règle unique (verdictGainPanier), comme l'Audit. */
+  if(!w.decImpact.__c301){var di0=w.decImpact;w.decImpact=function(id,v){var r=di0.apply(this,arguments);try{if(r&&id==='panier'&&num(v)&&typeof w.verdictGainPanier==='function'){var g=w.verdictGainPanier(num(v),r.R0);if(g&&isFinite(g.gain)){r.delta=g.gain;r.after=r.before+g.gain;}}}catch(e){}return r;};w.decImpact.__c301=true;}
+  if(typeof w.decImpactTotal==='function'&&!w.decImpactTotal.__c301){var dt0=w.decImpactTotal;w.decImpactTotal=function(){var t=dt0.apply(this,arguments);try{var vP=etat(w.DEC_STATE,'panier');if(t&&isFinite(t.delta)&&vP&&typeof w.verdictGainPanier==='function'){var R0=w.moteur(),seul=w.moteur(overAll({panier:vP})).d.res-R0.d.res,g=w.verdictGainPanier(vP,R0);if(g&&isFinite(g.gain)){t.delta+=g.gain-seul;t.after=t.before+t.delta;}}}catch(e){}return t;};w.decImpactTotal.__c301=true;}
   w.decPotentialState=function(P){var s={},src=(P&&P.state)||{};for(var k in src)s[k]=src[k];s.jour=0;return s;};
   w.decBest=decBest;
   if(typeof w.point11Decision==='function'&&!w.point11Decision.__c91){var p11=w.point11Decision;w.point11Decision=function(db){var r=p11.apply(this,arguments);try{sansVolume(r);}catch(e){}try{aligner(r,db);}catch(e){}return r;};w.point11Decision.__c91=true;}
@@ -393,7 +402,9 @@ function sansVolume(res){
 function aligner(res,db){
   if(!res||!res.items||!res.items.length)return;var keep=w.DB,swap=db&&db!==w.DB;if(swap)w.DB=db;
   try{
-    var P=plan();if(!P)return;var base=P.base.res,lv={};P.leviers.forEach(function(x){lv[x.id]=x.v;});if(P.bornesLevier.panier&&lv.panier==null)lv.panier=P.bornesLevier.panier;
+    var P=plan();if(!P)return;var base=P.base.res,lv={};P.leviers.forEach(function(x){lv[x.id]=x.v;});
+    /* C301 bis (B10) : la valeur retenue par le plan (réduite pour ne pas dépasser le niveau des meilleurs) : le même montant que Simuler et l'Audit */
+    for(var ks in P.state)if(P.state[ks])lv[ks]=P.state[ks];if(P.bornesLevier.panier&&lv.panier==null)lv.panier=P.bornesLevier.panier;
     res.items.forEach(function(it){var ids=ACTIONS[it.id],imp=it.impact;if(!ids||!imp||imp.kind!=='scenario_gain')return;
       var st={},n=0;ids.forEach(function(id){if(lv[id]){st[id]=lv[id];n++;}});if(!n)return;
       var g=Math.round(w.moteur(overAll(st)).d.res-base);if(!(g>0))return;
@@ -465,7 +476,11 @@ function sceneDecision(P){
 }
 function patchAudit(){
   try{
-    var el=document.getElementById('auditBody');if(!el)return;try{var R0=w.moteur();if(R0&&R0.ready)lectureResistance(el,R0);}catch(e){}var P=plan();if(!P)return;
+    var el=document.getElementById('auditBody');if(!el)return;try{var R0=w.moteur();if(R0&&R0.ready)lectureResistance(el,R0);}catch(e){}
+    /* C301 bis (V15a-N2, V15-078) : jours inconnus → « à confirmer », jamais « 1 jours · 493 142 € » ; les rythmes sont HT */
+    try{[].forEach.call(el.querySelectorAll('.au-ok > span'),function(sp){var t=sp.textContent||'',m=/^Par jour ouvert · (\d+) jours?$/.exec(t),b=sp.parentNode.querySelector('b');
+      if(m){if(Number(m[1])<=1){sp.textContent='Par jour ouvert';if(b)b.textContent='à confirmer : jours d’ouverture inconnus';}else sp.textContent='Par jour ouvert (HT) · '+m[1]+' jours';}
+      else if(/^Par mois actif · /.test(t))sp.textContent=t.replace(/^Par mois actif · /,'Par mois actif (HT) · ');});}catch(e){}var P=plan();if(!P)return;
     var full=el.querySelector('.av31-full-body');
     if(full&&!full.querySelector('#auGainReel')){var t=document.createElement('div');t.innerHTML=chapitreHTML(P);full.insertBefore(t.firstChild,full.firstChild);}
     var s5=el.querySelector('[data-av31-scene="4"]');if(s5&&!s5.getAttribute('data-c88')){s5.innerHTML=sceneDecision(P);s5.setAttribute('data-c88','1');s5.setAttribute('aria-label','Gain réaliste');}

@@ -119,7 +119,7 @@
     d._dirnRaw = d.dirn; d._salnRaw = d.saln;
     put('mat', q.nour.add(q.boi), true); put('av', q.emb.add(q.autv), true); put('cvT', q.mat.add(q.av).add(q.com), true);
     put('salM', q.dirb.mul(fraction(1).add(q.dirt.div(100))).add(q.salb.mul(fraction(1).add(q.salt.div(100)))), true);
-    put('sal', q.salM.mul(12), true);
+    put('sal', q.salM.mul(q.mois), true); /* C299 (décision 3 de Steven) : une équipe payée « par mois » coûte ses mois travaillés, jamais × 12 pour un saisonnier */
     var fixed = fraction(0); for (var i = 1; i <= 10; i++) { put('f' + i, get('f' + i), true); fixed = fixed.add(q['f' + i]); }
     put('fixM', fixed, true); put('af', fixed.mul(12), true); put('cf', q.sal.add(q.af), true); put('cfM', divideOrNull(q.cf, q.moisch), true);
     put('mc', q.ca.sub(q.cvT), true); put('amort', get('amort'), true); put('resAvantAmort', q.mc.sub(q.cf), true); put('res', q.resAvantAmort.sub(q.amort), true); put('resM', q.res.div(12), true);

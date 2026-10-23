@@ -24,7 +24,7 @@
     var T={fr:['Verdict met plus de temps que prévu à démarrer','Vérifiez votre connexion, puis réessayez. Rien n\u2019est perdu. Code&nbsp;: VD-BOOT','Réessayer'],
       en:['Verdict is taking longer than expected to start','Check your connection, then try again. Nothing is lost. Code: VD-BOOT','Try again'],
       es:['Verdict tarda más de lo previsto en iniciarse','Compruebe su conexión y vuelva a intentarlo. No se pierde nada. Código: VD-BOOT','Reintentar'],
-      it:['Verdict impiega più tempo del previsto ad avviarsi','Controlla la connessione, poi riprova. Non si perde nulla. Codice: VD-BOOT','Riprova'],
+      it:['Verdict impiega più tempo del previsto ad avviarsi','Controlli la connessione, poi riprovi. Non si perde nulla. Codice: VD-BOOT','Riprova'],
       de:['Verdict braucht länger als erwartet zum Starten','Prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Nichts geht verloren. Code: VD-BOOT','Erneut versuchen'],
       nl:['Verdict heeft meer tijd nodig dan verwacht om te starten','Controleer uw verbinding en probeer het opnieuw. Er gaat niets verloren. Code: VD-BOOT','Opnieuw proberen'],
       pt:['O Verdict está a demorar mais do que o previsto a iniciar','Verifique a sua ligação e tente novamente. Nada se perde. Código: VD-BOOT','Tentar novamente']},l='';

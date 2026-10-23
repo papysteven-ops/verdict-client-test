@@ -242,10 +242,35 @@ function duplicate(srcId,nom,ville,network,opts){
   }
   return id;
 }
+/* C301 (V15-065) — porte unique vers le serveur de comptes (recette L4, C303). */
+function compteServeur(){try{return root.VERDICT_ACCOUNT_AUTH_READY===true&&!!root.VERDICT_COMPTE&&typeof root.fetch==='function'&&String(root.location&&root.location.protocol||'').indexOf('http')===0;}catch(e){return false;}}
+function postServeur(url,body){var h={'Content-Type':'application/json'},c=root.VERDICT_ACCOUNT_STATE&&root.VERDICT_ACCOUNT_STATE.csrf;if(c)h['X-CSRF-Token']=c;
+  return root.fetch(url,{method:'POST',credentials:'same-origin',headers:h,body:JSON.stringify(body)}).then(function(r){return r.json().catch(function(){return {};}).then(function(j){return {status:r.status,j:j||{}};});});}
+function centimes(v){return (Number(v||0)/100).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2})+' € HT';}
+function prixQuote(q){var m=q&&q.montantNouveau||{},per=q&&/an/.test(String(q.periode||''))?' par an':' par mois';
+  return centimes(m.premier)+per+(q&&q.fondateur&&m.ensuite!=null&&m.ensuite!==m.premier?' la première année (prix fondateur), puis '+centimes(m.ensuite)+per:'');}
+function dire(t){try{if(typeof root.toast==='function')root.toast(t);}catch(e){}}
+function declarer(nom,suite){
+  if(!compteServeur()){suite();return;}
+  var id=typeof root.etabId==='function'?root.etabId():('e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}
+  function creerLocal(q){var e0=root.etabId,une=function(){root.etabId=e0;return id;};if(typeof e0==='function')root.etabId=une;try{suite();}finally{if(root.etabId===une)root.etabId=e0;}
+    if(q&&q.inclus)dire(q.raison==='essai'?'Établissement inclus pendant l’essai.':'Établissement inclus dans votre abonnement.');}
+  function envoyer(q,confirme){var b={action:'add_establishment',etabId:id,name:String(nom||'Nouvel établissement').slice(0,100)};if(tz)b.timezone=tz;if(confirme!=null)b.confirmedAmount=confirme;
+    postServeur('/api/workspace',b).then(function(r){
+      if(r.status===200&&r.j.ok!==false){creerLocal(r.j.quote||q);return;}
+      if(r.status===402&&r.j.quote){demander(r.j.quote);return;}
+      if(r.status===409){root.ask('Abonnement à mettre à jour','Votre abonnement est géré dans la page Compte : ajoutez-y cet établissement, puis revenez le créer ici. Rien n’a été créé.','Ouvrir mon abonnement',function(){root.location.href='../../account.html?view=abo';});return;}
+      dire('Le serveur n’a pas confirmé l’établissement : rien n’a été créé. Réessayez dans un instant.');
+    }).catch(function(){dire('Le serveur de comptes ne répond pas : rien n’a été créé. Réessayez dans un instant.');});}
+  function demander(q){if(q.inclus){envoyer(q,null);return;}
+    root.ask('Confirmer le supplément ?','« '+String(nom||'Nouvel établissement')+' » s’ajoute à votre abonnement : '+prixQuote(q)+'. Rien n’est facturé sans cette confirmation.','Confirmer et créer',function(){envoyer(q,q.montantNouveau&&q.montantNouveau.premier);});}
+  postServeur('/api/account',{action:'establishment_quote'}).then(function(r){if(r.status===200&&r.j&&typeof r.j==='object')demander(r.j);else dire('Le serveur n’a pas pu chiffrer l’établissement : rien n’a été créé.');})
+    .catch(function(){dire('Le serveur de comptes ne répond pas : rien n’a été créé. Réessayez dans un instant.');});
+}
 function createSame(){
   var t=T(),src=(doc.getElementById('ne12-src')||{}).value,net=(doc.getElementById('ne12-net')||{}).value,nom=((doc.getElementById('ne12-nom')||{}).value||'').trim(),ville=((doc.getElementById('ne12-ville')||{}).value||'').trim(),quartier=((doc.getElementById('ne12-quartier')||{}).value||'').trim();
   if(!nom){var e=doc.getElementById('ne12-err');if(e){e.textContent=t.noName;e.hidden=false;}return;}
-  closeSheet();duplicate(src,nom,ville,net,{quartier:quartier});
+  declarer(nom,function(){closeSheet();duplicate(src,nom,ville,net,{quartier:quartier});});
 }
 
 /* Fiche « Mon établissement » : champ Arrondissement / quartier juste après la ville. */
@@ -255,14 +280,15 @@ function districtField(){
     inp.addEventListener('change',function(){if(!root.DB)return;root.DB.etabQuartier=inp.value.trim().slice(0,80);try{root.save&&root.save('etab-place');}catch(e){}try{root.drawEtabs&&root.drawEtabs();root.refreshAll&&root.refreshAll();}catch(e){}});}
   if(doc.activeElement!==inp)inp.value=(root.DB&&root.DB.etabQuartier)||'';
 }
-function createBlank(){var q=((doc.getElementById('ne-quartier')||{}).value||'').trim();var before=S()&&S().actif;try{root.createEtab('');}catch(e){}closeSheet();if(S()&&S().actif!==before)publierContexte();if(q&&S()&&S().actif!==before&&root.DB){root.DB.etabQuartier=q.slice(0,80);try{root.save&&root.save('etab-place');root.drawEtabs&&root.drawEtabs();root.refreshAll&&root.refreshAll();}catch(e){}}}
+function createBlank(){var q=((doc.getElementById('ne-quartier')||{}).value||'').trim(),nomB=((doc.getElementById('ne-nom')||{}).value||'').trim();declarer(nomB,function(){var before=S()&&S().actif;try{var ce0=root.createEtab;(ce0&&ce0.__c301orig||ce0)('');}catch(e){}closeSheet();if(S()&&S().actif!==before)publierContexte();if(q&&S()&&S().actif!==before&&root.DB){root.DB.etabQuartier=q.slice(0,80);try{root.save&&root.save('etab-place');root.drawEtabs&&root.drawEtabs();root.refreshAll&&root.refreshAll();}catch(e){}}});}
 /* Bandeau d'accueil d'un établissement dupliqué tant que son score est bloqué. */
 function banner(){
   var host=doc.getElementById('v-pil');if(!host)return;var old=doc.getElementById('dup12-banner');
   var d=root.DB,R=null;if(d&&d._duplicatedFrom){try{R=root.moteur();}catch(e){R=null;}}
   if(!d||!d._duplicatedFrom||(R&&R.ready)){if(old)old.remove();return;}
   var t=T(),html='<div class="dup12-k">🔒 '+esc(t.bannerK)+'</div><b>'+esc(t.bannerT)+'</b><p>'+esc(t.bannerB.replace('{src}',d._duplicatedFrom.name||''))+'</p>'+
-    '<div class="dup12-actions"><button type="button" class="btn" onclick="verdictDupFec()">'+esc(t.fec)+'</button><button type="button" class="btn sec" onclick="verdictDupEntry()">'+esc(t.entry)+'</button></div>';
+    /* C301 (V15-131) : un seul bouton, le même que l'Accueil (même libellé, même fenêtre) */
+    '<div class="dup12-actions"><button type="button" class="btn" onclick="verdictDupRef()">'+esc(({fr:'Importer mon FEC ou saisir ma situation',en:'Import my file or enter my situation',es:'Importar archivo o indicar situación',it:'Importa il file o inserisci la situazione',de:'Datei importieren oder Lage erfassen',nl:'Bestand importeren of situatie invoeren',pt:'Importar ficheiro ou indicar situação'})[String(root.LOCALE||doc.documentElement.lang||'fr').slice(0,2)]||'Importer mon FEC ou saisir ma situation')+'</button></div>';
   if(!old){old=doc.createElement('section');old.id='dup12-banner';old.className='dup12';host.insertBefore(old,host.firstChild);}
   if(old.innerHTML!==html)old.innerHTML=html;
 }
@@ -340,14 +366,19 @@ root.addEventListener('message',function(ev){var d=ev&&ev.data;if(!d||!d.context
   var W={fr:['À compléter','il reste {m} une fois les produits payés'],en:['To complete','{m} left once products are paid'],es:['Por completar','queda {m} una vez pagados los productos'],it:['Da completare','resta {m} una volta pagati i prodotti'],de:['Zu ergänzen','{m} bleiben nach Wareneinsatz'],nl:['Aan te vullen','{m} blijft over na de producten'],pt:['A completar','sobra {m} depois de pagos os produtos']};
   var nem=function(d){var r=em.apply(this,arguments);try{if(r&&r.score==null&&d){var prev=root.DB;try{root.DB=d;var st=root.carteStats();if(st&&st.ca>0&&isFinite(st.margePond))r.marge=st.margePond;}finally{root.DB=prev;}}}catch(e){}return r;};
   nem.__c301=true;root.etabCarteMeta=nem;
-  var nvi=function(p,c){var h=vi.apply(this,arguments);try{if(c&&c.score==null&&c.marge!=null&&typeof h==='string'){var l=String(root.LOCALE||'fr').slice(0,2),x=W[l]||W.fr,i=h.indexOf('data-index="carte"');if(i>=0){var a=h.slice(0,i),b=h.slice(i),m=(Math.round(c.marge*10)/10).toLocaleString(root.LOCALE_TAG||'fr-FR')+' %';
+  var nvi=function(p,c){var h=vi.apply(this,arguments);try{/* C301 (deux indices, liste) : ce que chacun mesure quand ils divergent */var sp=p&&Number.isFinite(p.score)?p.score:null,scc=c&&Number.isFinite(c.score)?c.score:null;
+      if(sp!=null&&scc!=null&&typeof h==='string'&&String(root.LOCALE||'fr').slice(0,2)==='fr'){var lig=scc>=60&&sp<60?'La carte est bonne : c’est la structure (équipe, loyer, charges) qui perd.':(scc<60&&sp>=60?'La structure tient : c’est la carte qui reste à travailler.':'');
+        if(lig)h=h.replace(/<\/span>$/,'<small style="flex:1 1 100%;display:block;color:var(--mut2);font-size:11.5px">'+lig+'</small></span>');}}catch(e){}try{if(c&&c.score==null&&c.marge!=null&&typeof h==='string'){var l=String(root.LOCALE||'fr').slice(0,2),x=W[l]||W.fr,i=h.indexOf('data-index="carte"');if(i>=0){var a=h.slice(0,i),b=h.slice(i),m=(Math.round(c.marge*10)/10).toLocaleString(root.LOCALE_TAG||'fr-FR')+' %';
         b=b.replace(/(<b style="color:[^"]*">)[^<]*(<\/b>)/,'$1'+x[0]+'$2');if(b.indexOf('<small style="display:block')<0)b=b.replace('</b></span>','</b><small style="display:block;color:var(--mut2)">'+x[1].replace('{m}',m)+'</small></span>');h=a+b;}}}catch(e){}return h;};
   nvi.__c301=true;root.verdictIndicesHTML=nvi;})();
 /* C301 (V15-103) : la liste des modèles ne dit plus « Le chargement remplace votre saisie actuelle » (faux : le modèle
    s'ouvre dans une démonstration isolée, l'établissement et ses chiffres restent à leur place). */
 (function(){var om=root.openModeles;if(typeof om!=='function'||om.__c301)return;var g=function(){var r=om.apply(this,arguments);try{var tw=doc.createTreeWalker(doc.body,4,null),n,L=[];while((n=tw.nextNode()))if(n.nodeValue.indexOf('Le chargement remplace votre saisie actuelle.')>=0)L.push(n);L.forEach(function(x){x.nodeValue=x.nodeValue.replace('Le chargement remplace votre saisie actuelle.','Chaque modèle s’ouvre dans une démonstration isolée : votre établissement et vos chiffres restent à leur place.');});}catch(e){}return r;};for(var k in om)if(Object.prototype.hasOwnProperty.call(om,k))g[k]=om[k];g.__c301=true;root.openModeles=g;})();
+/* C301 (V15-065) : « Créer l’établissement réel » (029) passe par la même porte ; jamais pour un modèle */
+(function(){var ce=root.createEtab;if(typeof ce!=='function'||ce.__c301)return;var g=function(modele){if(modele)return ce.apply(this,arguments);var s=this,a=arguments,n=((doc.getElementById('ne-nom')||{}).value||'').trim();declarer(n,function(){ce.apply(s,a);});};g.__c301=true;g.__c301orig=ce;root.createEtab=g;})();
+root.VerdictDeclarerEtab=declarer;
 root.VerdictNomCompte=nomDuCompte;root.verdictNewEtabChooser=openChooser;root.verdictNewEtabModel=openModel;root.verdictNewEtabSame=openSame;root.verdictNewEtabFresh=openFresh;root.verdictNewEtabClose=closeSheet;
-root.verdictNewEtabCreateSame=createSame;root.verdictNewEtabCreateBlank=createBlank;root.verdictEtabDuplicate=duplicate;root.verdictDupFec=goFec;root.verdictDupEntry=goEntry;
+root.verdictNewEtabCreateSame=createSame;root.verdictNewEtabCreateBlank=createBlank;root.verdictEtabDuplicate=duplicate;root.verdictDupFec=goFec;root.verdictDupEntry=goEntry;root.verdictDupRef=function(){try{if(typeof root.openRef==='function'){root.openRef();return;}}catch(e){}goFec();};
 root.VerdictEtabPortfolio={conceptKeys:CONCEPT_KEYS.slice(),duplicate:duplicate,duplicateRequestsKey:DUP_KEY,placeOf:placeOf};
 
 function hook(){

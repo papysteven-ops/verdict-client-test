@@ -67,6 +67,17 @@
     if ((!C || C.mois !== moisCourant()) && demo()) C = consoDemo();
     return C && C.mois === moisCourant() && Array.isArray(C.produits) ? C : null;
   }
+  /* C305 (V15-075, avec L6) : la liste « Produit » d'une limite ne dépend plus d'une consommation déjà calculée ce mois-ci.
+     Sans consommation du mois (Inventaire pas encore rouvert, ou premier comptage seulement), elle propose les produits
+     chiffrés connus de l'Inventaire (dernier résumé déposé, quel que soit son mois) : la limite se pose tout de suite, la
+     mesure viendra avec les comptages. */
+  function produitsConnus(E) {
+    if (E && E.conso && E.conso.produits && E.conso.produits.length) return E.conso.produits;
+    var C = null;
+    try { var f = w.parent && w.parent !== w && w.parent.document.getElementById('frame-inventory'), I = f && f.contentWindow && f.contentWindow.VerdictConsoInventaire; if (I) C = I.etat(); } catch (e) {}
+    if (!C || !Array.isArray(C.produits)) try { C = JSON.parse(localStorage.getItem(CLE + (demo() ? ':demo' : '')) || 'null'); } catch (e) {}
+    return C && Array.isArray(C.produits) ? C.produits : [];
+  }
 
   /* ---------- Limites du patron (données du Pilotage) ---------- */
   function vdb() { try { return w.DB && typeof w.DB === 'object' ? w.DB : null; } catch (e) { return null; } }
@@ -148,8 +159,9 @@
     return h + '<div class="lc-a"><button type="button" class="lc-b" data-lc="modifier" data-id="' + esc(it.id) + '">Modifier</button><button type="button" class="lc-b" data-lc="retirer" data-id="' + esc(it.id) + '">Retirer</button></div></div>';
   }
   function formulaire(E, lim) {
-    var opts = (E.conso ? E.conso.produits : []).filter(function (p) { return p.prix > 0; }).sort(function (a, b) { return a.zone === b.zone ? a.nom.localeCompare(b.nom, 'fr') : a.zone < b.zone ? 1 : -1; });
+    var opts = produitsConnus(E).filter(function (p) { return p.prix > 0; }).sort(function (a, b) { return a.zone === b.zone ? a.nom.localeCompare(b.nom, 'fr') : a.zone < b.zone ? 1 : -1; });
     var choisi = lim ? (lim.productId || lim.nom) : presel;
+    if (!opts.length && !lim) return '<div class="lc-f"><p class="lc-m">Comptez et enregistrez l’Inventaire une première fois : vos produits apparaîtront ici.</p><div class="lc-a"><button type="button" class="lc-b" data-lc="annuler">Fermer</button></div></div>';
     var h = '<form class="lc-f" data-lc-form="' + esc(lim ? lim.id : '') + '"><label>Produit<select name="p" required>' + (choisi ? '' : '<option value="">Choisir un produit…</option>'), zc = '';
     opts.forEach(function (o) { if (o.zone !== zc) { if (zc) h += '</optgroup>'; h += '<optgroup label="' + ZONE[o.zone] + '">'; zc = o.zone; } h += '<option value="' + esc(o.id) + '" data-pr="' + o.prix + '" data-u="' + o.unite + '"' + (choisi === o.id || (lim && lim.nom === o.nom) ? ' selected' : '') + '>' + esc(o.nom) + ' — ' + nb(o.prix) + ' €/' + o.unite + '</option>'; });
     h += (zc ? '</optgroup>' : '') + '</select></label><label>Limite par mois (€ HT)<input name="e" type="number" inputmode="decimal" min="1" step="1" required value="' + (lim ? Math.round(lim.eur) : '') + '"></label><p class="lc-eq"></p>';
@@ -206,7 +218,7 @@
     var f = e.target.closest && e.target.closest('#v-conso form'); if (!f) return; e.preventDefault();
     if (!pro()) { ouvert = null; dessiner(); return; }
     var s = f.querySelector('select'), o = s.options[s.selectedIndex], v = Math.round(+f.querySelector('input').value); if (!o || !o.value || !(v > 0)) return;
-    var C = conso(), p = C && C.produits.filter(function (x) { return x.id === o.value; })[0] || {};
+    var p = produitsConnus(etat()).filter(function (x) { return x.id === o.value; })[0] || {};
     var L = limites(), id = f.getAttribute('data-lc-form'), ex = id ? L.filter(function (l) { return l.id === id; })[0] : L.filter(function (l) { return l.productId === o.value || l.nom === p.nom; })[0];
     var rec = { productId: o.value, nom: p.nom, zone: p.zone, unite: p.unite, prix: p.prix, eur: v, updatedAt: new Date().toISOString() };
     if (ex) Object.keys(rec).forEach(function (k) { ex[k] = rec[k]; }); else { rec.id = 'lim-' + Date.now().toString(36); rec.createdAt = rec.updatedAt; L.push(rec); }
@@ -221,6 +233,7 @@
       s.innerHTML = '<h1>Consommation<span class="lc-pro">PRO</span></h1><p class="sub">Vos limites par produit et votre consommation réelle, bar et cuisine.</p><div id="consoBody"></div>';
       ref.parentNode.insertBefore(s, ref.nextSibling); css();
     }
+    /* C305 (V15-117) : la ligne est rendue par plus-premium-a21.js avec les autres ; ceci ne sert plus que de secours. */
     var plus = doc.querySelector('#v-plus .vp-group .vp-list');
     if (plus && !doc.querySelector('#v-plus [data-vp="conso"]')) {
       var r = doc.createElement('button'); r.type = 'button'; r.className = 'vp-row'; r.setAttribute('data-vp', 'conso');

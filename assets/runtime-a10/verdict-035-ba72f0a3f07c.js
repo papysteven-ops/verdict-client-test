@@ -200,9 +200,9 @@ function auTruthLedgerHTML(R,P,dq){
   ];
   var declared=[
     'Modèle : '+M.format,
-    'Période économique : '+String((DB&&DB.exerciseYear)||(DB&&DB.ref&&DB.ref.exercice)||'non datée'),
+    'Période économique : '+String((DB&&DB.exerciseYear)||(DB&&DB.ref&&DB.ref.exercice)||(DB&&DB.refSource&&DB.refSource.exerciseYear&&('exercice '+DB.refSource.exerciseYear))||'non datée'),
     'Mois actifs : '+(typeof R.d.mois==='number'&&isFinite(R.d.mois)?fr(R.d.mois,0):'— non renseigné')+' · jours ouverts : '+(typeof R.d.jAn==='number'&&isFinite(R.d.jAn)?fr(R.d.jAn,0):'— non renseigné'),
-    'Origine : '+(sim?'modèle fictif estimatif':'données déclarées par le client')
+    /* C301 bis (V15-054) : un document comptable importé fait foi */'Origine : '+(sim?'modèle fictif estimatif':((DB&&DB.refSource&&DB.refSource.nature==='closed-fec-local')||(DB&&DB.dataProvenance&&DB.dataProvenance.source==='fec-local')?'document comptable (FEC)'+(DB.refSource&&DB.refSource.exerciseYear?' de l’exercice '+DB.refSource.exerciseYear:'')+', qui fait foi':'données déclarées par le client'))
   ];
   var n1html=n1.ready?'<b style="color:'+(n1.res>=0?'#168f43':'#c43b45')+'">'+(n1.res>=0?'+':'−')+eur(Math.abs(n1.res))+' de résultat</b><p>Exercice '+n1.from.an+' → exercice '+n1.to.an+' · CA '+(n1.ca>=0?'+':'−')+eur(Math.abs(n1.ca))+' · score '+(n1.score===null?'— non calculable':(n1.score>=0?'+':'')+fr(n1.score,0)+(Math.abs(n1.score)>=2?'\u00a0points':'\u00a0point'))+'.</p>':'<b>Comparaison N−1 non calculable</b><p>Aucune période annuelle consécutive et comparable n’est figée. Verdict refuse d’inventer une tendance. Ajoutez les deux exercices dans Trajectoire.</p><button type="button" class="btn sec" onclick="go(\'hist\')">Ouvrir Trajectoire</button>';
   return '<div class="au-sc au-truth-contract" data-audit-truth-ledger><div class="au-tag">Contrat de vérité · calculé, déclaré, à prouver</div><h2 class="au-h">Ce que l’audit sait — et ce qu’il refuse d’inventer</h2><p class="au-p">Chaque conclusion porte son niveau de preuve. Une réponse terrain reste une déclaration jusqu’à ce qu’une pièce ou une mesure comparable la confirme.</p>'+
