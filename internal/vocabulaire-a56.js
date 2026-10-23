@@ -34,7 +34,7 @@
     [/\bCA\s?\/\s?ETP\b/g, 'Ventes par temps plein'], [/\bETP\b/g, 'temps pleins'],
     /* C184 : marge de contribution, points, virgule française */
     [/\bContribution % CA\b/g, 'Reste après achats (% des ventes)'], [/\b([Ll])a marge de contribution\b/g, '$1a marge après achats'], [/\b[Mm]arge de contribution\b/g, function (m) { return m.charAt(0) === 'M' ? 'Marge après achats' : 'marge après achats'; }],
-    [/(\d+(?:,\d+)?)\s?pts?\b/g, function (m, n) { var v = Math.abs(Number(String(n).replace(',', '.'))); return n + '\u00a0point' + (v > 1 ? 's' : ''); }],
+    [/(\d+(?:,\d+)?)\s?pts?\b/g, function (m, n) { var v = Math.abs(Number(String(n).replace(',', '.'))); return n + '\u00a0point' + (v >= 2 ? 's' : ''); /* C311 (V16-026, détail) : « 1,5 point », pluriel à partir de 2 */ }],
     [/(\d+)\.(\d+)\s?%/g, '$1,$2\u00a0%'],
     /* C205 (V21) : le chiffre du jour est un MINIMUM (part du minimum du mois), jamais un « objectif » ; « objectif » reste
        réservé à l'ambition (objectif de résultat, objectif choisi du mois). */
@@ -48,6 +48,15 @@
     [/^(\d+(?:,\d+)?)([\s\u00a0\u202f])%([\s\u00a0\u202f])de l[’']objectif$/g, '$1$2%$3du minimum'],
     [/ : objectif dépassé de\b/g, ' : minimum dépassé de'], [/ : objectif atteint\b/g, ' : minimum atteint'], [/(^|\s)à son (propre )?objectif\b(?! choisi| de résultat)/g, '$1à son $2minimum'],
     [/(€|\u00a0€) au-dessus de l[’']objectif$/g, '$1 au-dessus du minimum'],
+    /* C309 (V16-036) : la journée de Performances est jugée sur son minimum ; la couleur, la légende, l'en-tête et la carte du jour disent le même mot */
+    [/(\d)([\s  ])%([\s  ])de son objectif\b(?! choisi| de résultat)/g, '$1$2%$3de son minimum'], [/\bde l[’']objectif attendu à cette date\b/g, 'du minimum attendu à cette date'],
+    [/^Objectif atteint$/g, 'Minimum atteint'], [/^Objectif presque atteint$/g, 'Minimum presque atteint'],
+    [/(^|· )objectif (atteint|prévu|à confirmer)\b/g, '$1minimum $2'], [/· Objectif (atteint|prévu|à confirmer)\b/g, '· Minimum $1'] /* jamais « Objectif atteint et volume confirmé » de la Carte ni l'objectif de résultat */, [/\bobjectif atteint exactement\b/g, 'minimum atteint exactement'],
+    [/\bObjectif à cette date\b/g, 'Minimum à cette date'], [/\bObjectif du mois indisponible\b/g, 'Minimum du mois indisponible'],
+    [/\bObjectif calculé (du jour|pour cette journée)\b/g, 'Minimum calculé $1'], [/\bl[’']objectif calculé pour cette journée\b/g, 'le minimum calculé pour cette journée'],
+    [/\bObjectif prévu :/g, 'Minimum prévu :'], [/\bObjectif aujourd’hui :/g, 'Minimum aujourd’hui :'],
+    [/ a dépassé son objectif de\b/g, ' a dépassé son minimum de'], [/\bjournée sous son objectif\b/g, 'journée sous son minimum'], [/\bun objectif confirmé avant de juger\b/g, 'un minimum confirmé avant de juger'],
+    [/\bobjectif à date\b/g, 'minimum à date'], [/(\d)([\s  ])%([\s  ])de l[’']objectif$/g, '$1$2%$3du minimum'],
     /* C299 (L5, V15-127) : les mots d'un patron, pas ceux du moteur */
     [/\bContribution matière pondérée\b/g, 'Marge moyenne des plats vendus'], [/\bobjectif interne pondéré\b/g, 'objectif moyen des plats vendus'],
     [/\bSolde de pilotage avant impôt\b/g, 'Résultat avant impôt'], [/\bsensibilité mécanique\b/g, 'effet direct'],

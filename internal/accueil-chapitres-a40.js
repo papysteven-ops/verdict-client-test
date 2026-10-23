@@ -113,12 +113,23 @@
     var d; try { d = f.contentDocument; } catch (e) { return; }
     if (!d || !d.body) return;
     var main = d.querySelector('main.cadre') || d.querySelector('main'); if (!main || !d.getElementById('modSaisie')) return;
-    if (!d.getElementById('vx40-css')) { var s = d.createElement('style'); s.id = 'vx40-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
+    if (!d.getElementById('vx40-css')) { var s = d.createElement('style'); s.id = 'vx40-css'; s.textContent = CSS + '.vx40-nonfinale{margin:4px 0 12px;padding:8px 12px;border-radius:12px;border:1px solid rgba(234,179,8,.45);background:rgba(234,179,8,.10);font-size:14px;line-height:1.45}' /* C308 (V16-038) */; (d.head || d.documentElement).appendChild(s); }
     if (!main.classList.contains('vx40-large')) main.classList.add('vx40-large'); /* C167 : jamais réécrite si déjà posée (sinon un changement toutes les 1,5 s) */
     var ident = main.querySelector(':scope>.identite');
     /* C160 — Noms d'établissement longs (« Cuisine de livraison (dark kitchen) (démonstration estimative) » : 5 lignes sur
        iPhone) : taille réduite au-delà de 28 caractères. */
     if (ident) [].forEach.call(ident.querySelectorAll('h1,h2'), function (h) { var n = (h.textContent || '').trim().length, lg = n > 28, tl = n > 44; if (h.classList.contains('vx40-long') !== lg) h.classList.toggle('vx40-long', lg); if (h.classList.contains('vx40-tres-long') !== tl) h.classList.toggle('vx40-tres-long', tl); });
+    /* C308 (V16-038) : lecture non finale dite sur l’Accueil comme dans Structure, l’Audit et Mes chiffres. */
+    try {
+      var DBn = w.DB || {}, demoN = DBn._demo || (DBn.dataProvenance && DBn.dataProvenance.nature === 'model_estimate'), vr = demoN ? null : DBn.docVerrou;
+      var tn = vr === 'saisie-contre-document' ? 'Lecture non finale : vous gardez votre saisie plutôt que vos documents. Vos minimums suivent cette saisie ; Mes chiffres montre ce qui diffère.' : vr === 'incertitude-sans-document' ? 'Lecture non finale : vous avez confirmé des chiffres inhabituels sans document. Importez votre document comptable pour une lecture finale.' : '';
+      var pn = d.querySelector('.vx40-nonfinale');
+      if (!tn) { if (pn) pn.remove(); }
+      else if (!pn || pn.getAttribute('data-sig') !== vr) {
+        if (!pn) { var idn = ident || main.querySelector('.identite'); if (!idn) throw 0; pn = d.createElement('p'); pn.className = 'vx40-nonfinale'; pn.setAttribute('role', 'note'); idn.appendChild(pn); } /* dans l’identité : elle reste en tête, hors des chapitres */
+        pn.setAttribute('data-sig', vr); pn.textContent = tn;
+      }
+    } catch (e) {}
     var nav = main.querySelector(':scope>.vx40-nav');
     if (!nav) {
       nav = d.createElement('div'); nav.className = 'vx40-nav'; nav.setAttribute('role', 'tablist'); nav.setAttribute('aria-label', 'Chapitres de l’accueil');

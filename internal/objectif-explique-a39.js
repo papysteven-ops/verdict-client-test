@@ -44,7 +44,7 @@
     var base = Number(c.base) || 0, em = ecartMois(c), retard = em.retard, avance = em.avance, total = Number(c.catchup) || base, g = c.input && c.input.glissant, out = '';
     var saisies = c.input && Array.isArray(c.input.days) ? c.input.days.filter(function (d) { return d && d.ca != null; }).length : 1; /* C213 (W08) : sans journée saisie, le mois n'est ni en retard ni « dans les temps » */
     out += retard > 0 ? '<span class="vx39-pos retard">Retard du mois : <b>' + eur(retard) + '</b></span>' : (avance > 0 ? '<span class="vx39-pos avance">Avance du mois : <b>+' + eur(avance) + '</b></span>' : (saisies ? '<span class="vx39-pos">Mois dans les temps</span>' : '<span class="vx39-pos">Aucune journée saisie ce mois-ci</span>'));
-    out += '<small>Reste à faire ce mois : <b>' + eur(c.remaining) + '</b> sur ' + c.openRemaining + ' jour' + (c.openRemaining > 1 ? 's' : '') + ' ouvert' + (c.openRemaining > 1 ? 's' : '') + ', réparti selon le poids de chaque jour : aujourd’hui ' + eur(total) + ' (base ' + eur(base) + ' ' + signe(total - base) + ').</small>';
+    out += '<small>Reste à faire ce mois : <b>' + eur(Math.max(0, Math.round(Number(c.minimum) || 0) - Math.round(Number(c.actual) || 0))) /* C308 (V16-031) : comme l’opération écrite */ + '</b> sur ' + c.openRemaining + ' jour' + (c.openRemaining > 1 ? 's' : '') + ' ouvert' + (c.openRemaining > 1 ? 's' : '') + ', réparti selon le poids de chaque jour : aujourd’hui ' + eur(total) + ' (base ' + eur(base) + ' ' + signe(Math.round(total) - Math.round(base)) + ').</small>';
     if (g && Math.abs(Number(g.ecartAnnee) || 0) >= 1) out += '<small class="vx39-rep">Année : ' + (g.ecartAnnee > 0 ? 'retard' : 'avance') + ' de ' + eur(Math.abs(g.ecartAnnee)) + ' sur les mois passés, réparti sur les ' + g.moisRestants + ' mois restants (' + signe(g.partMois) + ' sur ce mois).</small>';
     var tm = c.input && c.input.days ? ticketMoyen(c.next || c.input.days[0].date) : null; if (tm) out += '<small>Soit environ <b>' + Math.ceil(total / tm) + ' couverts</b> au ticket moyen de ' + tm.toFixed(2).replace('.', ',') + ' € TTC (8 dernières semaines).</small>';
     var best = c.next ? meilleurJour(c.next) : null; if (best && total > best) out += '<small class="vx39-alerte">Au-dessus de votre meilleur jour (' + eur(best) + ') : ce retard ne se rattrapera pas en une journée ; il reste réparti sur le mois et l’année.</small>';
@@ -61,7 +61,7 @@
     var base = Number(c.base) || 0, avant = (Number(c.deficit) || 0) - (Number(c.advance) || 0), aFaire = Number(c.catchup) || base, ca = Number(jour.ca) || 0, apres = avant + base - ca;
     function pos(v, quand) { return v > 0.5 ? '<dt>Retard du mois ' + quand + '</dt><dd class="vx39-r">' + eur(v) + '</dd>' : (v < -0.5 ? '<dt>Avance du mois ' + quand + '</dt><dd class="vx39-a">+' + eur(-v) + '</dd>' : '<dt>Mois ' + quand + '</dt><dd>dans les temps</dd>'); }
     return '<div class="vx39-l" data-vx39l="' + date + '">' + pos(avant, 'avant ce jour') + '</div>' +
-      '<div class="vx39-l"><dt>Minimum à faire ce jour-là<small>minimum du jour ' + eur(base) + ' ' + signe(aFaire - base) + ' (' + (aFaire < base ? 'part de l’avance du mois' : 'part du retard du mois') + ')</small></dt><dd><b>' + eur(aFaire) + '</b></dd></div>' +
+      '<div class="vx39-l"><dt>Minimum à faire ce jour-là<small>minimum du jour ' + eur(base) + ' ' + signe(Math.round(aFaire) - Math.round(base)) + ' (' + (aFaire < base ? 'part de l’avance du mois' : 'part du retard du mois') + ')</small></dt><dd><b>' + eur(aFaire) + '</b></dd></div>' +
       '<div class="vx39-l">' + pos(apres, 'après ce jour') + '</div>';
   }
   /* C213 (W11) : quand le suivi commence en cours de mois, le budget est la part des jours suivis, selon le même calcul que l'année. */
@@ -102,7 +102,7 @@
       '<li><b>Le budget du mois</b> : <b>' + eur(budget) + '</b> de chiffre d’affaires, la part de ce mois dans le minimum annuel qui couvre vos charges, salaires et loyer, sur <b>' + input.days.length + ' jours ouverts</b> (jours de repos exclus).' + debutMois(plan, date) + saisonMois(date) + annee + '</li>' +
       '<li><b>La part de ce jour</b> : ' + part + caisse + '</li>' +
       '<li><b>Le reste à faire</b> : ' + reste + '</li></ol>' +
-      '<p class="vx39-f">Base ' + eur(base) + ' ' + signe(total - base) + ' = <b>' + eur(total) + '</b> ' + (aujourdHui ? 'à réaliser aujourd’hui' : 'à réaliser ce jour-là') + '</p></div></details>';
+      '<p class="vx39-f">Base ' + eur(base) + ' ' + signe(Math.round(total) - Math.round(base)) + ' = <b>' + eur(total) + '</b> ' + (aujourdHui ? 'à réaliser aujourd’hui' : 'à réaliser ce jour-là') + '</p></div></details>';
   }
   var CSS = '.vx39-r{color:#ea580c!important;font-weight:800}.vx39-a{color:#16a34a!important;font-weight:800}html.vd-workspace-dark .vx39-r{color:#fb923c!important}html.vd-workspace-dark .vx39-a{color:#4ade80!important}.vx39-l dt small{display:block;font-size:12px;opacity:.75;font-weight:500}' +
     /* C142 (Steven, 17/10 : « avant c'était nickel, fluide, clair ; là énormément d'infos utiles, ça fait chargé ») :

@@ -418,6 +418,14 @@ root.VerdictDeclarerEtab=declarer;
       var t=nomModele(m);if(t)m.e=t;
       /* jours de repos d'un traiteur : début de semaine (lu par ensemencerPiloteDemo, 029, script L3 s029-repos-modele.py) */
       if(k==='Traiteur'&&!m.repos)m.repos=[0,1,2,3,4,6,5];
+      /* C311 (décision 13 bis, V16T1-N1) : la matière TOTALE du modèle est gardée (son économie d'origine) et répartie : boissons
+         = 30 % des ventes de boissons, nourriture = le reste ; les fiches de nourriture sont relevées pour valoir les achats moins
+         ≈ 1 point de pertes (le vrai coût matière d'un burger). Burger : 158 208 € = 8 900 € de boissons + 149 308 € de nourriture,
+         fiches × 1,654 ; Food truck : 48 000 € = 2 900 € + 45 100 €, fiches × 1,173. Les boissons (soda) gardent leur fiche. */
+      var R13={Burger:{nour:90505,boi:67703,nN:149308,nB:8900,f:1.654},FoodTruck:{nour:43000,boi:5000,nN:45100,nB:2900,f:1.173}}[k];
+      if(R13&&m.in&&!m.__c311m&&Math.round(Number(m.in.nour))===R13.nour&&Math.round(Number(m.in.boi))===R13.boi){m.in.nour=R13.nN;m.in.boi=R13.nB;
+        (m.plats||[]).forEach(function(p){if(Array.isArray(p)&&Array.isArray(p[4])&&!/boisson/i.test(String(p[1])))p[4].forEach(function(l){var q=Number(l[1]);if(q>0)l[1]=q>=10?Math.round(q*R13.f):Math.round(q*R13.f*100)/100;});});
+        Object.defineProperty(m,'__c311m',{value:true,enumerable:false});}
       /* C311 (V16-020) : fiches du Gastronomique plus chères que ses achats (40,8 % contre 35,0 %, impossible sans baisse de stock) :
          grammages ramenés à 83 % (fiches ≈ 34 %, sous les achats), le résultat du modèle ne change pas */
       if(k==='Gastro'&&!m.__c311g){(m.plats||[]).forEach(function(p){if(Array.isArray(p)&&Array.isArray(p[4]))p[4].forEach(function(l){var q=Number(l[1]);if(q>0)l[1]=q>=10?Math.round(q*0.83):Math.round(q*0.83*100)/100;});});

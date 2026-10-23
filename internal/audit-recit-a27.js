@@ -51,7 +51,7 @@
     try {
       /* C301 (V15-003, décision 5) : le même écart que partout (window.VerdictEcartMatiere) : même périmètre des deux côtés, période écrite. */
       var C = P && P.carte, E = typeof w.VerdictEcartMatiere === 'function' ? w.VerdictEcartMatiere(R) : null;
-      if (C && C.ok && num(C.couverture) >= 80 && E && E.reel > 0 && E.theo > 0 && E.pts >= 0.5) fuite = { reel: E.reel, theo: E.theo, pts: E.pts, eur: E.eur, compte: E.compte, perimetre: E.perimetre, periode: E.periode, brouillons: E.brouillons || 0 };
+      if (C && C.ok && num(C.couverture) >= 80 && E && E.reel > 0 && E.theo > 0 && E.pts >= 0.5) fuite = { reel: E.reel, theo: E.theo, pts: E.pts, eur: E.eur, compte: E.compte, perimetre: E.perimetre, periode: E.periode, brouillons: E.brouillons || 0, nour: E.nour || null, boi: E.boi || null };
     } catch (e) {}
     var leviers = (G && G.leviers || []).slice(0, 8);
     return {
@@ -103,12 +103,18 @@
     if (D.leviers.length || D.fuite) {
       var n0 = 0, fuites = '';
       if (D.fuite) {
-        var fpt = (Math.round(D.fuite.pts * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-        fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière (' + esc(D.fuite.perimetre || 'nourriture + boissons') + ')</b><small>Achats ' + esc(D.fuite.periode || '') + ' : ' + pct(D.fuite.reel) + ' du CA ; ' + (D.fuite.brouillons ? 'fiches-types proposées par Vera, à confirmer' : 'fiches') + ' : ' + pct(D.fuite.theo) + '. ' + fpt + ' point' + (D.fuite.pts >= 2 ? 's' : '') + ' de pertes, portions ou offerts non saisis' + (D.fuite.compte ? (function () { /* C311 (V16-026) : ce que le plan compte vraiment, et seulement si le levier existe */
-          var lf = D.leviers.filter(function (x) { return x && x.id === 'fc'; })[0], tiers = D.fuite.pts / 3, v = lf && lf.over ? Math.abs(num(lf.over.fc)) : 0;
-          var p1 = function (x) { return (Math.round(x * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); };
-          if (!lf) return ' ; le plan ne retient pas le levier « Coût de la nourriture » : cet écart n’est pas compté dans le gain';
-          return ' ; Verdict en compte ' + p1(v) + ' point' + (v >= 2 ? 's' : '') + ' dans le levier « Coût de la nourriture » ci-dessous' + (v < tiers - 0.05 ? ' (un tiers de l’écart ferait ' + p1(tiers) + ' points ; le curseur s’arrête à ' + p1(v) + ')' : ' (un tiers de l’écart)');
+        /* C311 (V16-026, détail) : l'écart écrit est la différence des deux pourcentages affichés (27,0 − 22,1 = 4,9), arrondi une seule fois */
+        var ecA = Math.round((Math.round(D.fuite.reel * 10) - Math.round(D.fuite.theo * 10))) / 10, fpt = ecA.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière (' + esc(D.fuite.perimetre || 'nourriture + boissons') + ')</b><small>Achats ' + esc(D.fuite.periode || '') + ' : ' + pct(D.fuite.reel) + ' du CA ; ' + (D.fuite.brouillons ? 'fiches-types proposées par Vera, à confirmer' : 'fiches') + ' : ' + pct(D.fuite.theo) + '. ' + fpt + ' point' + (Math.abs(ecA) >= 2 ? 's' : '') + ' de pertes, portions ou offerts non saisis' + (D.fuite.compte ? (function () { /* C311 (V16-026) : ce que le plan compte vraiment, et seulement si le levier existe */
+          /* C311 (décision 13) : poste par poste — nourriture et boissons, chacune bornée par son propre écart */
+          var p1 = function (x) { return (Math.round(x * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }, pl = function (x) { return p1(x) + ' point' + (Math.abs(Math.round(x * 10) / 10) >= 2 ? 's' : ''); };
+          var lf = D.leviers.filter(function (x) { return x && x.id === 'fc'; })[0], lb = D.leviers.filter(function (x) { return x && x.id === 'boi'; })[0];
+          var vf = lf && lf.over ? Math.abs(num(lf.over.fc)) : 0, vb = lb && lb.over ? Math.abs(num(lb.over.boi)) : 0, N = D.fuite.nour, B = D.fuite.boi;
+          var postes = N && B ? ' (nourriture ' + (N.pts >= 0 ? '+' : '−') + pl(Math.abs(N.pts)) + ', boissons ' + (B.pts >= 0 ? '+' : '−') + pl(Math.abs(B.pts)) + ')' : '';
+          if (!lf && !lb) return postes + ' ; le plan ne retient pas de levier matière' + (N && N.pts <= 0 ? ' (la nourriture est déjà sous vos fiches)' : '') + ' : cet écart n’est pas compté dans le gain';
+          var parts = []; if (lf) parts.push(pl(vf) + ' dans « Coût de la nourriture »'); if (lb) parts.push(pl(vb) + ' dans « Coût des boissons »');
+          var tN = N ? Math.max(0, N.pts) / 3 : D.fuite.pts / 3, tB = B ? Math.max(0, B.pts) / 3 : 0, reduit = (lf && vf < tN - 0.55) || (lb && vb < tB - 0.55);
+          return postes + ' ; Verdict en compte ' + parts.join(' et ') + ' ci-dessous : un tiers de l’écart de chaque poste, par pas de 0,5 point' + (reduit ? ', réduit pour rester au niveau des meilleurs établissements de votre format' : '');
         })() : ' ; sous 4 points, non compté dans le gain') + '</small></div><strong>≈\u00a0<em data-rc-count="' + Math.round(D.fuite.eur) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
         n0 = 1;
       }

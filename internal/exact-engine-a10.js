@@ -112,10 +112,13 @@
     put('caReconstructed', q.panierHT.mul(q.cmdAn), true);
     var declared = context.declaredCA === null || context.declaredCA === undefined ? null : fraction(context.declaredCA);
     if (declared && declared.cmp(0) < 0) throw new RangeError('NEGATIVE_ANNUAL_REVENUE');
-    var revenue = declared || q.caReconstructed;
-    if (declared && context.revenueOverride && context.baseReconstructed && fraction(context.baseReconstructed).cmp(0) > 0) revenue = declared.mul(q.caReconstructed).div(context.baseReconstructed);
-    put('caDeclared', declared, true); put('ca', revenue, true);
-    d.caSource = declared ? 'declared-closed-period' : 'operational-reconstruction'; put('caReconciliationGap', declared ? q.caReconstructed.sub(declared) : fraction(0), true);
+    /* C309 (correctif SIM) : sans document comptable, la caisse de l'exercice fait foi : le CA est la somme de ses journées (TTC, ramenée
+       en HT à la TVA de la saisie), jamais tickets × panier saisi ; une simulation le fait varier comme un CA déclaré. */
+    var cash = !declared && context.cashTTC > 0 ? fraction(context.cashTTC).div(fraction(1).add(fraction(context.cashTVA > 0 ? context.cashTVA : get('tva')).div(100))) : null;
+    var anchor = declared || cash, revenue = anchor || q.caReconstructed;
+    if (anchor && context.revenueOverride && context.baseReconstructed && fraction(context.baseReconstructed).cmp(0) > 0) revenue = anchor.mul(q.caReconstructed).div(context.baseReconstructed);
+    put('caDeclared', declared, true); put('caCaisse', cash, true); put('ca', revenue, true);
+    d.caSource = declared ? 'declared-closed-period' : cash ? 'cash-register' : 'operational-reconstruction'; put('caReconciliationGap', declared ? q.caReconstructed.sub(declared) : fraction(0), true);
     put('hNote', joursCal ? q.jAn.mul(8) : q.jSem.mul(q.mois).mul('4.33').mul(8)); put('hKpi', joursCal ? q.jAn.mul(8) : q.jMois.mul(q.mois).mul(8));
     put('moisch', get('moisch', 12)); put('obj', get('obj'), true);
     ['nour', 'boi', 'emb', 'autv', 'com', 'dirb', 'salb'].forEach(function (key) { put(key, get(key), true); });

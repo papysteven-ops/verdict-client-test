@@ -20,7 +20,7 @@ if(w.VerdictGainRealiste||typeof w.moteur!=='function'||typeof w.DEC_DEFS==='und
 try{var LS=w.localStorage,OUB=[];for(var li=0;li<LS.length;li++){var lk=LS.key(li);if(lk&&lk.indexOf('verdict:demo:decision:scenario:')===0)OUB.push(lk);}OUB.forEach(function(k){LS.removeItem(k);});}catch(e){}
 var CTRL={sal:1,fc:1,com:1,emb:1,fix:.5,panier:.5,carte:.5,cmd:1/3,jour:1/3};
 var CTRL_LIB={1:'élevé',0.5:'partiel'};
-var ORDER=['sal','fix','com','emb','fc','carte','panier','cmd'];
+var ORDER=['sal','fix','com','emb','fc','boi','carte','panier','cmd'];
 var CARTE_CAP=8,CARTE_ELAST=.03,JOUR_DEMANDE=.6,JOUR_EQUIPE=.8,PANIER_PCT=.02;
 
 function def(id){for(var i=0;i<w.DEC_DEFS.length;i++)if(w.DEC_DEFS[i].id===id)return w.DEC_DEFS[i];return null;}
@@ -47,7 +47,11 @@ function ecartMatiere(R,st){
   var reel=(avec?num(d.nour)+num(d.boi):num(d.nour))/ca*100,theo=avec?num(st.theoR):tn,pts=reel-theo;
   /* C311 (V16-021, décision 8) : les fiches-types proposées par Vera (brouillons) sont comptées et dites ; les vraies fiches priment */
   var brouillons=0;try{(w.DB&&w.DB.plats||[]).forEach(function(p){if(p&&p.cpVeraDraft&&p.actif!==false)brouillons++;});}catch(e){}
-  return {perimetre:avec?'nourriture + boissons':'nourriture',avecBoissons:avec,reel:reel,theo:theo,pts:pts,eur:pts/100*ca,compte:pts>=4,tiers:pts>=4?pts/3/100*ca:0,periode:periodeAchats(R),ca:ca,brouillons:brouillons};
+  /* C311 (décision 13) : le détail par poste — un levier ne va jamais au-delà de l'écart de son poste */
+  var rN=num(d.nour)/ca*100,eNour={reel:rN,theo:tn,pts:rN-tn},eBoi=avec?{reel:num(d.boi)/ca*100,theo:num(st.theoR)-tn,pts:num(d.boi)/ca*100-(num(st.theoR)-tn)}:null;
+  /* C311 (V16T1-N1) : la forme demandée par le chef, avec l'euro de chaque poste (eur = pts / 100 × CA) */
+  eNour.eur=eNour.pts/100*ca;if(eBoi)eBoi.eur=eBoi.pts/100*ca;
+  return {parPoste:{nourriture:eNour,boissons:eBoi},perimetre:avec?'nourriture + boissons':'nourriture',avecBoissons:avec,reel:reel,theo:theo,pts:pts,eur:pts/100*ca,compte:pts>=4,tiers:pts>=4?pts/3/100*ca:0,periode:periodeAchats(R),ca:ca,brouillons:brouillons,nour:eNour,boi:eBoi};
 }
 /* C301 (V15-002, phrase) : la phrase de la décision de Steven, la même que l'Audit (verdictGainPanier, traduite par L3) */
 function reglePanier(){try{var g=typeof w.verdictGainPanier==='function'?w.verdictGainPanier(1):null;if(g&&g.hypothese)return g.hypothese;}catch(e){}return 'À volume constant, une hausse de prix ne coûte pas de matière ; seules la TVA et les commissions suivent.';}
@@ -116,9 +120,12 @@ function overAll(state){
   /* 1. leviers de chiffre d'affaires */
   /* C301 bis (panier exact) : +X € de panier ajoute exactement tickets × X ÷ (1 + TVA) de CA HT, comme verdictGainPanier (l'Audit) ;
      le moteur part du panier arrondi saisi (29,80 € pour 29,798 € réels) : la hausse est calibrée sur ce CA. */
-  if(vP){var pb=inp('panier'),cible=num(d0.cmdAn)*vP/(1+num(d0.tva)),essai=w.deriv({panier:pb+vP}),pente=(num(essai.ca)-num(d0.ca))/vP;
+  /* C311 (correctif SIM de L3, la caisse fait foi) : panier et commandes par jour de départ = ceux du moteur (R.d), dérivés de la caisse
+     quand elle couvre l'exercice ; la saisie brute ne sert qu'à défaut (elle faisait perdre 38 600 € au Saisonnier pour +1 commande). */
+  var pan0=num(d0.panierTTC)>0?num(d0.panierTTC):inp('panier'),cmd0=num(d0.cmdj)>0?num(d0.cmdj):inp('cmdj');
+  if(vP){var pb=pan0,cible=num(d0.cmdAn)*vP/(1+num(d0.tva)),essai=w.deriv({panier:pb+vP}),pente=(num(essai.ca)-num(d0.ca))/vP;
     over.panier=pb+(cible>0&&pente>0?cible/pente:vP);}
-  var jsem=inp('jsem')||6,cmdj=inp('cmdj');
+  var jsem=inp('jsem')||6,cmdj=cmd0;
   if(vC)over.cmdj=Math.max(0,cmdj+vC);
   if(vJ){var nj=Math.max(1,Math.min(7,jsem+vJ)),dj=nj-jsem;over.jsem=nj;
     /* un jour ajouté (ou retiré) ne vaut pas une journée moyenne : 60 % de la demande d'une journée moyenne */
@@ -135,10 +142,12 @@ function overAll(state){
     if(volPct>.05)renfort+=salM*(volPct-.05)*.5;
   }
   /* 2. prix de la carte : la hausse de prix ne consomme pas de matière, la baisse de 3 % des ventes est comptée */
-  if(vK>0){var cp=cartePlan(vK);if(cp.dCaAn){var caAv=d1.ca;over.panier=(over.panier!=null?over.panier:inp('panier'))*(1+cp.dCaAn/caAv);
+  if(vK>0){var cp=cartePlan(vK);if(cp.dCaAn){var caAv=d1.ca;over.panier=(over.panier!=null?over.panier:pan0)*(1+cp.dCaAn/caAv);
     over.nour=(over.nour!=null?over.nour:inp('nour'))+(cp.dCaAn-cp.dContribAn);}}
   /* 3. food cost en points du CA résultant */
   var vF=etat(state,'fc');if(vF){var d2=w.deriv(over);over.nour=Math.max(0,(over.nour!=null?over.nour:inp('nour'))+vF/100*d2.ca);}
+  /* 3 bis. C311 (décision 13) : coût des boissons en points du CA résultant */
+  var vB=etat(state,'boi');if(vB){var d3=w.deriv(over);over.boi=Math.max(0,(over.boi!=null?over.boi:inp('boi'))+vB/100*d3.ca);}
   /* 4. équipe (curseur + renfort imposé par le volume) */
   var vS=etat(state,'sal');if(vS||renfort)w.decApplyHumanLoaded(over,vS+Math.round(renfort));
   /* 5. autres postes */
@@ -175,8 +184,11 @@ function plan(){
   /* matière : la carte (recettes et fuite) quand elle est fiable, sinon l'écart structurel */
   var why=null,pts=0;
   if(cf){var st=null;try{st=w.carteStats();}catch(e){}
-    if(st&&st.theoR>0){var tn=st.theoNourR!=null?st.theoNourR:st.theoR,E=ecartMatiere(R,st),rec=tn>fam.fc[1]?(tn-fam.fc[1])/3:0,fuite=E&&E.compte?E.pts/3:0;pts=rec+fuite;
-      why='Coût de la nourriture d’après vos fiches '+pc(tn)+' du CA, hors boissons (repère '+pc(fam.fc[1],0)+')'+(fuite?' ; écart '+E.perimetre+' entre vos achats ('+E.periode+', '+pc(E.reel)+' du CA) et vos fiches ('+pc(E.theo)+') : '+pts1(E.pts)+' de pertes, portions ou offerts invisibles.':'.')+' Un tiers de chaque écart.';}}
+    /* C311 (décision 13) : poste par poste — la part « fuite » de chaque levier est bornée par l'écart de son poste ; un poste déjà sous
+       ses fiches n'en a pas ; un écart qui est dans les boissons va au levier « Coût des boissons », jamais à la nourriture. */
+    if(st&&st.theoR>0){var tn=st.theoNourR!=null?st.theoNourR:st.theoR,E=ecartMatiere(R,st),rec=tn>fam.fc[1]?(tn-fam.fc[1])/3:0,eN=E&&E.nour?Math.max(0,E.nour.pts):0,eB=E&&E.boi?Math.max(0,E.boi.pts):0,fuite=E&&E.compte?eN/3:0;pts=rec+fuite;
+      var ptsB=E&&E.compte?Math.floor(eB/3*2)/2:0;if(ptsB>=.5)add('boi',-ptsB,'Coût des boissons : achats '+E.periode+' à '+pc(E.boi.reel)+' du CA, fiches '+pc(E.boi.theo)+' : '+pts1(E.boi.pts)+' de pertes, offerts ou portions servies. Un tiers de l’écart des boissons.','Mesurer les verres et les doses, noter les offerts, compter le bar chaque semaine.');
+      why='Coût de la nourriture d’après vos fiches '+pc(tn)+' du CA, hors boissons (repère '+pc(fam.fc[1],0)+')'+(fuite?' ; écart nourriture entre vos achats ('+E.periode+', '+pc(E.nour.reel)+' du CA) et vos fiches ('+pc(E.nour.theo)+') : '+pts1(E.nour.pts)+' de pertes, portions ou offerts invisibles.':'.')+' Un tiers de chaque écart.';}}
   else if(v.fc>fam.fc[1]){pts=(v.fc-fam.fc[1])/3;why='Coût de la nourriture à '+pc(v.fc)+' du CA, hors boissons ; repère médian '+pc(fam.fc[1],0)+'. Un tiers de l’écart.';}
   pts=Math.floor(pts*2)/2;if(pts>=.5)add('fc',-pts,why,'Repeser les portions clés, mettre à jour les fiches techniques, renégocier le premier fournisseur.');
   /* carte : prix des plats sous leur objectif, plafonnés */
@@ -234,9 +246,20 @@ function installerSimuler(){
      complète (nourriture + boissons) pour qu'aucun écran ne présente 18,6 % comme « le coût de la marchandise ». */
   var fcd=def('fc');if(fcd&&!fcd.__c218){fcd.__c218=true;fcd.t='Coût de la nourriture';fcd.label='Je modifie le coût de la nourriture (hors boissons) de';
     var fb0=fcd.dispBase;if(typeof fb0==='function')fcd.dispBase=function(){var r=fb0.apply(this,arguments);try{var R=w.moteur(),ca=num(R.d.ca),m=num(R.d.mat);if(ca>0&&m>0)r=String(r)+' · nourriture seule ; avec les boissons : '+pc(m/ca*100);}catch(e){}return r;};}
+  /* C311 (décision 13) : le curseur « Coût des boissons », présent quand l'écart des boissons le justifie (ou déjà réglé) */
+  if(!def('boi')&&fcd){var bd={id:'boi',t:'Coût des boissons',icon:'🍷',step:0.5,min:-10,max:10,def:0,label:'Je modifie le coût des boissons de',
+      visible:function(){try{if(!(inp('boi')>0))return false;if(num(w.DEC_STATE&&w.DEC_STATE.boi))return true;var E=ecartMatiere();return !!(E&&E.compte&&E.boi&&E.boi.pts>=1.5);}catch(e){return false;}},
+      fmt:fcd.fmt,dispBase:function(R){return pc(num(R.d.boi)/Math.max(1,num(R.d.ca))*100)+' du CA · boissons seules';},dispAfter:function(R,v){return pc(num(R.d.boi)/Math.max(1,num(R.d.ca))*100+num(v))+' du CA';},
+      apply:function(over,v){var d0=w.deriv();over.boi=Math.max(0,inp('boi')+(num(v)/100)*d0.ca);}};
+    w.DEC_DEFS.splice(w.DEC_DEFS.indexOf(fcd)+1,0,bd);try{if(w.DEC_STATE&&w.DEC_STATE.boi==null)w.DEC_STATE.boi=0;if(w.DEC_CONTROLE)w.DEC_CONTROLE.boi=['élevé','doses, offerts et pertes du bar dépendent de vous'];}catch(e){}}
   var p=def('panier');if(p)p.step=0.1;
   /* C301 (V15-002, écran) : la règle du panier est écrite sous le curseur, la même que l'Audit (verdictGainPanier) */
-  if(p&&!p.__c301){p.__c301=true;var pb0=p.dispBase;if(typeof pb0==='function')p.dispBase=function(){/* C301 (V15-078) : aucun ticket lu = panier inconnu, jamais 0,00 € */if(!(inp('panier')>0))return 'inconnu : aucun ticket lu dans votre caisse';var r=pb0.apply(this,arguments);return String(r)+' · '+reglePanier();};}var sl=def('sal');if(sl)sl.step=50;var c=def('cmd');if(c){c.step=0.5;c.fmt=function(v){return (v>0?'+':v<0?'\u2212':'')+String(Math.abs(Math.round(v*10)/10)).replace('.',',')+' / jour';};}var x=def('fix');if(x)x.step=1;
+  if(p&&!p.__c301){p.__c301=true;var pb0=p.dispBase;if(typeof pb0==='function')p.dispBase=function(){/* C301 (V15-078) : aucun ticket lu = panier inconnu, jamais 0,00 € */if(!(inp('panier')>0))return 'inconnu : aucun ticket lu dans votre caisse';var r=pb0.apply(this,arguments);return String(r)+' · '+reglePanier();};}var sl=def('sal');if(sl)sl.step=50;var c=def('cmd');if(c){c.step=0.5;c.fmt=function(v){return (v>0?'+':v<0?'\u2212':'')+String(Math.abs(Math.round(v*10)/10)).replace('.',',')+' / jour';};
+    /* C311 (correctif SIM de L3, la caisse fait foi) : « Aujourd'hui » et « Après » partent des commandes du moteur (R.d.cmdj), comme le calcul */
+    var cB=function(R){var x=num(R&&R.d&&R.d.cmdj);if(!(x>0))try{x=num(w.deriv().cmdj);}catch(e){}return x>0?x:inp('cmdj');},c1=function(x){return typeof w.fr==='function'?w.fr(x,1):(Math.round(x*10)/10).toLocaleString(tag(),{minimumFractionDigits:1,maximumFractionDigits:1});};
+    c.dispBase=function(R){return c1(cB(R))+' / jour';};c.dispAfter=function(R,v){return c1(Math.max(0,cB(R)+num(v)))+' / jour';};c.apply=function(over,v){over.cmdj=Math.max(0,cB(null)+num(v));};}
+  if(p&&!p.__c311c){p.__c311c=true;var pB=function(R){var x=num(R&&R.d&&R.d.panierTTC);if(!(x>0))try{x=num(w.deriv().panierTTC);}catch(e){}return x>0?x:inp('panier');},p2=function(x){return typeof w.eur2==='function'?w.eur2(x):(Math.round(x*100)/100).toLocaleString(tag(),{minimumFractionDigits:2,maximumFractionDigits:2})+'\u00a0€';},pd0=p.dispBase;
+    p.dispBase=function(R){if(!(inp('panier')>0)&&!(pB(R)>0))return pd0.apply(this,arguments);return p2(pB(R))+' TTC · '+reglePanier();};p.dispAfter=function(R,v){return p2(pB(R)+num(v))+' TTC';};p.apply=function(over,v){over.panier=pB(null)+num(v);};}var x=def('fix');if(x)x.step=1;
   if(!def('carte')){
     var at=w.DEC_DEFS.indexOf(def('panier'))+1;
     w.DEC_DEFS.splice(at,0,{id:'carte',t:'Prix de la carte',icon:'🍽️',step:1,min:0,max:CARTE_CAP,def:0,
@@ -313,8 +336,8 @@ function installerSimuler(){
   if(typeof w.decisionsRegistre==='function'&&!w.decisionsRegistre.__c311){var dr0=w.decisionsRegistre;w.decisionsRegistre=function(){var G=dr0.apply(this,arguments);
     try{if(G&&G.aExaminer){var P=plan(),L=G.aExaminer;if(P&&P.state){var gain=Math.round(num(P.central&&P.central.res)-num(P.base&&P.base.res)),noms=[];
       Object.keys(P.state).filter(function(k){return P.state[k];}).sort(function(a,b){return ORDER.indexOf(a)-ORDER.indexOf(b);}).forEach(function(k){var d=def(k);if(d)noms.push(d.t+' '+d.fmt(P.state[k]));});
-      L.forEach(function(x){var r=x&&x.reco;if(!r||r.id!=='FOOD_GAP_VERIFY')return;var g=null;
-        if(P.state.fc){try{var M=w.moteur(overAll({fc:P.state.fc}));g=Math.round(M.d.res-num(P.base.res));}catch(e){}}
+      L.forEach(function(x){var r=x&&x.reco;if(!r||r.id!=='FOOD_GAP_VERIFY')return;var g=null;try{var T13=titreEcart(ecartMatiere());if(T13)r.t=T13;}catch(e){}
+        if(P.state.fc||P.state.boi){try{var s9={};if(P.state.fc)s9.fc=P.state.fc;if(P.state.boi)s9.boi=P.state.boi;var M=w.moteur(overAll(s9));g=Math.round(M.d.res-num(P.base.res));}catch(e){}}
         if(!(g>0)){var E=w.VerdictEcartMatiere?w.VerdictEcartMatiere():null;if(E&&E.eur>0)g=Math.round(E.eur);}
         if(g>0)r.imp=g;});
       /* C311 (V16-018) : jamais « Impact estimé : 0 € par an » ; un constat sans levier chiffré est dit comme tel */
@@ -369,7 +392,8 @@ function phrase(id,P,B){
   var fin=B.reduit?'':' Au-delà, ce n’est plus réaliste.';
   if(id==='cmd')return 'Vous servez '+String(Math.round(num(d.cmdj)*10)/10).replace('.',',')+' commandes par jour. La fréquentation ne se décide pas : Verdict ne propose jamais ce levier. Ce curseur reste une hypothèse à vérifier ; la matière, les commissions et l’équipe suivent.';
   if(B.reduit&&id==='carte')return 'Verdict relève les prix d’au plus '+CARTE_CAP+' %, sans dépasser le plat le plus cher de la catégorie. '+au;
-  if(id==='panier')return 'Votre panier moyen est de '+fr2(d.panierTTC)+' € ; Verdict compte au plus +'+Math.round(PANIER_PCT*100)+' % de votre propre panier. '+au+fin;
+  /* C311 (V16-032) : une seule phrase pour une seule règle (« +2 % de votre propre panier, soit +0,30 € ») */
+  if(id==='panier')return 'Votre panier moyen est de '+fr2(d.panierTTC)+' € ; Verdict compte au plus +'+Math.round(PANIER_PCT*100)+' % de votre propre panier'+(!B.reduit&&b?', soit '+dd.fmt(b)+'.':'. '+au)+fin;
   if(id==='carte')return 'Verdict relève les prix d’au plus '+CARTE_CAP+' %, sans dépasser le plat le plus cher de la catégorie.'+fin;
   if(id==='sal')return 'Votre équipe coûte '+pc(v.ms)+' du chiffre d’affaires ; repère Verdict '+t+' : '+pc(fam.ms[1],0)+'. '+au+fin;
   if(id==='fc')return 'Votre coût de nourriture (hors boissons) est de '+pc(v.fc)+' du CA ; repère Verdict '+t+' : '+pc(fam.fc[1],0)+'. '+au+fin;
@@ -441,9 +465,13 @@ function sansVolume(res){
   var vol=function(x){return x&&(x.id==='COMMANDES_LOW'||x==='COMMANDES_LOW');};
   if(vol(res.top))res.top=res.items[0]||null;if(vol(res.next))res.next=res.items.filter(function(x){return x!==res.top;})[0]||null;
 }
+/* C311 (décision 13) : l'intitulé de l'écart matière nomme le poste en cause (nourriture, boissons, ou les deux) */
+function titreEcart(E){if(!E||!E.nour)return null;var n=E.nour.pts>=1,b=E.boi&&E.boi.pts>=1;
+  if(n&&b)return 'Vous achetez plus de nourriture et de boissons que vos ventes n’en utilisent';if(b)return 'Vous achetez plus de boissons que vos ventes n’en utilisent';return null;}
 function aligner(res,db){
   if(!res||!res.items||!res.items.length)return;var keep=w.DB,swap=db&&db!==w.DB;if(swap)w.DB=db;
   try{
+    try{var T13=titreEcart(ecartMatiere());if(T13)res.items.forEach(function(it){if(it&&it.id==='FOOD_GAP_VERIFY')it.diagnosis=T13;});}catch(e){}
     var P=plan();if(!P)return;var base=P.base.res,lv={};P.leviers.forEach(function(x){lv[x.id]=x.v;});
     /* C301 bis (B10) : la valeur retenue par le plan (réduite pour ne pas dépasser le niveau des meilleurs) : le même montant que Simuler et l'Audit */
     for(var ks in P.state)if(P.state[ks])lv[ks]=P.state[ks];if(P.bornesLevier.panier&&lv.panier==null)lv.panier=P.bornesLevier.panier;
@@ -614,6 +642,9 @@ w.VerdictGainRealiste={version:'C218',borneDyn:borneDyn,plan:plan,cartePlan:cart
   ouvrirDetail:function(){var d=document.querySelector('[data-audit-full-report]');if(d)d.open=true;setTimeout(function(){var c=document.getElementById('auGainReel');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});},40);}};
 installerSimuler();installerAudit();
 /* C106 (I-6) : le chapitre « Prix & panier » rejoue +1 € et +2 € hors de toute borne ; on le rattache au gain réaliste pour qu'il n'y ait qu'une référence. */
-if(typeof w.auPrixPremiumHTML==='function'&&!w.auPrixPremiumHTML.__c106){var ap0=w.auPrixPremiumHTML;w.auPrixPremiumHTML=function(R,P){var h=ap0.apply(this,arguments);try{var Pl=plan();if(Pl&&Pl.central)h=h.replace('</h2>','</h2><p class="au-p c106-ref" style="margin:0 0 10px;padding:10px 12px;border-radius:12px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25)"><b>Repère :</b> le gain réaliste de Verdict, borné et rejoué levier par levier, est de <b>'+signe(Pl.central.gain)+' par an</b>. Les montants ci-dessous sont une mécanique pure, sans réaction des clients ni plafond : ils ne s’y ajoutent pas.</p>');}catch(e){}return h;};w.auPrixPremiumHTML.__c106=true;}
+if(typeof w.auPrixPremiumHTML==='function'&&!w.auPrixPremiumHTML.__c106){var ap0=w.auPrixPremiumHTML;w.auPrixPremiumHTML=function(R,P){
+  /* C311 (V16-030, fin) : aucun ticket lu → le chapitre dit « inconnu » et « à calculer », jamais « 0,00 € » ni « +0 € » */
+  if(!(inp('panier')>0))return '<div class="au-sc"><div class="au-tag">Prix &amp; panier</div><h2 class="au-h">Ce que +1 € ou +2 € changeraient mécaniquement</h2><p class="au-p">Panier actuel : <b>inconnu</b> (aucun ticket lu dans votre caisse).</p><div class="au-card"><span class="au-k">Panier moyen +1 € ou +2 € TTC</span><div class="au-eur">à calculer : tickets inconnus</div><p class="au-p" style="margin:7px 0 0">Le calcul se fait dès que vos tickets sont connus (import de la caisse).</p></div></div>';
+  var h=ap0.apply(this,arguments);try{var Pl=plan();if(Pl&&Pl.central&&Pl.central.gain>0.5)h=h.replace('</h2>','</h2><p class="au-p c106-ref" style="margin:0 0 10px;padding:10px 12px;border-radius:12px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25)"><b>Repère :</b> le gain réaliste de Verdict, borné et rejoué levier par levier, est de <b>'+signe(Pl.central.gain)+' par an</b>. Les montants ci-dessous sont une mécanique pure, sans réaction des clients ni plafond : ils ne s’y ajoutent pas.</p>');}catch(e){}return h;};w.auPrixPremiumHTML.__c106=true;}
 w.addEventListener('load',function(){setTimeout(function(){installerAudit();if(w.VIEW==='audit')patchAudit();/* C103 : l'Audit caché n'est plus préparé au lancement ; drawAudit s'en charge à l'ouverture */},30);},{once:true});
 })(window);

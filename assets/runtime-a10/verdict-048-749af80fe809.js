@@ -882,7 +882,7 @@
     pt:'Os seus meses acompanhados vão de {lo} a {hi} do seu mínimo. Se os meses restantes fossem como o seu mês mais fraco, o ano terminaria perto de {flo}; como o mais forte, perto de {fhi}. Não são probabilidades: sem um ano anterior, o erro da projeção não pode ser medido.'};
   function vySpreadLine(a){try{if(!a||a.method==='n1'||a.seasonal||!vyNum(a.pace)||!(a.pace>0)||!vyNum(a.projection)||!vyNum(a.actual))return '';
     var rs=(a.months||[]).filter(function(m){return m.kind==='past'&&m.target>0&&vyNum(m.value)&&m.value>0;}).map(function(m){return m.value/m.target;});if(rs.length<2)return '';
-    var lo=Math.min.apply(null,rs),hi=Math.max.apply(null,rs),rest=(a.projection-a.actual)/a.pace;if(!(rest>0))return '';
+    var lo=Math.min(a.pace,Math.min.apply(null,rs)),hi=Math.max(a.pace,Math.max.apply(null,rs)),rest=(a.projection-a.actual)/a.pace;if(!(rest>0))return ''; /* C308 (décision 7) : la projection reste dans sa fourchette */
     return vyFill(VY_SPREAD[vyLoc()]||VY_SPREAD.fr,{lo:vyPct(lo),hi:vyPct(hi),flo:vyEur(a.actual+lo*rest),fhi:vyEur(a.actual+hi*rest)});}catch(e){return '';}}
   function vyCalendarRatios(year,prevY,ci){
     var rows=(root.DB&&root.DB.histJour)||[],by={},closed=root.verdictIsOperatingClosed,i,d,pad=function(x){return ('0'+x).slice(-2);};
@@ -1675,7 +1675,8 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     if(!inp||!vmNum(inp.caHT)||inp.caHT<=0)return {ok:false,raison:'ca'};
     var ca=inp.caHT,t=inp.taux||{},L=[],add=function(k,v,src,mesure){L.push({k:k,eur:v,pour100:v/ca*100,src:src,mesure:mesure!==false});};
     add('matiere',ca*(vmNum(t.mat)?t.mat:0),inp.matSrc==='fec'?'fec':'structure',vmNum(t.mat));
-    if(inp.ecart&&vmNum(inp.ecart.explique)&&vmNum(inp.ecart.aVerifier)){add('pertes',inp.ecart.explique,'cloture');add('ecart',inp.ecart.aVerifier,'cloture');}
+    if(inp.ecartAudit&&vmNum(inp.ecartAudit.pts))L.push({k:'ecart',eur:inp.ecartAudit.eur,pour100:inp.ecartAudit.pts,src:'audit',mesure:true,inclus:true,info:inp.ecartAudit}); /* C308 (V16-013) : compris dans la matière */
+    else if(inp.ecart&&vmNum(inp.ecart.explique)&&vmNum(inp.ecart.aVerifier)){add('pertes',inp.ecart.explique,'cloture');add('ecart',inp.ecart.aVerifier,'cloture');}
     else L.push({k:'ecart',eur:null,pour100:null,src:'aucune',mesure:false});
     if(vmNum(t.av)&&t.av>0)add('variables',ca*t.av,'structure');
     if(vmNum(t.com)&&t.com>0)add('commissions',ca*t.com,'structure');
@@ -1686,10 +1687,10 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     }else L.push({k:'equipe',eur:null,pour100:null,src:'aucune',mesure:false});
     add('fixes',vmNum(inp.fixesMois)?inp.fixesMois:0,'structure',vmNum(inp.fixesMois));
     if(vmNum(inp.amortMois)&&inp.amortMois>0)add('amortissements',inp.amortMois,'fec');
-    var depenses=L.reduce(function(a,x){return a+(vmNum(x.eur)?x.eur:0);},0),reste=ca-depenses;
+    var depenses=L.reduce(function(a,x){return a+(vmNum(x.eur)&&!x.inclus?x.eur:0);},0),reste=ca-depenses;
     L.push({k:'resultat',eur:reste,pour100:reste/ca*100,src:'calcul',mesure:true});
-    var somme=L.reduce(function(a,x){return a+(vmNum(x.eur)?x.eur:0);},0);
-    var calculated={ok:true,partSaison:inp.partSaison==null?null:inp.partSaison,moisTravailles:inp.moisTravailles||null,caHT:ca,lignes:L,reste:reste,pour100Reste:reste/ca*100,controle:Math.abs(somme-ca),nonMesurees:L.filter(function(x){return !x.mesure;}).map(function(x){return x.k;})};
+    var somme=L.reduce(function(a,x){return a+(vmNum(x.eur)&&!x.inclus?x.eur:0);},0);
+    var calculated={ok:true,partSaison:inp.partSaison==null?null:inp.partSaison,partSource:inp.partSource||null,annee:inp.annee||null,moisTravailles:inp.moisTravailles||null,caHT:ca,lignes:L,reste:reste,pour100Reste:reste/ca*100,controle:Math.abs(somme-ca),nonMesurees:L.filter(function(x){return !x.mesure;}).map(function(x){return x.k;})};
     if(window.VerdictInternalAudit)window.VerdictInternalAudit.auditBreakdown(calculated);
     return calculated;
   }
@@ -1754,6 +1755,17 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     }catch(e){return null;}
   }
   /* Assemble les entrées d'un mois i de l'année courante (mois complet). */
+  /* C308 (décision 11) : part de chaque mois dans le chiffre d’affaires de l’année, lue dans la caisse de cette année (journées de caisse
+     datées, hors démo écartée) ; null si la caisse ne couvre pas tous les mois travaillés : la saison reste inconnue. */
+  var vmSaisonMemo={k:null,v:null};
+  function vmSaisonCaisse(y,d){
+    var rows=(root.DB&&root.DB.histJour)||[],k=y+'|'+rows.length+'|'+(rows.length?String(rows[rows.length-1]&&rows[rows.length-1].date)+':'+(rows[rows.length-1]&&rows[rows.length-1].caJ):'')+'|'+(d&&d.mois);
+    if(vmSaisonMemo.k===k)return vmSaisonMemo.v;
+    var mois={},tot=0;rows.forEach(function(r){var dt=String(r&&r.date||'');if(dt.slice(0,4)!==String(y)||typeof r.caJ!=='number'||!isFinite(r.caJ)||r.caJ<0)return;mois[dt.slice(0,7)]=(mois[dt.slice(0,7)]||0)+r.caJ;tot+=r.caJ;});
+    var couverts=Object.keys(mois).filter(function(m){return mois[m]>0;}).length,besoin=Math.max(1,Math.min(12,Number(d&&d.mois)||12)),v=null;
+    if(tot>0&&couverts>=besoin){v={annee:String(y),parts:{}};for(var mm=1;mm<=12;mm++){var km=y+'-'+('0'+mm).slice(-2);v.parts[km]=(mois[km]||0)/tot;}}
+    vmSaisonMemo={k:k,v:v};return v;
+  }
   function vmEntrees(i,ecart,teamModel){
     var R=vmRenderData?vmRenderData.model:root.moteur(),d=R.d,ym=vmYm(i),s=0,n=0;
     ((root.DB&&root.DB.histJour)||[]).forEach(function(r){if(String(r&&r.date||'').slice(0,7)===ym&&typeof r.caJ==='number'){s+=r.caJ;n++;}});
@@ -1766,13 +1778,17 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     vmMigrerAmort();
     /* C298 (V15-004, décision 4) : les charges d'un mois suivent sa part de saison, comme le minimum (mois entier ÷ année entière du plan). */
     var partS=null;try{var ypS=root.DB&&root.DB.performanceYearPlans&&root.DB.performanceYearPlans[ym.slice(0,4)],fmS=ypS&&ypS.fullMonthlyTargets,totS=fmS?Object.keys(fmS).reduce(function(a,k){return a+(Number(fmS[k])||0);},0):0;if(totS>0&&fmS[ym]!=null)partS=(Number(fmS[ym])||0)/totS;}catch(_){partS=null;}
+    /* C308 (décision 11) : sans plan d’année, la saison de l’année est lue dans sa caisse quand elle couvre tous les mois travaillés. */
+    var partSrc=partS!=null?'plan':null;if(partS==null){var scS=vmSaisonCaisse(ym.slice(0,4),d);if(scS){partS=scS.parts[ym]||0;partSrc='caisse';}}
     /* C308 (V16-005, V16-024, décision 4) : l’équipe d’un mois est un mois de paie (coût annuel ÷ mois travaillés), rien un mois fermé ;
        les heures des services, quand elles existent, restent la mesure du mois. */
     var moisPaie=vmNum(d.salM)&&d.salM>0?d.salM:(vmNum(d.sal)&&Number(d.mois)>0?d.sal/Number(d.mois):null),fermeM=!!((m&&m.kind==='off')||(fmS&&fmS[ym]!=null&&!(Number(fmS[ym])>0)));
     if(fermeM)eq={cost:0,src:'ferme'};else if(eq.src==='reglages'&&moisPaie!=null)eq.cost=moisPaie;
     var demo=root.DB&&root.DB.dataProvenance&&root.DB.dataProvenance.nature==='model_estimate'&&root.DB.demoFinance&&root.DB.demoFinance[ym];
-    return {partSaison:partS,moisTravailles:Number(d.mois)>0?Number(d.mois):null,amortMois:vmNum(d.amort)&&d.amort>0?(partS!=null?d.amort*partS:d.amort/12):null,caHT:caHT,caSrc:fecHT!=null?'fec':'caisse',matSrc:fecMat!=null?'fec':'structure',taux:{mat:fecMat!=null?fecMat/caHT:(d.ca>0?d.mat/d.ca:null),av:d.ca>0?d.av/d.ca:0,com:d.ca>0?d.com/d.ca:0},equipe:eq,fixesMois:vmNum(d.af)?(partS!=null?d.af*partS:d.af/12):null,
-      ecart:demo?{explique:demo.loss,aVerifier:demo.gap}:(ecart?{explique:caHT*ecart.txExplique,aVerifier:caHT*ecart.txAVerifier}:null)};
+    /* C308 (V16-013) : l’écart matière est celui de l’Audit (VerdictEcartMatiere : périmètre et période écrits), en euros du mois. */
+    var ecA=null;try{var EA=typeof root.VerdictEcartMatiere==='function'?root.VerdictEcartMatiere():null;if(EA&&isFinite(Number(EA.pts)))ecA={pts:Number(EA.pts),eur:caHT*Number(EA.pts)/100,avecBoissons:EA.avecBoissons!==false,periode:EA.periode||'',compte:EA.compte!==false};}catch(_){ecA=null;}
+    return {ecartAudit:ecA,annee:ym.slice(0,4),partSaison:partS,partSource:partSrc,moisTravailles:Number(d.mois)>0?Number(d.mois):null,amortMois:vmNum(d.amort)&&d.amort>0?(partS!=null?d.amort*partS:d.amort/12):null,caHT:caHT,caSrc:fecHT!=null?'fec':'caisse',matSrc:fecMat!=null?'fec':'structure',taux:{mat:fecMat!=null?fecMat/caHT:(d.ca>0?d.mat/d.ca:null),av:d.ca>0?d.av/d.ca:0,com:d.ca>0?d.com/d.ca:0},equipe:eq,fixesMois:vmNum(d.af)?(partS!=null?d.af*partS:d.af/12):null,
+      ecart:ecA?null:demo?{explique:demo.loss,aVerifier:demo.gap}:(ecart?{explique:caHT*ecart.txExplique,aVerifier:caHT*ecart.txAVerifier}:null)};
   }
   /* R267 · un FEC importé avant R267 garde ses amortissements dans fecImport : on les reporte une fois dans la structure. */
   function vmMigrerAmort(){try{var D=root.DB;if(!D||!D.in||D.in.amort!=null)return;var a=D.fecImport&&D.fecImport.totals&&Number(D.fecImport.totals.amortization);if(a>0){D.in.amort=Math.round(a*100)/100;try{root.save('amort-fec');}catch(e){}}}catch(e){}}
@@ -1791,7 +1807,9 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
   var VM_SRC_FEC={fr:'Matière : achats du mois dans votre document comptable ; emballages et commissions au taux de votre structure ; équipe d’après {e}.',en:'Ingredients: purchases of the month in your accounting file; packaging and commissions at your structure’s rate; team from {e}.',es:'Materia: compras del mes en su documento contable; envases y comisiones al porcentaje de su estructura; equipo según {e}.',it:'Materie: acquisti del mese nel suo documento contabile; imballaggi e commissioni al tasso della sua struttura; squadra secondo {e}.',de:'Wareneinsatz: Einkäufe des Monats aus Ihrer Buchhaltung; Verpackung und Provisionen zum Satz Ihrer Struktur; Team laut {e}.',nl:'Grondstoffen: aankopen van de maand in uw boekhouding; verpakking en commissies tegen het tarief van uw structuur; team volgens {e}.',pt:'Matéria: compras do mês no seu documento contabilístico; embalagens e comissões à taxa da sua estrutura; equipa segundo {e}.'};
   function vmLoc(){var l='fr';try{l=(typeof locale==='function'?locale():root.LOCALE)||'fr';}catch(e){}return l;}
   function vmMoisDispo(teamModel){var ci=Number(root.verdictOperationalClock().key.slice(5,7))-1,out=[];for(var i=-12;i<ci;i++){var e=arguments.length?vmEntrees(i,null,teamModel):vmEntrees(i,null);if(e)out.push(i);}return out;}
-  function vmLabel(C,x){if(x.k==='matiere'&&x.src==='fec')return (VM_MAT_FEC[vmLoc()]||VM_MAT_FEC.fr);if(x.k==='matiere'&&!x.src)return (VM_MAT[vmLoc()]||VM_MAT.fr);if(x.k==='resultat')return x.eur<0?C.resultatNeg:C.resultat;if(!x.mesure&&x.k==='ecart')return C.ecartAbsent;if(!x.mesure&&x.k==='equipe')return C.equipeAbsent;return C[x.k]||x.k;}
+  var VM_ECART_AUDIT={fr:'Écart matière ({b}, {per}, comme l’Audit) : déjà compris dans la matière',en:'Food cost variance ({b}, same period as the Audit): already included in ingredients',es:'Desviación de materia ({b}, mismo periodo que la Auditoría): ya incluida en la materia',it:'Scostamento materie ({b}, stesso periodo dell’Audit): già compreso nelle materie',de:'Wareneinsatz-Abweichung ({b}, gleicher Zeitraum wie das Audit): bereits im Wareneinsatz enthalten',nl:'Afwijking grondstoffen ({b}, zelfde periode als de Audit): al in de grondstoffen begrepen',pt:'Desvio de matéria ({b}, mesmo período da Auditoria): já incluído na matéria'};
+  var VM_ECART_B={fr:['nourriture + boissons','nourriture'],en:['food + drinks','food'],es:['comida + bebidas','comida'],it:['cibo + bevande','cibo'],de:['Speisen + Getränke','Speisen'],nl:['eten + drinken','eten'],pt:['comida + bebidas','comida']};
+  function vmLabel(C,x){if(x.k==='ecart'&&x.src==='audit'&&x.info){var l=vmLoc(),b=(VM_ECART_B[l]||VM_ECART_B.fr)[x.info.avecBoissons?0:1];return vmF(VM_ECART_AUDIT[l]||VM_ECART_AUDIT.fr,{b:b,per:x.info.periode||'sur l’année'});}/* C308 (V16-013) */if(x.k==='matiere'&&x.src==='fec')return (VM_MAT_FEC[vmLoc()]||VM_MAT_FEC.fr);if(x.k==='matiere'&&!x.src)return (VM_MAT[vmLoc()]||VM_MAT.fr);if(x.k==='resultat')return x.eur<0?C.resultatNeg:C.resultat;if(!x.mesure&&x.k==='ecart')return C.ecartAbsent;if(!x.mesure&&x.k==='equipe')return C.equipeAbsent;return C[x.k]||x.k;}
   /* P9 · offerts, remises, annulations du mois (hors des 100 €) + import */
   function verdictCaisseAjustImport(text){var P=vcaParse(text);if(!P.ok)return {ok:false};var M=vcaMerge(root.DB.caisseAjust||[],P.lignes);root.DB.caisseAjust=M.liste;try{root.save('caisse-ajustements');}catch(e){}return {ok:true,lignes:P.lignes.length,ajoutees:M.ajoutees,remplacees:M.remplacees,ignorees:P.ignorees};}
   function verdictCaisseAjustPickIn(doc,win){var i=doc.createElement('input');i.type='file';i.accept='.csv,.txt,text/csv,text/plain';i.style.display='none';doc.body.appendChild(i);
@@ -1819,7 +1837,7 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     h+='<p class="sous" style="margin:0 0 8px">'+vmE(vmF(C.total,{v:vmEur(B.caHT)}))+'</p>';
     h+='<p class="sous" data-tax-scope style="margin:4px 0 10px;font-size:14px">'+vmE(vmF(C.taxNote,{c:vmEur(100-B.pour100Reste,2)}))+'</p>';
     /* barre : 100 € découpés */
-    var pos=B.lignes.filter(function(x){return vmNum(x.pour100)&&x.pour100>0;}),tot=pos.reduce(function(a,x){return a+x.pour100;},0);
+    var pos=B.lignes.filter(function(x){return vmNum(x.pour100)&&x.pour100>0&&!x.inclus;}),tot=pos.reduce(function(a,x){return a+x.pour100;},0);
     h+='<div style="display:flex;height:14px;border-radius:7px;overflow:hidden;margin:0 0 10px" aria-hidden="true">'+pos.map(function(x){return '<span style="width:'+(x.pour100/Math.max(tot,100)*100).toFixed(2)+'%;background:'+VM_COL[x.k]+'"></span>';}).join('')+'</div>';
     B.lignes.forEach(function(x){h+='<div data-vm-l="'+x.k+'" style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid rgba(148,163,184,.12);font-size:14px"><span style="min-width:0"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+(x.k==='resultat'?(x.eur<0?'#ef4444':x.eur===0?'#9aa6b2':'#22c55e'):(VM_COL[x.k]||'#64748b'))+';margin-right:6px"></span>'+vmE(vmLabel(C,x))+'</span><b style="white-space:nowrap'+(x.k==='resultat'&&x.eur<0?';color:#ef4444':'')+'">'+(x.mesure&&vmNum(x.pour100)?vmE(vmEur(x.k==='resultat'?Math.abs(x.pour100):x.pour100,2))+' <span style="font-weight:500;opacity:.7">· '+vmE(vmEur(x.k==='resultat'?Math.abs(x.eur):x.eur))+'</span>':'—')+'</b></div>';});
     var ch=vmChangements(B,P);
@@ -1833,16 +1851,17 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
   }
   /* C308 (V16-005, V16-024, décision 4) : la règle du mois, écrite à côté du résultat, et le résultat d’un mois par sa clé (L5 :
      Plus › Chiffre d’affaires donne le même chiffre que l’Argent). */
-  var VM_REGLE={fr:{t:'Règle du mois : {e} ; {c}.',m:'l’équipe compte un mois de paie (coût annuel ÷ {n} mois travaillés, rien un mois fermé)',s:'l’équipe compte les heures de vos services du mois',f:'mois fermé : aucune paie comptée',p:'loyer, charges fixes et amortissements suivent la part de saison du mois ({p} de l’année)',d:'loyer, charges fixes et amortissements à parts égales sur les 12 mois (aucune saison connue pour cette année)'},
-    en:{t:'Month rule: {e}; {c}.',m:'the team counts one month of pay (annual cost ÷ {n} months worked, nothing in a closed month)',s:'the team counts the hours of your services this month',f:'closed month: no pay counted',p:'rent, fixed costs and depreciation follow the month’s seasonal share ({p} of the year)',d:'rent, fixed costs and depreciation in equal parts over the 12 months (no known season for this year)'},
-    es:{t:'Regla del mes: {e}; {c}.',m:'el equipo cuenta un mes de nómina (coste anual ÷ {n} meses trabajados, nada en un mes cerrado)',s:'el equipo cuenta las horas de sus servicios del mes',f:'mes cerrado: ninguna nómina contada',p:'alquiler, gastos fijos y amortizaciones siguen la parte de temporada del mes ({p} del año)',d:'alquiler, gastos fijos y amortizaciones a partes iguales en los 12 meses (ninguna temporada conocida para este año)'},
-    it:{t:'Regola del mese: {e}; {c}.',m:'la squadra conta un mese di paga (costo annuo ÷ {n} mesi lavorati, nulla in un mese chiuso)',s:'la squadra conta le ore dei suoi servizi del mese',f:'mese chiuso: nessuna paga contata',p:'affitto, costi fissi e ammortamenti seguono la quota stagionale del mese ({p} dell’anno)',d:'affitto, costi fissi e ammortamenti in parti uguali sui 12 mesi (nessuna stagione nota per quest’anno)'},
-    de:{t:'Monatsregel: {e}; {c}.',m:'das Team zählt einen Monatslohn (Jahreskosten ÷ {n} Arbeitsmonate, nichts in einem geschlossenen Monat)',s:'das Team zählt die Stunden Ihrer Services dieses Monats',f:'geschlossener Monat: kein Lohn gezählt',p:'Miete, Fixkosten und Abschreibungen folgen dem saisonalen Anteil des Monats ({p} des Jahres)',d:'Miete, Fixkosten und Abschreibungen zu gleichen Teilen auf die 12 Monate (keine bekannte Saison für dieses Jahr)'},
-    nl:{t:'Regel van de maand: {e}; {c}.',m:'het team telt één maand loon (jaarkosten ÷ {n} gewerkte maanden, niets in een gesloten maand)',s:'het team telt de uren van uw diensten van de maand',f:'gesloten maand: geen loon geteld',p:'huur, vaste kosten en afschrijvingen volgen het seizoensaandeel van de maand ({p} van het jaar)',d:'huur, vaste kosten en afschrijvingen in gelijke delen over de 12 maanden (geen bekend seizoen voor dit jaar)'},
-    pt:{t:'Regra do mês: {e}; {c}.',m:'a equipa conta um mês de salário (custo anual ÷ {n} meses trabalhados, nada num mês fechado)',s:'a equipa conta as horas dos seus serviços do mês',f:'mês fechado: nenhum salário contado',p:'renda, custos fixos e amortizações seguem a parte sazonal do mês ({p} do ano)',d:'renda, custos fixos e amortizações em partes iguais pelos 12 meses (nenhuma época conhecida para este ano)'}};
+  var VM_REGLE={fr:{t:'Règle du mois : {e} ; {c}.',m:'l’équipe compte un mois de paie (coût annuel ÷ {n} mois travaillés, rien un mois fermé)',s:'l’équipe compte les heures de vos services du mois',f:'mois fermé : aucune paie comptée',p:'loyer, charges fixes et amortissements suivent la part de saison du mois ({p} de l’année)',pc:'loyer, charges fixes et amortissements suivent la part de saison du mois lue dans votre caisse {y} ({p} de l’année)',d:'loyer, charges fixes et amortissements : saison inconnue, répartition à parts égales sur les 12 mois'},
+    en:{t:'Month rule: {e}; {c}.',m:'the team counts one month of pay (annual cost ÷ {n} months worked, nothing in a closed month)',s:'the team counts the hours of your services this month',f:'closed month: no pay counted',p:'rent, fixed costs and depreciation follow the month’s seasonal share ({p} of the year)',pc:'rent, fixed costs and depreciation follow the month’s seasonal share read in your {y} till data ({p} of the year)',d:'rent, fixed costs and depreciation: season unknown, split in equal parts over the 12 months'},
+    es:{t:'Regla del mes: {e}; {c}.',m:'el equipo cuenta un mes de nómina (coste anual ÷ {n} meses trabajados, nada en un mes cerrado)',s:'el equipo cuenta las horas de sus servicios del mes',f:'mes cerrado: ninguna nómina contada',p:'alquiler, gastos fijos y amortizaciones siguen la parte de temporada del mes ({p} del año)',pc:'alquiler, gastos fijos y amortizaciones siguen la parte de temporada del mes leída en su caja {y} ({p} del año)',d:'alquiler, gastos fijos y amortizaciones: temporada desconocida, reparto a partes iguales en los 12 meses'},
+    it:{t:'Regola del mese: {e}; {c}.',m:'la squadra conta un mese di paga (costo annuo ÷ {n} mesi lavorati, nulla in un mese chiuso)',s:'la squadra conta le ore dei suoi servizi del mese',f:'mese chiuso: nessuna paga contata',p:'affitto, costi fissi e ammortamenti seguono la quota stagionale del mese ({p} dell’anno)',pc:'affitto, costi fissi e ammortamenti seguono la quota stagionale del mese letta nella sua cassa {y} ({p} dell’anno)',d:'affitto, costi fissi e ammortamenti: stagione sconosciuta, ripartizione in parti uguali sui 12 mesi'},
+    de:{t:'Monatsregel: {e}; {c}.',m:'das Team zählt einen Monatslohn (Jahreskosten ÷ {n} Arbeitsmonate, nichts in einem geschlossenen Monat)',s:'das Team zählt die Stunden Ihrer Services dieses Monats',f:'geschlossener Monat: kein Lohn gezählt',p:'Miete, Fixkosten und Abschreibungen folgen dem saisonalen Anteil des Monats ({p} des Jahres)',pc:'Miete, Fixkosten und Abschreibungen folgen dem saisonalen Anteil des Monats aus Ihren Kassendaten {y} ({p} des Jahres)',d:'Miete, Fixkosten und Abschreibungen: Saison unbekannt, Aufteilung zu gleichen Teilen auf die 12 Monate'},
+    nl:{t:'Regel van de maand: {e}; {c}.',m:'het team telt één maand loon (jaarkosten ÷ {n} gewerkte maanden, niets in een gesloten maand)',s:'het team telt de uren van uw diensten van de maand',f:'gesloten maand: geen loon geteld',p:'huur, vaste kosten en afschrijvingen volgen het seizoensaandeel van de maand ({p} van het jaar)',pc:'huur, vaste kosten en afschrijvingen volgen het seizoensaandeel van de maand uit uw kassagegevens {y} ({p} van het jaar)',d:'huur, vaste kosten en afschrijvingen: seizoen onbekend, verdeling in gelijke delen over de 12 maanden'},
+    pt:{t:'Regra do mês: {e}; {c}.',m:'a equipa conta um mês de salário (custo anual ÷ {n} meses trabalhados, nada num mês fechado)',s:'a equipa conta as horas dos seus serviços do mês',f:'mês fechado: nenhum salário contado',p:'renda, custos fixos e amortizações seguem a parte sazonal do mês ({p} do ano)',pc:'renda, custos fixos e amortizações seguem a parte sazonal do mês lida na sua caixa {y} ({p} do ano)',d:'renda, custos fixos e amortizações: época desconhecida, repartição em partes iguais pelos 12 meses'}};
   function vmRegle(B){
     var T=VM_REGLE[vmLoc()]||VM_REGLE.fr,L=(B&&B.lignes)||[],srv=L.some(function(x){return x.src==='services';}),ferme=L.some(function(x){return x.src==='ferme';}),n=B&&B.moisTravailles,p=B&&B.partSaison;
-    var e=ferme?T.f:srv?T.s:vmF(T.m,{n:n?String(n):'12'}),c=p!=null?vmF(T.p,{p:(Math.round(p*1000)/10).toLocaleString(vmTag())+'\u202f%'}):T.d;
+    var pp=p!=null?(Math.round(p*1000)/10).toLocaleString(vmTag())+'\u202f%':null;
+    var e=ferme?T.f:srv?T.s:vmF(T.m,{n:n?String(n):'12'}),c=p!=null?(B.partSource==='caisse'?vmF(T.pc,{p:pp,y:B.annee||''}):vmF(T.p,{p:pp})):T.d; /* C308 (décision 11) */
     return vmF(T.t,{e:e,c:c});
   }
   function vmResultatMois(cle){
@@ -1851,8 +1870,8 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
       var y=Number(root.verdictOperationalClock().key.slice(0,4)),i=(Number(k.slice(0,4))-y)*12+Number(k.slice(5,7))-1;if(i<-12||i>11)return {ok:false,raison:'periode'};
       var ec=root.DB&&root.DB.demoCompleteVersion==='R275'?null:(vmCache.sig?vmCache.ecart:vmEcart()),inp=vmEntrees(i,ec);if(!inp)return {ok:false,raison:'ca'};
       var B=vmBreakdown(inp);if(!B.ok)return {ok:false,raison:B.raison||'ca'};
-      var v=function(){var ks=[].slice.call(arguments);return B.lignes.filter(function(x){return ks.indexOf(x.k)>=0&&vmNum(x.eur);}).reduce(function(a,x){return a+x.eur;},0);};
-      return {ok:true,mois:k,caHT:B.caHT,matiere:v('matiere'),equipe:v('equipe','equipeUtile','heuresTrop'),fixes:v('fixes'),amortissements:v('amortissements'),autres:v('variables','commissions','pertes','ecart'),resultat:B.reste,pour100:B.pour100Reste,regle:vmRegle(B),
+      var v=function(){var ks=[].slice.call(arguments);return B.lignes.filter(function(x){return ks.indexOf(x.k)>=0&&vmNum(x.eur)&&!x.inclus;}).reduce(function(a,x){return a+x.eur;},0);};
+      return {ok:true,mois:k,caHT:B.caHT,matiere:v('matiere'),equipe:v('equipe','equipeUtile','heuresTrop'),fixes:v('fixes'),amortissements:v('amortissements'),autres:v('variables','commissions','pertes','ecart'),resultat:B.reste,pour100:B.pour100Reste,regle:vmRegle(B),ecartMatiere:inp.ecartAudit||null/* C308 (V16-013) : compris dans la matière */,
         sources:{ca:inp.caSrc,matiere:inp.matSrc,equipe:inp.equipe&&inp.equipe.src||null,partSaison:inp.partSaison,moisTravailles:inp.moisTravailles}};
     }catch(e){return {ok:false,raison:'erreur'};}
   }
@@ -2377,6 +2396,8 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     var html=root.verdictSeuilsHTML('annee',p);if(!html)return;
     html+='<button type="button" class="btn sec" onclick="parent.go(\'ca\')">Historique · comparer les années et les mois</button>';
     var main=doc.querySelector('main')||doc.body;main.insertAdjacentHTML('beforeend','<article class="mod" data-vs-diag-wrap="1" data-vs-sig="'+vmE(sig)+'" style="margin-top:14px">'+html.replace('data-vs-seuils="annee"','data-vs-seuils="diag-visible"')+'</article>');
+    /* C312 (V16-079) : ce bloc vit dans le cadre isolé de l'écran, qui n'a ni .btn ni .sous : carte, textes et bouton au style de l'écran (variables du cadre, clair et sombre). */
+    if(!doc.getElementById('vs-diag-css')){var vst=doc.createElement('style');vst.id='vs-diag-css';vst.textContent='[data-vs-diag-wrap]{padding:16px 16px 14px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--card-a),var(--card-b));color:var(--txt)}[data-vs-diag-wrap] [data-vs-seuils]{margin-top:0!important;padding-top:0!important;border-top:0!important}[data-vs-diag-wrap] .sous{margin:0;color:var(--mut);font-size:13.5px;line-height:1.45}[data-vs-diag-wrap] .sous b{color:var(--txt);font-size:15px;line-height:1.35}[data-vs-diag-wrap] .btn{display:block;width:100%;margin-top:12px;min-height:44px;padding:11px 14px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--txt);font-family:inherit;font-size:14.5px;font-weight:700;line-height:1.3;cursor:pointer}';(doc.head||doc.body).appendChild(vst);}
   }catch(e){}}
   root.setInterval(vsDiagAttach,900);
   root.VerdictOffre={version:VO_OFFRE.version,offre:VO_OFFRE,acces:voAcces,matrice:VO_ACCES,niveau:verdictNiveau,snapshot:voSnapshot,grilleHTML:voGrilleHTML};
