@@ -11,6 +11,10 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C291', date: '2026-10-23', titre: 'La barre des onglets de Structure suit le thème : foncée en thème clair, blanche en thème sombre, l’onglet ouvert toujours bordé de vert' },
+    { id: 'C290', date: '2026-10-22', titre: 'Accueil : après un changement de thème et un rechargement, l’Accueil ne reste plus sur son ancienne présentation ; au repos, rien ne bouge à l’écran' },
+    { id: 'C289', date: '2026-10-22', titre: 'Démonstration : la pastille de l’établissement affiché propose « Revenir à mon établissement ». Carte : « Vera propose » reconnaît un plat de votre carte à son produit principal et à sa garniture, même sous un autre nom (une bavette-frites face à votre steak frites), et n’affiche aucune marge quand c’est le produit principal qui manque — elle dit lequel' },
+    { id: 'C288', date: '2026-10-22', titre: 'Démonstration : une seule façon de dire la sortie, « Revenir à mon établissement », partout et dans votre langue ; replié, le bandeau n’est plus qu’une petite pastille' },
     { id: 'C287', date: '2026-10-22', titre: 'Carte : une nouveauté de « Vera propose » se distingue vraiment de vos plats — plus de carbonara à côté de vos pâtes carbonara ni de burger qui n’est que le vôtre avec un ingrédient de plus : Vera propose un autre produit principal ou une autre technique' },
     { id: 'C286', date: '2026-10-22', titre: 'Retour d’une démonstration : l’Accueil apparaît directement mis en forme, sans passer un instant par une présentation brute avec des centimes' },
     { id: 'C285', date: '2026-10-22', titre: 'Démonstration : la croix du bandeau le replie sans jamais retirer la sortie (« Quitter la démo » reste visible) ; chaque nouvelle démo rouvre le bandeau ; le sélecteur d’établissement propose aussi « Revenir à mon établissement »' },

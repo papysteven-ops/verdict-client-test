@@ -133,8 +133,16 @@
         if (rec.length) { if (!pr || memePrincipal) return true; }
         else { var rn = mn.slice(1), rp = mp.slice(1); if (!rn.length || !rp.length || rn.some(function (m) { return rp.indexOf(m) >= 0; })) return true; }
       }
-      /* les produits de base communs (beurre, œufs, sucre, crème) ne font pas le même plat : moelleux ≠ profiteroles */
-      return false;
+      /* C289 (N1) : même produit principal et même garniture, quel que soit le nom — « Bavette d'aloyau, sauce à l'échalote, frites
+         maison » face au « Steak frites » (bavette + frites). Les produits de base (beurre, œufs, sucre, crème, huile, oignon…)
+         ne font pas une garniture : moelleux ≠ profiteroles. */
+      /* Le rapprochement se fait sur la nature des produits, pas sur leur libellé : la garniture « frites » de Vera (trouvée
+         comme « Pomme de terre ») retrouve les « Frites surgelées » de la fiche ; la pièce « bavette de bœuf », la « Bavette ». */
+      var ri = (p.rec || []).map(function (l) { return { nom: l[0] }; }), pc = (e.g.comp || []).filter(function (c) { return c[0] === 'piece'; })[0];
+      if (!memePrincipal && !(pc && trouver(pc[1], ri))) return false;
+      var BASE = /^(beurre|sucre|oeuf|creme|huile|sel|poivre|farine|lait|oignon|ail|echalote|herbe|persil|vinaigre|moutarde|mayonnaise|eau|vin|fond|bouillon|levure|vanille|cacao|chocolat)$/;
+      return (e.g.comp || []).some(function (c) { return c[0] === 'garniture' && !BASE.test(premier(c[1])) && !!trouver(c[1], ri); }) ||
+        e.rec.some(function (l) { var n = norm(l[0]); return n !== pr && rec.indexOf(n) >= 0 && !BASE.test(premier(l[0])); });
     });
   }
 
@@ -291,17 +299,19 @@
     function memeFamille(g) { var fg = familleGabarit(g); return fc ? fg === fc : !(fg && fams[fg]); }
     if (!gabs.length && fam !== 'brasserie') gabs = TG.filter(function (g) { return g.f.indexOf('brasserie') >= 0 && g.c.some(function (r) { return rangs.indexOf(r) >= 0; }) && !dejaALaCarte(g, d); });
     function evaluer(g, climatCible) {
-      var rec = [], avec = [], manque = [], poids = 0, couv = 0, principal = null;
+      var rec = [], avec = [], manque = [], poids = 0, couv = 0, principal = null, principalManque = null;
       g.comp.forEach(function (c) {
         var w = c[0] === 'piece' ? 2 : c[0] === 'touche' ? 0.5 : 1; poids += w;
         var trouve = trouver(c[1], ing), lib = trouve && trouve.nom, fm = !trouve && faitMaison(c[1], ing);
         if (trouve && c[0] === 'piece' && !principal) principal = trouve.nom;
+        /* C289 (R3) : le produit principal (la pièce) absent est retenu : sans lui, aucune marge n'est affichée */
+        if (!trouve && c[0] === 'piece' && !principal && !principalManque) principalManque = c[1];
         if (fm) { trouve = fm; lib = fm.nom + ' (' + c[1] + ' maison)'; }
         if (trouve) { couv += w; rec.push([trouve.nom, c[2]]); if (avec.indexOf(lib) < 0) avec.push(lib); }
         else if (manque.indexOf(c[1]) < 0) manque.push(c[1]);
       });
       var couverture = poids ? couv / poids : 0, saison = g.s.indexOf(climatCible) >= 0 ? 1 : 0;
-      return { g: g, rec: rec, avec: avec, manque: manque, couverture: couverture, saison: saison, principal: principal, score: saison * 1.2 + couverture + (manque.length === 0 ? .3 : 0) - manque.length * .08 };
+      return { g: g, rec: rec, avec: avec, manque: manque, couverture: couverture, saison: saison, principal: principal, principalManque: principalManque, score: saison * 1.2 + couverture + (manque.length === 0 ? .3 : 0) - manque.length * .08 };
     }
     function meilleur(climatCible, exclure, mois) {
       /* un plat complet : au moins 3 composants nommés (jamais « mousse au chocolat » tout court) */
@@ -318,7 +328,7 @@
   function fabriquer(e, d, o, mois, clim, quand) {
     var g = e.g, tva = null; try { tva = o.tva != null ? o.tva : (d.reg && d.reg.tvac) || null; } catch (x) {}
     var p = { id: 'vera-saison-' + Math.abs(hash(g.nom + mois)).toString(36), nom: g.nom, cat: o.cat || '', tva: tva, rec: e.rec, preps: [], vol: null,
-      cpVeraNew: true, cpVeraSaison: { quand: quand, mois: mois, climat: clim, famille: famille(d.etabType), avec: e.avec, manque: e.manque, couverture: e.couverture, prix: g.prix }, cpWarmth: clim === 'chaud' ? 1 : clim === 'froid' ? -1 : 0 };
+      cpVeraNew: true, cpVeraSaison: { quand: quand, mois: mois, climat: clim, famille: famille(d.etabType), avec: e.avec, manque: e.manque, principalManque: e.principalManque || null, couverture: e.couverture, prix: g.prix }, cpWarmth: clim === 'chaud' ? 1 : clim === 'froid' ? -1 : 0 };
     return p;
   }
   function hash(s) { s = String(s); var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }

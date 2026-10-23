@@ -152,10 +152,13 @@
       if(w!=="all"){el.querySelector('.svc-t[data-w="all"][data-id="'+id+'"]').setAttribute("aria-pressed",String(tousOn(id)));}
       try{global.save();}catch(e){}try{if(global.VIEW==="pil")global.drawPil();}catch(e){}});}
   /* ---------- saisie du jour : un champ par service ---------- */
+  /* C290 : n’écrire une classe que si elle change. classList.add / remove réécrivent l’attribut même sans changement : l’observateur ci-dessous
+     relançait la carte toutes les 180 ms, sans fin, dès que l’Accueil d’origine était affiché (≈ 110 changements en 10 s au repos). */
+  function cls(el,c,on){if(el&&el.classList.contains(c)!==on)el.classList.toggle(c,on);}
   function carteSaisie(){var host=doc.getElementById("v36-today");if(!host||host.offsetParent===null)return;var e=etatJour(),c=clock();
     var deja=host.querySelector(".svc-form"),form=host.querySelector(".v25-day-form");
-    if(!e||!c){if(deja)deja.remove();if(form)form.classList.remove("svc-on");host.classList.remove("svc-progress","svc-active");return;}
-    if(form){var jf=form.querySelector("#pl-jour");if(jf&&Number(jf.value)!==c.day){if(deja)deja.remove();form.classList.remove("svc-on");return;}form.classList.add("svc-on");}
+    if(!e||!c){if(deja)deja.remove();cls(form,"svc-on",false);cls(host,"svc-progress",false);cls(host,"svc-active",false);return;}
+    if(form){var jf=form.querySelector("#pl-jour");if(jf&&Number(jf.value)!==c.day){if(deja)deja.remove();cls(form,"svc-on",false);return;}cls(form,"svc-on",true);}
     var sig=JSON.stringify(e);if(deja&&deja.getAttribute("data-sig")===sig)return;if(deja)deja.remove();
     var t=L(),s=saisies(c.key),w=doc.createElement("div");w.className="svc-form";w.setAttribute("data-sig",sig);
     var h='';e.need.forEach(function(id){var v=s[id]||{};h+='<div class="svc-line" data-id="'+id+'"><b>'+t[id]+'</b><div class="v25-input-shell"><input inputmode="decimal" autocomplete="off" data-svc-ca="'+id+'" value="'+(v.ca!=null?String(Math.round(v.ca*100)/100).replace(".",","):"")+'"><b>€</b></div><input inputmode="numeric" autocomplete="off" data-svc-tk="'+id+'" placeholder="'+t.tickets+'" value="'+(v.tk!=null?v.tk:"")+'"></div>';});
@@ -166,7 +169,7 @@
     h+='<button type="button" class="v25-primary svc-save">'+t.enregistrer+'</button>';w.innerHTML=h;
     var carte=host.querySelector(".v25-today"),tete=carte&&carte.querySelector(".v25-today-head");
     if(tete&&tete.parentNode===carte)carte.insertBefore(w,tete.nextSibling);else if(carte)carte.appendChild(w);else host.appendChild(w);
-    host.classList.toggle("svc-progress",!e.complet);host.classList.add("svc-active");
+    cls(host,"svc-progress",!e.complet);cls(host,"svc-active",true);
     w.querySelector(".svc-save").addEventListener("click",function(){var d=DBx();d.servicesJour=d.servicesJour||{};var rec=d.servicesJour[c.key]||{},tot=0,tk=0,any=false;
       e.need.forEach(function(id){var ca=parseFloat(String(w.querySelector('[data-svc-ca="'+id+'"]').value).replace(/\s/g,"").replace(",","."));var tkv=parseInt(w.querySelector('[data-svc-tk="'+id+'"]').value,10);
         if(isFinite(ca)&&ca>=0){rec[id]={ca:ca,tk:isFinite(tkv)?tkv:null};tot+=ca;tk+=isFinite(tkv)?tkv:0;any=true;}else delete rec[id];});

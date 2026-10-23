@@ -90,17 +90,23 @@
     'html.vd-workspace-light #v-org #point9-organization{background:#fff!important;border:1px solid #cfe0f5!important;box-shadow:0 6px 18px rgba(20,35,50,.06)!important}' +
     'html.vd-workspace-light #v-org #point9-organization h3{color:#17212b!important}html.vd-workspace-light #v-org #point9-organization p.note{color:#526171!important}' +
     'html.vd-workspace-light #v-org #point9-organization [style*="color:#93c5fd"]{color:#1d4ed8!important}' +
-    /* C281 (Steven, 22/10 : « mets la barre de Structure blanche partout ») : les règles de C269 valent maintenant dans les
-       deux thèmes, sur téléphone comme sur ordinateur ; elles remplacent la barre sombre du thème clair sur téléphone.
+    /* C281 (Steven, 22/10 : « mets la barre de Structure blanche partout »), restreint par C291 au thème sombre : les règles
+       de C269 valent, sur téléphone comme sur ordinateur ; elles remplacent la barre sombre du thème clair sur téléphone.
        Leur poids (deux identifiants, :not(#vd-c281) pour la copie du dock) passe devant les règles de thème de verdict-app.html.
        C269 (Steven, 22/10 : « le module sombre, on peut ne pas le distinguer en scroll : fond plus clair, écriture plus
        sombre, contraste ») : en thème sombre, la barre des sous-onglets de Structure, collée en haut, se fondait dans les
        cartes de même couleur qui défilent dessous. Elle reprend l'aspect du thème clair
        (« l'inverse du clair, cohérent, premium ») : fond blanc, texte foncé, onglet ouvert vert pâle bordé de vert
        (#e8f6ee, contour 2 px #15803d : le vert des onglets clairs de la Carte, que Steven trouve « beau, premium »), jamais de vert vif. */
-    'html body #v-data #dchips.chips.verdict-structure-tabs,html body #v32ModuleDock .chips.verdict-structure-tabs:not(#vd-c281){background:#fff!important;border:1px solid #d5dde5!important;box-shadow:0 10px 24px rgba(0,0,0,.5)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}' +
-    'html body #v-data #dchips.chips.verdict-structure-tabs button,html body #v32ModuleDock .chips.verdict-structure-tabs:not(#vd-c281) button{background:transparent!important;color:#14202b!important;box-shadow:none!important}' +
-    'html body #v-data #dchips.chips.verdict-structure-tabs button.on,html body #v-data #dchips.chips.verdict-structure-tabs button[aria-current="page"],html body #v32ModuleDock .chips.verdict-structure-tabs:not(#vd-c281) button.on{background:#e8f6ee!important;color:#14532d!important;box-shadow:inset 0 0 0 2px #15803d!important}';
+    'html:not(.vd-workspace-light) body #v-data #dchips.chips.verdict-structure-tabs,html:not(.vd-workspace-light) body #v32ModuleDock .chips.verdict-structure-tabs:not(#vd-c281){background:#fff!important;border:1px solid #d5dde5!important;box-shadow:0 10px 24px rgba(0,0,0,.5)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}' +
+    'html:not(.vd-workspace-light) body #v-data #dchips.chips.verdict-structure-tabs button,html:not(.vd-workspace-light) body #v32ModuleDock .chips.verdict-structure-tabs:not(#vd-c281) button{background:transparent!important;color:#14202b!important;box-shadow:none!important}' +
+    'html:not(.vd-workspace-light) body #v-data #dchips.chips.verdict-structure-tabs button.on,html:not(.vd-workspace-light) body #v-data #dchips.chips.verdict-structure-tabs button[aria-current="page"],html:not(.vd-workspace-light) body #v32ModuleDock .chips.verdict-structure-tabs:not(#vd-c281) button.on{background:#e8f6ee!important;color:#14532d!important;box-shadow:inset 0 0 0 2px #15803d!important}' +
+    /* C291 (Steven, 23/10 : « en clair le module doit être foncé et pas rester blanc comme le mode sombre ») : la barre est
+       l'inverse du thème. En sombre elle reste blanche (C269), en clair elle est foncée, texte clair, onglet ouvert vert sombre
+       bordé du même vert #15803d. Même poids que C281, donc devant les règles de thème de verdict-app.html. */
+    'html.vd-workspace-light body #v-data #dchips.chips.verdict-structure-tabs,html.vd-workspace-light body #v32ModuleDock .chips.verdict-structure-tabs:not(#vd-c281){background:#101419!important;border:1px solid #2f3842!important;box-shadow:0 10px 24px rgba(20,35,50,.28)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}' +
+    'html.vd-workspace-light body #v-data #dchips.chips.verdict-structure-tabs button,html.vd-workspace-light body #v32ModuleDock .chips.verdict-structure-tabs:not(#vd-c281) button{background:transparent!important;color:#f3f5f7!important;box-shadow:none!important}' +
+    'html.vd-workspace-light body #v-data #dchips.chips.verdict-structure-tabs button.on,html.vd-workspace-light body #v-data #dchips.chips.verdict-structure-tabs button[aria-current="page"],html.vd-workspace-light body #v32ModuleDock .chips.verdict-structure-tabs:not(#vd-c281) button.on{background:#183524!important;color:#fff!important;box-shadow:inset 0 0 0 2px #15803d!important}';
   /* C76 — Simuler commence au « Point de départ calculé » (demande de Steven) : rien au-dessus ; puis les curseurs et
      le total ; le registre des décisions et le journal des gains (seulement ici) passent tout en bas. */
   css.textContent +=

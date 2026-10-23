@@ -627,7 +627,11 @@ function vues(){var fs=doc.querySelectorAll(".p41-cadre > iframe");for(var i=0;i
 var vRaf=0;function vuesDoux(){if(vRaf)return;vRaf=global.requestAnimationFrame(function(){vRaf=0;vues();});}
 global.addEventListener("scroll",vuesDoux,{passive:true});global.addEventListener("resize",vuesDoux);
 global.addEventListener("message",function(ev){var d=ev.data;if(d&&d.p41==="h"){global.setTimeout(vues,60);global.setTimeout(vues,400);}});
-global.setInterval(function(){if(doc.querySelector(".p41-cadre > iframe"))vues();},1500);
+/* C290 : une pose manquée de l’Accueil (au chargement, une dépendance pas encore prête) n’était reprise qu’au prochain changement de vue :
+   l’Accueil d’origine restait affiché 25 s et plus. Tant qu’il est à l’écran sans « Détail complet » demandé, la lecture premium est reposée
+   ici (une tentative sans effet n’écrit rien dans la page : 0 changement au repos). */
+function rattraper(){try{if(global.VIEW!=="pil"||doc.getElementById("splash")||(doc.body&&doc.body.classList.contains("demo-tour-active")))return;var h=doc.getElementById(HOST.pil);if(!h||h.classList.contains("p41-on")||h.getAttribute("data-p41-legacy")==="1"||h.offsetParent===null)return;poser("pil");}catch(e){}}
+global.setInterval(function(){rattraper();if(doc.querySelector(".p41-cadre > iframe"))vues();},1500);
 global.VerdictPremiumEcrans={version:"R41-1.0.0",poser:function(){for(var k in TPL)poser(k);},cles:Object.keys(TPL),vues:vues};
 })(window);
 

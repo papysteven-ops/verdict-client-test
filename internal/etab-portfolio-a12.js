@@ -315,6 +315,18 @@ root.addEventListener('message',function(ev){var d=ev&&ev.data;if(!d||!d.context
 /* C258 : en démonstration, la barre ne dit jamais « Mon établissement · RÉEL » (vu pendant le chargement de la démo,
    chiffres de la Brasserie Collet affichés) : un dossier réel n'existe pas dans une session de démonstration. */
 (function(){var f=root.verdictEtabIdentity;if(typeof f!=='function'||f.__c258)return;var g=function(d){var r=f.apply(this,arguments);try{var demo=root.eval('typeof VERDICT_DEMO_SESSION!=="undefined"&&!!VERDICT_DEMO_SESSION');if(demo&&r&&r.kind==='RÉEL'){var x=d||{},nm=String(x.etab||'').trim();return {name:nm&&!/^mon établissement$/i.test(nm)?nm:'Démonstration',kind:'DÉMONSTRATION',context:'Démonstration fictive · aucune donnée réelle'};}}catch(e){}return r;};g.__c258=true;root.verdictEtabIdentity=g;})();
+/* C289 (C285 en partie, T1) : pendant une démo, toucher la pastille de l'établissement affiché ne répond plus « Déjà affiché ·
+   … · MODÈLE FICTIF » : il propose « Revenir à mon établissement », le même libellé et la même action que le bandeau (C288). */
+(function(){var f=root.switchEtab;if(typeof f!=='function'||f.__c289)return;var g=function(id){
+  try{var S=root.STORE,demo=root.eval('typeof VERDICT_DEMO_SESSION!=="undefined"&&!!VERDICT_DEMO_SESSION');
+    if(demo&&S&&id===S.actif&&typeof root.quitterDemo==='function'&&typeof root.ask==='function'){var nm='';try{nm=root.verdictEtabIdentity(S.etabs[id]).name;}catch(e){}
+      /* libellé unique de L6 (C288), dans chaque langue ; le reste de la phrase suit */
+      var L={fr:['Revenir à mon établissement','Vous regardez une démonstration','Vos propres chiffres vous attendent.'],en:['Back to my business','You are viewing a demo','Your own figures are waiting for you.'],
+        es:['Volver a mi establecimiento','Está viendo una demostración','Sus propias cifras le esperan.'],it:['Torna alla mia attività','Stai guardando una dimostrazione','I tuoi dati ti aspettano.'],
+        de:['Zurück zu meinem Betrieb','Sie sehen eine Demo','Ihre eigenen Zahlen warten auf Sie.'],nl:['Terug naar mijn zaak','U bekijkt een demo','Uw eigen cijfers wachten op u.'],
+        pt:['Voltar ao meu estabelecimento','Está a ver uma demonstração','Os seus próprios números esperam por si.']},lg=String(root.LOCALE||root.document.documentElement.lang||'fr').slice(0,2),x=L[lg]||L.fr;
+      var fr=x===L.fr;root.ask(x[0]+(fr?' ?':'?'),x[1]+(nm?(fr?' (« '+nm+' »)':' (“'+nm+'”)'):'')+'. '+x[2],x[0],function(){root.quitterDemo();});return true;}
+  }catch(e){}return f.apply(this,arguments);};for(var k in f)if(Object.prototype.hasOwnProperty.call(f,k))g[k]=f[k];g.__c289=true;root.switchEtab=g;})();
 root.VerdictNomCompte=nomDuCompte;root.verdictNewEtabChooser=openChooser;root.verdictNewEtabModel=openModel;root.verdictNewEtabSame=openSame;root.verdictNewEtabFresh=openFresh;root.verdictNewEtabClose=closeSheet;
 root.verdictNewEtabCreateSame=createSame;root.verdictNewEtabCreateBlank=createBlank;root.verdictEtabDuplicate=duplicate;root.verdictDupFec=goFec;root.verdictDupEntry=goEntry;
 root.VerdictEtabPortfolio={conceptKeys:CONCEPT_KEYS.slice(),duplicate:duplicate,duplicateRequestsKey:DUP_KEY,placeOf:placeOf};
