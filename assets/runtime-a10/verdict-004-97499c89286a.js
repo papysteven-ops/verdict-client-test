@@ -38,6 +38,9 @@ function savedHTML(c,date,amount){
 function dayExplanation(c,date){
  var day=date&&c.input&&c.input.days.find(function(d){return d.date===date;});if(!day||!c.exact)return '';
  var gap=Math.max(0,Math.round((Number(day.target)-Number(day.ca))*100)/100);if(!gap)return '';
+ /* C308 (décision 1) : minimum demandé le matin de cette journée (base − part de l’avance / + part du retard des journées d’avant). */
+ var dem=null;try{var cd=calculate({minimum:c.input.minimum,today:date,days:c.input.days.map(function(d){return d.date<date?d:{date:d.date,target:d.target,ca:null};})});if(cd.exact&&cd.next===date)dem=cd.catchup;}catch(_){dem=null;}
+ if(dem!=null){var manque=Math.max(0,Math.round(dem)-Math.round(Number(day.ca)));return manque>0?'<p>Manque sur cette journée : '+money(manque)+' sous le minimum demandé ('+money(dem)+').</p>':'<p>Sous la base du jour ('+money(Number(day.target))+') de '+money(Math.round(Number(day.target))-Math.round(Number(day.ca)))+' : l’avance des jours précédents couvre cet écart.</p>';}
  var absorbed=Math.min(gap,Math.max(0,gap-(c.deficit||0)));
  return '<p>Manque sur cette journée : '+money(gap)+'.'+(absorbed>0?' Avance des jours précédents utilisée : '+money(absorbed)+'.':'')+'</p>';
 }

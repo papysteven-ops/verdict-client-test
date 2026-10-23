@@ -128,6 +128,8 @@ function prixEnPlus(){
   try{if(typeof root.verdictNiveau==='function')niveau=root.verdictNiveau()==='pilotage'?'pilotage':'pro';}catch(e){}
   try{var o=typeof root.verdictOffrePourTier==='function'?root.verdictOffrePourTier():null;if(o&&o.xm>0&&o.xa>0){P[niveau].m=o.xm;P[niveau].a=o.xa;}}catch(e){}
   try{var VP=root.VerdictPlan||(root.parent&&root.parent!==root&&root.parent.VerdictPlan);essai=!!(VP&&VP.etat&&VP.etat().niveau==='essai');}catch(e){}
+  /* C311 (V16-069, L4) : l'essai du compte connecté se lit aussi dans la configuration du serveur (VERDICT_COMPTE.essai) */
+  try{var CC=lireHaut('VERDICT_COMPTE');if(CC&&CC.essai===true)essai=true;}catch(e){}
   var e=function(v){return v.toLocaleString('fr-FR').replace(/\s/g,' ')+' € HT';},ligne=function(k){return '+'+e(P[k].m)+' par mois, ou +'+e(P[k].a)+' par an';};
   if(essai)return 'Pendant l’essai, cet établissement est compris. Ensuite, il s’ajoute à votre abonnement : '+ligne('pro')+' en Pro ; '+ligne('pilotage')+' en Pilotage.';
   return 'Cet établissement s’ajoute à votre abonnement '+(niveau==='pilotage'?'Pilotage':'Pro')+' : '+ligne(niveau)+' en formule annuelle.';
@@ -288,7 +290,8 @@ function declarer(nom,suite){
       echec(causeEchec(r));
     }).catch(function(x){echec(x&&x.c306?causeEchec(x):'Le serveur de comptes ne répond pas : rien n’a été créé. Réessayez dans un instant.');});}
   function demander(q){if(q.inclus){envoyer(q,null);return;}
-    root.ask('Confirmer le supplément ?','« '+String(nom||'Nouvel établissement')+' » s’ajoute à votre abonnement : '+prixQuote(q)+'. Rien n’est facturé sans cette confirmation.','Confirmer et créer',function(){envoyer(q,q.montantNouveau&&q.montantNouveau.premier);});}
+    /* C311 (V16-069) : le libellé et la phrase du serveur (L4) passent en premier quand il les donne */
+    root.ask('Confirmer le supplément ?','« '+String(nom||'Nouvel établissement')+' » s’ajoute à votre abonnement : '+(q.libelle?String(q.libelle)+(q.detail?'. '+String(q.detail):''):prixQuote(q))+'. Rien n’est facturé sans cette confirmation.','Confirmer et créer',function(){envoyer(q,q.montantNouveau&&q.montantNouveau.premier);});}
   postServeur('/api/account',{action:'establishment_quote'}).then(function(r){if(r.status===200&&r.j&&typeof r.j==='object'&&r.j.ok!==false)demander(r.j);else echec(r.status===401?causeEchec(r):'Le serveur n’a pas pu chiffrer l’établissement'+(r.status?' (réponse '+r.status+')':'')+' : rien n’a été créé.');})
     .catch(function(x){echec(x&&x.c306?causeEchec(x):'Le serveur de comptes ne répond pas : rien n’a été créé. Réessayez dans un instant.');});
 }
@@ -392,7 +395,7 @@ root.addEventListener('message',function(ev){var d=ev&&ev.data;if(!d||!d.context
   var nem=function(d){var r=em.apply(this,arguments);try{if(r&&r.score==null&&d){var prev=root.DB;try{root.DB=d;var st=root.carteStats();if(st&&st.ca>0&&isFinite(st.margePond))r.marge=st.margePond;}finally{root.DB=prev;}}}catch(e){}return r;};
   nem.__c301=true;root.etabCarteMeta=nem;
   var nvi=function(p,c){var h=vi.apply(this,arguments);try{/* C301 (deux indices, liste) : ce que chacun mesure quand ils divergent */var sp=p&&Number.isFinite(p.score)?p.score:null,scc=c&&Number.isFinite(c.score)?c.score:null;
-      if(sp!=null&&scc!=null&&typeof h==='string'&&String(root.LOCALE||'fr').slice(0,2)==='fr'){var lig=scc>=60&&sp<60?'La carte est bonne : c’est la structure (équipe, loyer, charges) qui perd.':(scc<60&&sp>=60?'La structure tient : c’est la carte qui reste à travailler.':'');
+      if(sp!=null&&scc!=null&&typeof h==='string'&&String(root.LOCALE||'fr').slice(0,2)==='fr'){var lig=scc>=60&&sp<60?'La carte est bonne : c’est la structure (équipe, loyer, charges) qui pèse.' /* C311 (V16-090) : « qui pèse », le modèle peut gagner de l'argent */:(scc<60&&sp>=60?'La structure tient : c’est la carte qui reste à travailler.':'');
         if(lig)h=h.replace(/<\/span>$/,'<small style="flex:1 1 100%;display:block;color:var(--mut2);font-size:11.5px">'+lig+'</small></span>');}}catch(e){}try{if(c&&c.score==null&&c.marge!=null&&typeof h==='string'){var l=String(root.LOCALE||'fr').slice(0,2),x=W[l]||W.fr,i=h.indexOf('data-index="carte"');if(i>=0){var a=h.slice(0,i),b=h.slice(i),m=(Math.round(c.marge*10)/10).toLocaleString(root.LOCALE_TAG||'fr-FR')+' %';
         b=b.replace(/(<b style="color:[^"]*">)[^<]*(<\/b>)/,'$1'+x[0]+'$2');if(b.indexOf('<small style="display:block')<0)b=b.replace('</b></span>','</b><small style="display:block;color:var(--mut2)">'+x[1].replace('{m}',m)+'</small></span>');h=a+b;}}}catch(e){}return h;};
   nvi.__c301=true;root.verdictIndicesHTML=nvi;})();
@@ -402,6 +405,43 @@ root.addEventListener('message',function(ev){var d=ev&&ev.data;if(!d||!d.context
 /* C301 (V15-065) : « Créer l’établissement réel » (029) passe par la même porte ; jamais pour un modèle */
 (function(){var ce=root.createEtab;if(typeof ce!=='function'||ce.__c301)return;var g=function(modele){if(modele)return ce.apply(this,arguments);var s=this,a=arguments,n=((doc.getElementById('ne-nom')||{}).value||'').trim();declarer(n,function(){ce.apply(s,a);});};g.__c301=true;g.__c301orig=ce;root.createEtab=g;})();
 root.VerdictDeclarerEtab=declarer;
+/* C311 (V16-043, V16-080, V16-073) — modèles de démonstration, sans toucher au moteur : un soda est une boisson (pas un dessert) ;
+   le nom du modèle en minuscules, sans « (cas d'exploitation) » ni capitales, apostrophe typographique ; un traiteur travaille le
+   week-end : ses jours de repos sont pris en début de semaine (M.repos, lu par 029). */
+(function(){var fait=false;
+  function nomModele(m){return String(m&&m.n||'').replace(/^[^A-Za-zÀ-ÿ0-9]+/,'').replace(/'/g,'’').trim();}
+  function corriger(){var M=root.MODELES;if(!M||fait)return !!M&&fait;var vu=0;
+    Object.keys(M).forEach(function(k){var m=M[k];if(!m||!m.n)return;vu++;
+      (m.plats||[]).forEach(function(p){if(Array.isArray(p)&&/^(soda|coca|limonade|jus |eau |thé glacé|ice tea)/i.test(String(p[0]))&&/^desserts?$/i.test(String(p[1])))p[1]='Boissons';});
+      /* C311 (décision 10) : l'Italien n'a ni pizzas ni boissons détaillées : son nom le dit, sa fiche aussi (écart matière lu sur la nourriture) */
+      if(k==='Italien'&&!/pâtes fraîches/.test(String(m.n)))m.n=String(m.n).replace(/Italien\s*$/,'Restaurant italien, pâtes fraîches');
+      var t=nomModele(m);if(t)m.e=t;
+      /* jours de repos d'un traiteur : début de semaine (lu par ensemencerPiloteDemo, 029, script L3 s029-repos-modele.py) */
+      if(k==='Traiteur'&&!m.repos)m.repos=[0,1,2,3,4,6,5];
+      /* C311 (V16-020) : fiches du Gastronomique plus chères que ses achats (40,8 % contre 35,0 %, impossible sans baisse de stock) :
+         grammages ramenés à 83 % (fiches ≈ 34 %, sous les achats), le résultat du modèle ne change pas */
+      if(k==='Gastro'&&!m.__c311g){(m.plats||[]).forEach(function(p){if(Array.isArray(p)&&Array.isArray(p[4]))p[4].forEach(function(l){var q=Number(l[1]);if(q>0)l[1]=q>=10?Math.round(q*0.83):Math.round(q*0.83*100)/100;});});
+        Object.defineProperty(m,'__c311g',{value:true,enumerable:false});}});
+    fait=vu>0;return fait;}
+  /* C311 (V16-019) : l'objectif de référence d'un modèle (in.obj, accountingTarget.preTaxResultHT) est le résultat que le moteur calcule
+     pour ce modèle, pas une cible trois fois plus haute (Kebab 24 120 € pour 8 040 €) ; calculé une fois, comme la liste des modèles. */
+  var recale=false;function recaler(){var M=root.MODELES;if(recale||!M||typeof root.modeleDossierDemo!=='function'||typeof root.moteur!=='function')return false;recale=true;
+    Object.keys(M).forEach(function(k){var m=M[k];if(!m||!m.in||!m.referenceMeta||!m.referenceMeta.accountingTarget)return;var prev=root.DB,prevM=root.MODELE_ACTIF,d=null,r=null;
+      try{d=root.modeleDossierDemo(k,true);}catch(e){d=null;}finally{root.MODELE_ACTIF=prevM;}if(!d)return;
+      try{root.DB=d;r=root.moteur();}catch(e){r=null;}finally{root.DB=prev;}
+      if(r&&r.ready&&r.d&&isFinite(r.d.res)&&r.d.res>0){var v=Math.round(r.d.res/100)*100;m.in.obj=v;m.referenceMeta.accountingTarget.preTaxResultHT=v;}});return true;}
+  if(typeof root.setTimeout==='function')root.setTimeout(function(){try{recaler();}catch(e){}},1800);
+  /* la fiche de l'Italien dans la liste des modèles */
+  function noteItalien(){try{var b=doc&&doc.querySelector('button[onclick="pickModele(\'Italien\')"]');if(b&&!b.querySelector('[data-c311-it]')){var s=doc.createElement('small');s.setAttribute('data-c311-it','1');s.style.cssText='display:block;margin:8px 0;font-weight:500';s.textContent='Carte détaillée pour la nourriture seule (pâtes, plats, desserts) : l’écart matière se lit sur la nourriture ; les boissons restent dans les achats.';var r=b.querySelector('.etab-indices');if(r)b.insertBefore(s,r);else b.appendChild(s);}}catch(e){}}
+  (function(){var om=root.openModeles;if(typeof om!=='function'||om.__c311)return;var g=function(){var r=om.apply(this,arguments);noteItalien();return r;};for(var kk in om)if(Object.prototype.hasOwnProperty.call(om,kk))g[kk]=om[kk];g.__c311=true;root.openModeles=g;})();
+  if(!corriger()&&typeof root.setInterval==='function'){var i=0,t=root.setInterval(function(){if(corriger()||++i>40)root.clearInterval(t);},250);}})();
+/* C311 (V16-089) : Abonnement — « Toutes les fonctions Client sont ouvertes… » n'est plus écrit deux fois (la ligne d'accès le dit déjà) */
+(function(){function br(){var f=root.aboPrixHTML;if(typeof f!=='function'||f.__c311)return !!f;var g=function(count,total,intro){try{var dsc=doc.getElementById('aboTierDesc');if(intro&&dsc&&String(dsc.textContent).trim()===String(intro).trim())intro='';}catch(e){}return f.call(this,count,total,intro);};g.__c311=true;root.aboPrixHTML=g;return true;}
+  if(!br()&&typeof root.setInterval==='function'){var i=0,t=root.setInterval(function(){if(br()||++i>40)root.clearInterval(t);},250);}})();
+/* C311 (V16-064) : la comparaison « Où se trouve la vraie différence ? » ne contredit plus le podium de Comparer : elle lit l'écart
+   poste par poste, le classement suit l'Indice de chacun. */
+(function(){function poser(){var T=root.CMP10_TEXT;if(!T||!T.veraNoWinner)return !!T;T.veraNoWinner=['Ici, je lis l’écart poste par poste ; le classement de Comparer, lui, suit l’Indice de chacun.','Here I read the gap item by item; the Compare ranking follows each one’s Index.','Aquí leo la diferencia partida por partida; la clasificación de Comparar sigue el Índice de cada uno.','Qui leggo lo scarto voce per voce; la classifica di Confronta segue l’Indice di ciascuno.','Hier lese ich den Abstand Posten für Posten; die Rangliste von Vergleichen folgt dem Index jedes Betriebs.','Hier lees ik het verschil post per post; de rangschikking van Vergelijken volgt de Index van elk.','Aqui leio a diferença rubrica a rubrica; a classificação de Comparar segue o Índice de cada um.'];return true;}
+  if(!poser()&&typeof root.setInterval==='function'){var i=0,t=root.setInterval(function(){if(poser()||++i>40)root.clearInterval(t);},250);}})();
 /* C306 : au chargement et à chaque relecture du compte, un compte connecté reçoit son jeton (les envois à l'espace et aux flux
    ne reviennent plus en 403 csrf_invalid). Le jeton que la configuration du serveur donne (VERDICT_COMPTE.csrf, L4) passe en premier. */
 (function(){var vu=null;function remplir(){try{var s=etatCompte();if(!s||s.auth!==true||s.csrf||!compteServeur())return;if(JETON||jetonCompte()){s.csrf=JETON||jetonCompte();return;}if(vu===s)return;vu=s;demanderJeton().catch(function(){vu=null;});}catch(e){}}

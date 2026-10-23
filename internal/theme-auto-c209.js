@@ -30,5 +30,9 @@
   w.addEventListener('storage', function (e) { if (!e.key || e.key === 'verdict-workspace-theme' || e.key === 'verdict-mobile-appearance-v2') appliquer(); });
   var p = parent();
   if (p) { try { new w.parent.MutationObserver(appliquer).observe(p, { attributes: true, attributeFilter: ['class'] }); } catch (e) {} }
+  /* C312 (V16-058) : comme la coque (C242), l'apparence est aussi relue au retour et toutes les 2 s : l'événement de l'appareil
+     n'arrive pas toujours (appli installée, Centre de contrôle, coucher du soleil). Simple lecture : rien n'est écrit tant qu'elle ne change pas. */
+  if (w.addEventListener) w.addEventListener('focus', appliquer); if (doc.addEventListener) doc.addEventListener('visibilitychange', function () { if (!doc.hidden) appliquer(); });
+  var tAuto = typeof setInterval === 'function' ? setInterval(function () { if (!doc.hidden) appliquer(); }, 2000) : 0; if (tAuto && tAuto.unref) tAuto.unref();
   w.VerdictThemeAuto = { appliquer: appliquer };
 })();

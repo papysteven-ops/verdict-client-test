@@ -45,7 +45,9 @@ function ecartMatiere(R,st){
   if(!st||!(num(st.theoR)>0))return null;var d=R.d,ca=num(d.ca);if(!(ca>0))return null;
   var tn=st.theoNourR!=null?num(st.theoNourR):num(st.theoR),avec=num(st.theoR)-tn>0.05;
   var reel=(avec?num(d.nour)+num(d.boi):num(d.nour))/ca*100,theo=avec?num(st.theoR):tn,pts=reel-theo;
-  return {perimetre:avec?'nourriture + boissons':'nourriture',avecBoissons:avec,reel:reel,theo:theo,pts:pts,eur:pts/100*ca,compte:pts>=4,tiers:pts>=4?pts/3/100*ca:0,periode:periodeAchats(R),ca:ca};
+  /* C311 (V16-021, décision 8) : les fiches-types proposées par Vera (brouillons) sont comptées et dites ; les vraies fiches priment */
+  var brouillons=0;try{(w.DB&&w.DB.plats||[]).forEach(function(p){if(p&&p.cpVeraDraft&&p.actif!==false)brouillons++;});}catch(e){}
+  return {perimetre:avec?'nourriture + boissons':'nourriture',avecBoissons:avec,reel:reel,theo:theo,pts:pts,eur:pts/100*ca,compte:pts>=4,tiers:pts>=4?pts/3/100*ca:0,periode:periodeAchats(R),ca:ca,brouillons:brouillons};
 }
 /* C301 (V15-002, phrase) : la phrase de la décision de Steven, la même que l'Audit (verdictGainPanier, traduite par L3) */
 function reglePanier(){try{var g=typeof w.verdictGainPanier==='function'?w.verdictGainPanier(1):null;if(g&&g.hypothese)return g.hypothese;}catch(e){}return 'À volume constant, une hausse de prix ne coûte pas de matière ; seules la TVA et les commissions suivent.';}
@@ -58,7 +60,10 @@ function format(){
   try{t=typeof w.fmtActif==='function'?w.fmtActif():null;}catch(e){}
   try{if(t&&w.FORMATS&&w.FORMATS[t]){fmt=w.FORMATS[t];F=w.FAMILLES[fmt.f];}}catch(e){}
   var generic=!F;if(!F)F=(w.FAMILLES&&w.FAMILLES.trad)||{ms:[30,36,42],fc:[25,29,32],cv:[33,38,43],acf:[15,20,26],rn:[2,5,9]};
-  return {type:t,fam:F,fmt:fmt,generic:generic,nom:t||'votre format (repères généraux de la restauration traditionnelle)'};
+  /* C311 (V16-072) : un établissement saisonnier garde les repères de sa famille, mais il est nommé comme tel (le saisonnier de bord
+     de mer n'est pas « Restaurant traditionnel ») */
+  var aff=t;try{var D=w.DB||{},pr=D.establishmentProfile||{};if(t&&!generic&&pr.seasonality==='seasonal'&&fmt&&fmt.f==='trad')aff='Restaurant saisonnier, repères de la restauration traditionnelle';}catch(e){}
+  return {type:aff,fam:F,fmt:fmt,generic:generic,nom:aff||'votre format (repères généraux de la restauration traditionnelle)'};
 }
 
 /* ── Carte : gain réaliste par plat (prix plafonné, ventes −3 %) ── */
@@ -244,6 +249,15 @@ function installerSimuler(){
     try{w.DEC_CONTROLE.carte=['partiel','vous fixez les prix ; la réaction des clients ne se décide pas'];}catch(e){}
   }
   w.decOverAll=overAll;
+  /* C311 (V16-016, décision 6) : le curseur « Jours d'ouverture » écrit les jours du calendrier (caisse ou calendrier déclaré),
+     jamais « 6.1 j/semaine » : un nombre entier de jours par semaine, la virgule française, et « estimé » quand rien n'est connu. */
+  try{var DJ=def('jour');if(DJ&&!DJ.__c311){var jFr=function(x){return (Math.round(num(x)*10)/10).toLocaleString(tag(),{maximumFractionDigits:1});},
+    jAn=function(R){var d=R&&R.d||{};/* C309 (L3) : d.jAn et d.joursSource (« caisse », « calendrier », « estime ») d'abord */if(num(d.jAn)>0&&d.joursSource&&d.joursSource!=='estime')return {n:Math.round(num(d.jAn)),cal:true,src:d.joursSource};if(num(d.jAn)>0&&d.joursSource==='estime')return {n:Math.round(num(d.jAn)),cal:false};var a=num(d.joursAn)||num(d.joursCaisse&&d.joursCaisse.jours)||0;return a>0?{n:Math.round(a),cal:true}:{n:Math.round((num(d.jSem)||num(w.DB&&w.DB.in&&w.DB.in.jsem)||6)*4.33*(num(d.mois)||12)),cal:false};},
+    jSem=function(){return Math.max(1,Math.min(7,Math.round(num(w.DB&&w.DB.in&&w.DB.in.jsem)||6)));};
+    DJ.fmt=function(v){return (v>0?'+':v<0?'\u2212':'')+jFr(Math.abs(v))+' j/sem';};
+    DJ.dispBase=function(R){var a=jAn(R);return jSem()+' j/semaine · '+(a.cal?'':'≈ ')+a.n.toLocaleString(tag())+' jours par an'+(a.cal?(a.src==='caisse'?' (votre caisse)':' (calendrier)'):' (estimé)');};
+    DJ.dispAfter=function(R,v){if(!num(v))return DJ.dispBase(R);var s0=jSem(),s1=Math.max(1,Math.min(7,s0+num(v))),a=jAn(R),m=num(R&&R.d&&R.d.mois)||12;return s1+' j/semaine · ≈ '+Math.round(a.n+(s1-s0)*52*m/12).toLocaleString(tag())+' jours par an';};
+    DJ.__c311=true;}}catch(e){}
   /* C301 (V15-126) : « Premium » n'existe pas dans les offres (Pilotage, Pro) : le bandeau de Simuler dit « VERDICT · … » */
   try{var PU=w.DEC_PREMIUM_UI;if(PU)for(var lg in PU)if(PU[lg]&&typeof PU[lg].tag==='string')PU[lg].tag=PU[lg].tag.replace(/^VERDICT PREMIUM\s*·\s*/,'VERDICT · ');}catch(e){}
   /* C301 (V15-140) : le poste le plus lourd des charges fixes est un montant mensuel, et il est dit */
@@ -254,6 +268,8 @@ function installerSimuler(){
     var T=null;try{T=w.decImpactTotal();}catch(e){}
     if(!T||!T.n){try{w.toast('Modifiez d’abord un levier');}catch(e){}return;}
     var lib=String(w.decNomScenario()||'Scénario simulé');lib=lib.charAt(0).toUpperCase()+lib.slice(1);
+    /* C311 (V16-060) : le geste lui-même est écrit dans la décision (« Panier moyen +0,30 € ») */
+    try{var gestes=[];w.DEC_DEFS.forEach(function(dd){var v=w.DEC_STATE[dd.id];if(v!=null&&num(v)!==num(dd.def))gestes.push(dd.t+' '+dd.fmt(v));});if(gestes.length&&lib.indexOf(gestes[0])<0)lib+=' : '+gestes.join(' · ');}catch(e){}
     w.ask('En faire une décision ?',lib+'\u00a0— gain estimé '+(T.delta>=0?'+':'−')+eur(Math.abs(T.delta))+' par an. Verdict l’inscrit dans le registre des décisions, en haut de Simuler. Pour en mesurer le résultat, lancez ensuite une seule action depuis « À faire » : sa source et sa date de contrôle seront figées. Vos chiffres ne sont pas modifiés.','Enregistrer',function(){
       var D=w.DB;D.decisions=D.decisions||[];var eid=(D._demo&&D._demo.establishmentId)||(typeof w.point12EstablishmentId==='function'?w.point12EstablishmentId():'');
       D.decisions.push({version:'10.12',kind:'scenario',status:'recorded',date:new Date().toISOString().slice(0,10),id:'SIMU_'+Date.now(),lib:lib,est:Math.round(T.delta),profile:String(D.etabType||''),establishmentId:String(eid||'')});
@@ -279,7 +295,33 @@ function installerSimuler(){
      l'impact du levier panier et le total de Simuler lisent donc la règle unique (verdictGainPanier), comme l'Audit. */
   if(!w.decImpact.__c301){var di0=w.decImpact;w.decImpact=function(id,v){var r=di0.apply(this,arguments);try{if(r&&id==='panier'&&num(v)&&typeof w.verdictGainPanier==='function'){var g=w.verdictGainPanier(num(v),r.R0);if(g&&isFinite(g.gain)){r.delta=g.gain;r.after=r.before+g.gain;}}}catch(e){}return r;};w.decImpact.__c301=true;}
   if(typeof w.decImpactTotal==='function'&&!w.decImpactTotal.__c301){var dt0=w.decImpactTotal;w.decImpactTotal=function(){var t=dt0.apply(this,arguments);try{var vP=etat(w.DEC_STATE,'panier');if(t&&isFinite(t.delta)&&vP&&typeof w.verdictGainPanier==='function'){var R0=w.moteur(),seul=w.moteur(overAll({panier:vP})).d.res-R0.d.res,g=w.verdictGainPanier(vP,R0);if(g&&isFinite(g.gain)){t.delta+=g.gain-seul;t.after=t.before+t.delta;}}}catch(e){}return t;};w.decImpactTotal.__c301=true;}
+  /* C311 (V16-068, décision du chef) : la barre « N leviers modifiés » réserve sa place, à sa hauteur réelle (suivie en continu),
+     et l'Indice « après » d'un levier suit l'échelle des zones, comme la barre (jamais 59 vert d'un côté et orange de l'autre). */
+  (function(){var obs=null;function caler(){try{var bar=document.getElementById('decTotalBar'),view=document.getElementById('v-dec'),h=bar&&bar.classList.contains('on')?Math.round(bar.getBoundingClientRect().height||0):0;
+      if(view)view.style.paddingBottom=h?(h+28)+'px':'';document.documentElement.style.scrollPaddingBottom=h?(h+16)+'px':'';
+      if(bar&&!obs&&typeof w.ResizeObserver==='function'){obs=new w.ResizeObserver(caler);obs.observe(bar);try{new w.MutationObserver(caler).observe(bar,{attributes:true,attributeFilter:['class']});}catch(e){}}}catch(e){}}
+    function brancher(){var ok=true;
+      if(typeof w.decPadFix==='function'){if(!w.decPadFix.__c311){var pf=w.decPadFix;w.decPadFix=function(){var r=pf.apply(this,arguments);caler();return r;};w.decPadFix.__c311=true;}}else ok=false;
+      if(typeof w.decRender==='function'){if(!w.decRender.__c311){var dr=w.decRender;w.decRender=function(id,v){var r=dr.apply(this,arguments);try{var sc=document.getElementById('da-sc-'+id);if(sc&&typeof w.zone==='function'){var I=w.decImpact(id,v);if(I&&isFinite(I.score1))sc.style.setProperty('color',w.zone(I.score1).h,'important');}}catch(e){}return r;};w.decRender.__c311=true;}}else ok=false;
+      return ok;}
+    if(!brancher()&&typeof w.setInterval==='function'){var k=0,iv=w.setInterval(function(){if(brancher()||++k>40)w.clearInterval(iv);},250);}})();
+  /* C311 (V16-060, V16-084) : le bouton du registre porte le nom du menu (« À faire et alertes »), pas un écran absent */
+  if(typeof w.decisionsRegistreHTML==='function'&&!w.decisionsRegistreHTML.__c311){var drh=w.decisionsRegistreHTML;w.decisionsRegistreHTML=function(){var h=drh.apply(this,arguments);try{if(typeof h==='string')h=h.replace('>Voir les priorités<','>Voir À faire et alertes<');}catch(e){}return h;};w.decisionsRegistreHTML.__c311=true;}
   w.decPotentialState=function(P){var s={},src=(P&&P.state)||{};for(var k in src)s[k]=src[k];s.jour=0;return s;};
+  /* C311 (V16-009) : le registre de Simuler reprend le point de départ (même montant, mêmes leviers) et l'écart matière de l'Audit
+     (le levier « coût de la nourriture » du plan s'il est retenu, sinon l'écart entier, non compté dans le gain). */
+  if(typeof w.decisionsRegistre==='function'&&!w.decisionsRegistre.__c311){var dr0=w.decisionsRegistre;w.decisionsRegistre=function(){var G=dr0.apply(this,arguments);
+    try{if(G&&G.aExaminer){var P=plan(),L=G.aExaminer;if(P&&P.state){var gain=Math.round(num(P.central&&P.central.res)-num(P.base&&P.base.res)),noms=[];
+      Object.keys(P.state).filter(function(k){return P.state[k];}).sort(function(a,b){return ORDER.indexOf(a)-ORDER.indexOf(b);}).forEach(function(k){var d=def(k);if(d)noms.push(d.t+' '+d.fmt(P.state[k]));});
+      L.forEach(function(x){var r=x&&x.reco;if(!r||r.id!=='FOOD_GAP_VERIFY')return;var g=null;
+        if(P.state.fc){try{var M=w.moteur(overAll({fc:P.state.fc}));g=Math.round(M.d.res-num(P.base.res));}catch(e){}}
+        if(!(g>0)){var E=w.VerdictEcartMatiere?w.VerdictEcartMatiere():null;if(E&&E.eur>0)g=Math.round(E.eur);}
+        if(g>0)r.imp=g;});
+      /* C311 (V16-018) : jamais « Impact estimé : 0 € par an » ; un constat sans levier chiffré est dit comme tel */
+      L.forEach(function(x){var r=x&&x.reco;if(r&&r.imp!=null&&!(Math.abs(num(r.imp))>=1)){r.imp=null;r.t=String(r.t||'')+' — constat : pas de montant chiffré, le levier se choisit dans Simuler';}});
+      if(gain>0&&noms.length&&!L.some(function(x){return x&&x.reco&&x.reco.id==='SIMU_DEPART';})){var c0=L[0]&&L[0].reco&&L[0].reco.conf;
+        L.unshift({reco:{id:'SIMU_DEPART',t:'Point de départ de Simuler : '+noms.join(' · '),imp:gain,conf:c0!=null?c0:null},etat:'a-examiner'});G.compte.e=L.length;}}}}catch(e){}
+    return G;};w.decisionsRegistre.__c311=true;}
   w.decBest=decBest;
   if(typeof w.point11Decision==='function'&&!w.point11Decision.__c91){var p11=w.point11Decision;w.point11Decision=function(db){var r=p11.apply(this,arguments);try{sansVolume(r);}catch(e){}try{aligner(r,db);}catch(e){}return r;};w.point11Decision.__c91=true;}
   w.decScenarioPersist=persist;
@@ -452,7 +494,8 @@ function lignes(P){
 function chapitreHTML(P){
   var cf=P.carteFiable,c=P.central;
   return '<div class="au-sc vu" id="auGainReel"><div class="au-tag">Le gain réaliste · structure + carte</div>'+
-    '<h2 class="au-h">'+signe(c.mois)+' par mois, soit '+signe(c.gain)+' par an</h2>'+
+    /* C311 (V16-030) : jamais « +0 € par mois, soit +0 € par an » : la raison est écrite */
+    (c.gain>0.5?'<h2 class="au-h">'+signe(c.mois)+' par mois, soit '+signe(c.gain)+' par an</h2>':'<h2 class="au-h">Pas de gain chiffré à ce stade</h2><p class="au-p">'+(inp('panier')>0?'Aucun levier ne dépasse les repères de votre format : Verdict ne compte pas de gain qu’il ne peut pas tenir.':'Vos tickets ne sont pas encore connus (aucun ticket lu dans votre caisse) : le panier et les commandes se chiffrent dès que votre caisse est importée.')+'</p>')+
     /* C301 (V15-032, suite) : la décision annoncée au chapitre 4 (l'équipe) n'est pas dans ce montant tant qu'elle n'est pas mesurée */
     (P.attente.length&&(function(){try{var a=w.auActions()[0];return a&&ACTIONS[a.id]&&ACTIONS[a.id].indexOf('sal')>=0;}catch(e){return false;}})()?'<p class="au-p"><b>La décision du chapitre précédent, l’équipe, n’est pas encore dans ce montant</b> : elle y entrera après une décision d’organisation mesurée (jusqu’à '+signe(P.attente[0].gain)+' par an). Ce montant vient des autres leviers.</p>':'')+
     '<p class="au-p">Un seul calcul, rejoué dans le moteur avec vos chiffres. Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':' (repères généraux de la restauration traditionnelle)')+' (un tiers de l’écart au repère, comme vos priorités). Les étapes s’enchaînent : chaque montant est ce que le levier ajoute après les précédents, aucun euro n’est compté deux fois.</p>'+
@@ -477,6 +520,17 @@ function sceneDecision(P){
 function patchAudit(){
   try{
     var el=document.getElementById('auditBody');if(!el)return;try{var R0=w.moteur();if(R0&&R0.ready)lectureResistance(el,R0);}catch(e){}
+    /* C311 (V16-030) : FEC seul, aucun ticket lu : « inconnu », jamais 0 (Prix & panier, Productivité) */
+    try{if(!(inp('panier')>0)){[].forEach.call(el.querySelectorAll('.au-sc'),function(sc){var tg=sc.querySelector('.au-tag'),tx=tg?tg.textContent:'';
+      if(/Prix & panier/.test(tx)){var pp=sc.querySelector('.au-p');if(pp&&/Panier actuel/.test(pp.textContent))pp.textContent='Panier actuel : inconnu (aucun ticket lu dans votre caisse). Ce qu’un panier plus haut changerait se calcule dès que vos tickets sont connus.';
+        [].forEach.call(sc.querySelectorAll('.au-eur'),function(e){if(/^\s*\+?\s*0\s*€/.test(e.textContent))e.textContent='à calculer : tickets inconnus';});}
+      if(/Productivit/.test(tx))[].forEach.call(sc.querySelectorAll('.au-ok'),function(r){var s=r.querySelector('span'),b=r.querySelector('b');if(!s||!b)return;
+        if(/^Commandes sur l/.test(s.textContent)&&/^0$/.test(b.textContent.trim()))b.textContent='inconnues : aucun ticket lu';
+        if(/^Contribution \/ h/.test(s.textContent)&&/^0\s*€$/.test(b.textContent.trim()))b.textContent='à calculer : tickets inconnus';});});}}catch(e){}
+    /* C311 (V16-014) : « Le résultat reste sous le repère » n'est écrit que si c'est vrai ; au-dessus du repère du format, la phrase le dit. */
+    try{var R14=w.moteur(),rp14=w.verdictRepereRN?w.verdictRepereRN():null;if(R14&&R14.ready&&rp14&&R14.v.rn>=rp14.repere){var N14=w.verdictRepereRNNum||function(x){return String(x);};
+      var tw14=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null),n14,L14=[];while((n14=tw14.nextNode()))if(n14.nodeValue.indexOf('Le résultat reste sous le repère de pilotage utilisé par Verdict.')>=0)L14.push(n14);
+      L14.forEach(function(x){x.nodeValue=x.nodeValue.replace('Le résultat reste sous le repère de pilotage utilisé par Verdict.','Le résultat est au-dessus du repère de votre format ('+N14(rp14.repere)+' %) : ce point reste celui qui le limite.');});}}catch(e){}
     /* C301 bis (V15a-N2, V15-078) : jours inconnus → « à confirmer », jamais « 1 jours · 493 142 € » ; les rythmes sont HT */
     try{[].forEach.call(el.querySelectorAll('.au-ok > span'),function(sp){var t=sp.textContent||'',m=/^Par jour ouvert · (\d+) jours?$/.exec(t),b=sp.parentNode.querySelector('b');
       if(m){if(Number(m[1])<=1){sp.textContent='Par jour ouvert';if(b)b.textContent='à confirmer : jours d’ouverture inconnus';}else sp.textContent='Par jour ouvert (HT) · '+m[1]+' jours';}

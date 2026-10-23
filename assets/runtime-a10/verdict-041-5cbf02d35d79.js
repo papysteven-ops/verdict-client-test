@@ -4,7 +4,7 @@
   if(global.__VERDICT_PERFORMANCES_INTEGRATED_V1__)return;
   global.__VERDICT_PERFORMANCES_INTEGRATED_V1__=true;
 
-  var RULES="verdict-performances/2.0.0",TRAJECTORY_RULES="verdict-trajectory/2.3.0",SEASON_RULES="verdict-season/1.2.0",ANNUAL_RULES="verdict-annual-closure/1.0.0",ACCOUNTING_RULES="verdict-accounting-anchor/1.0.0",MOTION_RULES="verdict-motion/1.1.0",DEMO_SCENARIO="verdict-demo-trajectory/1.1.0";
+  var RULES="verdict-performances/2.1.0"/* C308 (décision 1) : plus de bases figées pour les jours passés */,TRAJECTORY_RULES="verdict-trajectory/2.3.0",SEASON_RULES="verdict-season/1.2.0",ANNUAL_RULES="verdict-annual-closure/1.0.0",ACCOUNTING_RULES="verdict-accounting-anchor/1.0.0",MOTION_RULES="verdict-motion/1.1.0",DEMO_SCENARIO="verdict-demo-trajectory/1.1.0";
   var activeTab="days",selectedDay="",selectedAuto=true/* C299 (V15-100) : le jour affiché suit la dernière journée saisie tant que le patron n’en a pas choisi un */,selectedMonth="",chartMode="daily",storyTimers=[],motionTimer=null,motionSession={};
 
   function data(){return global.DB||{};}
@@ -180,8 +180,9 @@
   /* C297 : minimum du mois tiré de la structure seule (VerdictFinance), jamais du plan en cours : progObjJour, relu par
      le plan du mois, rend la part suivie (13 683 € au lieu de 46 001 €) et l’année serait 12 fois cette part. */
   function minimumStructurelMois(R){try{var o=global.VerdictFinance&&R&&R.d?global.VerdictFinance.monthlyTargets(R.d,1):null;if(o&&hasNumber(o.mois)&&Number(o.mois)>0)return Number(o.mois);}catch(_){}return monthlyMinimum(R);}
+  var interneProg=0;/* C308 : appel de progObjJour depuis 041 lui-même (aucun plan de mois construit par l’enveloppe) */
   function monthlyMinimum(R){
-    try{var objective=global.progObjJour(R);if(objective&&hasNumber(objective.mois))return Number(objective.mois);}catch(_){ }
+    try{interneProg++;var objective;try{objective=global.progObjJour(R);}finally{interneProg--;}if(objective&&hasNumber(objective.mois))return Number(objective.mois);}catch(_){ }
     try{var state=global.piloteMoisEtat(R);if(state&&state.economique)return Number(state.economique.seuilMois)||0;}catch(_){ }
     return 0;
   }
@@ -259,18 +260,42 @@
       var apC=null;try{apC=seasonPlanFor(R,key.slice(0,4),false);}catch(_){}var ancreDe=function(id){return id?accountingAnchors().filter(function(x){return x&&x.id===id;})[0]||null:null;},ancreC=apC&&apC.accountingAnchorId||null,histC=(d.performancePlanHistory&&d.performancePlanHistory[key])||[],precC=histC[histC.length-1]||null;
       var correction=!!(ancreC&&plan.accountingAnchorId&&ancreC!==plan.accountingAnchorId&&(ancreDe(ancreC)||{}).reason==="correction"),relire=!correction&&!plan.correctionStructure&&!!(precC&&precC.accountingAnchorId&&plan.accountingAnchorId&&precC.accountingAnchorId!==plan.accountingAnchorId&&(ancreDe(plan.accountingAnchorId)||{}).reason==="correction"&&Object.keys(plan.lockedTargets||{}).length);
       var declaredBudget=global.VerdictBudgetUI&&global.VerdictBudgetUI.getBudget(key+'-01'),declaredRevision=declaredBudget&&declaredBudget.revisions[declaredBudget.revisions.length-1].id;
-      if(correction||relire||(plan.budgetRevision||null)!==(declaredRevision||null)||plan.rulesVersion!==RULES||plan.calendarFingerprint!==planFingerprint(dates)||Math.abs(plan.minimum-minimum)>.01||startMoved){
-        var locks={},records=monthRecords(key);Object.keys(plan.targets||{}).forEach(function(date){if(date<todayKey()||records[date]&&records[date].ca!=null){if(!(correction||relire))locks[date]=plan.targets[date];if(dates.indexOf(date)<0)dates.push(date);}});
+      /* C308 (V16-004, décision 3) : la caisse fait foi ; arrivée après le plan, elle refait les poids des jours du mois en cours. */
+      var caisseNouvelle=!declaredRevision&&poidsCaisseChanges(plan,key);
+      if(caisseNouvelle||correction||relire||(plan.budgetRevision||null)!==(declaredRevision||null)||plan.rulesVersion!==RULES||plan.calendarFingerprint!==planFingerprint(dates)||Math.abs(plan.minimum-minimum)>.01||startMoved){
+        var locks={},records=monthRecords(key);Object.keys(plan.targets||{}).forEach(function(date){if(date<todayKey()||records[date]&&records[date].ca!=null){/* C308 (décision 1) : aucune base figée ; une journée saisie est relue avec le plan en vigueur */if(dates.indexOf(date)<0)dates.push(date);}});
         d.performancePlanHistory=d.performancePlanHistory||{};var history=d.performancePlanHistory[key]||(d.performancePlanHistory[key]=[]);history.push(jsonCopy(plan));
         var previous=plan;plan=createPlan(R,key,(plan.revision||1)+1,{minimum:minimum,openDates:dates.sort(),lockedTargets:locks,trackingStart:start});
-        if(correction||relire)plan.correctionStructure=true;d.performancePlans[key]=plan;d.chrCalendarChange={month:key,before:previous.openDates.length,after:plan.openDates.length,at:new Date().toISOString()};saveDerivedInit();
+        if(correction||relire)plan.correctionStructure=true;if(caisseNouvelle)plan.recalculCaisse={at:new Date().toISOString(),source:plan.weekdayMeansSource||null};else if(previous.recalculCaisse)plan.recalculCaisse=previous.recalculCaisse;d.performancePlans[key]=plan;d.chrCalendarChange={month:key,before:previous.openDates.length,after:plan.openDates.length,at:new Date().toISOString()};saveDerivedInit();
       }
     }
     if(!plan&&!create){var versions=closureVersions(key),latest=versions.length?versions[versions.length-1]:null;if(latest&&latest.plan)plan=latest.plan;}
     if(!plan&&create){var start=ensureTrackingStart();plan=createPlan(R,key,1,{trackingStart:start});d.performancePlans[key]=plan;saveDerivedInit();}
     return plan;
   }
+  /* C308 (V16-004) : poids des jours de semaine que donnerait la caisse aujourd’hui, comparés à ceux du plan (une seule lecture par état de la caisse). */
+  var poidsMemo={rows:null,key:null,info:null};
+  function poidsCaisseChanges(plan,key){
+    var rows=sourceRows();if(poidsMemo.rows!==rows||poidsMemo.key!==key)poidsMemo={rows:rows,key:key,info:weekdayHistorySource(key+'-01')};
+    var info=poidsMemo.info;if(!info||weekdayKnown(info.means)<3)return false;
+    return (plan.weekdayMeansSource||null)!==(info.source||null)||JSON.stringify(plan.weekdayMeans||null)!==JSON.stringify(info.means);
+  }
   function currentPlan(R){return planFor(R,currentMonth(),true);}
+  /* C308 (V16-003, V16-006, décision 1) : minimum demandé le matin de chaque journée = base du jour − part de l’avance / + part du
+     retard des journées d’avant (règle CHR, la même que « Pourquoi ce montant ? »). Tant qu’une journée d’avant manque, la base. */
+  var demandeMemo={sig:null,map:null};
+  function minimumsDemandes(R){
+    var key=currentMonth(),plan=currentPlan(R);if(!plan||!global.VerdictCHR)return {};
+    var records=monthRecords(key),days=plan.openDates.map(function(date){return {date:date,target:plan.targets[date],ca:records[date]&&!records[date].estimatedCa?records[date].ca:null};});
+    var gl=objectifGlissantMois(R,key,plan),sig=JSON.stringify([gl.objectif,todayKey(),days]);
+    if(demandeMemo.sig===sig)return demandeMemo.map;
+    var map={};
+    days.forEach(function(day){
+      var input=days.map(function(x){return x.date<day.date?x:{date:x.date,target:x.target,ca:null};});
+      try{var c=global.VerdictCHR.calculate({minimum:gl.objectif,today:day.date,days:input});if(c&&c.exact&&c.next===day.date&&hasNumber(c.catchup))map[day.date]=Number(c.catchup);}catch(_){ }
+    });
+    demandeMemo={sig:sig,map:map};return map;
+  }
   global.verdictCHRReading=function(R){
     var key=currentMonth(),plan=currentPlan(R),records=monthRecords(key),days=plan.openDates.map(function(date){return {date:date,target:plan.targets[date],ca:records[date]&&!records[date].estimatedCa?records[date].ca:null};});
     var gl=objectifGlissantMois(global.moteur(),plan.month||currentMonth(),plan);
@@ -325,15 +350,19 @@
     var key=date.slice(0,7),plan=key===currentMonth()?currentPlan(R):planFor(R,key,false);
     // Aperçu du prochain mois avec le même moteur ; aucun plan futur figé.
     if(!plan&&key>currentMonth())plan=createPlan(R,key,1);
+    if(plan&&key===currentMonth()){var dem=minimumsDemandes(R);if(hasNumber(dem[date]))return dem[date];}/* C308 (décision 1) */
     return plan&&hasNumber(plan.targets[date])?Number(plan.targets[date]):null;
   };
+  /* C308 : la base du jour (part pondérée du plan, sans avance ni retard) et le minimum demandé ce jour-là. */
+  global.verdictPerformanceDayBase=function(day){var R;try{R=global.moteur();}catch(_){return null;}var date=validDateKey(day)?day:currentMonth()+"-"+pad(day);if(!validDateKey(date))return null;var plan=date.slice(0,7)===currentMonth()?currentPlan(R):planFor(R,date.slice(0,7),false);return plan&&hasNumber(plan.targets[date])?Number(plan.targets[date]):null;};
+  global.verdictMinimumDemande=function(day){var R;try{R=global.moteur();}catch(_){return null;}var date=validDateKey(day)?day:currentMonth()+"-"+pad(day);if(!validDateKey(date)||date.slice(0,7)!==currentMonth())return null;var dem=minimumsDemandes(R);return hasNumber(dem[date])?dem[date]:null;};
 
   /* C205 (V42) : un écart affiché se lit sur les montants affichés (1 786 € − 1 676 € = 110 €, jamais 109 €). */
   function ecartAffiche(a,b){return Math.round(Number(a)||0)-Math.round(Number(b)||0);}
   function buildMonth(R,key){
-    var current=key===currentMonth(),records=monthRecords(key),plan=planFor(R,key,current),annualPlan=seasonPlanFor(R,key.slice(0,4),current),now=todayKey(),baseDates=plan&&!current?historicalDates(plan,key):openDates(key);if(current&&plan&&validDateKey(plan.trackingStart)&&plan.trackingStart.slice(0,7)===key)baseDates=baseDates.filter(function(date){return date>=plan.trackingStart||records[date]&&records[date].ca!=null;});var dates=withRecordedOpenings(baseDates,records,key),calendarFingerprint=planFingerprint(dates),referenceChanged=!!(current&&plan&&(plan.rulesVersion!==RULES||annualPlan&&plan.annualPlanRevision!==annualPlan.revision)),days=[],actual=0,known=0,expected=0,missing=[],ignoredCount=0;
+    var current=key===currentMonth(),records=monthRecords(key),plan=planFor(R,key,current),demandes=current?minimumsDemandes(R):{}/* C308 (décision 1) */,annualPlan=seasonPlanFor(R,key.slice(0,4),current),now=todayKey(),baseDates=plan&&!current?historicalDates(plan,key):openDates(key);if(current&&plan&&validDateKey(plan.trackingStart)&&plan.trackingStart.slice(0,7)===key)baseDates=baseDates.filter(function(date){return date>=plan.trackingStart||records[date]&&records[date].ca!=null;});var dates=withRecordedOpenings(baseDates,records,key),calendarFingerprint=planFingerprint(dates),referenceChanged=!!(current&&plan&&(plan.rulesVersion!==RULES||annualPlan&&plan.annualPlanRevision!==annualPlan.revision)),days=[],actual=0,known=0,expected=0,missing=[],ignoredCount=0;
     for(var day=1;day<=daysCount(key);day++){
-      var date=key+"-"+pad(day),record=records[date],ignored=isIgnored(date),preTracking=!!(plan&&validDateKey(plan.trackingStart)&&plan.trackingStart.slice(0,7)===key&&date<plan.trackingStart&&!record),closed=dates.indexOf(date)<0&&!record&&!preTracking/* C299 (V15-068) : un jour d’avant le début du suivi n’est jamais « établissement fermé » */,target=plan&&hasNumber(plan.targets[date])?Number(plan.targets[date]):null,past=date<now,isToday=date===now,status="future";
+      var date=key+"-"+pad(day),record=records[date],ignored=isIgnored(date),preTracking=!!(plan&&validDateKey(plan.trackingStart)&&plan.trackingStart.slice(0,7)===key&&date<plan.trackingStart&&!record),closed=dates.indexOf(date)<0&&!record&&!preTracking/* C299 (V15-068) : un jour d’avant le début du suivi n’est jamais « établissement fermé » */,target=hasNumber(demandes[date])?Number(demandes[date]):plan&&hasNumber(plan.targets[date])?Number(plan.targets[date]):null,past=date<now,isToday=date===now,status="future";
       if(date>now){record=null;status=closed?'closed':'future';}
       else if(preTracking)status="baseline";
       else if(closed&&!record)status="closed";
@@ -846,6 +875,52 @@
 
   try{seedPersonalReviewScenario(global.moteur());}catch(_){ }
   global.VerdictPerformanceIntegrated={weeklyClosed:weeklyClosed,seasonClosedMonths:function(){return Object.keys(documentClosedMonths()).map(Number);},knownYear:function(year){var R=null;try{R=global.moteur();}catch(_){}return knownYear(year,R);},knownYearMonths:function(year){var R=null;try{R=global.moteur();}catch(_){}return knownYearMonths(year,R);},weekdayHistorySource:weekdayHistorySource,claimAnimation:claimSessionAnimation,rulesVersion:RULES,trajectoryRulesVersion:TRAJECTORY_RULES,seasonRulesVersion:SEASON_RULES,annualRulesVersion:ANNUAL_RULES,accountingRulesVersion:ACCOUNTING_RULES,motionRulesVersion:MOTION_RULES,demoScenarioVersion:DEMO_SCENARIO,operationalDate:operationalDate,ratioStatus:ratioStatus,performanceStatus:performanceStatus,statusFor:statusFor,statusColor:statusColor,createPlan:createPlan,buildMonth:buildMonth,createSeasonPlan:createSeasonPlan,seasonState:seasonState,seasonEvidence:seasonEvidence,accountingBasis:accountingBasis,accountingFingerprint:accountingFingerprint,createAccountingAnchor:createAccountingAnchor,accountingAnchorFor:accountingAnchorFor,annualCloseState:annualCloseState,makeAnnualSnapshot:makeAnnualSnapshot,yearSummary:yearSummary,annualChart:annualChart,isClosed:isClosed,closureRanges:closureRanges,trajectoryModel:trajectoryModel,trajectoryBounds:trajectoryBounds,chart:chart,homeMonthSummary:homeMonthSummary,homeMonthImpact:homeMonthImpact,homeBrief:homeBrief,motionState:motionState,motionTransitions:motionTransitions,motionPresentation:motionPresentation,seedPersonalReviewScenario:seedPersonalReviewScenario,comparable:comparable,comparablePeriod:comparablePeriod,explain:explain,daysDataHash:daysDataHash};
+  /* C308 (V16-001) : le minimum du mois est celui du plan dès le premier calcul. L’enveloppe « plan-du-mois » vivait dans a39, chargé
+     après le premier affichage : l’Accueil montrait le mois moyen entier (46 001 € au lieu de 14 324 €). Même règle que a39 (drapeau
+     __c129 : a39 ne la repose pas) ; le plan du mois est construit au premier calcul s’il manque. */
+  (function(){
+    var orig=global.progObjJour;if(typeof orig!=='function'||orig.__c129)return;var enCours=false;
+    var f=function(R){
+      var o=orig.apply(this,arguments);if(enCours||!o)return o;
+      try{enCours=true;
+        var key=currentMonth(),d=data(),p=d.performancePlans&&d.performancePlans[key];
+        if((!p||p.rulesVersion!==RULES)&&!interneProg&&R&&R.d&&typeof R.d==="object"){try{p=currentPlan(R);}catch(_){ }}
+        var ap=d.performanceYearPlans&&d.performanceYearPlans[key.slice(0,4)];
+        if(!p||!(Number(p.minimum)>0)||!/(1\.9\.0|[2-9]\.\d+\.\d+)$/.test(String(p.rulesVersion||''))||!(ap&&Number(ap.monthlyTargets&&ap.monthlyTargets[key])>0))return o;
+        var r=Object.assign({},o),delta=Number(p.minimum)-Number(o.mois||0),n=Number(o.jOuv)||(p.openDates&&p.openDates.length)||0;
+        r.mois=Math.round(Number(p.minimum)*100)/100;if(n>0)r.obj=Math.round(r.mois/n*100)/100;
+        if(o.objectifMois!=null){r.objectifMois=Math.round((Number(o.objectifMois)+delta)*100)/100;if(n>0)r.objectif=Math.round(r.objectifMois/n*100)/100;}
+        r.source='plan-du-mois';return r;
+      }catch(_){return o;}finally{enCours=false;}
+    };
+    f.__c129=true;global.progObjJour=f;
+  })();
+  /* C308 (V16-002, décision 2) : un seul minimum du jour. « À tenir aujourd’hui » et le rythme du mois reprennent le minimum de la
+     carte du jour (part pondérée par le poids des jours de semaine, avance ou retard compris), plus le reste ÷ jours à parts égales. */
+  (function(){
+    var orig=global.point4Calc;if(typeof orig!=='function'||orig.__c308)return;
+    var f=function(R){
+      var P=orig.apply(this,arguments);if(!P)return P;
+      try{var key=currentMonth(),dem=minimumsDemandes(R||global.moteur()),auj=key+"-"+pad(P.auj),nx=P.prochainJour?key+"-"+pad(P.prochainJour):null;
+        if(P.securiteAujourdhui!=null&&!P.jourSaisi&&hasNumber(dem[auj]))P.securiteAujourdhui=dem[auj];
+        if(P.securiteSuivante!=null&&nx&&hasNumber(dem[nx]))P.securiteSuivante=dem[nx];
+        P.regleMinimum='part-ponderee';
+      }catch(_){ }
+      return P;
+    };
+    f.__c308=true;global.point4Calc=f;
+  })();
+  /* C308 (V16-004, décision 3, avec L5) : la caisse importée après le plan refait les poids du mois en cours, puis l’écran est redessiné. */
+  function recalculerAvecCaisse(){
+    var R=null;try{R=global.moteur();}catch(_){return null;}var plan=null;try{plan=currentPlan(R);}catch(_){ }demandeMemo={sig:null,map:null};
+    try{if(global.VIEW==="pil"&&typeof global.drawPil==="function")global.drawPil();}catch(_){ }
+    return plan?{revision:plan.revision,recalculCaisse:plan.recalculCaisse||null,source:plan.weekdayMeansSource||null}:null;
+  }
+  global.VerdictPerformanceIntegrated.recalculerAvecCaisse=recalculerAvecCaisse;
+  global.VerdictPerformanceIntegrated.minimumDemande=function(date){return global.verdictMinimumDemande(date);};
+  try{global.addEventListener("verdict:caisse-importee",function(){setTimeout(recalculerAvecCaisse,0);});}catch(_){ }
+  /* C308 (V16-001) : un Accueil dessiné avant 041, pendant la lecture de la page (mois moyen entier), est redessiné tout de suite avec le plan du mois. */
+  try{if(global.VIEW==="pil"&&document.getElementById("point4-month")&&typeof global.drawPil==="function")global.drawPil();}catch(_){ }
   function renameTab(){var button=document.querySelector('[onclick*="dsub(\'carnet\'"]');if(button){var names={fr:"Performances",en:"Performance",es:"Rendimiento",it:"Prestazioni",de:"Leistung",nl:"Prestaties",pt:"Desempenho"};button.removeAttribute("data-i18n");button.textContent=names[global.LOCALE]||names.fr;}}
   renameTab();setTimeout(function(){renameTab();if(global.VIEW==="pil"){var _d=function(){global.drawPil();};if(typeof global.verdictApresIntro==='function')global.verdictApresIntro(_d);else _d();}/* C103 */if(new URLSearchParams(location.search+(self.__vdq||"")).get("performance")==="1")global.goPerformance();},350);
 })(window);

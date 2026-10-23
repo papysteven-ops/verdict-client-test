@@ -80,6 +80,7 @@
   }
   function report(input) { var g = input && input.glissant; if (!g || !g.ecartAnnee) return null; return { ecartAnnee: g.ecartAnnee, partMois: g.partMois, moisRestants: g.moisRestants }; }
   var ouverts = {}; /* l'ouverture survit aux redessins du module */
+  function revPlan(date) { try { var p = w.DB.performancePlans[String(date).slice(0, 7)]; return p ? String(p.revision || '') + (p.recalculCaisse ? 'c' : '') : ''; } catch (e) { return ''; } } /* C308 (V16-004) */
   function bloc(input, date, aujourdHui) {
     if (!input || !Array.isArray(input.days) || !w.VerdictCHR || joursInconnus()) return ''; /* C245 : pas de part du jour tant que les jours sont inconnus */
     var jour = input.days.filter(function (d) { return d.date === date; })[0]; if (!jour) return '';
@@ -93,11 +94,13 @@
     var part = connus.length >= 3 && lui != null
       ? 'Chaque jour reçoit sa part selon ce qu’il fait d’habitude. ' + quand + ', un <b>' + JOURS[js] + '</b> rapporte en moyenne <b>' + eur(lui) + '</b>' + (bas !== null ? ', un ' + JOURS[bas] + ' ' + eur(M[bas]) : '') + ' : la base du ' + JOURS[js] + ' est ' + (bas !== null && lui > M[bas] ? 'plus haute' : 'adaptée') + '. Base de ce jour : <b>' + eur(base) + '</b>.'
       : 'Aucune caisse jour par jour ne dit encore ce que rapporte chaque jour de semaine : chaque jour ouvert reçoit la même part, <b>' + eur(base) + '</b>.';
+    /* C308 (V16-004) : la caisse arrivée après le plan a refait les poids des jours du mois (041). */
+    var caisse = plan && plan.recalculCaisse && connus.length >= 3 ? ' <span class="vx39-caisse">Plan recalculé avec votre caisse : chaque jour est pondéré par ce qu’il rapporte vraiment.</span>' : '';
     var annee = g && Math.abs(Number(g.ecartAnnee) || 0) >= 1 ? ' L’année porte ' + (g.ecartAnnee > 0 ? 'un retard' : 'une avance') + ' de <b>' + eur(Math.abs(g.ecartAnnee)) + '</b> sur les mois passés, réparti sur les ' + g.moisRestants + ' mois restants : minimum du mois <b>' + eur(input.minimum) + '</b> (' + signe(g.partMois) + ').' : '';
     var reste = (/reste du mois/.test(resteMois(input.minimum, date)) ? 'Minimum du reste du mois ' : 'Minimum du mois ') /* C264 (R1) */ + eur(input.minimum) + ' − encaissé ' + eur(c.actual) + ' = <b>' + eur(Math.max(0, Math.round(input.minimum) - Math.round(c.actual))) /* C298 (V15-044) : opération juste telle qu'écrite */ + '</b> à faire sur les <b>' + c.openRemaining + ' jours ouverts</b> restants, ' + (aujourdHui ? 'partagés' : 'qui étaient partagés') + ' selon leur poids : un retard fait monter la part de chaque jour, une avance la fait baisser.';
-    return '<details class="vx39" data-vx39="' + date + '"' + (ouverts[date] ? ' open' : '') + '><summary class="vx39-t"><span>Pourquoi ' + (aujourdHui ? 'ce montant aujourd’hui' : 'ce montant le ' + libJour(date)) + ' ?</span><i aria-hidden="true">›</i></summary><div class="vx39-c"><ol>' +
+    return '<details class="vx39" data-vx39="' + date + '" data-vx39r="' + revPlan(date) + '"' + (ouverts[date] ? ' open' : '') + '><summary class="vx39-t"><span>Pourquoi ' + (aujourdHui ? 'ce montant aujourd’hui' : 'ce montant le ' + libJour(date)) + ' ?</span><i aria-hidden="true">›</i></summary><div class="vx39-c"><ol>' +
       '<li><b>Le budget du mois</b> : <b>' + eur(budget) + '</b> de chiffre d’affaires, la part de ce mois dans le minimum annuel qui couvre vos charges, salaires et loyer, sur <b>' + input.days.length + ' jours ouverts</b> (jours de repos exclus).' + debutMois(plan, date) + saisonMois(date) + annee + '</li>' +
-      '<li><b>La part de ce jour</b> : ' + part + '</li>' +
+      '<li><b>La part de ce jour</b> : ' + part + caisse + '</li>' +
       '<li><b>Le reste à faire</b> : ' + reste + '</li></ol>' +
       '<p class="vx39-f">Base ' + eur(base) + ' ' + signe(total - base) + ' = <b>' + eur(total) + '</b> ' + (aujourdHui ? 'à réaliser aujourd’hui' : 'à réaliser ce jour-là') + '</p></div></details>';
   }
@@ -205,7 +208,7 @@
       if (lp) clair(lp, cw.VD.chr, cw.VD.saisie || {}); arrondir(saisie); }
     if (saisie && quand) {
       var ex = saisie.querySelector('.vx39');
-      if (!ex || ex.getAttribute('data-vx39') !== quand) { if (ex) ex.remove(); var h = bloc(input, quand, !cleS && (!input.today || input.today === next)) /* C131 : jour fermé aujourd'hui → titre du prochain jour ouvert */; if (h) saisie.insertAdjacentHTML('beforeend', h); }
+      if (!ex || ex.getAttribute('data-vx39') !== quand || ex.getAttribute('data-vx39r') !== revPlan(quand)) { if (ex) ex.remove(); var h = bloc(input, quand, !cleS && (!input.today || input.today === next)) /* C131 : jour fermé aujourd'hui → titre du prochain jour ouvert */; if (h) saisie.insertAdjacentHTML('beforeend', h); }
       /* C142 : le détail de la position (reste du mois, couverts, année à date) est en tête du volet replié. */
       var vol = saisie.querySelector('.vx39 .vx39-c');
       if (vol && !vol.querySelector('.vx39-d')) { var hp2 = position(cw.VD.chr); if (hp2) { var t = d.createElement('div'); t.innerHTML = hp2; var lignes = t.querySelectorAll('small'); if (lignes.length) { var dd = d.createElement('div'); dd.className = 'vx39-d'; [].forEach.call(lignes, function (x) { dd.appendChild(x); }); vol.insertBefore(dd, vol.firstChild); } } }
@@ -216,7 +219,7 @@
       var k = det.querySelector('.kicker'), m = k && /(\d{1,2})/.exec(k.textContent || '');
       var date = m ? (input.days.filter(function (x) { return Number(x.date.slice(8)) === Number(m[1]); })[0] || {}).date : null;
       var ex2 = det.querySelector('.vx39');
-      if (date && (!ex2 || ex2.getAttribute('data-vx39') !== date)) { if (ex2) ex2.remove(); var h2 = bloc(input, date, false); if (h2) det.insertAdjacentHTML('beforeend', h2); }
+      if (date && (!ex2 || ex2.getAttribute('data-vx39') !== date || ex2.getAttribute('data-vx39r') !== revPlan(date))) { if (ex2) ex2.remove(); var h2 = bloc(input, date, false); if (h2) det.insertAdjacentHTML('beforeend', h2); }
       if (!date && ex2) ex2.remove();
       var dl = det.querySelector('dl'), exl = det.querySelector('.vx39-l');
       if (dl && date && (!exl || exl.getAttribute('data-vx39l') !== date)) {

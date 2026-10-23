@@ -72,6 +72,8 @@
     /* 1 · Indice Carte */
     t.push('<section class="cr-card cr-c1" data-cr="1"><span class="cr-k">1 · Votre carte</span><h2>' + (pret ? (e.value >= 75 ? 'Une carte qui tient ses marges' + /* C301 bis (V15a-N1) */ (D.manque && D.manque.ready && D.manque.rows && D.manque.rows.length ? ', sauf ' + D.manque.rows.length + ' plat' + (D.manque.rows.length > 1 ? 's' : '') : '') : e.value >= 60 ? 'Une carte correcte, à affiner' : e.value >= 31 ? 'Une carte fragile' : 'Une carte loin de ses objectifs de marge') : 'Indice Carte en construction') + '</h2>' +
       '<div class="cr-dial">' + anneau(pret ? e.value : Math.round(D.couv), col) + '<div class="cr-dial-n"><b data-cr-count="' + (pret ? e.value : Math.round(D.couv)) + '">' + (pret ? e.value : Math.round(D.couv)) + '</b><small>' + (pret ? '/100' : '%') + '</small></div></div>' +
+      /* C311 (V16-089) : en construction, le grand pourcentage dit ce qu'il compte (les fiches complètes), pas un Indice */
+      (pret ? '' : '<p class="cr-p" style="margin-top:-4px">' + Math.round(D.couv) + ' % de vos plats ont une fiche complète : l’Indice Carte se calcule quand les fiches et les ventes des plats sont complètes.</p>') +
       '<p class="cr-big"><b>' + pct1(D.marge) + '</b><small>de vos ventes vous restent une fois les produits payés · objectif ' + pct1(D.obj) + '</small></p>' +
       '<p class="cr-p">' + (pret ? 'Indice Carte : la carte seule, les marges de vos plats face à vos objectifs.' + /* C301 (deux indices) : ce que chacun mesure */ (function () {
         var sr = null; try { var Rm = w.moteur(); if (Rm && Rm.ready && isFinite(Rm.score)) sr = Math.round(Rm.score); } catch (x) {} if (sr == null) return '';
@@ -83,7 +85,7 @@
     t.push('<section class="cr-card cr-c2" data-cr="2"><span class="cr-k">2 · Sur chaque 100 € de carte</span><h2>Ce que vos plats gardent</h2>' +
       '<div class="cr-stack"><i style="--w:' + D.theo.toFixed(2) + '%;--c:#f59e0b"><span><small>Matière</small>' + pct1(D.theo).replace('\u00a0%', '\u00a0€') + '</span></i>' + (D.autres > 0.05 ? '<i style="--w:' + D.autres.toFixed(2) + '%;--c:#c084fc"><span><small>Plateformes, emballages</small>' + pct1(D.autres).replace('\u00a0%', '\u00a0€') + '</span></i>' : '') + '<i class="cr-res" style="--w:' + D.marge.toFixed(2) + '%;--c:#22c55e"><span><small>Gardés</small>' + pct1(D.marge).replace('\u00a0%', '\u00a0€') + '</span></i></div>' +
       '<p class="cr-big"><b data-cr-count="' + (Math.round(D.marge * 10) / 10) + '" data-cr-eur data-cr-dec>' + eur1(D.marge) + '</b><small>gardés sur 100 € encaissés, avant l’équipe, le loyer et l’impôt</small></p>' +
-      '<p class="cr-p">Matière théorique des fiches : ' + pct1(D.theo) + /* C301 (V15-003) Carte : le même écart que l'Audit */ (function () { var E = null; try { E = typeof w.VerdictEcartMatiere === 'function' ? w.VerdictEcartMatiere() : null; } catch (e) {} return E ? ' · ' + E.perimetre + ' : ' + pct1(E.theo) + ' sur les fiches, ' + pct1(E.reel) + ' achetée (' + esc(E.periode) + ', écart ' + (E.pts > 0 ? '+' : '') + pct1(E.pts).replace('\u00a0%', '\u00a0pt') + ')' : ''; })() + '.</p><span class="cr-suite">Vos plats vedettes ↓</span></section>');
+      '<p class="cr-p">Matière théorique des fiches : ' + pct1(D.theo) + /* C301 (V15-003) Carte : le même écart que l'Audit */ (function () { var E = null; try { E = typeof w.VerdictEcartMatiere === 'function' ? w.VerdictEcartMatiere() : null; } catch (e) {} return E ? ' · ' + E.perimetre + ' : ' + pct1(E.theo) + (E.brouillons ? ' sur les fiches-types proposées par Vera (à confirmer), ' : ' sur les fiches, ') + pct1(E.reel) + ' achetée (' + esc(E.periode) + ', écart ' + (E.pts > 0 ? '+' : '') + pct1(E.pts).replace('\u00a0%', '\u00a0pt') + ')' : ''; })() + '.</p><span class="cr-suite">Vos plats vedettes ↓</span></section>');
     /* 3 · Vedettes */
     var best = (D.apc && D.apc.best || []).slice(0, 3), max = Math.max.apply(null, [1].concat(best.map(function (b) { return num(b.contrib); }))), somme = best.reduce(function (s, b) { return s + num(b.contrib); }, 0);
     if (best.length) t.push('<section class="cr-card cr-c3" data-cr="3"><span class="cr-k">3 · Vos plats vedettes</span><h2>Ceux qui font vivre la maison</h2><ol class="cr-bars">' +
@@ -146,7 +148,9 @@
     if (box && box.getAttribute('data-cle') === cle && box.parentNode === hote && bienPlace()) return;
     if (!box) { box = doc.createElement('div'); box.id = 'vdRecitCarte'; }
     box.setAttribute('data-cle', cle);
-    box.innerHTML = '<header class="cr-head"><span>Carte · ' + esc(D.nom) + '</span><h1>Votre carte en 6 images</h1><p>Mêmes chiffres que l’Audit et Simuler, lus sur vos fiches et vos ventes.</p></header>' + tableaux(D);
+    /* C311 (V16-049, Langues) : autant d'images annoncées que d'images affichées, comme l'Audit */
+    var corpsC = tableaux(D), nC = (corpsC.match(/data-cr="\d"/g) || []).length || 6;
+    box.innerHTML = '<header class="cr-head"><span>Carte · ' + esc(D.nom) + '</span><h1>Votre carte en ' + nC + ' image' + (nC > 1 ? 's' : '') + '</h1><p>Mêmes chiffres que l’Audit et Simuler, lus sur vos fiches et vos ventes.</p></header>' + corpsC;
     if (!bienPlace()) { if (liste) liste.after(box); else hote.appendChild(box); }
     [].forEach.call(box.querySelectorAll('[data-cr-go]'), function (b) {
       b.onclick = function () {

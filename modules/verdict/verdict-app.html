@@ -7,7 +7,7 @@
 
 <style id="vd-first-paint-r307">html.vd-workspace-dark,html.vd-workspace-dark body{background-color:#08090b!important;color:#f5f7fa}html.vd-workspace-light,html.vd-workspace-light body{background-color:#fff!important;color:#17212b}</style>
 <script id="vd-transition-r306" src="../../assets/runtime-a10/verdict-003-8aac73945076.js"></script>
-<script src="../../assets/runtime-a10/verdict-004-d3ff2c28f4a9.js"></script>
+<script src="../../assets/runtime-a10/verdict-004-97499c89286a.js"></script>
 <meta charset="UTF-8">
 <script src="../../internal/verdict-recheck.js"></script>
 <script src="../../internal/audit-hooks.js"></script>
@@ -44,7 +44,7 @@
 <meta name="twitter:image" content="https://verdict-client-iphone.papysteven.chatgpt.site/icone-1024.png">
 <title>Verdict&reg; &mdash; App</title>
 <script data-mono="../../runtime-config-v44.js" src="../../assets/runtime-a10/verdict-016-5e88689bc97c.js"></script>
-<script data-mono="../../service-day-v1.js" src="../../assets/runtime-a10/verdict-017-9a404d4d7085.js"></script>
+<script data-mono="../../service-day-v1.js" src="../../assets/runtime-a10/verdict-017-17ecdf02ec0f.js"></script>
 <script src="../../assets/runtime-a10/verdict-018-ba3ea762e09f.js"></script>
 <script src="../../assets/runtime-a10/verdict-019-904dceff7bab.js"></script>
 <style>
@@ -3030,11 +3030,11 @@ html.vd-workspace-light #v-carte.cp-active .cp-card {background:radial-gradient(
 <script data-verdict-models-external data-mono="./assets/modeles-chr-profonds-2026.js" src="../../assets/runtime-a10/verdict-025-825cc8928e1f.js"></script>
 <script data-mono="./dish-labor-v1.js" src="../../assets/runtime-a10/verdict-026-99d1632f83e6.js"></script>
 <script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/verdict-027-2ee1f78e3256.js"></script>
-<script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/verdict-028-54651be79848.js"></script>
-<script src="../../assets/runtime-a10/verdict-029-cd92b92d2866.js"></script>
+<script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/verdict-028-db3d40c9e516.js"></script>
+<script src="../../assets/runtime-a10/verdict-029-722ae3ebeea9.js"></script>
 <script id="vd-i18n-demande-c216b">/* C216 (W57) : une langue choisie en cours de route se charge à ce moment-là, depuis le même fichier qu'avant. */
 (function(){var M=window.VERDICT_I18N_SRC||{},orig=window.verdictLoadLanguagePack;if(typeof orig!=="function")return;var wrap=function(l,done){var P=window.VERDICT_I18N_PACKS||{};if(l==="fr"||P[l]||!Object.prototype.hasOwnProperty.call(M,l))return orig(l,done);var s=document.createElement("script");s.src=M[l];s.setAttribute("data-verdict-language-pack",l);s.onload=s.onerror=function(){orig(l,done);};(document.head||document.documentElement).appendChild(s);};wrap.__c216=true;window.verdictLoadLanguagePack=wrap;})();</script>
-<script src="../../assets/runtime-a10/verdict-030-56ef1a7c2b60.js"></script>
+<script src="../../assets/runtime-a10/verdict-030-52b296f0db91.js"></script>
 <style>
 .gpulse{animation:gpk 1.6s ease 2;border-radius:12px}
 @keyframes gpk{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 14px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
@@ -3344,6 +3344,42 @@ body.verdict-language-required>:not(#mLang):not(#splash):not(#verdictIntroHandof
 #mLang .lang-head p{color:#b7c3cd}
 #mLang .lang-note{color:#a9b6c1}
 #mLang.lang-confirming .lang-note{color:#6ee7b7}
+/* C312 (V16-058) : en thème clair, la fenêtre Langue et la fiche du guide « Découvrir Verdict » sont claires à toutes les largeurs
+   (la fiche ne l'était que sous 768 px ; la fenêtre restait sombre). Fond opaque gardé : le garde-contraste mesure le vrai fond. */
+html.vd-workspace-light #mLang>.lang-sheet{background:radial-gradient(90% 75% at 50% 0,rgba(34,197,94,.10),transparent 70%),#fff!important;background-color:#fff!important;color:#17212b!important;border-color:#cfe3d6!important;box-shadow:0 22px 60px rgba(20,35,50,.22)!important}
+html.vd-workspace-light #mLang .lang-aura{opacity:.35}
+html.vd-workspace-light #mLang .lang-brand,html.vd-workspace-light #mLang .lang-head h3,html.vd-workspace-light #mLang .lang-orb{color:#17212b!important}
+html.vd-workspace-light #mLang .lang-brand span,html.vd-workspace-light #mLang .lang-kicker{color:#15803d!important}
+html.vd-workspace-light #mLang .lang-orb{background:#ecfdf3!important;border-color:#86d0a0!important}
+html.vd-workspace-light #mLang .lang-head p{color:#435365!important}
+html.vd-workspace-light #mLang .lang-note{color:#526171!important}
+html.vd-workspace-light #mLang.lang-confirming .lang-note{color:#15803d!important}
+html.vd-workspace-light #mLang .lang-choice{background:#f6f8fa!important;color:#17212b!important;border-color:#cfd8df!important}
+html.vd-workspace-light #mLang .lang-choice .lang-flag,html.vd-workspace-light #mLang .lang-choice .lang-name{color:inherit!important}
+html.vd-workspace-light #mLang .lang-choice.is-selected{background:#ecfdf3!important;color:#166534!important;border-color:#22c55e!important}
+html.vd-workspace-light #mLang .lang-choice.is-selected .lang-state{background:#16a34a!important;color:#fff!important;border-color:#16a34a!important}
+html.vd-workspace-light #mLang .lang-choice:not(.is-selected) .lang-state{border-color:#94a3b8!important}
+html.vd-workspace-light #mLang .lang-close{background:#f1f5f9!important;color:#17212b!important;border-color:#86d0a0!important}
+html.vd-workspace-light #mLang{background:radial-gradient(75% 55% at 50% 12%,rgba(34,197,94,.12),transparent 68%),linear-gradient(180deg,#f4f8f6,#e6ecf0)!important}
+/* C312 (V16-079) : « Ajouter mes plats », « Faire mon point », « Compléter le mois » (Alertes) au style des boutons secondaires de l'appli, pas au style brut du navigateur */
+#alertesBody .btn2{border-radius:12px;padding:9px 14px;font:700 14px/1.3 -apple-system,system-ui,sans-serif;cursor:pointer;text-align:center}
+html.vd-workspace-light body #demoInline{background:#fff!important;color:#17212b!important;border-color:#8ab5f0!important;box-shadow:0 16px 38px rgba(20,35,50,.18)!important}
+html.vd-workspace-light body #demoInline.is-power{border-color:#5fc79a!important}
+html.vd-workspace-light #demoInline .di-scroll-body,html.vd-workspace-light #demoInline .di-head,html.vd-workspace-light #demoInline .di-title{color:#17212b!important}
+html.vd-workspace-light #demoInline .di-step{color:#1e56a0!important}
+html.vd-workspace-light #demoInline.is-power .di-step{color:#15803d!important}
+html.vd-workspace-light #demoInline .di-question,html.vd-workspace-light #demoInline .di-head>p,html.vd-workspace-light #demoInline .di-head>div:not(.di-step):not(.di-title){color:#40566d!important}
+html.vd-workspace-light #demoInline .demo-film-plan b{color:#263648!important}
+html.vd-workspace-light #demoInline .demo-film-plan small{color:#526171!important}
+html.vd-workspace-light #demoInline .di-proof{background:#eef5ff!important;color:#263f60!important;border-color:#b7d3f7!important}
+html.vd-workspace-light #demoInline .di-proof *{color:#263f60!important}
+html.vd-workspace-light #demoInline .di-vera{border-top-color:#dfe5e9!important}
+html.vd-workspace-light #demoInline .di-vera summary,html.vd-workspace-light #demoInline .di-vera.is-visible>b{color:#15803d!important}
+html.vd-workspace-light #demoInline .di-vera p{color:#40566d!important}
+html.vd-workspace-light #demoInline.demo-inline-scroll .di-actions{background:#fff!important;border-top-color:#dfe5e9!important}
+html.vd-workspace-light #demoInline .di-prev,html.vd-workspace-light #demoInline .di-close{background:#17212b!important;color:#fff!important}
+html.vd-workspace-light #demoInline .di-next{background:#397fd3!important;color:#fff!important}
+html.vd-workspace-light #demoInline.is-power .di-next{background:#15803d!important;color:#fff!important}
 #mLang .lang-orb{color:#eef2f5}
 #mLang .lang-close{display:block;width:100%;min-height:44px;margin:12px 0 0;padding:10px 14px;border:1px solid rgba(110,231,183,.38);border-radius:14px;background:rgba(255,255,255,.06);color:#eef2f5;font-family:inherit;font-size:14px;font-weight:700;line-height:1.2;cursor:pointer}
 #mLang .lang-close:hover,#mLang .lang-close:focus-visible{border-color:#6ee7b7;background:rgba(255,255,255,.12)}
@@ -4201,7 +4237,7 @@ label.f input,label.f select,.daily-guided-row .btn2{min-height:44px!important}
 </script>
 <script data-mono="./premium-viewport-v1.js" src="../../assets/runtime-a10/verdict-039-813a40955b00.js"></script>
 <script data-mono="../../daily-home-v25.js" src="../../assets/runtime-a10/verdict-040-5abbfd4c29ca.js"></script>
-<script data-mono="./performance-integrated-v1.js" src="../../assets/runtime-a10/verdict-041-4ddc79d7e184.js"></script>
+<script data-mono="./performance-integrated-v1.js" src="../../assets/runtime-a10/verdict-041-5cbf02d35d79.js"></script>
 <script data-mono="../../daily-validation-v1.js" src="../../assets/runtime-a10/verdict-042-9489224c5241.js"></script>
 <script data-mono="../../interaction-polish-v26.js" src="../../assets/runtime-a10/verdict-043-7d9e3a9c6fe2.js"></script>
 <style  data-mono="./verdict-v44.css">
@@ -4333,7 +4369,7 @@ html[data-v45-profile="carte"] nav button[data-v="dec"], html[data-v45-profile="
 .v36-pointmort{padding:clamp(16px,3vw,26px)!important;background:linear-gradient(145deg,#15212b,#0b1218)!important;border:1px solid #354653!important;border-radius:20px!important;margin-bottom:20px!important}.v36-pm-kicker{color:#b7c9d8;font-size:12px;letter-spacing:.08em}.v36-pointmort h2{font-size:clamp(22px,3vw,30px);line-height:1.15;margin:10px 0 18px}.v36-pm-answer{font-size:clamp(24px,3.6vw,38px);font-weight:800;line-height:1.2;letter-spacing:-.025em;margin:16px 0 22px;color:#f5f7fa}.v36-pm-track{display:flex;gap:3px;align-items:end;height:54px}.v36-pm-track i{flex:1;min-width:0;height:29px;border-radius:3px;background:#9bb5c7}.v36-pm-track i.forecast{background:transparent;border:1px dashed #90a8ba}.v36-pm-track i.closed{height:6px;background:#44515b}.v36-pm-track i.crossing{height:52px;outline:2px solid #fff;outline-offset:2px}.v36-pm-ends,.v36-pm-legend{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#b4c2ce;font-size:12px;margin-top:12px}.v36-pm-legend b{color:#f1f5f9}.v36-pm-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:24px 0}.v36-pm-metrics div{min-width:0;border-top:1px solid #435360;padding-top:12px}.v36-pm-metrics dt{font-size:12px;color:#b4c2ce}.v36-pm-metrics dd{margin:7px 0 0;font-size:clamp(16px,2vw,23px);font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.v36-pm-buttons{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.v36-pm-buttons .btn{width:auto;min-height:44px;margin:0}.v36-pm-method{font-size:14px;line-height:1.5;color:#b4c2ce}.v36-pm-method summary{min-height:44px;padding:10px 0;box-sizing:border-box;cursor:pointer;color:#e5edf4}.v36-pm-scenarios{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px;margin-top:18px}.v36-pm-scenarios article{padding:14px;border:1px solid #354653;border-radius:14px;min-width:0}.v36-pm-scenarios h4{font-size:16px;margin:0 0 12px}.v36-pm-scenarios p{font-size:12px;color:#b4c2ce;margin:10px 0}.v36-pm-scenarios b{display:block;font-size:16px;color:#f1f5f9;margin-top:4px;font-variant-numeric:tabular-nums}.v36-pointmort button:focus-visible,.v36-pointmort summary:focus-visible{outline:2px solid #93c5fd;outline-offset:3px}@media(max-width:420px){.v36-pm-metrics{grid-template-columns:1fr}.v36-pm-buttons .btn{width:100%}.v36-pm-track{gap:2px}}
 
 </style>
-<script data-mono="./fec-import-v44.js" src="../../assets/runtime-a10/verdict-044-5b62f66b384c.js"></script>
+<script data-mono="./fec-import-v44.js" src="../../assets/runtime-a10/verdict-044-4464a461976b.js"></script>
 <script data-mono="./deep-links-v44.js" src="../../assets/runtime-a10/verdict-045-896780c82370.js"></script>
 <script data-mono="../../flux-client-v45-1.js" src="../../assets/runtime-a10/verdict-046-d7962094dd46.js"></script>
 <style  data-mono="../../minimum-curve-r38.css">
@@ -4357,7 +4393,7 @@ html[data-v45-profile="carte"] nav button[data-v="dec"], html[data-v45-profile="
 
 </style>
 <script data-mono="../../minimum-curve-r38.js" src="../../assets/runtime-a10/verdict-047-741555c57be1.js"></script>
-<script data-mono="../../module-profiles-v45.js" src="../../assets/runtime-a10/verdict-048-b27f6843bc33.js"></script>
+<script data-mono="../../module-profiles-v45.js" src="../../assets/runtime-a10/verdict-048-37195c0fda5f.js"></script>
 <script id="VERDICT_CLIENT_VOCABULARY" src="../../assets/runtime-a10/verdict-049-f99e2f5dbc1f.js"></script>
 <script data-mono="./data-safety-guard-v1.js" src="../../assets/runtime-a10/verdict-050-6f83c6c53ca4.js"></script>
 <style id="p40-css" data-mono="../../premium-r40.css">
@@ -4643,10 +4679,10 @@ html.p40-app .p41-detail{-webkit-tap-highlight-color:transparent;touch-action:ma
 
 </style>
 <script id="svc-js" data-mono="../../services-r56.js" src="../../assets/runtime-a10/verdict-051-1b0f47e23ecf.js"></script>
-<script id="p41-js" data-mono="../../premium-r41-ecrans.js" src="../../assets/runtime-a10/verdict-052-8f6adf3f04b4.js"></script>
-<script id="p40-js" data-mono="../../premium-r40.js" src="../../assets/runtime-a10/verdict-053-24aeb05508e2.js"></script>
+<script id="p41-js" data-mono="../../premium-r41-ecrans.js" src="../../assets/runtime-a10/verdict-052-bebe27df700c.js"></script>
+<script id="p40-js" data-mono="../../premium-r40.js" src="../../assets/runtime-a10/verdict-053-68b569084000.js"></script>
 <script data-mono="../../carte-atelier-v1.js" src="../../assets/runtime-a10/verdict-054-2510938db652.js"></script>
-<script data-mono="../../carte-pages-v1.js" src="../../assets/runtime-a10/verdict-055-5db093f163ae.js"></script><style  data-mono="../../control-ecarts-v1.css">
+<script data-mono="../../carte-pages-v1.js" src="../../assets/runtime-a10/verdict-055-812d175c2c51.js"></script><style  data-mono="../../control-ecarts-v1.css">
 .vc{margin:22px 0;color:var(--text,#edf0f3);font-size:16px;line-height:1.5}.vc h3{font-size:24px;margin:5px 0 12px}.vc p{color:var(--muted,#adb5bf)}.vc-eyebrow{font-size:13px;font-weight:800;letter-spacing:.08em}.vc-panel{border:1px solid #394048;border-radius:24px;background:linear-gradient(135deg,#1c252a,#101418 72%);padding:20px;margin:16px 0;overflow:hidden}.vc-panel summary{cursor:pointer;font-weight:750;font-size:18px;min-height:44px;align-content:center}.vc form{margin-top:16px}.vc label{display:block;margin:12px 0}.vc label>span{display:block;font-size:14px;margin-bottom:6px;color:#c3cbd2}.vc input:not([type=checkbox]){display:block;width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #485360;border-radius:12px;background:#090d10;color:#fff;font-size:16px;min-height:46px}.vc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.vc-grid strong{display:block;font-size:24px;margin-top:6px}.vc fieldset{border:1px solid #42494f;border-radius:16px;min-width:0;margin:14px 0}.vc button{border:1px solid #55745f;border-radius:14px;background:linear-gradient(135deg,#233c31,#17251f);color:#edf8f0;padding:13px 17px;font-size:16px;font-weight:700;min-height:46px;cursor:pointer;white-space:normal}.vc button:hover{border-color:#36ca77;box-shadow:0 0 18px #22c55e20}.vc button:focus-visible,.vc input:focus-visible{outline:3px solid #99b9ed;outline-offset:3px}.vc-confirm{display:flex!important;gap:12px;align-items:flex-start;font-size:14px}.vc-confirm input{margin-top:5px;min-width:20px;height:20px}.vc-result{border-left:4px solid #eab308;background:#eab30809;border-radius:16px;padding:16px;margin:16px 0}.vc-result>strong{display:block;font-size:30px;margin-top:12px}.vc-badge{display:inline-block;font-size:14px;border:1px solid #67737f;border-radius:18px;padding:5px 10px;color:#cad2da}.vc-badge[data-tone=green]{color:#3ade84;border-color:#268a51;background:#22c55e15}.vc-badge[data-tone=yellow]{color:#f6d858;border-color:#ab8526;background:#eab30815}.vc-priorities button{display:block;width:100%;text-align:left;margin:12px 0;border-left:4px solid #ef4444}.vc-priorities strong,.vc-priorities span{display:block}.vc [data-vc-error]{color:#ff9c91}.vc details[open]{animation:vc-reveal .22s ease-out}@keyframes vc-reveal{from{opacity:.6;transform:translateY(5px)}to{opacity:1;transform:none}}@media(max-width:380px){.vc-grid{grid-template-columns:1fr}.vc-panel{padding:16px}.vc h3{font-size:22px}}@media(prefers-reduced-motion:reduce){.vc details[open]{animation:none}}
 html.p40-app #v-pil.on.p41-on > #vc-main{display:block!important;order:2;scroll-margin-top:150px}#vc-entry{margin:8px 0 14px}#vc-entry button{width:100%}.vc-panel form{scroll-margin-top:150px}
 
@@ -4699,4 +4735,6 @@ html.p40-app #v-pil.on.p41-on > #vc-main{display:block!important;order:2;scroll-
 <script src="../../internal/gain-realiste-a24.js"></script>
 <script src="../../internal/vitesse-a30.js"></script>
 <script src="../../internal/langues-complements.js"></script>
+<!-- C312 (V16-058) : le thème suit l'appareil sans recharger, comme l'Inventaire (dans la coque : il suit la coque) -->
+<script src="../../internal/theme-auto-c209.js"></script>
 </body></html>

@@ -338,6 +338,7 @@
         var target=backDemoStep;close({skipFocus:true});resumeDemoStep=null;backDemoStep=null;globalDemoStep=null;globalDemoTotal=null;
         global.VerdictUnified.requestSwitch('verdict',{demo:true,profile:'carte',resumeDemoStep:target,bridge:true,siteId:'demo-brasserie'});return;
       }
+      if(backDemoStep!==null&&!EMBEDDED){var retour=backDemoStep;close({skipFocus:true});global.location.href='../verdict/verdict-app.html?presentation=brasserie&demo=1&reprise='+retour;return;}/* C312 */
       close();return;
     }
     step--;
@@ -359,7 +360,7 @@
         global.VerdictUnified.requestSwitch('verdict',options);
         return;
       }
-      global.location.href=VERDICT_URL;
+      global.location.href=resumeDemoStep!==null?'../verdict/verdict-app.html?presentation=brasserie&demo=1&reprise='+resumeDemoStep:VERDICT_URL;/* C312 : reprise du guide dans Pilotage seul (VERDICT_URL repasse par la coque et perd l'étape) */
       return;
     }
     step++;
@@ -396,6 +397,9 @@
   global.inventoryDemoRestart=restart;
   global.inventoryDemoExit=exitDemo;
   global.InventoryGuide=Object.freeze({version:'1.7.2',open:open,close:close,previous:previous,restart:restart,exit:exitDemo,inspect:function(){return {active:!!(panel&&panel.isConnected),step:step+1,total:data(metrics()).length,mode:'inline',personnelDemo:PERSONNEL_DEMO,establishmentId:global.DB&&global.DB.site||'',verdictUrl:PERSONNEL_DEMO?'':VERDICT_URL,resumeDemoStep:resumeDemoStep,backDemoStep:backDemoStep,globalDemoStep:globalDemoStep,globalDemoTotal:globalDemoTotal,globalCurrentStep:globalDemoStep===null?null:globalDemoStep+step};}});
-  if(autoRequested()&&!EMBEDDED){var start=global.requestAnimationFrame||function(fn){Promise.resolve().then(fn);};start(function(){open(0);});}
+  /* C312 (V16-050) : ouvert seul depuis le guide de Pilotage (?reprise=, retour=, etape=, total=) : même numérotation, et retour à Pilotage à la fin. */
+  function urlGuide(){var o={};try{var q=new URLSearchParams(global.location.search);['reprise','retour','etape','total'].forEach(function(k,i){var v=q.get(k);if(v!==null&&/^\d+$/.test(v))o[['resumeDemoStep','backDemoStep','globalDemoStep','globalDemoTotal'][i]]=+v;});}catch(e){}return o;}
+  if(autoRequested()&&!EMBEDDED){var lancer=function(){if(panel&&panel.isConnected)return;open(0,urlGuide());};/* après le chargement : à la première image, la démo n'était pas prête et le guide ne s'ouvrait pas */
+    if(doc.readyState==='complete')setTimeout(lancer,600);else global.addEventListener('load',function(){setTimeout(lancer,600);},{once:true});}
 })(window);
 

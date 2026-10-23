@@ -154,12 +154,12 @@ function v5recos(){
       why:'Rentabilit\u00e9 n\u00e9gative = rang critique \u2014 le score est plafonn\u00e9 tant que la perte dure.',
       urg:95, imp:Math.abs(Math.round(d.res)), fac:30, conf:confBase});
   }
-  var msC=(typeof repereMS==='function'?repereMS().sec:36), msH=msC+5; /* C180 : conseill\u00e9 du type d\u2019\u00e9tablissement, trop lourd au-del\u00e0 de +5 points (comme la jauge) */
+  var msC=(typeof repereMS==='function'?repereMS().sec:36), msH=(typeof repereMS==='function'&&repereMS().haut)||msC+6;/* C309 (décision 5) : conseill\u00e9 du type d\u2019\u00e9tablissement, trop lourd au-del\u00e0 de son rep\u00e8re haut (comme l\u2019Indice) */
   if(v.ms>msH){
     var gMS=Math.round((v.ms-msH)/100*ca);
     list.push({id:'ms',rank:2,t:'Masse salariale critique : '+pc(v.ms,0)+' du CA',
       p:'Au-dessus de '+msH+' % des ventes : trop lourd. Revenir \u00e0 ce seuil repr\u00e9sente \u2248 '+eur(gMS)+'/an. '+srvT('leviersMs'),
-      why:'Plus de '+msH+' % des ventes (conseill\u00e9 pour votre type d\u2019\u00e9tablissement : '+msC+' %, plus 5 points) = trop lourd \u2014 ce n\u2019est pas une moyenne sectorielle officielle.',
+      why:'Plus de '+msH+' % des ventes (rep\u00e8re haut de votre type d\u2019\u00e9tablissement ; conseill\u00e9 : '+msC+' %) = trop lourd \u2014 ce n\u2019est pas une moyenne sectorielle officielle.',
       urg:80, imp:gMS, fac:30, conf:confBase});
   } else if(v.ms>msC){
     var gMS2=Math.round((v.ms-msC)/100*ca);

@@ -18,7 +18,11 @@
     acces: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
     compte: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     langue: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
-    chercher: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>'
+    chercher: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+    /* C312 (V16-071) : modules */
+    pilotage: '<path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/>',
+    carte: '<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    inventaire: '<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>'
   };
   function svg(k, cls) { return '<svg class="' + (cls || 'vp-ic') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[k] + '</svg>'; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -40,7 +44,11 @@
     etabs: function () { w.openEtabs(); },
     acces: function () { if (demo() && typeof w.demoInventoryAccessPreview === 'function') w.demoInventoryAccessPreview(); else if (typeof w.plusInventoryAccessManage === 'function') w.plusInventoryAccessManage(); },
     compte: function () { w.go('abo'); },
-    langue: function () { if (typeof w.langModal === 'function') w.langModal(); }
+    langue: function () { if (typeof w.langModal === 'function') w.langModal(); },
+    /* C312 (V16-071) : Pilotage ouvert seul (sans la coque) — les trois modules restent atteignables. */
+    pilotage: function () { var P = w.VerdictModuleProfilesV45; if (P && P.setProfile) P.setProfile('pilotage', true); else w.go('pil'); },
+    carte: function () { var P = w.VerdictModuleProfilesV45; if (P && P.setProfile) P.setProfile('carte', true); else w.go('carte'); },
+    inventaire: function () { var P = w.VerdictModuleProfilesV45; if (P && P.requestInventory) P.requestInventory('inventory-analysis'); }
   };
   function groupes() {
     var g = [
@@ -52,6 +60,10 @@
     if (demo() || portail) g[2].l.push(['acces', 'Accès du personnel', 'Inventaire pour votre équipe, droits choisis par vous']);
     g[2].l.push(['compte', 'Compte et abonnement', 'Accès, essai et facturation']);
     if (w.I18N_ENABLED !== false && typeof w.langModal === 'function') g[2].l.push(['langue', 'Langue', 'Changer la langue de l’application']);
+    /* C312 (V16-071) : hors de la coque, la barre des modules n'existe pas : Plus les propose (le module ouvert n'est pas répété). */
+    var seul = false, prof = 'pilotage';
+    try { seul = w.top === w && !(w.VerdictUnified && w.VerdictUnified.embedded); var MP = w.VerdictModuleProfilesV45; if (MP && MP.getProfile) prof = MP.getProfile(); } catch (e) {}
+    if (seul) g.unshift({ t: 'Modules', l: [prof === 'carte' ? ['pilotage', 'Pilotage', 'Accueil, Structure, Simuler et Audit'] : ['carte', 'Carte', 'Plats, recettes, prix et marges'], ['inventaire', 'Inventaire', 'Stock, comptages et commandes']] });
     return g;
   }
   function rendre() {
@@ -90,7 +102,10 @@
     '#vd-plus .vp-txt{flex:1;min-width:0}#vd-plus .vp-txt b{display:block;font:700 16px/1.25 -apple-system,system-ui,sans-serif;color:var(--vp-txt)}#vd-plus .vp-txt small{display:block;margin-top:3px;font:400 13.5px/1.35 -apple-system,system-ui,sans-serif;color:var(--vp-sub)}' +
     '#vd-plus .vp-badge{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:999px;background:linear-gradient(135deg,#b45309,#92400e);color:#fff;font:800 10.5px/1.3 -apple-system,system-ui,sans-serif;letter-spacing:.06em;vertical-align:2px}' +
     '#vd-plus .vp-chev{font:400 26px/1 -apple-system,system-ui,sans-serif;color:var(--vp-sub);opacity:.7}' +
-    '@media (min-width:900px){#vd-plus{padding-top:18px}#vd-plus .vp-head h1{font-size:40px}}';
+    '@media (min-width:900px){#vd-plus{padding-top:18px}#vd-plus .vp-head h1{font-size:40px}}' +
+    /* C312 (V16-079) : « .vp-head » est aussi une classe de Performances (rangée flexible) : « VERDICT », « Plus » et la phrase
+       se plaçaient côte à côte, le titre décalé. L'en-tête de Plus reste un bloc. */
+    '#vd-plus .vp-head{display:block!important;margin-bottom:0!important}';
   (doc.head || doc.documentElement).appendChild(css);
   /* L'écran Plus est reconstruit à chaque affichage (langue, démonstration, établissement). */
   if (typeof w.mainNavView === 'function') { var nav0 = w.mainNavView; w.mainNavView = function (v) { if (v === 'plus') setTimeout(rendre, 0); return nav0.apply(this, arguments); }; }

@@ -70,27 +70,42 @@
     return h + '</tbody></table>';
   }
   /* Appelé par le lecteur FEC avant le bouton « Confirmer et calculer ». */
-  function comparaisonFEC(totals) {
+  /* C310 (V16-067) : la page du FEC comptait « 4 postes » et la fenêtre qui suit « 5 postes » (TVA, panier et commandes en plus) :
+     la page compte maintenant les mêmes écarts et dit que la question unique viendra après « Confirmer et calculer ». */
+  function tvaDuFEC(ag) { var mf = ag && ag.monthlyFlux || {}, s = 0, n = 0, rev = num(ag && ag.totals && ag.totals.revenue); Object.keys(mf).forEach(function (k) { var v = Number(mf[k] && mf[k].tvaCollectee); if (isFinite(v) && v !== 0) { s += v; n++; } }); var r = rev > 0 && n ? s / rev : null; return r != null && r >= 0.02 && r <= 0.25 ? Math.round(r * 1e6) / 1e4 : null; }
+  function autresAvantFEC(D, ag) {
+    var L = [], t = tvaDuFEC(ag);
+    if (t != null && D && D.in && !vide(D.in.tva) && Math.abs(num(D.in.tva) - t) > 0.05) L.push({ k: 'tva', lib: 'TVA moyenne', saisie: num(D.in.tva), doc: t, source: 'votre document comptable', pct: true });
+    try { var an = anDocs(D), C = an ? caisse(D, an) : null;
+      if (C && C.panier && !vide(D.in.panier) && Math.abs(num(D.in.panier) - C.panier) > C.panier * VOLUMES) L.push({ k: 'panier', lib: 'Panier moyen TTC', saisie: num(D.in.panier), doc: C.panier, source: 'votre caisse', cents: true });
+      if (C && C.cmdj && !vide(D.in.cmdj) && Math.abs(num(D.in.cmdj) - C.cmdj) > C.cmdj * VOLUMES) L.push({ k: 'cmdj', lib: 'Commandes par jour', saisie: num(D.in.cmdj), doc: Math.round(C.cmdj * 10) / 10, source: 'votre caisse (' + C.jours + ' journées)', nombre: true }); } catch (e) {}
+    return L;
+  }
+  function comparaisonFEC(totals, ag) {
     var D = w.DB, s = D && aDesDonnees(D) ? valeurs(D) : null, dv = valeursFEC(totals || {}), cc = !!(D && D.refSource && D.refSource.caSource === 'caisse');
-    var n = s ? POSTES.filter(function (p) { return differe(s[p.k], dv[p.k]); }).length : 0;
-    return '<div class="df58-cmp"><h3>Ce que dit votre document comptable</h3>' + tableau(s, dv, cc) +
-      '<p>' + (s ? (n ? '<b>' + n + ' poste' + (n > 1 ? 's diffèrent' : ' diffère') + ' de votre saisie.</b> ' : 'Votre saisie concorde avec votre document. ') : '') +
-      'En confirmant, Verdict retient votre document : c’est lui qui fait foi.' + (s ? ' Votre saisie est conservée à part ; vous pourrez y revenir, mais votre note ne sera alors plus un calcul final.' : '') + '</p></div>';
+    var X = s ? autresAvantFEC(D, ag) : [], n = s ? POSTES.filter(function (p) { return differe(s[p.k], dv[p.k]); }).length + X.length : 0;
+    var h2 = X.length ? '<table class="df58-t"><tbody>' + X.map(function (e) { return '<tr><td>' + esc(e.lib) + '<br><small style="opacity:.7">' + esc(e.source) + '</small></td><td>' + montant(e, e.saisie) + '</td><td><b>' + montant(e, e.doc) + '</b></td></tr>'; }).join('') + '</tbody></table>' : '';
+    return '<div class="df58-cmp"><h3>Ce que dit votre document comptable</h3>' + tableau(s, dv, cc) + h2 +
+      '<p>' + (s ? (n ? '<b>' + n + ' poste' + (n > 1 ? 's diffèrent' : ' diffère') + ' de votre saisie.</b> Après « Confirmer et calculer », une seule question vous demandera ce que vous gardez : vos documents (conseillé) ou votre saisie.' : 'Votre saisie concorde avec votre document : en confirmant, Verdict retient votre document.') :
+        'En confirmant, Verdict retient votre document : c’est lui qui fait foi.') + '</p></div>';
   }
 
   /* ——— Mémoire : saisie avant document, document de référence ——— */
   var avantFec = null;
-  doc.addEventListener('change', function (ev) { if (ev.target && ev.target.id === 'v44-fec-input' && w.DB) avantFec = { in: copie(w.DB.in), ref: copie(w.DB.ref), refSource: copie(w.DB.refSource), provenance: copie(w.DB.dataProvenance), avait: aDesDonnees(w.DB) }; }, true);
+  doc.addEventListener('change', function (ev) { if (ev.target && ev.target.id === 'v44-fec-input' && w.DB) avantFec = { D: w.DB, in: copie(w.DB.in), ref: copie(w.DB.ref), refSource: copie(w.DB.refSource), provenance: copie(w.DB.dataProvenance), avait: aDesDonnees(w.DB) }; }, true);
   w.addEventListener('verdict:fec-applied', function () {
     var D = w.DB; if (!D) return;
     var t = (D.fecImport && D.fecImport.totals) || {};
     D.docRef = { source: 'fec', at: new Date().toISOString(), year: D.refSource && D.refSource.exerciseYear, in: copie(D.in), ca: caDeclare(D), valeurs: valeurs(D) };
     D.docAccords = {}; D.docChangements = {}; delete D.docChoix; if (D.docVerrou) delete D.docVerrou;
+    /* C310 (V16-041) : la saisie d'avant le document est celle de CET établissement (un fichier choisi dans un autre, puis confirmé
+       ici, montrait « 6 postes différaient » avec la saisie de l'autre établissement). */
+    if (avantFec && avantFec.D !== D) avantFec = null;
     if (avantFec && avantFec.avait) {
       D.saisieAvantDocument = { at: new Date().toISOString(), in: avantFec.in, ref: avantFec.ref, refSource: avantFec.refSource, provenance: avantFec.provenance };
       /* Le FEC ne contient ni panier ni couverts : on garde ceux de la saisie (la caisse les vérifiera). */
       if (avantFec.in) { if (!vide(avantFec.in.panier) && vide(D.in.panier)) D.in.panier = avantFec.in.panier; if (!vide(avantFec.in.cmdj) && vide(D.in.cmdj)) D.in.cmdj = avantFec.in.cmdj; D.docRef.in.panier = D.in.panier; D.docRef.in.cmdj = D.in.cmdj; }
-      ETAT.bilan = { saisie: valeurs({ in: avantFec.in, ref: avantFec.ref, refSource: avantFec.refSource }), doc: D.docRef.valeurs, caCaisse: !!(avantFec.refSource && avantFec.refSource.caSource === 'caisse'), tva: avantFec.in && !vide(avantFec.in.tva) && !vide(D.in.tva) && Math.abs(num(avantFec.in.tva) - num(D.in.tva)) > 0.05 ? { saisie: num(avantFec.in.tva), doc: num(D.in.tva) } : null };
+      ETAT.bilan = { D: D, saisie: valeurs({ in: avantFec.in, ref: avantFec.ref, refSource: avantFec.refSource }), doc: D.docRef.valeurs, caCaisse: !!(avantFec.refSource && avantFec.refSource.caSource === 'caisse'), tva: avantFec.in && !vide(avantFec.in.tva) && !vide(D.in.tva) && Math.abs(num(avantFec.in.tva) - num(D.in.tva)) > 0.05 ? { saisie: num(avantFec.in.tva), doc: num(D.in.tva) } : null };
     }
     avantFec = null; enregistrer(); setTimeout(tour, 600);
   });
@@ -116,6 +131,14 @@
     return { jours: L.length, ttc: ttc, ht: ttc / (1 + tva / 100), tickets: tk, panier: tk > 0 ? ttc / tk : null, cmdj: tk > 0 ? tk / L.length : null, annee: annee };
   }
 
+  /* C310 (V16-023) : au-delà de 1 % d'écart avec la caisse, le panier et les commandes par jour sont dans la question unique
+     (75,608 saisies contre 74,4 lues passaient en silence sous l'ancien seuil de 5 %) ; en dessous, c'est un écart de définition
+     ou d'arrondi : la caisse les remplace sans question (une seule définition, tickets ÷ journées réelles). */
+  var VOLUMES = 0.01;
+  /* C310 (V16-034) : la TVA qui convertit les minimums en TTC vient-elle d'un document ? Sans FEC, c'est une saisie (un bilan n'a
+     pas de TVA) : Verdict le dit, et l'Accueil peut l'écrire sous le minimum du jour (window.VerdictDocumentsFoi.tvaEstimee). */
+  function tvaEstimee(D) { D = D || w.DB; if (!D || !D.in) return null; var lu = !!(D.fecImport && D.fecImport.totals) || !!(D.refSource && /fec/.test(String(D.refSource.nature || ''))); if (lu) return null;
+    var t = vide(D.in.tva) ? null : num(D.in.tva); return { tva: t, texte: (t != null ? 'TVA estimée à ' + t.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' %' : 'TVA non renseignée') + ' : importez votre document comptable (FEC) pour l’affiner, et avec elle vos minimums TTC.' }; }
   function tvaRef(D) { var t = D.docRef && D.docRef.in && D.docRef.in.tva; return !vide(t) ? num(t) : num(D.in && D.in.tva); }
   /* C300 (V15-017) : une saisie à la main (Mes chiffres) n'a pas d'année d'exercice ; la caisse était alors ignorée : ni question
      sur le panier et les commandes, ni « elle fait foi ». Sans exercice, l'année de référence est la dernière année civile
@@ -150,9 +173,9 @@
     if (C) {
       var ca = caDeclare(D);
       if (!D.docRef && !bilanRecopie(D) && ca != null && differe(ca, C.ht) && !(acc.caCaisse != null && !differe(acc.caCaisse, ca))) out.push({ k: 'caCaisse', lib: 'Chiffre d’affaires HT ' + an, saisie: ca, doc: C.ht, source: 'votre caisse (' + C.jours + ' journées)' });
-      if (C.panier && !vide(D.in.panier) && Math.abs(num(D.in.panier) - C.panier) > C.panier * 0.05 && !tranche(D, 'panier', num(D.in.panier))) out.push({ k: 'panier', lib: 'Panier moyen TTC', saisie: num(D.in.panier), doc: C.panier, source: 'votre caisse', cents: true });
+      if (C.panier && !vide(D.in.panier) && Math.abs(num(D.in.panier) - C.panier) > C.panier * VOLUMES && !tranche(D, 'panier', num(D.in.panier))) out.push({ k: 'panier', lib: 'Panier moyen TTC', saisie: num(D.in.panier), doc: C.panier, source: 'votre caisse', cents: true });
       /* C280 (T4 vague 10) : les commandes par jour lues dans la caisse font foi aussi, dans la même question globale (90 saisies contre 74,4 lues ne déclenchaient rien). */
-      if (C.cmdj && !vide(D.in.cmdj) && Math.abs(num(D.in.cmdj) - C.cmdj) > C.cmdj * 0.05 && !tranche(D, 'cmdj', num(D.in.cmdj))) out.push({ k: 'cmdj', lib: 'Commandes par jour', saisie: num(D.in.cmdj), doc: Math.round(C.cmdj * 10) / 10, source: 'votre caisse (' + C.jours + ' journées)', nombre: true });
+      if (C.cmdj && !vide(D.in.cmdj) && Math.abs(num(D.in.cmdj) - C.cmdj) > C.cmdj * VOLUMES && !tranche(D, 'cmdj', num(D.in.cmdj))) out.push({ k: 'cmdj', lib: 'Commandes par jour', saisie: num(D.in.cmdj), doc: Math.round(C.cmdj * 10) / 10, source: 'votre caisse (' + C.jours + ' journées)', nombre: true });
     }
     return out;
   }
@@ -288,15 +311,17 @@
       var cle = cleDocuments(D) + '|' + String((D.refSource && D.refSource.nature) || '') + ':' + caDeclare(D);/* une fois par jeu de documents (FEC, bilan recopié, caisse) */
       if (D.docAligne !== cle && !doc.getElementById('df58-m')) {
         var pc = Math.round(C.panier * 100) / 100, cc = C.cmdj ? Math.round(C.cmdj * 10) / 10 : null;
-        if (!vide(D.in.panier) && Math.abs(num(D.in.panier) - pc) >= 0.005 && Math.abs(num(D.in.panier) - C.panier) <= C.panier * 0.05 && !tranche(D, 'panier', num(D.in.panier))) { D.in.panier = pc; rempli = true; }
-        if (cc != null && !vide(D.in.cmdj) && Math.abs(num(D.in.cmdj) - cc) >= 0.05 && Math.abs(num(D.in.cmdj) - C.cmdj) <= C.cmdj * 0.05 && !tranche(D, 'cmdj', num(D.in.cmdj))) { D.in.cmdj = cc; rempli = true; }
+        if (!vide(D.in.panier) && Math.abs(num(D.in.panier) - pc) >= 0.005 && Math.abs(num(D.in.panier) - C.panier) <= C.panier * VOLUMES && !tranche(D, 'panier', num(D.in.panier))) { D.in.panier = pc; rempli = true; }
+        if (cc != null && !vide(D.in.cmdj) && Math.abs(num(D.in.cmdj) - cc) >= 0.05 && Math.abs(num(D.in.cmdj) - C.cmdj) <= C.cmdj * VOLUMES && !tranche(D, 'cmdj', num(D.in.cmdj))) { D.in.cmdj = cc; rempli = true; }
         D.docAligne = cle;
       }
       if (rempli) { if (D.docRef && D.docRef.in) { D.docRef.in.panier = D.in.panier; D.docRef.in.cmdj = D.in.cmdj; } enregistrer(true); }
     }
+    if (ETAT.ouvert && ETAT.ouvert.D && ETAT.ouvert.D !== D) fermer();
     if (doc.getElementById('df58-m') || saisieEnCours()) return;
-    if (ETAT.bilan) { var X = autresEcarts(ETAT.bilan); ETAT.ouvert = { bilan: ETAT.bilan, extra: X }; ouvrir(bilanHTML(ETAT.bilan, X)); ETAT.bilan = null; return; }
-    var E = ecarts(D); if (E.length) { ETAT.ouvert = { liste: differences(D) }; ouvrir(questionHTML(ETAT.ouvert.liste)); }
+    if (ETAT.bilan && ETAT.bilan.D && ETAT.bilan.D !== D) ETAT.bilan = null;
+    if (ETAT.bilan) { var X = autresEcarts(ETAT.bilan); ETAT.ouvert = { D: D, bilan: ETAT.bilan, extra: X }; ouvrir(bilanHTML(ETAT.bilan, X)); ETAT.bilan = null; return; }
+    var E = ecarts(D); if (E.length) { ETAT.ouvert = { D: D, liste: differences(D) }; ouvrir(questionHTML(ETAT.ouvert.liste)); }
   }
   doc.addEventListener('click', function (ev) {
     var b = ev.target && ev.target.closest ? ev.target.closest('#df58-m [data-df58],#df58-ban [data-df58]') : null; if (!b) return;
@@ -354,6 +379,7 @@
     if (chk.length) { var ndc = noteDocuments(D), anr = anneeDoc(D);
       t.push('Changements depuis ' + anr + ' pris en compte : ' + chk.map(function (x) { var c = ch[x], f = function (v) { if (c.pct) return v.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' %'; if (c.nombre) return v.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' / jour'; return c.cents ? v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : eur(v); }; return c.lib.toLowerCase() + ' ' + f(c.doc) + ' → ' + f(c.saisie) + (c.raison || c.depuis ? ' (' + [c.raison, c.depuis ? 'depuis ' + moisLib(c.depuis) : null].filter(Boolean).join(', ') + ')' : ''); }).join(' ; ') + '.');
       t.push('Votre note en tient compte.' + (ndc != null ? ' D’après vos seuls documents ' + anr + ' : ' + ndc + ' / 100.' : '')); }
+    var te = tvaEstimee(D); if (te && (C || caDeclare(D) != null)) t.push(te.texte);
     if (!D.docRef && !C) { k = D.docVerrou ? 'ko' : 'info'; /* C216 (W56) : sur un profil vide, il n'y a ni note ni saisie : on ne le prétend pas. */
       var pret = false; try { var Rm = w.moteur && w.moteur(); pret = !!(Rm && Rm.ready); } catch (e) {}
       t.push(D.docVerrou ? 'Vous avez confirmé des chiffres inhabituels sans document : votre note reste une lecture non finale.' : pret ? 'Note calculée sur votre saisie.' : 'Aucun chiffre pour l’instant : pas encore de note.'); t.push('Déposez votre document comptable (FEC) et l’export de votre caisse : Verdict s’appuiera sur vos vrais chiffres.'); }
@@ -426,17 +452,70 @@
       if (en && !q.end && (en.value === today || !en.value)) put('rc-end', d1);
       if (tkOk && tk > 0) put('rc-tickets', Math.round(tk), true);
       var tva = !vide(D.in && D.in.tva) ? num(D.in.tva) : null;
-      if (tva != null) { put('rc-ca', Math.round(ttc / (1 + tva / 100) * 100) / 100, true); put('rc-tva', tva, true); aide('rc-ca', 'Repris de votre caisse : ' + eur(ttc) + ' TTC sur ' + L.length + ' journées, à ' + tva.toLocaleString('fr-FR') + ' % de TVA.'); }
-      else aide('rc-ca', 'Votre caisse : ' + eur(ttc) + ' TTC sur ' + L.length + ' journées (du ' + d0.split('-').reverse().join('/') + ' au ' + d1.split('-').reverse().join('/') + '). Indiquez ici le montant hors taxes.');
+      if (tva != null) { put('rc-ca', String(Math.round(ttc / (1 + tva / 100) * 100) / 100).replace('.', ','), true); put('rc-tva', String(tva).replace('.', ','), true); aide('rc-ca', 'Repris de votre caisse : ' + eur(ttc) + ' TTC sur ' + L.length + ' journées, à ' + tva.toLocaleString('fr-FR') + ' % de TVA.'); }
+      else {
+        /* C310 (V16-047) : sans TVA connue, le CA hors taxes est estimé à 10 % (dit à l'écran), puis recalculé dès que le patron
+           indique sa TVA à l'étape 3 ; une frappe du patron dans le champ le garde tel quel. */
+        var cae = put('rc-ca', String(Math.round(ttc / 1.1 * 100) / 100).replace('.', ','), true);
+        if (cae) { cae.setAttribute('data-df58-ttc', String(Math.round(ttc * 100) / 100)); aide('rc-ca', 'Repris de votre caisse : ' + eur(ttc) + ' TTC sur ' + L.length + ' journées, converti avec une TVA estimée à 10 % : il sera recalculé avec votre TVA à l’étape suivante.');
+          if (cae.addEventListener) cae.addEventListener('input', function (ev) { if (ev.isTrusted) cae.removeAttribute('data-df58-ttc'); });
+          var tv = doc.getElementById('rc-tva'); if (tv && tv.addEventListener) tv.addEventListener('input', function () { var t = nb(tv.value), tt = nb(cae.getAttribute('data-df58-ttc')); if (tt != null && t != null && t >= 0 && t <= 30) { cae.value = String(Math.round(tt / (1 + t / 100) * 100) / 100).replace('.', ','); aide('rc-ca', 'Repris de votre caisse : ' + eur(tt) + ' TTC, converti avec votre TVA de ' + t.toLocaleString('fr-FR') + ' %.'); try { cae.dispatchEvent(new Event('input', { bubbles: true })); } catch (x) {} } }); }
+      }
     }
     /* jours d'ouverture : lus dans la caisse, sinon à renseigner (plus de « 6 » ni de « 12 » d'office) */
     var js = null; try { js = w.VerdictPassageUnique && w.VerdictPassageUnique.joursSemaine ? w.VerdictPassageUnique.joursSemaine() : null; } catch (e) {}
     var j = doc.getElementById('rc-jsem'); if (j && q.daysWeek == null) { if (js && js.jours) { j.value = String(js.jours); aide('rc-jsem', 'Lus dans vos journées de caisse.'); } else if (j.value === '6') j.value = ''; }
     var mo = doc.getElementById('rc-mois'); if (mo && q.months == null && mo.value === '12') mo.value = '';
   }
+  function qrAmort() { var i = doc.getElementById('qr-amort'); return i ? nb(i.value) : null; }
+  function lectureAmort() {
+    var com = doc.getElementById('qr-com'); if (!com || doc.getElementById('qr-amort')) return;
+    var lab = com.closest ? com.closest('label') : null; if (!lab || !lab.parentNode) return;
+    var l = doc.createElement('label'); l.className = 'f';
+    l.innerHTML = '<span>Amortissements (€ / an)</span><input id="qr-amort" inputmode="decimal" value=""><small>Dotations aux amortissements de votre compte de résultat. 0 si aucune ; vide : non comptées.</small>';
+    lab.parentNode.insertBefore(l, lab.nextSibling);
+    var i = doc.getElementById('qr-amort'); if (i) i.addEventListener('input', function () { try { w.qrApercu && w.qrApercu(); } catch (e) {} });
+    try { var v = w.sessionStorage.getItem('df58-qr-amort'); if (v && i) i.value = v; i.addEventListener('input', function () { try { w.sessionStorage.setItem('df58-qr-amort', i.value); } catch (e) {} }); } catch (e) {}
+  }
+  /* Après « Compléter mon diagnostic » : les amortissements passent à l'étape 3 ; nourriture et boissons répartissent le total
+     matière du document (et non une ancienne saisie qui ne fait pas ce total). */
+  function apresLectureRapide(am) {
+    var ra = doc.getElementById('rf-amort'); if (ra && am != null && !String(ra.value || '').trim()) ra.value = String(am).replace('.', ',');
+    var mat = num(w.__qrMatTotal), en = doc.getElementById('rf-nour'), eb = doc.getElementById('rf-boi'); if (!(mat > 0) || !en || !eb) return;
+    var n = nb(en.value), b = nb(eb.value); if (n == null && b == null) return; if (Math.abs(num(n) + num(b) - mat) < 0.5) return;
+    if (n != null && b != null && n + b > 0) { var nv = Math.round(mat * n / (n + b) * 100) / 100; en.value = String(nv).replace('.', ','); eb.value = String(Math.round((mat - nv) * 100) / 100).replace('.', ','); eb.setAttribute('data-qr-auto', '1');
+      var z = eb.parentNode && eb.parentNode.querySelector('small'), t = 'Répartition proposée d’après votre saisie précédente (' + eur(n) + ' / ' + eur(b) + ') pour faire vos ' + eur(mat) + ' d’achats : corrigez-la.'; if (z) z.textContent = t; else { var sm = doc.createElement('small'); sm.textContent = t; eb.parentNode.appendChild(sm); } }
+    else { en.value = ''; eb.value = ''; }
+    try { w.refApercu && w.refApercu(); } catch (e) {}
+  }
+  /* C310 (V16-005, décision 4, avec L2) : Plus › Chiffre d'affaires donnait un autre résultat du mois que l'Argent (septembre :
+     5 919 € contre 6 332 € pour la Brasserie) : l'historique répartissait charges et équipe au douzième. Pour l'année affichée,
+     chaque mois prend le résultat de l'Argent (window.VerdictArgent.resultatMois, 048) : équipe = un mois de paie (0 un mois
+     fermé), loyer, charges et amortissements = part de saison, matière au taux de l'année ; la règle est écrite sous le bloc.
+     Les valeurs enregistrées ne sont pas modifiées : elles sont remises dès l'écran dessiné. */
+  function historiqueCommeArgent() {
+    var D = w.DB, H = D && D.monthlyHistory, A = w.VerdictArgent, out = { regle: null, remettre: function () {} };
+    if (!H || !H.length || !A || typeof A.resultatMois !== 'function') return out;
+    var ans = H.map(function (x) { return String(x.period || '').slice(0, 4); }).filter(Boolean).sort(), an = String(w.VERDICT_HISTORY_YEAR || ans[ans.length - 1] || '');
+    var sauve = [];
+    H.forEach(function (x) { if (String(x.period || '').slice(0, 4) !== an) return; var r = null; try { r = A.resultatMois(x.period); } catch (e) { r = null; } if (!r || !r.ok || !(num(r.caHT) > 0)) return;
+      sauve.push([x, { fixedCosts: x.fixedCosts, amortization: x.amortization, resultBeforeTax: x.resultBeforeTax, breakEvenHT: x.breakEvenHT, breakEvenRatio: x.breakEvenRatio }]);
+      var fixes = num(r.equipe) + num(r.fixes), am = num(r.amortissements), taux = 1 - (num(r.matiere) + num(r.autres)) / num(r.caHT);
+      x.fixedCosts = Math.round(fixes); x.amortization = Math.round(am); x.resultBeforeTax = Math.round(num(r.resultat));
+      x.breakEvenHT = taux > 0 ? Math.round((fixes + am) / taux) : null; x.breakEvenRatio = x.breakEvenHT > 0 ? num(x.caHT) / x.breakEvenHT : null;
+      if (r.regle) out.regle = r.regle; });
+    out.remettre = function () { sauve.forEach(function (p) { Object.keys(p[1]).forEach(function (k) { p[0][k] = p[1][k]; }); }); };
+    return out;
+  }
   function amortFiche() { var i = doc.getElementById('rf-amort'); return i ? nb(i.value) : null; }
   function envelopper() {
-    var F = w.refFormulaire, A = w.refApercu, V = w.refValider, E = w.refEtape, RF = w.recentFormulaire;
+    var F = w.refFormulaire, A = w.refApercu, V = w.refValider, E = w.refEtape, RF = w.recentFormulaire, QL = w.refLectureRapide, QC = w.qrCalcul, QK = w.qrContinuer, HH = w.verdictHistoryHTML;
+    if (typeof HH === 'function' && !HH.__df58) { var hh = function () { var rest = historiqueCommeArgent(), r; try { r = HH.apply(this, arguments); } finally { try { rest.remettre(); } catch (e) {} } return rest.regle && typeof r === 'string' ? r.replace(/(Chaque mois face à son point mort<\/h3><p class="note">[^<]*<\/p>)/, '$1<p class="note" data-df58-regle="1">' + esc(rest.regle) + '</p>') : r; }; hh.__df58 = true; w.verdictHistoryHTML = hh; }
+    /* C310 (V16-022) : la lecture rapide « Six montants » n'avait pas d'amortissements (résultat 102 991 € au lieu de 93 991 €,
+       seuil 480 995 € au lieu de 493 142 €). Ligne facultative ajoutée, comptée dans le résultat et le seuil, reprise à l'étape 3. */
+    if (typeof QL === 'function' && !QL.__df58) { var ql = function () { var r = QL.apply(this, arguments); try { lectureAmort(); } catch (e) {} return r; }; ql.__df58 = true; w.refLectureRapide = ql; }
+    if (typeof QC === 'function' && !QC.__df58) { var qc = function (r) { var x = QC.apply(this, arguments), am = qrAmort(); try { if (x && am > 0 && r) { var cv = num(r.mat) + num(r.com), fixes = num(r.ms) + num(r.loy) + num(r.cf), taux = r.ca > 0 ? cv / r.ca : 1; x.res = x.res - am; x.marge = r.ca > 0 ? x.res / r.ca * 100 : x.marge; x.seuil = (taux >= 0 && taux < 1) ? (fixes + am) / (1 - taux) : null; } } catch (e) {} return x; }; qc.__df58 = true; w.qrCalcul = qc; }
+    if (typeof QK === 'function' && !QK.__df58) { var qk = function () { var am = qrAmort(), r = QK.apply(this, arguments); setTimeout(function () { try { apresLectureRapide(am); } catch (e) {} }, 40); return r; }; qk.__df58 = true; w.qrContinuer = qk; }
     if (typeof RF === 'function' && !RF.__df58) { var rf = function () { var r = RF.apply(this, arguments); try { ficheRecente(); } catch (e) {} return r; }; rf.__df58 = true; w.recentFormulaire = rf; }
     if (typeof F === 'function' && !F.__df58) { var f = function () { var r = F.apply(this, arguments); try { ficheBilan(); } catch (e) {} return r; }; f.__df58 = true; w.refFormulaire = f; }
     if (typeof E === 'function' && !E.__df58) { var g = function () { try { ficheBilan(); } catch (e) {} return E.apply(this, arguments); }; g.__df58 = true; w.refEtape = g; }
@@ -447,6 +526,10 @@
           var res = L.ca - (n(L.nour) + n(L.boi) + qt + n(L.emb) + n(L.com)) - (n(L.ms) + n(L.loy) + n(L.cf)) - am, mn = L.ca > 0 ? res / L.ca * 100 : 0;
           box.innerHTML = box.innerHTML.replace(/(R(?:é|é)sultat avant imp(?:ô|ô)t : <b style="color:)[^"]*(">)[^<]*(<\/b> · marge avant imp(?:ô|ô)t )[^&]*(&nbsp;%)/, function (m, p1, p2, p3, p4) { return p1 + (res >= 0 ? '#22c55e' : '#ef4444') + p2 + eur(res) + p3 + mn.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + p4; })
             + '<br>Amortissements <b>' + eur(am) + '/an</b> (comptés dans le résultat, jamais dans vos minimums de trésorerie)'; }
+        /* C310 (V16-022) : « Commandes par jour 74,7 (couverts ÷ jours ouverts) » alors que Verdict retient 74,4 (tickets ÷ 313
+           journées de caisse) : quand les couverts sont ceux de la caisse, l'aperçu montre la valeur retenue. */
+        var Cf = caisseFiche(), cvf = L && !L.err ? num(L.cv) : 0;
+        if (box && Cf && Cf.tickets > 0 && cvf > 0 && Math.abs(cvf - Cf.tickets) <= Cf.tickets * 0.01) box.innerHTML = box.innerHTML.replace(/Commandes par jour <b>[^<]*<\/b> \([^)]*\)/, 'Commandes par jour <b>' + (Math.round(Cf.cmdj * 10) / 10).toLocaleString('fr-FR') + '</b> (tickets de votre caisse ÷ ' + Cf.jours + ' journées)');
       } catch (e) {} return r; };
       a.__df58 = true; w.refApercu = a;
     }
@@ -454,6 +537,10 @@
       var v = function () { var am = amortFiche(), D = w.DB; if (D && D.in && am != null && am >= 0) D.in.amort = Math.round(am * 100) / 100;
         var r = V.apply(this, arguments);
         try { if (D && D.refSource && /closed-income-statement/.test(String(D.refSource.nature || '')) && am != null) { D.refSource.amortization = D.in.amort; enregistrer(false); } } catch (e) {}
+        /* C310 (V16-022/023) : couverts du bilan = tickets de la caisse : une seule définition (tickets ÷ journées réelles), sans
+           question sur un écart de définition (74,705 = couverts ÷ jours théoriques ; panier calculé avec une TVA tapée). */
+        try { var Cb = D && D.refSource && /closed-income-statement/.test(String(D.refSource.nature || '')) ? caisse(D, String(D.refSource.exerciseYear)) : null, cvb = D && D.refSource ? num(D.refSource.cv) : 0;
+          if (Cb && Cb.tickets > 0 && cvb > 0 && Math.abs(cvb - Cb.tickets) <= Cb.tickets * 0.01) { D.in.cmdj = Math.round(Cb.cmdj * 10) / 10; D.in.panier = Math.round(Cb.panier * 100) / 100; enregistrer(true); } } catch (e) {}
         return r; };
       v.__df58 = true; w.refValider = v;
     }
@@ -467,6 +554,9 @@
     var t = ev.target; if (!TAPE || !t || t.tagName !== 'INPUT' || t.getAttribute('inputmode') !== 'decimal' || !t.value || TAPE.has(t)) return;
     if (!(t.closest && t.closest('#refP,#welcome,.sheet,.modal'))) return;
     setTimeout(function () { try { if (doc.activeElement === t && !TAPE.has(t)) t.select(); } catch (e) {} }, 0);
+    /* C310 (V16-044) : entré à la souris, le relâchement du clic défaisait la sélection : la frappe s'ajoutait à la valeur. */
+    var up = function (e) { doc.removeEventListener('mouseup', up, true); try { if (doc.activeElement === t && !TAPE.has(t)) { e.preventDefault(); t.select(); } } catch (x) {} };
+    doc.addEventListener('mouseup', up, true);
   }, true);
 
   /* ——— C300 (V15-021) : la caisse retenue face à la saisie reste la référence après rechargement ———
@@ -561,8 +651,27 @@
     }
     enregistrer(true);
   }
+  /* C310 (V16-033) : « Votre Indice, lui, ne dépend pas du type » est faux depuis le barème du format (C299) : le même dossier
+     passe de 59 à 54 selon le type. L'aide du type d'établissement (029, TYPE_ETAB_AIDE) dit la règle. */
+  var AIDE_TYPE = 'Choisit vos repères de comparaison (panier, équipe, matière) et les conseils qui en découlent. Votre Indice est jugé avec les repères de votre type.';
+  function aideType() { try { if (typeof w.TYPE_ETAB_AIDE === 'string' && /ne d(é|\u00e9)pend pas du type/.test(w.TYPE_ETAB_AIDE)) w.TYPE_ETAB_AIDE = AIDE_TYPE; } catch (e) {}
+    try { [].forEach.call(doc.querySelectorAll('#refP small, .sheet small, #v-in small'), function (x) { if (/Votre Indice, lui, ne d(é|\u00e9)pend pas du type\./.test(x.textContent || '')) x.textContent = AIDE_TYPE; }); } catch (e) {} }
+  try { aideType(); } catch (e) {}
+  /* C310 (V16-045) : sous « Bruts salariés » (18 300 €), l'aide de 029 écrivait « Depuis votre compte de résultat : 271 200 €/an ÷ 12 »
+     (271 200 € comprennent le dirigeant, 51 600 €, inscrit dans son propre champ ; 271 200 ÷ 12 = 22 600). L'aide dit le vrai calcul. */
+  function aideEquipe() {
+    var D = w.DB, t = D && D.fecImport && D.fecImport.totals; if (!t || !(num(t.payroll) > 0)) return;
+    var I = D.in || {}, m = moisEquipe(I), own = num(t.payrollOwner), sal = num(t.payroll) - own;
+    var pose = function (id, an, mens, plus) { var el = doc.getElementById(id), lab = el && el.parentNode; if (!lab) return; var o = lab.querySelector('.src-champ');
+      var h = 'Depuis votre document comptable : <b>' + eur(an) + '/an</b> ÷ ' + m + ' = <b>' + eur(mens) + '/mois</b>' + (plus || '');
+      /* au repos, rien n'est réécrit : le navigateur rend l'espace insécable en « &nbsp; », la comparaison se fait sur une signature */
+      if (o && o.getAttribute && o.getAttribute('data-df58-sig') === h) return; if (!o) { o = doc.createElement('small'); o.className = 'src-champ'; lab.appendChild(o); } o.innerHTML = h; if (o.setAttribute) o.setAttribute('data-df58-sig', h); };
+    if (vide(I.salb) || Math.abs(num(I.salb) * m - sal) > Math.max(50, sal * 0.01)) return;/* le patron a changé le champ : l'aide d'origine n'a plus cours */
+    pose('i-salb', sal, sal / m, own > 0 ? ' (le dirigeant est dans son propre champ)' : '');
+    if (own > 0 && !vide(I.dirb) && Math.abs(num(I.dirb) * m - own) <= Math.max(50, own * 0.01)) pose('i-dirb', own, own / m, '');
+  }
   try { protegerJournees(); } catch (e) {}
-  function boucle() { try { etiquette(); } catch (e) {} try { envelopper(); } catch (e) {} try { protegerJournees(); if (w.DB) nettoyerApresCaisse(w.DB); } catch (e) {} try { css(); tour(); } catch (e) {} }
+  function boucle() { try { etiquette(); } catch (e) {} try { aideType(); } catch (e) {} try { aideEquipe(); } catch (e) {} try { envelopper(); } catch (e) {} try { protegerJournees(); if (w.DB) nettoyerApresCaisse(w.DB); } catch (e) {} try { css(); tour(); } catch (e) {} }
   var it = setInterval(boucle, 1000); if (it && it.unref) it.unref();
-  w.VerdictDocumentsFoi = { comparaisonFEC: comparaisonFEC, valeurs: valeurs, valeursFEC: valeursFEC, ecarts: ecarts, differences: differences, prendreTout: prendreTout, garderTout: garderTout, noterChangements: noterChangements, caisse: caisse, majVerrou: majVerrou, incertitudeSansDocument: incertitudeSansDocument, differe: differe, tour: boucle };
+  w.VerdictDocumentsFoi = { tvaEstimee: tvaEstimee, comparaisonFEC: comparaisonFEC, valeurs: valeurs, valeursFEC: valeursFEC, ecarts: ecarts, differences: differences, prendreTout: prendreTout, garderTout: garderTout, noterChangements: noterChangements, caisse: caisse, majVerrou: majVerrou, incertitudeSansDocument: incertitudeSansDocument, differe: differe, tour: boucle };
 })();

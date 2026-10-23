@@ -41,6 +41,11 @@
   function siteZones(db,sid){var s=db&&db.sites&&db.sites[sid];return s&&Array.isArray(s.zones)?s.zones.filter(function(z){return db.spaces&&db.spaces[z];}):[];}
   function siteName(db,sid){return txt(db&&db.sites&&db.sites[sid]&&db.sites[sid].name,120)||'Mon établissement';}
   function rows(db,sid){var out=[];siteZones(db,sid).forEach(function(z){var sp=db.spaces[z]||{};(sp.products||[]).forEach(function(p){if(p&&p.id)out.push({space:z,p:p});});});return out;}
+  /* C312 (V16-054) : comptage de l'équipe reçu (produits comptés par un autre prénom que celui du patron, dans les 36 h) : qui, quand, combien. */
+  function comptageEquipe(db,sid,now){var patron=String(db&&db.profile&&db.profile.prenom||'').trim().toLowerCase(),par={};
+    rows(db||{},sid).forEach(function(x){var p=x.p,by=String(p.countedBy||'').trim(),at=Date.parse(p.countedAt||'');if(!by||!isFinite(at)||by.toLowerCase()===patron||now.getTime()-at>36*3600000)return;
+      if(!par[by])par[by]={by:txt(by,80),at:at,n:0};par[by].n++;if(at>par[by].at)par[by].at=at;});
+    var l=Object.keys(par).map(function(k){return par[k];}).sort(function(a,b){return b.at-a.at;});return l.length?{by:l[0].by,at:new Date(l[0].at).toISOString(),products:l[0].n}:null;}
   function productMap(db,sid){var out={};rows(db,sid).forEach(function(x){out[x.p.id]={space:x.space,p:x.p};});return out;}
   function profileList(db,sid){var p=db&&db.suppliersBySite&&db.suppliersBySite[sid]||{};return Object.keys(p).map(function(k){return p[k];}).filter(function(x){return x&&x.name;});}
   function nextWindow(profile,now,ordering){
@@ -90,6 +95,9 @@
   function orderCounts(orders){var out={prepared:0,sent:0,confirmed:0,partial:0,received:0,cancelled:0};(orders||[]).forEach(function(x){if(out[x.status]!=null)out[x.status]++;});return out;}
   function chooseAction(snapshot,now){
     now=now instanceof Date?now:new Date(now||Date.now());var open=(snapshot.incidents||[]).filter(function(x){return x.open;});
+    /* C312 (V16-054) : « Comptage reçu de Camille · ven. 23/10 14:05 · 12 produits » (promis par « Accès du personnel »), avant les commandes. */
+    var tc=snapshot.teamCount;if(tc&&!open.length){var quand=(function(v){try{var O=typeof globalThis!=='undefined'&&globalThis.VerdictOrdering;if(O&&typeof O.formatDateTime==='function')return O.formatDateTime(v);}catch(e){}return String(v).slice(0,16).replace('T',' ');})(tc.at);
+      return {kind:'count',level:'info',title:'Comptage reçu de '+tc.by,detail:quand+' · '+tc.products+' produit'+(tc.products>1?'s':''),route:'inventory',sourceId:'count-'+tc.by+'-'+tc.at.slice(0,16),actorName:tc.by,reportedAt:tc.at};}
     if(open.length){var x=open[0];return {kind:'incident',level:'critical',title:'Rupture à décider',detail:x.productName+(x.requiredAt?' · nécessaire '+x.requiredAt:''),route:'inventory',sourceId:x.id,actorName:txt(x.actorName,100),reportedAt:txt(x.reportedAt,40)};}
     var prepared=(snapshot.orders||[]).filter(function(x){return x.status==='prepared';}).sort(function(a,b){return dateMs(a.cutoffAt)-dateMs(b.cutoffAt);});
     if(prepared.length){var p=prepared[0],ms=dateMs(p.cutoffAt)-now.getTime();return {kind:'order',level:ms<=3*3600000?'critical':'warning',title:'Commande préparée à valider',detail:p.supplier+(p.cutoffAt?' · limite '+(function(v){try{var O=typeof globalThis!=='undefined'&&globalThis.VerdictOrdering;if(O&&typeof O.formatDateTime==='function')return O.formatDateTime(v);}catch(e){}return String(v).replace('T',' ');})(p.cutoffAt):''),route:'inventory',sourceId:p.id};}
@@ -107,7 +115,7 @@
   }
   function buildInventorySnapshot(db,opts){
     opts=opts||{};var now=opts.now instanceof Date?opts.now:new Date(opts.now||Date.now()),sid=txt(opts.siteId||db&&db.site,100),map=productMap(db||{},sid),stock=stockRows(db||{},sid),orders=preparedOrders(opts.prepared,sid,map).concat(storedOrders(db||{},sid,map));
-    var snapshot={schema:SCHEMA,version:VERSION,generatedAt:now.toISOString(),source:'verdict-inventory',responsibilities:RESPONSIBILITIES,server:{stored:!!opts.serverStored,revision:Math.max(0,Number(opts.serverRevision)||0)},account:{id:txt(opts.accountId,120),scope:txt(opts.accountScope,120),verified:!!opts.accountVerified},establishment:{id:sid,name:siteName(db||{},sid)},demo:!!opts.demo,stock:{items:stock},suppliers:supplierRows(db||{},sid,now,opts.ordering),incidents:incidentRows(db||{},sid,map),orders:orders,policy:{unknownIsNeverZero:true,preparedIsNotSent:true,sentIsNotConfirmed:true,confirmationIsNotAvailability:true,availabilityRequiresEvidence:true}};
+    var snapshot={schema:SCHEMA,version:VERSION,generatedAt:now.toISOString(),source:'verdict-inventory',responsibilities:RESPONSIBILITIES,server:{stored:!!opts.serverStored,revision:Math.max(0,Number(opts.serverRevision)||0)},account:{id:txt(opts.accountId,120),scope:txt(opts.accountScope,120),verified:!!opts.accountVerified},establishment:{id:sid,name:siteName(db||{},sid)},demo:!!opts.demo,stock:{items:stock},suppliers:supplierRows(db||{},sid,now,opts.ordering),incidents:incidentRows(db||{},sid,map),orders:orders,teamCount:comptageEquipe(db||{},sid,now),policy:{unknownIsNeverZero:true,preparedIsNotSent:true,sentIsNotConfirmed:true,confirmationIsNotAvailability:true,availabilityRequiresEvidence:true}};
     snapshot.summary=summarize(snapshot,now);snapshot.fingerprint=hash(JSON.stringify({account:snapshot.account,establishment:snapshot.establishment,stock:snapshot.stock,suppliers:snapshot.suppliers,incidents:snapshot.incidents,orders:snapshot.orders}));return snapshot;
   }
   function validate(snapshot){

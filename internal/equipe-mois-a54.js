@@ -81,14 +81,22 @@
      attendre un bilan et comprendre trop tard ») : verdict du mois en cours, à ce jour. */
   /* 4 zones (Steven : « une jauge premium : vert, jaune, orange, rouge ») : sous le repère, jusqu'à +2 points, +5 points, au-delà. */
   var SEUILS = [0, 0.02, 0.05];
+  /* C308 (décision 5) : « trop lourde » au-delà du repère haut du format (029, repereMS().haut), le même seuil que Structure, Priorités et
+     Alertes ; « repère + 5 points » ne sert plus que si ce repère manque. */
+  function repereHaut(rep) {
+    try { var m = typeof w.repereMS === 'function' ? w.repereMS() : null, h = m && Number(m.haut) / 100; if (h > rep) return h; } catch (e) {}
+    try { var t = typeof w.fmtActif === 'function' ? w.fmtActif() : null, F = t && w.FORMATS && w.FORMATS[t] && w.FAMILLES && w.FAMILLES[w.FORMATS[t].f]; F = F || (w.FAMILLES && w.FAMILLES.trad); if (F && F.ms && F.ms[2] / 100 > rep) return F.ms[2] / 100; } catch (e) {}
+    return rep + SEUILS[2];
+  }
+  function seuilJaune(rep) { return Math.min(rep + SEUILS[1], repereHaut(rep)); }
   function statut(part, rep) {
     if (part == null) return null;
-    return part <= rep + 0.0005 ? { k: 'vert', mot: 'OK' } : part <= rep + SEUILS[1] ? { k: 'jaune', mot: 'juste au-dessus du repère' } : part <= rep + SEUILS[2] ? { k: 'orange', mot: 'à surveiller' } : { k: 'rouge', mot: 'trop lourde' };
+    return part <= rep + 0.0005 ? { k: 'vert', mot: 'OK' } : part <= seuilJaune(rep) ? { k: 'jaune', mot: 'juste au-dessus du repère' } : part <= repereHaut(rep) + 0.0005 ? { k: 'orange', mot: 'à surveiller' } : { k: 'rouge', mot: 'trop lourde' };
   }
   var COUL = { vert: '#22c55e', jaune: '#eab308', orange: '#f97316', rouge: '#ef4444' };
   function jaugeHTML(part, rep) {
     var min = Math.max(0, rep - 0.15), max = rep + 0.15, pos = function (v) { return Math.max(0, Math.min(100, (v - min) / (max - min) * 100)); };
-    var b = [pos(rep), pos(rep + SEUILS[1]), pos(rep + SEUILS[2])], x = pos(part), st = statut(part, rep);
+    var b = [pos(rep), pos(seuilJaune(rep)), pos(repereHaut(rep))], x = pos(part), st = statut(part, rep); /* C308 (décision 5) */
     return '<div class="em54-j" role="img" aria-label="L’équipe coûte ' + Math.round(part * 100) + ' € pour 100 € vendus, conseillé ' + Math.round(rep * 100) + ' € au plus, ' + st.mot + '">' +
       '<div class="em54-jb"><i style="left:0;width:' + b[0] + '%;background:linear-gradient(90deg,#16a34a,#22c55e)"></i><i style="left:' + b[0] + '%;width:' + (b[1] - b[0]) + '%;background:#eab308"></i>' +
       '<i style="left:' + b[1] + '%;width:' + (b[2] - b[1]) + '%;background:#f97316"></i><i style="left:' + b[2] + '%;width:' + (100 - b[2]) + '%;background:linear-gradient(90deg,#ef4444,#b91c1c)"></i>' +

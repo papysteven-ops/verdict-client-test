@@ -103,8 +103,12 @@
     function put(key, value, monetary) { if (value !== null && monetary && unitAmounts.indexOf(key) < 0) value = new Fraction(value.units(2), 100n); q[key] = value; d[key] = value === null ? null : monetary ? money(value) : value.number(); if (monetary) moneyKeys.push(key); }
     put('tva', get('tva').div(100)); put('panierTTC', get('panier'), true); put('panierHT', q.panierTTC.div(fraction(1).add(q.tva)), true);
     put('jSem', get('jsem', 6)); put('mois', get('mois', 12));
-    put('jMois', new Fraction(q.jSem.mul('4.33').units(0, 'ceil'))); put('jAn', new Fraction(q.jSem.mul('4.33').mul(q.mois).units(0, 'ceil')));
-    put('cmdj', get('cmdj')); put('cmdAn', q.cmdj.mul(q.jSem).mul('4.33').mul(q.mois));
+    /* C309 (décision 6, V16-016) : quand le calendrier est connu (caisse de l'exercice ou calendrier déclaré, le même que l'Accueil),
+       ses jours font foi pour les jours, les commandes de l'année et les heures ; « jours par semaine × 4,33 » seulement à défaut, dit estimé. */
+    var joursCal = context.joursAn > 0 ? fraction(context.joursAn) : null, ticketsCal = context.ticketsAn > 0 ? fraction(context.ticketsAn) : null;
+    put('jMois', joursCal ? new Fraction(joursCal.div(q.mois).units(0)) : new Fraction(q.jSem.mul('4.33').units(0, 'ceil'))); put('jAn', joursCal ? new Fraction(joursCal.units(0)) : new Fraction(q.jSem.mul('4.33').mul(q.mois).units(0, 'ceil')));
+    put('cmdj', get('cmdj')); put('cmdAn', ticketsCal || (joursCal ? q.cmdj.mul(joursCal) : q.cmdj.mul(q.jSem).mul('4.33').mul(q.mois)));
+    d.joursSource = joursCal ? (context.joursSource || 'calendrier') : 'estime';
     put('caReconstructed', q.panierHT.mul(q.cmdAn), true);
     var declared = context.declaredCA === null || context.declaredCA === undefined ? null : fraction(context.declaredCA);
     if (declared && declared.cmp(0) < 0) throw new RangeError('NEGATIVE_ANNUAL_REVENUE');
@@ -112,7 +116,7 @@
     if (declared && context.revenueOverride && context.baseReconstructed && fraction(context.baseReconstructed).cmp(0) > 0) revenue = declared.mul(q.caReconstructed).div(context.baseReconstructed);
     put('caDeclared', declared, true); put('ca', revenue, true);
     d.caSource = declared ? 'declared-closed-period' : 'operational-reconstruction'; put('caReconciliationGap', declared ? q.caReconstructed.sub(declared) : fraction(0), true);
-    put('hNote', q.jSem.mul(q.mois).mul('4.33').mul(8)); put('hKpi', q.jMois.mul(q.mois).mul(8));
+    put('hNote', joursCal ? q.jAn.mul(8) : q.jSem.mul(q.mois).mul('4.33').mul(8)); put('hKpi', joursCal ? q.jAn.mul(8) : q.jMois.mul(q.mois).mul(8));
     put('moisch', get('moisch', 12)); put('obj', get('obj'), true);
     ['nour', 'boi', 'emb', 'autv', 'com', 'dirb', 'salb'].forEach(function (key) { put(key, get(key), true); });
     ['dirt', 'salt', 'dirn', 'saln'].forEach(function (key) { put(key, get(key)); });

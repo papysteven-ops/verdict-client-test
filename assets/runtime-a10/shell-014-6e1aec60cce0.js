@@ -280,4 +280,31 @@
   function attach(){try{var d=fv.contentDocument,r=d&&d.documentElement;if(!r||fv.__lgObs===r)return;fv.__lgObs=r;new MutationObserver(sync).observe(r,{attributes:true,attributeFilter:['lang']});sync();}catch(e){}}
   fv.addEventListener('load',attach);attach();sync();window.setTimeout(attach,1500);window.setTimeout(attach,4000);window.setTimeout(sync,1500);
 }catch(e){}})();
+/* C312 (V16-055) : la pastille de l'établissement de la coque est un sélecteur (avant : elle ne réagissait pas, on changeait
+   d'établissement par les onglets de l'Inventaire ou les pastilles de Pilotage sans que rien ne le dise). Elle liste les
+   établissements du module affiché (sites de l'Inventaire, établissements de Pilotage) ; jamais pendant une démonstration. */
+;(function(){try{
+  var ctx=document.querySelector('.app-shell-context');if(!ctx)return;
+  var TXT={fr:['Changer d’établissement','Établissement affiché'],en:['Switch business','Business shown'],es:['Cambiar de establecimiento','Establecimiento mostrado'],it:['Cambia attività','Attività mostrata'],de:['Betrieb wechseln','Angezeigter Betrieb'],nl:['Andere zaak kiezen','Getoonde zaak'],pt:['Mudar de estabelecimento','Estabelecimento mostrado']};
+  function t(i){var l=String(document.documentElement.lang||'fr').slice(0,2);return (TXT[l]||TXT.fr)[i];}
+  function cadre(id){var f=document.getElementById(id);try{return f&&f.getAttribute('src')?f.contentWindow:null;}catch(e){return null;}}
+  function propre(s){var d=document.createElement('div');d.innerHTML=String(s||'');return (d.textContent||'').trim();}
+  function liste(){var U=window.VerdictUnifiedShell,c=(U&&U.getContext&&U.getContext())||{},mod='';try{mod=String(U&&U.getActiveModule?U.getActiveModule():'');}catch(e){}
+    if(c.demo)return [];var I=cadre('frame-inventory'),V=cadre('frame-verdict'),out=[];
+    try{if(/inventor/.test(mod)&&I&&I.DB&&Array.isArray(I.DB.siteList)&&typeof I.setSite==='function'){I.DB.siteList.forEach(function(k){var n='';try{n=typeof I.siteName==='function'?I.siteName(k):(I.DB.sites[k]||{}).name;}catch(e){}out.push({nom:propre(n)||k,actif:k===I.DB.site,choisir:function(){I.setSite(k);}});});return out;}}catch(e){}
+    try{if(V&&V.STORE&&V.STORE.etabs&&typeof V.switchEtab==='function'){var S=V.STORE,ids=Array.isArray(S.ordre)?S.ordre:Object.keys(S.etabs);ids.forEach(function(id){var d=S.etabs[id]||{};if(d._demo&&d._demo.active)return;out.push({nom:propre(d.etab)||id,actif:id===S.actif,choisir:function(){V.switchEtab(id);}});});}}catch(e){}
+    return out;}
+  var menu=null;function fermer(){if(menu&&menu.parentNode)menu.parentNode.removeChild(menu);menu=null;ctx.setAttribute('aria-expanded','false');}
+  function ouvrir(){var l=liste();if(l.length<2)return;fermer();menu=document.createElement('div');menu.id='vd-etab-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label',t(0));
+    var r=ctx.getBoundingClientRect();menu.style.cssText='position:fixed;z-index:95;left:'+Math.round(r.left)+'px;top:'+Math.round(r.bottom+6)+'px;min-width:'+Math.max(200,Math.round(r.width))+'px;max-width:calc(100vw - 24px);padding:6px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:#10161c;color:#f3f5f7;box-shadow:0 18px 40px rgba(0,0,0,.35);font:600 13px/1.3 Inter,-apple-system,system-ui,sans-serif';
+    l.forEach(function(e){var b=document.createElement('button');b.type='button';b.setAttribute('role','menuitemradio');b.setAttribute('aria-checked',e.actif?'true':'false');b.textContent=(e.actif?'✓ ':'')+e.nom;
+      b.style.cssText='display:block;width:100%;min-height:40px;padding:9px 11px;border:0;border-radius:10px;background:'+(e.actif?'rgba(34,197,94,.16)':'transparent')+';color:inherit;font:inherit;text-align:left;cursor:pointer';
+      b.addEventListener('click',function(){fermer();if(!e.actif)try{e.choisir();}catch(x){}});menu.appendChild(b);});
+    document.body.appendChild(menu);ctx.setAttribute('aria-expanded','true');var p=menu.querySelector('[aria-checked="true"]')||menu.querySelector('button');if(p)p.focus();}
+  function etat(){var n=liste().length>1;ctx.style.cursor=n?'pointer':'';if(n){ctx.setAttribute('role','button');ctx.setAttribute('tabindex','0');ctx.setAttribute('aria-haspopup','menu');ctx.title=t(0);}else{ctx.removeAttribute('role');ctx.removeAttribute('tabindex');ctx.removeAttribute('aria-haspopup');ctx.title=t(1);}}
+  ctx.addEventListener('click',function(ev){ev.stopPropagation();if(menu)fermer();else ouvrir();});
+  ctx.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();if(menu)fermer();else ouvrir();}});
+  document.addEventListener('click',function(ev){if(menu&&!menu.contains(ev.target))fermer();});document.addEventListener('keydown',function(ev){if(ev.key==='Escape')fermer();});
+  etat();window.setInterval(etat,2000);
+}catch(e){}})();
 

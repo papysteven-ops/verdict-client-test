@@ -125,6 +125,11 @@
         c.msg = v.rn < 0 ? 'Structure en perte' : v.rn < m ? 'Sous le repère de votre format (' + N(m) + ' %, les meilleurs ' + N(b) + ' %)'
           : v.rn < b ? 'Au niveau du repère de votre format (' + N(m) + ' %, les meilleurs ' + N(b) + ' %)'
           : 'Bien au-dessus du repère de votre format (' + N(m) + ' %), au niveau des meilleurs (' + N(b) + ' %)';
+      } else if (c.n === 'Masse salariale' && F && F.ms && F.ms[2] > 0) {
+        /* C311 (V16-010, décision 5) : un seul seuil « trop lourd », le repère haut du format (celui de l'Indice et de Repères) */
+        var rep = F.ms[1], haut = F.ms[2];
+        c.ok = v.ms <= rep; c.warn = v.ms <= haut;
+        c.msg = v.ms > haut ? 'Trop lourd : plus de ' + haut + ' % des ventes' : v.ms > rep ? 'À surveiller : entre ' + rep + ' et ' + haut + ' % des ventes' : 'Sous contrôle';
       } else if (c.n === 'Point mort' && v.pm < 999) {
         var med = F && F.pm ? F.pm[1] : 85;
         c.n = 'Point mort sur l’année';
@@ -157,8 +162,8 @@
     if (f.__c301) return true;
     var nf = function () {
       var A = corriger(f.apply(this, arguments));
-      /* les dates limites (jaunes) entrent dans le compte des vigilances de l'en-tête ; l'écran Alertes les compte à part */
-      if (!dessin && A && A.ready) { try { var dl = (typeof w.verdictAlertPreferenceOn !== 'function' || w.verdictAlertPreferenceOn('verdict_deadline')) && typeof w.rappels === 'function' ? w.rappels() : []; if (dl && dl.length) A.warning = A.warning.concat(dl.map(function (r) { return { n: r.titre, deadline: true }; })); } catch (e) {} }
+      /* C311 (V16-028) : les dates limites sont comptées à part, comme les cases de l'écran Alertes (plus dans les vigilances) */
+      if (A && A.ready) { try { var dl = (typeof w.verdictAlertPreferenceOn !== 'function' || w.verdictAlertPreferenceOn('verdict_deadline')) && typeof w.rappels === 'function' ? w.rappels() : []; A.dates = dl && dl.length || 0; } catch (e) { A.dates = 0; } }
       return A;
     };
     nf.__c301 = true; w.alertesState = nf;
@@ -166,6 +171,12 @@
     var rp = w.rappels; if (typeof rp === 'function' && !rp.__c301) { var nrp = function () { var L = rp.apply(this, arguments); try { var D = w.DB || {}, now = new Date(), an = String(now.getFullYear()), P = D.performanceYearPlans && D.performanceYearPlans[an], ts = String(P && P.trackingStart || ''); if (/^\d{4}-\d{2}-\d{2}$/.test(ts)) { var debutMois = an + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01'; if (ts >= debutMois) L = (L || []).filter(function (r) { return !r || r.cle !== 'mois'; }); } } catch (e) {} return L; }; nrp.__c301 = true; w.rappels = nrp; }
     var ng = function () { dessin = true; try { return g.apply(this, arguments); } finally { dessin = false; } };
     ng.__c301 = true; w.drawAlertes = ng;
+    /* C311 (V16-028) : l'en-tête dit les mêmes nombres que les cases (graves · vigilances · dates limites), au bon nombre */
+    var ce = w.chrCockpitEvidence; if (typeof ce === 'function' && !ce.__c311) { var nce = function (v) { var r = ce.apply(this, arguments);
+      try { var l = String(w.LOCALE || 'fr').slice(0, 2); if (v === 'alertes' && r && r.main && l === 'fr') { var A = w.alertesState(); if (A && A.ready) {
+        var pl = function (n, s, p) { return n + ' ' + (n > 1 ? p : s); }, t = [pl(A.critical.length, 'alerte grave', 'alertes graves'), pl(A.warning.length, 'vigilance', 'vigilances')];
+        if (A.dates) t.push(pl(A.dates, 'date limite', 'dates limites')); r.main = t.join(' · '); } } } catch (e) {} return r; };
+      nce.__c311 = true; w.chrCockpitEvidence = nce; }
     return true;
   }
   if (!brancher() && typeof w.setInterval === 'function') { var k = 0, iv = w.setInterval(function () { if (brancher() || ++k > 40) w.clearInterval(iv); }, 250); }

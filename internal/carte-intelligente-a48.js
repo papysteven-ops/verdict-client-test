@@ -158,6 +158,10 @@
           var nouveau = Math.floor(x.ttc * (1 + hausse) * 10) / 10; if (nouveau <= x.ttc) nouveau = Math.round((x.ttc + 0.1) * 10) / 10; var h = nouveau / x.ttc - 1, nhT = x.ht * (1 + h); /* arrondi au dixième vers le bas : jamais plus de 8 % */
           x.prix = nouveau; x.gain = x.vol * (1 - 0.5 * h) * (x.marge + (nhT - x.ht)) - x.vol * x.marge;
           x.action = 'Passer de ' + eur2(x.ttc) + ' à ' + eur2(nouveau) + ' (+' + Math.round(h * 100) + ' %), ou réduire légèrement la portion (hors plan : Simuler et l’Audit ne comptent pas cette hausse)';
+        } else if (x.classe === 'enigme' && x.sousObj) {
+          /* C311 (V16-017) : un plat sous son objectif de marge (Décisions le compte dans le manque) n'est pas mis en avant : un seul avis par plat */
+          x.gainPrix = pr ? Number(pr.contribMois) || 0 : 0; if (pr) x.prix = pr.apres; x.gain = x.gainPrix;
+          x.action = 'Sous votre objectif de marge, comme dans Décisions : ' + (pr ? 'passer de ' + eur2(x.ttc) + ' à ' + eur2(pr.apres) + ' (même prix que Décisions et Simuler)' : 'remonter sa marge par le coût (portion, achats) avant de le mettre en avant');
         } else if (x.classe === 'enigme') { x.gainPrix = pr ? Number(pr.contribMois) || 0 : 0; if (pr) x.prix = pr.apres; x.gain = 0.10 * x.vol * (x.marge - mMoy) + x.gainPrix; x.action = 'Mettre en avant : suggestion du serveur, haut de catégorie, nom et description plus parlants' + (pr ? ' ; et passer de ' + eur2(x.ttc) + ' à ' + eur2(pr.apres) + ' (marge sous votre objectif, même prix que Décisions et Simuler)' : ''); }
         else {
           var autres = L.filter(function (y) { return y !== x; }), mAutres = autres.length ? autres.reduce(function (t, y) { return t + y.marge * y.vol; }, 0) / Math.max(1, autres.reduce(function (t, y) { return t + y.vol; }, 0)) : 0;
@@ -488,15 +492,14 @@
     if (L0) { var q00 = num(p.rec[L0.i][1]); for (var f0 = 0.95; f0 > 0.74; f0 = Math.round((f0 - 0.05) * 100) / 100) { p.rec[L0.i][1] = Math.max(5, Math.round(q00 * f0 / 5) * 5); if (okMarge(calc(p))) break; }
       if (okMarge(calc(p))) out.portion = { nom: L0.nom, de: q00, a: p.rec[L0.i][1], u: unite(L0.type) }; else p.rec[L0.i][1] = q00; }
     if (out.portion) {}
-    else if (c <= plafond) setPrix(p, c);
     else {
-      if (plafond > avant.ttc) setPrix(p, plafond);
-      var L = lignePlusChere(p);
-      if (L) {
-        var q0 = num(p.rec[L.i][1]), f = 0.95;
-        for (; f > 0.74; f = Math.round((f - 0.05) * 100) / 100) { p.rec[L.i][1] = Math.max(5, Math.round(q0 * f / 5) * 5); if (okMarge(calc(p))) break; }
-        out.portion = { nom: L.nom, de: q0, a: p.rec[L.i][1], u: unite(L.type) };
-      }
+      /* C311 (V16-061) : le coût d'abord, aussi quand la portion seule ne suffit pas — portion au plus bas permis (−25 %), puis le plus
+         petit prix qui tient l'objectif (dans les limites de la carte), puis la portion remonte autant que ce prix le permet. */
+      var L = lignePlusChere(p), q0 = L ? num(p.rec[L.i][1]) : 0;
+      if (L) p.rec[L.i][1] = Math.max(5, Math.round(q0 * 0.75 / 5) * 5);
+      var px = avant.ttc; while (!okMarge(calc(p)) && px < plafond - 1e-9) { px = Math.min(plafond, Math.round((px + 0.1) * 10) / 10); setPrix(p, px); }
+      if (L) { for (var f2 = 0.8; f2 < 1.0001; f2 = Math.round((f2 + 0.05) * 100) / 100) { var av2 = p.rec[L.i][1]; p.rec[L.i][1] = Math.max(5, Math.round(q0 * f2 / 5) * 5); if (!okMarge(calc(p))) { p.rec[L.i][1] = av2; break; } }
+        if (num(p.rec[L.i][1]) !== q0) out.portion = { nom: L.nom, de: q0, a: p.rec[L.i][1], u: unite(L.type) }; }
     }
     var k2 = calc(p); out.apres = { ttc: num(p.ttc), pct: k2.contribPct, parVente: k2.contribPond }; out.ok = okMarge(k2);
     if (!out.ok) { var L2 = lignePlusChere(p); out.cher = L2 ? { nom: L2.nom, cout: L2.cout } : null; out.conseil = c; }
@@ -742,7 +745,10 @@
         var e = w.STORE.etabs[id] || {}, n = (e.plats || []).filter(actif).length, j = Array.isArray(e.carteJournal) ? e.carteJournal.length : 0;
         var cree = e._duplicatedFrom && e._duplicatedFrom.at, m = /^e([0-9a-z]{8})/.exec(id), t = m ? parseInt(m[1], 36) : null; if (!cree && t > 1577836800000 && t < 4102444800000) cree = new Date(t).toISOString();
         return '<li class="c251-ev"><span class="c251-d">' + esc(cree ? dateCourte(cree) : '') + '</span><span class="c251-t"><b>' + esc(nomEtab(id)) + '</b>' + (id === w.STORE.actif ? ' <small>· ouvert</small>' : '') + ' · ' + n + ' plat' + (n > 1 ? 's' : '') + ' à la carte' + (e._duplicatedFrom ? ' · créé à partir de « ' + esc(e._duplicatedFrom.name || '') + ' »' : '') + (j ? ' · ' + j + ' changement' + (j > 1 ? 's notés' : ' noté') : '') + '</span></li>';
-      }).join('') + ev.filter(function (x) { return x.type === 'retrait'; }).slice(0, 10).map(function (x) { return '<li class="c251-ev"><span class="c251-d">' + esc(dateCourte(x.at)) + '</span><span class="c251-t">Établissement retiré</span></li>'; }).join('') + '</ul></section>';
+      }).join('') + ev.filter(function (x) { return x.type === 'retrait' && !/^demo|^perso-|^modele/i.test(String(x.id || '')); }).slice(0, 10).map(function (x) {
+        /* C311 (V16-082) : un retrait dit lequel et ce que cela veut dire (sorti de la liste) ; une démonstration refermée n'est pas notée */
+        var nomR = x.nom || (ev.filter(function (y) { return y.type === 'ajout' && y.id === x.id && y.nom; }).map(function (y) { return y.nom; }).pop()) || '';
+        return '<li class="c251-ev"><span class="c251-d">' + esc(dateCourte(x.at)) + '</span><span class="c251-t">' + (nomR ? '« ' + esc(nomR) + ' » retiré de la liste de vos établissements' : 'Un établissement retiré de la liste de vos établissements') + '</span></li>'; }).join('') + '</ul></section>';
     fenetre('c251-hist', html);
   }
 
@@ -885,7 +891,8 @@
   function surNom() {
     var r = deviner(G.nom, G.cat);
     G.rec = r.rec; G.preps = r.preps; G.nouveaux = r.nouveaux; G.source = r.source; G.variable = r.variable; G.manque = r.fiche && r.manque ? r.manque.slice() : []; G.esp = r.fiche ? r.fiche.esp : (r.proche && r.proche.esp) || null;
-    if (!G.catChoisie) { var c = r.fiche ? carteCat(r.fiche.cat) : r.proche ? r.proche.cat : carteCat(catDuNom(G.nom)); if (c) { G.cat = c; var s = doc.getElementById('c251-cat'); if (s) { if (![].some.call(s.options, function (o) { return o.value === c; })) { var o = doc.createElement('option'); o.value = o.textContent = c; s.appendChild(o); } s.value = c; } } }
+    /* C311 (V16-062) : un plat non reconnu ne garde pas la catégorie du nom tapé avant (« Pot-au-feu » après « Tiramisu café ») : « Plats » par défaut */
+    if (!G.catChoisie) { var c = r.fiche ? carteCat(r.fiche.cat) : r.proche ? r.proche.cat : carteCat(catDuNom(G.nom)); if (!c) { var cs0 = categories(); c = cs0.indexOf('Plats') >= 0 ? 'Plats' : cs0[0]; } if (c) { G.cat = c; var s = doc.getElementById('c251-cat'); if (s) { if (![].some.call(s.options, function (o) { return o.value === c; })) { var o = doc.createElement('option'); o.value = o.textContent = c; s.appendChild(o); } s.value = c; } } }
     G.tva = tvaPour(G.cat, r.fiche); var t = doc.getElementById('c251-tva'); if (t) t.value = String(G.tva);
     if (!G.prixChoisi) { G.prix = ''; var ip = doc.getElementById('c251-prix'); if (ip) ip.value = ''; }
     lignes(); resultat();

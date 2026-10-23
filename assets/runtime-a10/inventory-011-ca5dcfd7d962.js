@@ -111,6 +111,16 @@
     database.vdPrecBySite[ID]={eur:stockEur,date:isoDate(now).slice(0,7),countedAt:isoDate(now),fingerprint:fingerprint,previousEur:PREVIOUS_STOCK,previousDate:isoDate(previous)};
     database.needs=[{id:'need_demo_oeuf',site:ID,space:'cuisine',productId:'brasserie-ref-01',qtyBase:240,requiredDate:isoDate(tomorrow),note:'Rupture constatée avant le service',status:'open',createdAt:now.toISOString()}];
     database.purchaseOrders=[{id:'po_demo_received',site:ID,supplier:'Brasseur Régional',status:'received',createdAt:receivedAt.toISOString(),updatedAt:receivedAt.toISOString(),cutoffAt:'',deliveryAt:'',deliveryEndAt:'',estimatedTotal:153,lines:[{site:ID,space:'bar',productId:'brasserie-ref-47',name:'Bière blonde fût 30 L',sku:'BC-047',unit:'l',quantity:60,receivedQty:60,pack:5,packages:12,price:2.55,priceDate:isoDate(now),sourceNeedIds:[]}]}];
+    /* C312 (V16-065) : la démo garde aussi un comptage détaillé d'il y a une semaine : la consommation réelle se lit dès l'ouverture
+       (Inventaire › Analyse, Plus › Consommation). Stock d'il y a 7 jours = stock du jour + usage de la semaine (ventes de la démo,
+       sinon stock idéal / 14 par jour) − réceptions de la semaine ; quantités entières pour les unités. Les totaux de Pilotage ne changent pas. */
+    (function(){var debut=new Date(now.getFullYear(),now.getMonth(),now.getDate()-7,6),jours=7,obs={},recu={};
+      ((database.demandBridge&&database.demandBridge.products)||[]).forEach(function(p){var o=p.observations||[];if(o.length)obs[p.id]=o.reduce(function(t,x){return t+(Number(x.qty)||0);},0)/o.length;});
+      (database.purchaseOrders||[]).forEach(function(o){if(o.status!=='received'||new Date(o.receivedAt||o.updatedAt||0)<debut)return;(o.lines||[]).forEach(function(l){recu[l.productId]=(recu[l.productId]||0)+(Number(l.receivedQty)||0);});});
+      var lignes=rows.map(function(x){var p=x.p,st=Number(p.stock)||0,u=obs[p.id]!=null?obs[p.id]:(Number(p.goal)||0)/14,q=Math.max(st>0?0:0,st+u*jours-(recu[p.id]||0)),entier=/unit|pi[eè]ce|bouteille|botte|sachet|paquet|bo[iî]te|seau|pot/i.test(String(p.unit||''));
+        q=entier?Math.round(q):Math.round(q*10)/10;return {id:p.id,name:p.name,unit:p.unit||null,qty:Math.max(0,q),price:Number(p.price)>0?Number(p.price):null};});
+      var eur=Math.round(lignes.reduce(function(t,l){return t+(l.qty||0)*(l.price||0);},0)*100)/100;
+      database.snapshots.splice(database.snapshots.length-1,0,{id:'demo-stock-week-start',site:ID,date:debut.toISOString(),eur:eur,counted:lignes.length,total:lignes.length,coverage:100,exact:true,fingerprint:'demo-week-start',schema:'count-lines.v1',lines:lignes,fictional:true});})();
     database.supplyIncidents=[{id:'demo-incident-rupture',site:ID,space:'cuisine',productId:'brasserie-ref-01',productName:'Œuf frais calibre M',status:'awaiting-decision',actorName:'Greg',reportedAt:now.toISOString(),requiredAt:isoDate(now)+'T12:00:00',availability:'unconfirmed',urgentCoverage:'store-purchase-to-decide',replenishmentStatus:'prepared'}];
     database.demoContract={version:'1.1.0',establishmentId:ID,references:51,stockFinalHT:stockValue(createSpaces()),previousStockHT:PREVIOUS_STOCK,scoreAuthority:'verdict-engine'};
     return database;

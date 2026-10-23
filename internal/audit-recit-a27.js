@@ -14,7 +14,10 @@
   function eur(v) { return Math.round(Number(v) || 0).toLocaleString('fr-FR').replace(/[\u202f\s]/g, '\u00a0') + '\u00a0€'; }
   function pct(v) { return (Number(v) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
   function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
-  function ton(rn) { return rn < 0 ? 'Votre structure perd de l’argent' : rn < 5 ? 'Rentable, mais fragile' : rn < 8 ? 'Rentable, sans matelas' : 'Une structure solide'; }
+  /* C311 (V16-012) : le titre suit aussi le Test de résistance, comme le chapitre 01 (« rentable, mais fragile » dès que deux chocs
+     sur quatre font passer en perte) : jamais « Une structure solide » au-dessus d'un chapitre qui dit fragile. */
+  function ton(rn, R) { var n = 0; try { if (R && rn >= 0 && typeof w.stressStruct === 'function') n = w.stressStruct(R).pertes || 0; } catch (e) {}
+    if (rn < 0) return 'Votre structure perd de l’argent'; if (rn < 5 || n >= 2) return 'Rentable, mais fragile'; if (rn < 8 || n === 1) return 'Rentable, sans matelas'; return 'Une structure solide'; }
   function teinte(rn) { return rn < 0 ? '#ef4444' : rn < 5 ? '#f97316' : rn < 8 ? '#eab308' : '#22c55e'; }
 
   function donnees() {
@@ -48,7 +51,7 @@
     try {
       /* C301 (V15-003, décision 5) : le même écart que partout (window.VerdictEcartMatiere) : même périmètre des deux côtés, période écrite. */
       var C = P && P.carte, E = typeof w.VerdictEcartMatiere === 'function' ? w.VerdictEcartMatiere(R) : null;
-      if (C && C.ok && num(C.couverture) >= 80 && E && E.reel > 0 && E.theo > 0 && E.pts >= 0.5) fuite = { reel: E.reel, theo: E.theo, pts: E.pts, eur: E.eur, compte: E.compte, perimetre: E.perimetre, periode: E.periode };
+      if (C && C.ok && num(C.couverture) >= 80 && E && E.reel > 0 && E.theo > 0 && E.pts >= 0.5) fuite = { reel: E.reel, theo: E.theo, pts: E.pts, eur: E.eur, compte: E.compte, perimetre: E.perimetre, periode: E.periode, brouillons: E.brouillons || 0 };
     } catch (e) {}
     var leviers = (G && G.leviers || []).slice(0, 8);
     return {
@@ -68,7 +71,7 @@
   function tableaux(D) {
     var col = teinte(D.rn), t = [];
     /* 1 · Le verdict */
-    t.push('<section class="rc-card rc-c1" data-rc="1"><span class="rc-k">1 · Le verdict</span><h2>' + esc(ton(D.rn)) + '</h2>' +
+    t.push('<section class="rc-card rc-c1" data-rc="1"><span class="rc-k">1 · Le verdict</span><h2>' + esc(ton(D.rn, D.R)) + '</h2>' +
       '<div class="rc-dial">' + anneau(D.score, col) + '<div class="rc-dial-n"><b data-rc-count="' + D.score + '">0</b><small>/100</small></div></div>' +
       '<p class="rc-big"><b data-rc-count="' + Math.round(D.res) + '" data-rc-eur>0 €</b><small>de résultat sur un an · marge ' + pct(D.rn) + '</small></p>' +
       '<p class="rc-p">Indice de sérénité Verdict, calculé avec vos chiffres.</p><span class="rc-suite">Voir où part l’argent ↓</span></section>');
@@ -101,7 +104,12 @@
       var n0 = 0, fuites = '';
       if (D.fuite) {
         var fpt = (Math.round(D.fuite.pts * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-        fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière (' + esc(D.fuite.perimetre || 'nourriture + boissons') + ')</b><small>Achats ' + esc(D.fuite.periode || '') + ' : ' + pct(D.fuite.reel) + ' du CA ; fiches : ' + pct(D.fuite.theo) + '. ' + fpt + ' point' + (D.fuite.pts >= 2 ? 's' : '') + ' de pertes, portions ou offerts non saisis' + (D.fuite.compte ? ' ; Verdict n’en compte qu’un tiers, dans le levier « Coût de la nourriture » ci-dessous' : ' ; sous 4 points, non compté dans le gain') + '</small></div><strong>≈\u00a0<em data-rc-count="' + Math.round(D.fuite.eur) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
+        fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière (' + esc(D.fuite.perimetre || 'nourriture + boissons') + ')</b><small>Achats ' + esc(D.fuite.periode || '') + ' : ' + pct(D.fuite.reel) + ' du CA ; ' + (D.fuite.brouillons ? 'fiches-types proposées par Vera, à confirmer' : 'fiches') + ' : ' + pct(D.fuite.theo) + '. ' + fpt + ' point' + (D.fuite.pts >= 2 ? 's' : '') + ' de pertes, portions ou offerts non saisis' + (D.fuite.compte ? (function () { /* C311 (V16-026) : ce que le plan compte vraiment, et seulement si le levier existe */
+          var lf = D.leviers.filter(function (x) { return x && x.id === 'fc'; })[0], tiers = D.fuite.pts / 3, v = lf && lf.over ? Math.abs(num(lf.over.fc)) : 0;
+          var p1 = function (x) { return (Math.round(x * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); };
+          if (!lf) return ' ; le plan ne retient pas le levier « Coût de la nourriture » : cet écart n’est pas compté dans le gain';
+          return ' ; Verdict en compte ' + p1(v) + ' point' + (v >= 2 ? 's' : '') + ' dans le levier « Coût de la nourriture » ci-dessous' + (v < tiers - 0.05 ? ' (un tiers de l’écart ferait ' + p1(tiers) + ' points ; le curseur s’arrête à ' + p1(v) + ')' : ' (un tiers de l’écart)');
+        })() : ' ; sous 4 points, non compté dans le gain') + '</small></div><strong>≈\u00a0<em data-rc-count="' + Math.round(D.fuite.eur) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
         n0 = 1;
       }
       fuites += D.leviers.map(function (x, i) {
@@ -148,6 +156,9 @@
     if (REDUIT) return aff(fin);
     var t0 = performance.now(), duree = 1100;
     (function tour(t) { var p = Math.min(1, (t - t0) / duree), e = p === 1 ? 1 : 1 - Math.pow(2, -10 * p); aff(fin * e); if (p < 1) requestAnimationFrame(tour); })(t0);
+    /* C311 (V16-011) : le compteur finit toujours sur le chiffre exact des chapitres (12 533 €, pas 12 516 €), même quand
+       l'animation est suspendue (cadre ou onglet caché) avant sa dernière image. */
+    setTimeout(function () { aff(fin); }, duree + 150);
   }
   function jouer(card) {
     if (card.classList.contains('rc-on')) return;
@@ -242,7 +253,7 @@
   var css = doc.createElement('style'); css.id = 'audit-recit-a27';
   var E = 'cubic-bezier(.23,1,.32,1)';
   css.textContent =
-    '#auditBody .av31{display:none!important}' +
+    '#auditBody .av31{display:none!important}html:has(#vdRecit) [data-audit-visual-story]{display:none!important}' + /* C311 (V16-012) : une seule version visuelle de l'Audit */
     '#vdRecit{margin:4px 0 26px;font-family:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif}' +
     '#vdRecit .rc-head{padding:6px 4px 14px;color:#101214}#vdRecit .rc-head>span{font:800 11.5px/1 -apple-system,system-ui;letter-spacing:.14em;text-transform:uppercase;color:#16a34a}' +
     '#vdRecit .rc-head h1{margin:8px 0 6px;font:900 32px/1.05 -apple-system,system-ui;letter-spacing:-.025em}#vdRecit .rc-head p{margin:0;color:#5f6670;font-size:14.5px}' +

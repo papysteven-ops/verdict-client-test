@@ -133,6 +133,9 @@
     /* C212 (W04) : boutons vers le compte et les abonnements. */
     var ABO = '<button type="button" class="vo-sec" data-vo="passer">Voir les abonnements Pilotage et Pro</button>';
     var CREER = '<button type="button" class="vo-cta" data-vo="creer">Créer mon compte · 14 jours d’essai</button><button type="button" class="vo-sec" data-vo="connexion">J’ai déjà un compte</button>';
+    /* C315 (V16-069) : pendant l’essai, un établissement ajouté est inclus (le serveur répond « inclus : essai ») ; le supplément
+       ne compte qu’à l’abonnement. La fenêtre d’essai le dit, comme la fenêtre d’ajout (L4, L7). */
+    var ETABS_ESSAI = '<p class="vo-note">Pendant l’essai, les établissements que vous ajoutez sont inclus. Le supplément (+39 € HT par mois en Pilotage, +69 € HT en Pro) ne compte qu’une fois abonné.</p>';
     var ESSAI_COMPTE = 'Un seul essai de 14 jours, porté par votre compte : il démarre à la création du compte, sans carte bancaire. Les données de cet appareil sont rattachées au compte : rien n’est perdu.';
     fermer();
     var o = doc.createElement('div'); o.id = 'vdOffre'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
@@ -142,9 +145,9 @@
     else if (mode === 'attente') h += '<span class="vo-k">Essai terminé</span><h1>Tout reste ouvert, pour l’instant.</h1><p>Vos 14 jours d’essai sont passés. Les abonnements Pilotage et Pro ouvrent très bientôt : d’ici là, rien ne se ferme et rien n’est supprimé.</p>' + LIGNES +
       '<button type="button" class="vo-cta" data-vo="continuer">Continuer</button>' + ABO;
     else if (mode === 'essai' && E.compte) h += '<span class="vo-k">Essai · encore ' + E.jours + ' jour' + (E.jours > 1 ? 's' : '') + '</span><h1>Tout Verdict est ouvert</h1><p>Pilotage, Carte, Audit, Simuler et Vera, avec vos vrais chiffres. Votre essai est porté par votre compte : un seul essai de 14 jours, sans carte bancaire. À la fin, rien n’est supprimé : l’Inventaire reste gratuit.</p>' + LIGNES +
-      '<button type="button" class="vo-cta" data-vo="passer">Choisir Pilotage ou Pro</button><button type="button" class="vo-sec" data-vo="continuer">Continuer l’essai</button><p class="vo-note">À la fin de l’essai, aucun prélèvement : vous choisissez vous-même de passer à Pilotage ou Pro.</p>';
+      '<button type="button" class="vo-cta" data-vo="passer">Choisir Pilotage ou Pro</button><button type="button" class="vo-sec" data-vo="continuer">Continuer l’essai</button><p class="vo-note">À la fin de l’essai, aucun prélèvement : vous choisissez vous-même de passer à Pilotage ou Pro.</p>' + ETABS_ESSAI;
     else if (mode === 'essai') h += '<span class="vo-k">Essai · encore ' + E.jours + ' jour' + (E.jours > 1 ? 's' : '') + '</span><h1>Tout Verdict est ouvert</h1><p>Pilotage, Carte, Audit, Simuler et Vera, avec vos vrais chiffres. Vous pouvez arrêter quand vous voulez : rien n’est supprimé, l’Inventaire reste gratuit.</p>' + LIGNES +
-      '<button type="button" class="vo-cta" data-vo="continuer">Continuer l’essai</button>' + ABO + '<button type="button" class="vo-stop" data-vo="arreter">Arrêter l’essai maintenant</button><p class="vo-note">À la fin de l’essai, aucun prélèvement : vous choisissez vous-même de passer à Pilotage ou Pro.</p>';
+      '<button type="button" class="vo-cta" data-vo="continuer">Continuer l’essai</button>' + ABO + '<button type="button" class="vo-stop" data-vo="arreter">Arrêter l’essai maintenant</button><p class="vo-note">À la fin de l’essai, aucun prélèvement : vous choisissez vous-même de passer à Pilotage ou Pro.</p>' + ETABS_ESSAI;
     else if (mode === 'compte') h += '<span class="vo-k">Découverte</span><h1>Essayez tout Verdict 14 jours</h1><p>' + ESSAI_COMPTE + '</p>' + LIGNES + CREER + '<button type="button" class="vo-sec" data-vo="continuer">Continuer la découverte</button>';
     else if (mode === 'termine' && E.abonnementFini) h += '<span class="vo-k">Abonnement terminé</span><h1>Vos données sont conservées.</h1><p>Votre abonnement a pris fin. Vos fiches, vos ventes et vos stocks sont conservés. L’Inventaire reste gratuit, pour toujours. Pour retrouver Pilotage, Carte, Audit, Simuler et Vera :</p>' + LIGNES +
       '<button type="button" class="vo-cta" data-vo="passer">Reprendre Pilotage ou Pro</button><button type="button" class="vo-sec" data-vo="rester">Rester sur l’Inventaire gratuit</button>';

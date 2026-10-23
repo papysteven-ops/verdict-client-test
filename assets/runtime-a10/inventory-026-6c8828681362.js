@@ -49,7 +49,7 @@
     var verdict=(!d.ready||!d.n)?t.empty:parts.length?parts.join(", ").replace(/, ([^,]*)$/,t.et+"$1")+".":t.rien;
     /* C217 W60/W66 : sans aucun prix connu, la commande n'est jamais chiffrée « 0 € » ; avec des prix manquants, on le dit. */
     var fS=(d.fournisseurs||0)>1?"s":"",inc=d.inconnus||0,cmdTxt=!d.cmd||d.valeur==null?"":(inc>=d.cmd?" "+tpl(t2.sansPrix,{f:d.fournisseurs||"",s:fS}):" "+(inc?tpl(t.cmdPrete,{v:eur(d.valeur),f:d.fournisseurs||"",s:fS}).replace(/\.$/,"")+" "+tpl(t2.inconnus,{n:inc,s:inc>1?"s":""})+".":tpl(t.cmdPrete,{v:eur(d.valeur),f:d.fournisseurs||"",s:fS})));
-    var sous=tpl(t.suivis,{n:d.n,s:d.n>1?"s":""})+(d.aCompter||!d.ready||!d.n?"":", "+tpl(t.tousComptes,{s:d.n>1}))+"."+cmdTxt;/* C302 : « 1 produit suivi, compté » */
+    var sous=tpl(t.suivis,{n:d.n,s:(t===T.fr?d.n>1:d.n!==1)?"s":""})+(d.aCompter||!d.ready||!d.n?"":", "+tpl(t.tousComptes,{s:t===T.fr?d.n>1:d.n!==1}))/* C312 (V16-049) : 0 au pluriel hors français */+"."+cmdTxt;/* C302 : « 1 produit suivi, compté » */
     var h='<p class="pinv-k">'+t.kick+'</p><h2 class="pinv-q">'+t.q+'</h2><p class="pinv-v">'+verdict+'</p><p class="pinv-s">'+sous+'</p>';
     h+='<div class="pinv-g"><button type="button" class="pinv-b" data-act="compter"><b>'+d.aCompter+'</b><span>'+t.bCompter+'</span><small>'+(d.aCompter||!d.n?t.bCompterS:t2.tous)+'</small></button>';
     h+='<button type="button" class="pinv-b" data-act="commande" '+(d.cmd?"":"disabled")+'><b>'+d.cmd+'</b><span>'+t.bCmd+'</span><small>'+t.bCmdS+'</small></button>';

@@ -203,7 +203,7 @@
     var p=mapped.parsed,period=periodTexte(p.period);
     var html='<div class="v44-fec-summary"><div><span>'+escapeHTML(tr("summary"))+'</span><strong>'+p.rows.length+' '+escapeHTML(tr("lines"))+'</strong></div><div><span>'+escapeHTML(tr("period"))+'</span><strong>'+escapeHTML(period)+'</strong></div></div>';/* C300 (V15-114) : plus d'« Encodage utf-8 » pour le patron */
     /* C190 : avant de calculer, ce que dit le document face à la saisie (écarts), et le document fait foi. */
-    try{if(root.VerdictDocumentsFoi)html+=root.VerdictDocumentsFoi.comparaisonFEC(aggregate(mapped,{}).totals);}catch(e){}
+    try{if(root.VerdictDocumentsFoi)html+=(function(ag){return root.VerdictDocumentsFoi.comparaisonFEC(ag.totals,ag);})(aggregate(mapped,{}));/* C310 (V16-067) : la TVA du FEC compte aussi dans la comparaison */}catch(e){}
     if(mapped.ambiguous.length){html+='<div class="v44-fec-ambiguities"><h3>'+mapped.ambiguous.length+' '+escapeHTML(tr("ambiguous"))+'</h3>';mapped.ambiguous.forEach(function(item){html+='<label><span><b>'+escapeHTML(item.line.account||"—")+'</b> '+escapeHTML(item.line.accountLabel||item.line.entryLabel||"Ligne "+item.line.index)+'</span><select data-fec-decision="'+escapeHTML(item.id)+'"><option value="">'+escapeHTML(tr("choose"))+'</option>'+item.candidates.map(function(c){return '<option value="'+escapeHTML(c)+'">'+escapeHTML(CATEGORY_LABELS[c]||c)+'</option>';}).join("")+'</select></label>';});html+='</div>';}
     if(p.duplicates)html+='<p class="v44-fec-note">'+p.duplicates+' '+escapeHTML(tr("duplicate"))+'</p>';
     /* C296 : les comptes rangés par défaut sont dits, jamais ignorés en silence. */

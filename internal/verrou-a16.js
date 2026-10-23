@@ -242,7 +242,7 @@
   function screenCreate(step) {
     S.mode = step === 2 ? 'create2' : 'create';
     show('<div class="vr-logo">🛡️</div><h2>' + (step === 2 ? 'Confirmez votre code' : 'Protégez Verdict') + '</h2><p>' +
-      (step === 2 ? 'Saisissez le même code une seconde fois.' : 'Choisissez votre code personnel à 6 chiffres.' + (IP ? '' : ' Ensuite, ' + esc(BIO) + ' pourra ouvrir Verdict ; ce code restera le secours.') + ' Personne d’autre que vous ne pourra ouvrir vos chiffres.') + '</p>' + pad(false));
+      (S.pourReel && step !== 2 ? 'Vous passez à vos vrais chiffres : ce code protège vos vrais chiffres sur cet appareil. ' : '') + (step === 2 ? 'Saisissez le même code une seconde fois.' : 'Choisissez votre code personnel à 6 chiffres.' + (IP ? '' : ' Ensuite, ' + esc(BIO) + ' pourra ouvrir Verdict ; ce code restera le secours.') + ' Personne d’autre que vous ne pourra ouvrir vos chiffres.') + '</p>' + pad(false));
   }
   function weak(code) { return /^(\d)\1+$/.test(code) || '0123456789012345'.indexOf(code) >= 0 || '9876543210987654'.indexOf(code) >= 0; }
   function onCreate(code) {
@@ -409,6 +409,13 @@
 
   /* ───────── Verrouillage ───────── */
   function configured() { return COFFRE || !!(C && C.hash); }
+  /* C312 (V16-050) : entrée de démonstration et passage au réel. */
+  function demoEntree() { if (COFFRE) return false; try { var q = new URLSearchParams(location.search); return q.get('demo') === '1' || q.get('guide') === '1' || q.has('presentation') || q.get('decouvrir') === '1'; } catch (e) { return false; } }
+  function demoEnCours() {
+    /* La session de démonstration de Pilotage fait foi (le contexte reste « démo » sous le profil de présentation) ; sinon le contexte de la coque. */
+    try { var f = doc.getElementById('frame-verdict'), V = f && f.getAttribute('src') && f.contentWindow, s = V && V.eval('typeof VERDICT_DEMO_SESSION!=="undefined"?VERDICT_DEMO_SESSION:null'); if (s === true || s === false) return s; } catch (e) {}
+    try { var U = window.VerdictUnifiedShell, c = U && U.getContext && U.getContext(); if (c && typeof c.demo !== 'undefined') return !!c.demo; } catch (e) {} return null; }
+  function surveillerSortieDemo() { var vu = false, t = setInterval(function () { if (configured()) { clearInterval(t); S.demoSansCode = false; return; } var d = demoEnCours(); if (d === true) vu = true; if (vu && d === false) { clearInterval(t); S.demoSansCode = false; S.pourReel = true; S.locked = true; screenCreate(1); } }, 700); if (t && t.unref) t.unref(); }
   function lock(autoBio) { if (COFFRE) { C = C || {}; return screenCoffre(autoBio); } /* C60 — logique des applis bancaires : un code Verdict à 6 chiffres est toujours la base (créé à la première
      ouverture) ; Face ID / Touch ID est le raccourci, essayé d'abord ; s'il échoue, c'est ce code qui est demandé. */
     if (!C || !C.hash) return screenCreate(1); S.locked = true; screenUnlock(autoBio); }
@@ -463,6 +470,10 @@
         if (FRAIS) { S.locked = false; annoncerOuvert(); screenBioOffer(); } else if (MAJ) { S.locked = false; annoncerOuvert(); } else screenCoffre(true);
         return;
       }
+      /* C312 (V16-050, décision 9 de Steven) : une démonstration (?demo=1, guide, « Découvrir Verdict ») sur un appareil sans code
+         s'ouvre sans code ; le code n'est demandé qu'au passage au réel (sortie de la démo, compte, première saisie réelle).
+         Un code déjà créé garde son verrou. Rien de réel n'est enregistré sans code. */
+      if (!configured() && demoEntree()) { S.locked = false; S.demoSansCode = true; annoncerOuvert(); surveillerSortieDemo(); return; }
       if (MAJ && configured()) { S.locked = false; annoncerOuvert(); return; }
       if (encoreOuvert()) { S.locked = false; annoncerOuvert(); marquer(); return; }
       lock(true);
