@@ -11,6 +11,7 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C292', date: '2026-10-23', titre: 'Accueil, « Ventes et heures par service » : la colonne devient « Écart au conseillé » — « 7 € en dessous » en vert quand l’équipe coûte moins que le conseillé, « +35 € de trop » quand elle coûte plus, plus jamais un « −7 € » en vert' },
     { id: 'C291', date: '2026-10-23', titre: 'La barre des onglets de Structure suit le thème : foncée en thème clair, blanche en thème sombre, l’onglet ouvert toujours bordé de vert' },
     { id: 'C290', date: '2026-10-22', titre: 'Accueil : après un changement de thème et un rechargement, l’Accueil ne reste plus sur son ancienne présentation ; au repos, rien ne bouge à l’écran' },
     { id: 'C289', date: '2026-10-22', titre: 'Démonstration : la pastille de l’établissement affiché propose « Revenir à mon établissement ». Carte : « Vera propose » reconnaît un plat de votre carte à son produit principal et à sa garniture, même sous un autre nom (une bavette-frites face à votre steak frites), et n’affiche aucune marge quand c’est le produit principal qui manque — elle dit lequel' },

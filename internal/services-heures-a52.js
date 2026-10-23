@@ -191,8 +191,8 @@
   function carteHTML(R) {
     var jour = R.periode === 'jour', aHab = jour && R.services.some(function (x) { return x.habituel != null; });
     var h = '<p class="kicker">Ventes et heures par service · ' + esc(libelle(R)) + (w.DB && (w.DB.demo || (w.DB.services || []).some(function (s) { return s && s.demo; })) ? ' · démonstration' : '') + '</p>' +
-      '<p class="titre">' + esc(R.lourd && tropTotal(R) >= 0.5 ? 'L’équipe a coûté ' + eur(tropTotal(R)) + ' de trop' + (R.periode === 'jour' ? ' ce jour-là' : R.periode === 'mois' ? ' ce mois-ci' : ' sur l’année') : R.lourd ? cap(le(R.lourd.nom)) + ' coûte trop d’équipe' : R.total.part != null && R.total.part > R.repere + 0.005 ? 'L’équipe coûte ' + s100(R.total.part) + ', sur tous les services' : 'Équipe dans le conseillé, service par service') + '</p>' +
-      jaugeHTML(R.total.part, R.repere) + lienHTML(R) + '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>Ventes</th><th>Équipe</th><th>En trop</th></tr></thead><tbody>';
+      '<p class="titre">' + esc(R.lourd && tropTotal(R) >= 0.5 && R.total.part > R.repere + 0.005 /* C292 : seulement s'il y a vraiment un dépassement */ ? 'L’équipe a coûté ' + eur(tropTotal(R)) + ' de trop' + (R.periode === 'jour' ? ' ce jour-là' : R.periode === 'mois' ? ' ce mois-ci' : ' sur l’année') : R.lourd ? cap(le(R.lourd.nom)) + ' coûte trop d’équipe' : R.total.part != null && R.total.part > R.repere + 0.005 ? 'L’équipe coûte ' + s100(R.total.part) + ', sur tous les services' : 'Équipe dans le conseillé, service par service') + '</p>' +
+      jaugeHTML(R.total.part, R.repere) + lienHTML(R) + '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>Ventes</th><th>Équipe</th><th>Écart au conseillé</th></tr></thead><tbody>';
     var plusieurs = R.services.length > 1;
     /* C205 (V17) : un service sous le conseillé montre son économie (« −299 € », en vert) au lieu de « OK », et la colonne
        se recompte : la somme des services arrondis égale la ligne Total (écart d'arrondi au plus grand reste). */
@@ -208,10 +208,12 @@
       h += '<tr' + (tot ? ' class="sh52-tot"' : '') + '><td>' + esc(x.nom) + '</td>' +
         '<td>' + eur(x.ht) + (plusieurs && !tot && R.total.ht > 0 ? '<small class="sh52-s">' + pc(x.ht / R.total.ht) + ' des ventes</small>' : '') + '</td>' +
         '<td>' + (x.coutConnu ? eur(x.cout) : '—') + '<small class="sh52-s">' + hh(x.h) + ' de travail</small></td>' +
-        '<td><span class="sh52-p sh52-' + (trop == null ? 'info' : ok ? 'vert' : couleur(x.part, R.repere)) + '">' + (trop == null ? '—' : trop < 0 ? '\u2212' + eur(-trop) : trop === 0 ? eur(0) : '+' + eur(trop)) + '</span>' +
+        /* C292 (Steven, 23/10 : « −7 en vert, ça porte à confusion ») : jamais un signe moins seul dans la colonne ; sous le conseillé,
+           « 7 € en dessous » en vert ; au-dessus, « +35 € de trop » dans la couleur du dépassement ; à zéro, « au conseillé ». */
+        '<td><span class="sh52-p sh52-' + (trop == null ? 'info' : ok ? 'vert' : couleur(x.part, R.repere) === 'vert' ? 'jaune' : couleur(x.part, R.repere)) + '">' + (trop == null ? '—' : trop < 0 ? eur(-trop) + ' en dessous' : trop === 0 ? 'au conseillé' : '+' + eur(trop) + ' de trop') + '</span>' +
         (x.part != null ? '<small class="sh52-s">' + Math.round(x.part * 100) + '\u00a0€ pour 100\u00a0€</small>' : '') + '</td></tr>';
     });
-    h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + esc((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Conseillé pour votre type d’établissement : ' + conseil(R) + ' d’équipe (salaires + cotisations) pour 100 € vendus. « En trop » = ce que l’équipe a coûté au-delà ; en vert avec −, ce qu’elle a coûté en moins. Ventes sans la TVA.') + '</p>' +
+    h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + esc((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Conseillé pour votre type d’établissement : ' + conseil(R) + ' d’équipe (salaires + cotisations) pour 100 € vendus. « de trop » = ce que l’équipe a coûté au-delà du conseillé ; « en dessous » = ce qu’elle a coûté en moins. Ventes sans la TVA.') + '</p>' +
       '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-equipe="1">Voir mon équipe, salarié par salarié</button><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
     return h;
   }
