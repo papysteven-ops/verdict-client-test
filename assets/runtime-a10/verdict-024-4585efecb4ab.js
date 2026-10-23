@@ -32,6 +32,14 @@
     l=String(l||document.documentElement.lang||navigator.language||'fr').slice(0,2).toLowerCase();
     return T[l]||T.fr;
   }
+  /* C319 (V16-094, T1 : modèle chargé, page rechargée, panneau masqué) : VD-BOOT restait par-dessus une appli démarrée. L'appli est
+     « prête » quand ses écrans existent (go, moteur, une vue ouverte, page chargée). Prête au moment du garde : l'ouverture est
+     terminée proprement, sans VD-BOOT. Déjà affiché : VD-BOOT se retire de lui-même dès que l'appli démarre, même tard. */
+  function bootAppPrete(){try{return document.readyState==='complete'&&typeof window.go==='function'&&typeof window.moteur==='function'&&!!document.querySelector('.view.on');}catch(e){return false;}}
+  function bootTerminer(sp,raison){try{sp.setAttribute('data-intro-stop',raison);}catch(e){}
+    try{if(!window.__verdictIntroInitialDone&&typeof window.verdictIntroDebloquer==='function')window.verdictIntroDebloquer('initial',null,raison);}catch(e){}
+    try{if(sp.parentNode&&document.getElementById('splash')===sp&&/VD-BOOT/.test(sp.innerHTML))sp.parentNode.removeChild(sp);}catch(e){}}
+  function bootLever(sp){setTimeout(function(){try{if(!sp.parentNode)return;if(window.__verdictIntroInitialDone||bootAppPrete()){bootTerminer(sp,'c319-vd-boot-leve');return;}}catch(e){}bootLever(sp);},1000);}
   function bootVerifier(){
     window.__verdictBootGuard=null;
     var sp=document.getElementById('splash'),maintenant=Date.now();
@@ -39,12 +47,14 @@
     if(!bootAttenteNormale())bootAttente+=Math.min(maintenant-bootDernier,5000);
     bootDernier=maintenant;
     if(bootAttente<30000){window.__verdictBootGuard=setTimeout(bootVerifier,1000);return;}
+    if(bootAppPrete()){bootTerminer(sp,'c319-garde-appli-prete');return;}
     var t=bootTexte();
     sp.className='';
     sp.innerHTML='<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;font:16px/1.5 Inter,-apple-system,system-ui,sans-serif;color:#f2f4f8">'+
       '<b style="font-size:19px">'+t[0]+'</b>'+
       '<span style="max-width:330px;margin-top:10px;color:#98a1ad">'+t[1]+'</span>'+
       '<button type="button" onclick="location.reload()" style="margin-top:18px;border:0;border-radius:12px;padding:13px 22px;background:#22c55e;color:#04120a;font:800 15px Inter,-apple-system,system-ui,sans-serif">'+t[2]+'</button></div>';
+    bootLever(sp);
   /* Ce garde couvre uniquement une panne réelle de chargement. L'iPhone peut
      garder le lecteur Sites au-dessus de la page plusieurs secondes : le
      délai ne doit jamais remplacer le zéro Verdict avant que l'app soit

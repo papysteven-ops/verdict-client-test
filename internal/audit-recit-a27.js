@@ -103,8 +103,8 @@
     if (D.leviers.length || D.fuite) {
       var n0 = 0, fuites = '';
       if (D.fuite) {
-        /* C311 (V16-026, détail) : l'écart écrit est la différence des deux pourcentages affichés (27,0 − 22,1 = 4,9), arrondi une seule fois */
-        var ecA = Math.round((Math.round(D.fuite.reel * 10) - Math.round(D.fuite.theo * 10))) / 10, fpt = ecA.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        /* C318 (V16C-N1) : un seul arrondi, à partir de l'écart exact (Burger 1,99 → « 2,0 points », comme le chapitre 13) */
+        var ecA = Math.round((D.fuite.pts != null ? Number(D.fuite.pts) : D.fuite.reel - D.fuite.theo) * 10) / 10, fpt = ecA.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
         fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière (' + esc(D.fuite.perimetre || 'nourriture + boissons') + ')</b><small>Achats ' + esc(D.fuite.periode || '') + ' : ' + pct(D.fuite.reel) + ' du CA ; ' + (D.fuite.brouillons ? 'fiches-types proposées par Vera, à confirmer' : 'fiches') + ' : ' + pct(D.fuite.theo) + '. ' + fpt + ' point' + (Math.abs(ecA) >= 2 ? 's' : '') + ' de pertes, portions ou offerts non saisis' + (D.fuite.compte ? (function () { /* C311 (V16-026) : ce que le plan compte vraiment, et seulement si le levier existe */
           /* C311 (décision 13) : poste par poste — nourriture et boissons, chacune bornée par son propre écart */
           var p1 = function (x) { return (Math.round(x * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }, pl = function (x) { return p1(x) + ' point' + (Math.abs(Math.round(x * 10) / 10) >= 2 ? 's' : ''); };

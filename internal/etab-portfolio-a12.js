@@ -416,6 +416,8 @@ root.VerdictDeclarerEtab=declarer;
       /* C311 (décision 10) : l'Italien n'a ni pizzas ni boissons détaillées : son nom le dit, sa fiche aussi (écart matière lu sur la nourriture) */
       if(k==='Italien'&&!/pâtes fraîches/.test(String(m.n)))m.n=String(m.n).replace(/Italien\s*$/,'Restaurant italien, pâtes fraîches');
       var t=nomModele(m);if(t)m.e=t;
+      /* C318 (T4) : l'apostrophe typographique aussi dans le nom affiché (« d’un hôtel 5 étoiles ») */
+      if(/'/.test(String(m.n)))m.n=String(m.n).replace(/'/g,'’');
       /* jours de repos d'un traiteur : début de semaine (lu par ensemencerPiloteDemo, 029, script L3 s029-repos-modele.py) */
       if(k==='Traiteur'&&!m.repos)m.repos=[0,1,2,3,4,6,5];
       /* C311 (décision 13 bis, V16T1-N1) : la matière TOTALE du modèle est gardée (son économie d'origine) et répartie : boissons

@@ -187,9 +187,9 @@ function plan(){
     /* C311 (décision 13) : poste par poste — la part « fuite » de chaque levier est bornée par l'écart de son poste ; un poste déjà sous
        ses fiches n'en a pas ; un écart qui est dans les boissons va au levier « Coût des boissons », jamais à la nourriture. */
     if(st&&st.theoR>0){var tn=st.theoNourR!=null?st.theoNourR:st.theoR,E=ecartMatiere(R,st),rec=tn>fam.fc[1]?(tn-fam.fc[1])/3:0,eN=E&&E.nour?Math.max(0,E.nour.pts):0,eB=E&&E.boi?Math.max(0,E.boi.pts):0,fuite=E&&E.compte?eN/3:0;pts=rec+fuite;
-      var ptsB=E&&E.compte?Math.floor(eB/3*2)/2:0;if(ptsB>=.5)add('boi',-ptsB,'Coût des boissons : achats '+E.periode+' à '+pc(E.boi.reel)+' du CA, fiches '+pc(E.boi.theo)+' : '+pts1(E.boi.pts)+' de pertes, offerts ou portions servies. Un tiers de l’écart des boissons.','Mesurer les verres et les doses, noter les offerts, compter le bar chaque semaine.');
-      why='Coût de la nourriture d’après vos fiches '+pc(tn)+' du CA, hors boissons (repère '+pc(fam.fc[1],0)+')'+(fuite?' ; écart nourriture entre vos achats ('+E.periode+', '+pc(E.nour.reel)+' du CA) et vos fiches ('+pc(E.nour.theo)+') : '+pts1(E.nour.pts)+' de pertes, portions ou offerts invisibles.':'.')+' Un tiers de chaque écart.';}}
-  else if(v.fc>fam.fc[1]){pts=(v.fc-fam.fc[1])/3;why='Coût de la nourriture à '+pc(v.fc)+' du CA, hors boissons ; repère médian '+pc(fam.fc[1],0)+'. Un tiers de l’écart.';}
+      var ptsB=E&&E.compte?Math.floor(eB/3*2)/2:0;if(ptsB>=.5)add('boi',-ptsB,'Coût des boissons : achats '+E.periode+' à '+pc(E.boi.reel)+' du CA, fiches '+pc(E.boi.theo)+' : '+pts1(E.boi.pts)+' de pertes, offerts ou portions servies. Un tiers de l’écart des boissons, par pas de 0,5 point.','Mesurer les verres et les doses, noter les offerts, compter le bar chaque semaine.');
+      why='Coût de la nourriture d’après vos fiches '+pc(tn)+' du CA, hors boissons (repère '+pc(fam.fc[1],0)+')'+(fuite?' ; écart nourriture entre vos achats ('+E.periode+', '+pc(E.nour.reel)+' du CA) et vos fiches ('+pc(E.nour.theo)+') : '+pts1(E.nour.pts)+' de pertes, portions ou offerts invisibles.':'.')+' Un tiers de chaque écart, par pas de 0,5 point.';}}
+  else if(v.fc>fam.fc[1]){pts=(v.fc-fam.fc[1])/3;why='Coût de la nourriture à '+pc(v.fc)+' du CA, hors boissons ; repère médian '+pc(fam.fc[1],0)+'. Un tiers de l’écart, par pas de 0,5 point.';}
   pts=Math.floor(pts*2)/2;if(pts>=.5)add('fc',-pts,why,'Repeser les portions clés, mettre à jour les fiches techniques, renégocier le premier fournisseur.');
   /* carte : prix des plats sous leur objectif, plafonnés */
   var cp=cf?cartePlan(CARTE_CAP):null;
@@ -360,7 +360,7 @@ function installerSimuler(){
    un panier à +0,20 € seul n'est plus « au-delà du réaliste » parce que la proposition, elle, ne l'utilisait pas.
    Règle inchangée : chaque levier reste borné par le repère du format, et l'ensemble ne dépasse pas la rentabilité
    des meilleurs établissements du format. Le moteur n'est rejoué que si l'ensemble des curseurs dépasse ce niveau. */
-var MONTE={panier:1,cmd:1,carte:1},BAISSE={sal:1,fc:1,fix:1,com:1,emb:1},BD={k:null,m:{}};
+var MONTE={panier:1,cmd:1,carte:1},BAISSE={sal:1,fc:1,boi:1,fix:1,com:1,emb:1}/* C318 : le coût des boissons (décision 13) compte aussi dans les bornes des curseurs */,BD={k:null,m:{}};
 function rnDe(st){var k=JSON.stringify(st);if(BD.k!==cle()){BD={k:cle(),m:{}};}if(BD.m[k]==null)BD.m[k]=w.moteur(overAll(st)).v.rn;return BD.m[k];}
 /* Comme la proposition : les leviers sont pris dans l'ordre (ce qui dépend le plus du client d'abord) ; un levier n'est
    borné que par ceux qui le précèdent, et seul celui qui fait dépasser le niveau des meilleurs établissements est signalé. */
@@ -390,13 +390,15 @@ function phrase(id,P,B){
     :(b?'Avec vos autres leviers, Verdict compte au plus '+dd.fmt(b)+' : au-delà, la rentabilité dépasserait '+meilleurs+'.'
        :'Verdict n’en compte pas davantage : avec vos autres leviers, la rentabilité est déjà de '+pc(B.rnAutres,1)+(B.rnAutres>=P.plafond.rn?', au-delà de ':' ; ce levier la ferait dépasser ')+meilleurs+'.');
   var fin=B.reduit?'':' Au-delà, ce n’est plus réaliste.';
-  if(id==='cmd')return 'Vous servez '+String(Math.round(num(d.cmdj)*10)/10).replace('.',',')+' commandes par jour. La fréquentation ne se décide pas : Verdict ne propose jamais ce levier. Ce curseur reste une hypothèse à vérifier ; la matière, les commissions et l’équipe suivent.';
+  if(id==='cmd')return 'Vous servez '+String(Math.round(num(d.cmdj)*10)/10).replace('.',',')+' commandes par jour. La fréquentation ne se décide pas : Verdict ne propose jamais ce levier. Ce curseur reste une hypothèse à vérifier ; la matière et les commissions suivent.';
   if(B.reduit&&id==='carte')return 'Verdict relève les prix d’au plus '+CARTE_CAP+' %, sans dépasser le plat le plus cher de la catégorie. '+au;
   /* C311 (V16-032) : une seule phrase pour une seule règle (« +2 % de votre propre panier, soit +0,30 € ») */
   if(id==='panier')return 'Votre panier moyen est de '+fr2(d.panierTTC)+' € ; Verdict compte au plus +'+Math.round(PANIER_PCT*100)+' % de votre propre panier'+(!B.reduit&&b?', soit '+dd.fmt(b)+'.':'. '+au)+fin;
   if(id==='carte')return 'Verdict relève les prix d’au plus '+CARTE_CAP+' %, sans dépasser le plat le plus cher de la catégorie.'+fin;
   if(id==='sal')return 'Votre équipe coûte '+pc(v.ms)+' du chiffre d’affaires ; repère Verdict '+t+' : '+pc(fam.ms[1],0)+'. '+au+fin;
-  if(id==='fc')return 'Votre coût de nourriture (hors boissons) est de '+pc(v.fc)+' du CA ; repère Verdict '+t+' : '+pc(fam.fc[1],0)+'. '+au+fin;
+  /* C318 (SIM) : la règle du levier matière est écrite là où il est borné : un tiers de l'écart de chaque poste, par pas de 0,5 point */
+  if(id==='fc')return 'Votre coût de nourriture (hors boissons) est de '+pc(v.fc)+' du CA ; repère Verdict '+t+' : '+pc(fam.fc[1],0)+'. Verdict retient un tiers de l’écart, par pas de 0,5 point. '+au+fin;
+  if(id==='boi'){var Eb=null;try{Eb=ecartMatiere(R);}catch(e){}return (Eb&&Eb.boi?'Vos achats de boissons pèsent '+pc(Eb.boi.reel)+' du CA, vos fiches '+pc(Eb.boi.theo)+'. ':'')+'Verdict retient un tiers de l’écart des boissons, par pas de 0,5 point. '+au+fin;}
   if(id==='fix')return 'Vos charges fixes pèsent '+pc(v.acf)+' du chiffre d’affaires ; repère Verdict '+t+' : '+pc(fam.acf[1],0)+'. '+au+fin;
   if(id==='com')return 'Verdict compte au plus −10 % de commissions, en passant une partie des commandes en retrait.'+fin;
   if(id==='emb')return 'Verdict compte au plus −10 % sur ces achats.'+fin;
@@ -417,8 +419,30 @@ function autresNotes(id){(w.DEC_DEFS||[]).forEach(function(d){if(d.id===id||d.id
 function panneau(){
   var bar=document.getElementById('decTotalBar');if(!bar)return;var sc=document.getElementById('decScene'),cache=false;
   if(sc&&w.VIEW==='dec'&&bar.classList.contains('on')){var a=sc.getBoundingClientRect(),h=bar.getBoundingClientRect();cache=a.height>0&&a.bottom>h.top-8&&a.top<h.bottom;}
+  /* C318 (T4, G02) : la barre se retire aussi tant que « Le total de vos changements » passe dessous (mêmes chiffres, mêmes boutons) :
+     elle ne recouvre plus jamais son encadré (« Gain mécanique limité », « Perte mécanique »). */
+  var tot=document.getElementById('decTotal');
+  if(!cache&&tot&&w.VIEW==='dec'&&bar.classList.contains('on')){var a2=tot.getBoundingClientRect();cache=a2.height>0&&a2.bottom>hautBarre(bar)-8&&a2.top<w.innerHeight;}
   if(bar.classList.contains('c206-retire')!==cache)bar.classList.toggle('c206-retire',cache);
 }
+/* C318 (T4, G02) : après un geste sur un curseur, l'encadré de ce levier (gain et avis) ne reste jamais sous la barre :
+   la page remonte juste assez, sans jamais cacher le haut de la carte. */
+/* le haut de la barre à sa place de repos (bas de l'écran − son écart − sa hauteur), même pendant qu'elle glisse */
+function hautBarre(bar){var bb=bar.getBoundingClientRect(),bo=0;try{bo=parseFloat(w.getComputedStyle(bar).bottom)||0;}catch(e){}return w.innerHeight-bo-(bb.height||0);}
+function montrerLevier(id){
+  var bar=document.getElementById('decTotalBar');if(!bar||!bar.classList.contains('on')||bar.classList.contains('c206-retire')||w.VIEW!=='dec')return;
+  var el=document.getElementById('da-vd-'+id)||document.getElementById('da-gain-'+id),card=el&&el.closest?el.closest('[data-dec]'):null;if(!el)return;
+  /* la phrase de borne écrite sous l'encadré (« Vous servez … ») compte aussi */
+  var note=document.getElementById('c88-note-'+id),r=el.getBoundingClientRect(),haut=hautBarre(bar)-12;if(note){var rn=note.getBoundingClientRect();if(rn.height>0&&rn.bottom>r.bottom)r={top:r.top,bottom:rn.bottom,height:rn.bottom-r.top};}
+  if(!(r.height>0)||r.bottom<=haut||r.top>=w.innerHeight)return;
+  var dy=r.bottom-haut;if(card){var c=card.getBoundingClientRect();dy=Math.min(dy,Math.max(0,c.top-80));}
+  if(dy>0){var red=false;try{red=w.matchMedia&&w.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}w.scrollBy({top:dy,behavior:red?'auto':'smooth'});}
+}
+/* jamais pendant qu'on fait glisser un curseur (le curseur fuirait sous le doigt) : au relâchement, 350 ms après le dernier geste */
+(function(){var k=0,appui=false,attente=null,minu=null;function lancer(){if(appui||attente==null)return;var id=attente;attente=null;try{panneau();montrerLevier(id);}catch(e){}}
+  try{document.addEventListener('pointerdown',function(){appui=true;},true);['pointerup','pointercancel'].forEach(function(t){document.addEventListener(t,function(){appui=false;if(minu)clearTimeout(minu);minu=setTimeout(lancer,350);},true);});}catch(e){}
+  function br(){if(typeof w.decMove!=='function')return false;if(!w.decMove.__c318){var dm=w.decMove;w.decMove=function(id){var r=dm.apply(this,arguments);try{attente=id;try{panneau();}catch(e){}if(minu)clearTimeout(minu);minu=setTimeout(lancer,350);}catch(e){}return r;};w.decMove.__c318=true;}return true;}
+  if(!br()&&typeof w.setInterval==='function'){var iv=w.setInterval(function(){if(br()||++k>40)w.clearInterval(iv);},250);}})();
 var PAN=0;w.addEventListener('scroll',function(){if(PAN)return;PAN=1;(w.requestAnimationFrame||setTimeout)(function(){PAN=0;try{panneau();}catch(e){}});},{passive:true});
 w.addEventListener('resize',function(){try{panneau();}catch(e){}},{passive:true});
 /* Enregistrement : on garde la version et l'origine du scénario (proposition de Verdict ou curseurs du client). */

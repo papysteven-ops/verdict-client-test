@@ -2501,6 +2501,9 @@ function demoInstallerBrasserieCanonique(){
   STORE.etabs[STORE.actif]=fixDB(d);DB=STORE.etabs[STORE.actif];
   SKEY='verdict:demo:ephemeral';VERDICT_STORAGE_SCOPE='demo';VERDICT_LOCAL_FOUND=false;VERDICT_SAFETY_READY=false;VERDICT_IDB_RECOVERY_PENDING=false;
   try{MODELE_ACTIF='Brasserie';}catch(e){}
+  /* C319 (V16-051, T4 écran visible) : la barre gardait « Mon établissement · RÉEL · ACTIF » du dossier vide d'un nouveau visiteur
+     après « Découvrir Verdict » : elle est redessinée dès que la Brasserie fictive est installée (« Brasserie Collet · PRÉSENTATION »). */
+  try{if(typeof drawEtabs==='function')drawEtabs();}catch(e){}
   return DB;
 }
 function etabId(){ return "e"+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
@@ -9556,7 +9559,7 @@ function blocProgression(R){
   else phrase=pilPoint1T('needDays');
   return '<div class="card prog" role="button" tabindex="0" onclick="goRap(\'pilote\',\'pil\')" style="cursor:pointer">'+
     '<h3 style="margin-bottom:2px">Progression du mois</h3>'+
-    '<p class="note" style="margin:0 0 10px">Couleur de chaque barre = chiffre encaiss\u00e9 face \u00e0 l\u2019objectif propre du jour \u00b7 ligne pointill\u00e9e neutre = moyenne structurelle ('+eur(seuilJour)+'/jour ouvert). Le rythme restant est recalcul\u00e9 dans « Piloter mon mois ».</p>'+
+    '<p class="note" style="margin:0 0 10px">Couleur de chaque barre = chiffre encaiss\u00e9 face au minimum propre du jour \u00b7 ligne pointill\u00e9e neutre = moyenne structurelle ('+eur(seuilJour)+'/jour ouvert). Le rythme restant est recalcul\u00e9 dans « Piloter mon mois ».</p>'+
     s+rep+
     '<div style="display:flex;align-items:center;gap:8px;margin-top:12px">'+
       '<i style="width:9px;height:9px;border-radius:50%;background:'+coul+';flex:none;box-shadow:0 0 8px '+coul+'"></i>'+
@@ -10439,7 +10442,7 @@ function blocCalendrierJours(R){
   var mois=new Intl.DateTimeFormat(localeTag(),{month:'long'}).format(new Date(an,mo,1));
   var dec=(new Date(an,mo,1).getDay()+6)%7; /* lundi en premier */
   var h='<div class="card"><h3 style="margin-bottom:2px">'+mois.charAt(0).toUpperCase()+mois.slice(1)+'</h3>'+
-    '<p class="note" style="margin:0 0 10px">Couleur = r\u00e9sultat face \u00e0 l\u2019objectif propre de chaque jour \u00b7 hauteur = chiffre encaiss\u00e9 \u00b7 trait blanc neutre = moyenne structurelle ('+eur(seuilJour)+').</p>'+
+    '<p class="note" style="margin:0 0 10px">Couleur = chiffre de la journ\u00e9e face \u00e0 son propre minimum \u00b7 hauteur = chiffre encaiss\u00e9 \u00b7 trait blanc neutre = moyenne structurelle ('+eur(seuilJour)+').</p>'+
     '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;font-family:var(--mono);font-size:11px;color:var(--mut2);text-align:center;margin-bottom:4px">'+
     ['L','M','M','J','V','S','D'].map(function(x,i){ var off=fermesSem().indexOf(i)>=0;
       return '<button type="button" onclick="basculerFermeSem('+i+')" title="Fermeture hebdomadaire" style="padding:3px 0;border:none;background:none;font:inherit;'+
@@ -22278,8 +22281,22 @@ function majBandeauDemo(){
     /* C312 (V16-077) : une vue sans onglet propre (Alertes, À faire, réglages…) s'ouvre depuis Plus : c'est Plus qui s'allume, plus l'onglet d'avant. */
     if(![].some.call(bs,function(b){return b.getAttribute('data-v')===k;})){k='plus';if(![].some.call(bs,function(b){return b.getAttribute('data-v')==='plus';}))return;}
     [].forEach.call(bs,function(b){var on=b.getAttribute('data-v')===k;if(b.classList.contains('on')!==on)b.classList.toggle('on',on);if(on){if(b.getAttribute('aria-current')!=='page')b.setAttribute('aria-current','page');}else if(b.hasAttribute('aria-current'))b.removeAttribute('aria-current');});}catch(e){}}
-  document.addEventListener('pointerdown',function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('nav [data-v]');if(!b)return;
-    [].forEach.call(b.parentNode.querySelectorAll('[data-v]'),function(x){x.classList.toggle('on',x===b);});setTimeout(navSync,1500);},true);
+  /* C319 (V16-077, compte réel, ordinateur) : l'onglet restait sur l'écran précédent (Audit sur l'Accueil, Accueil sur les Alertes,
+     Structure sur Plus). Trois causes : la première « .view.on » de la page n'est pas forcément l'écran affiché ; une vue pouvait
+     allumer un onglet caché (« Actions ») ; go() et d'autres scripts rallument la barre après coup. Désormais : l'écran affiché
+     (VIEW, sinon la vue visible), les onglets visibles seulement (sinon Plus), et un recalage chaque seconde, sauf juste après
+     un toucher (l'onglet touché s'allume tout de suite). Cette déclaration remplace celle du dessus. */
+  var navTouche=0;
+  function navVue(){var V=null;try{V=typeof VIEW==='string'&&VIEW?document.getElementById('v-'+VIEW):null;}catch(e){}
+    if(V&&V.classList.contains('view')&&V.classList.contains('on'))return V;
+    var l=[].filter.call(document.querySelectorAll('.view.on'),function(x){return !x.classList.contains('preparing')&&x.offsetParent!==null;});return l.length?l[l.length-1]:null;}
+  function navSync(){try{if(Date.now()-navTouche<1500)return;var v=navVue();if(!v)return;var k=v.id.replace(/^v-/,''),tous=document.querySelectorAll('nav [data-v]'),
+    vis=[].filter.call(tous,function(b){return b.offsetParent!==null;});if(!vis.length)return;
+    if(!vis.some(function(b){return b.getAttribute('data-v')===k;}))k='plus';
+    [].forEach.call(tous,function(b){var on=b.offsetParent!==null&&b.getAttribute('data-v')===k;if(b.classList.contains('on')!==on)b.classList.toggle('on',on);if(on){if(b.getAttribute('aria-current')!=='page')b.setAttribute('aria-current','page');}else if(b.hasAttribute('aria-current'))b.removeAttribute('aria-current');});}catch(e){}}
+  setInterval(function(){if(!document.hidden)navSync();},1000);
+  document.addEventListener('pointerdown',function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('nav [data-v]');if(!b)return;navTouche=Date.now();
+    [].forEach.call(b.parentNode.querySelectorAll('[data-v]'),function(x){x.classList.toggle('on',x===b);});setTimeout(navSync,1600);},true);
   document.addEventListener('click',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('nav [data-v]'))setTimeout(navSync,0);},true);
   try{new MutationObserver(function(r){for(var i=0;i<r.length;i++){var t=r[i].target;if(t.classList&&t.classList.contains('view')){navSync();return;}}}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});}catch(e){}
 })();
@@ -23960,6 +23977,24 @@ var SECT=[
    d’établissement : FAMILLES[format].rn = [bas, médiane, meilleurs] (restauration traditionnelle sans type), comme Simuler.
    Remplace le 8 % fixe de C205. Ce n’est pas une moyenne officielle du secteur. */
 function verdictRepereRN(){ var F=famActive()||FAMILLES.trad,r=(F&&F.rn)||FAMILLES.trad.rn; return {repere:r[1],cible:r[2],bas:r[0],nom:fmtActif()||'',generic:!famActive()}; }
+/* C317 (V16-068, T2) : dans les courbes de Performances et de l'Accueil, l'étiquette du point choisi (« 72,4 % du minimum ») ne recouvre
+   jamais le libellé du minimum (« MINIMUM DU JOUR », « minimum »), quelle que soit la largeur des deux textes : ils sont mesurés à
+   l'écran (police, thème, taille) ; en cas de chevauchement, l'étiquette passe sous ou au-dessus du libellé, du côté libre du point.
+   Rien ne bouge quand rien ne se chevauche (0 changement au repos). */
+function verdictEcarterEtiquettes(svg){
+  try{
+    if(!svg||!svg.querySelector)return;var v=svg.querySelector('.vp-last-value'),ts=[].slice.call(svg.querySelectorAll('.vp-target-label,.jmin'));if(!v||!ts.length||!v.getBBox)return;
+    var I=function(a,b,m){m=m||0;return a.x<b.x+b.width+m&&b.x<a.x+a.width+m&&a.y<b.y+b.height+m&&b.y<a.y+a.height+m;},vb=v.getBBox();if(!(vb.width>0))return;
+    var hit=null;ts.forEach(function(t){var b=t.getBBox();if(!hit&&b.width>0&&I(vb,b,1))hit=b;});if(!hit)return;
+    var y0=Number(v.getAttribute('y'))||0,off=y0-vb.y,h=vb.height,pt=svg.querySelector('.vp-point-group.is-focus .vp-point')||svg.querySelector('.vp-point-group.is-focus circle'),pb=pt&&pt.getBBox?pt.getBBox():null;
+    var vbx=svg.viewBox&&svg.viewBox.baseVal,H=vbx&&vbx.height>0?vbx.height:Infinity;
+    var cands=[hit.y+hit.height+3,hit.y-3-h,hit.y+hit.height+3+(pb?pb.height+4:12)];
+    for(var i=0;i<cands.length;i++){var top=cands[i];if(top<0||top+h>H)continue;var box={x:vb.x,y:top,width:vb.width,height:h};if(I(box,hit,1))continue;if(pb&&I(box,pb,2))continue;v.setAttribute('y',(top+off).toFixed(1));return;}
+  }catch(e){}
+}
+(function(){try{if(typeof MutationObserver!=='function'||!document.documentElement)return;var en=false;
+  new MutationObserver(function(){if(en)return;en=true;requestAnimationFrame(function(){en=false;try{[].forEach.call(document.querySelectorAll('svg'),function(s){if(s.querySelector('.vp-last-value'))verdictEcarterEtiquettes(s);});}catch(e){}});}).observe(document.documentElement,{childList:true,subtree:true});
+}catch(e){}})();
 /* C309 (V16T1-N2, règle du chef) : une valeur à moins de 0,5 point de son repère s'écrit avec deux décimales (« 5,98 % » face à un repère
    de 6 %, jamais « 6 % » sous « 6 % ») ; sinon une décimale au plus. Une seule fonction : Structure (plafond de l'Indice) et l'Accueil (L2). */
 function fmtPresRepere(v,rep,u){v=Number(v);if(!isFinite(v))return '\u2014';var r=Number(rep),near=isFinite(r)&&Math.abs(v-r)<0.5,dec=near?2:1,L=typeof LOCALE==='string'&&LOCALE?LOCALE:'fr';
@@ -23974,7 +24009,9 @@ function verdictJoursRepondre(n){n=Math.round(Number(n));if(!(n>=1&&n<=7))return
 function verdictJoursQuestionHTML(){if(!verdictJoursInconnus())return '';var b='';for(var i=1;i<=7;i++)b+='<button type="button" class="btn sec" style="display:inline-flex;justify-content:center;width:auto;min-width:46px;margin:6px 6px 0 0" onclick="verdictJoursRepondre('+i+')">'+i+'</button>';
   return '<div class="card" id="vdJoursQ" data-c245="1" style="border-left:3px solid #f97316;margin:0 0 12px"><b>Combien de jours ouvrez-vous par semaine ?</b><p class="note" style="margin:6px 0 2px">Votre document comptable ne le dit pas. En attendant, le minimum du mois est provisoire : il s’ajustera à vos jours d’ouverture, comme celui de chaque jour. L’export de votre caisse le donne aussi.</p><div>'+b+'</div></div>';}
 function repereMS(){ var F=famActive()||FAMILLES.trad; return {sec:F.ms[1],sain:F.ms[0],haut:F.ms[2]}; }/* C309 (décision 5) : « trop lourd » = repère haut du format */
-function sectActif(){ var m=repereMS(),r=verdictRepereRN(); return SECT.map(function(s){ return s.k==="ms"?Object.assign({},s,{sec:m.sec,sain:m.sain}):(s.k==="rn"?Object.assign({},s,{sec:r.repere,sain:r.cible}):s); }); }/* C246 : la marge avant impôt suit aussi le repère du format */
+function sectActif(){ var m=repereMS(),r=verdictRepereRN(),F=null;try{F=famActive()||FAMILLES.trad;}catch(e){F=null;} return SECT.map(function(s){ if(s.k==="ms")return Object.assign({},s,{sec:m.sec,sain:m.sain}); if(s.k==="rn")return Object.assign({},s,{sec:r.repere,sain:r.cible});
+  /* C317 (V16-025) : contribution, coûts variables, charges fixes et chiffre minimum suivent aussi le type d'établissement, comme le cadre premium (052) et l'Audit */
+  if(F&&s.k==="mc"&&F.mc)return Object.assign({},s,{sec:F.mc[1],sain:F.mc[2]}); if(F&&s.k==="cv"&&F.cv)return Object.assign({},s,{sec:F.cv[1],sain:F.cv[0]}); if(F&&s.k==="acf"&&F.acf)return Object.assign({},s,{sec:F.acf[1]}); if(F&&s.k==="pm"&&F.pm)return Object.assign({},s,{sec:F.pm[1],sain:F.pm[0]}); return Object.assign({},s,{gen:true});/* sensibilité, CA par temps plein : repère général, dit tel quel */ }); }/* C246 : la marge avant impôt suit aussi le repère du format */
 var RADAR_SCALE={rn:[-5,15],mc:[40,75],cv:[60,30],ms:[55,25],pm:[110,60],sen:[-5,12],cas:[40,220]};
 function benchVals(R){
   var v=R.v,d=R.d;
@@ -24086,9 +24123,9 @@ function drawBench(R,el){
   var vigil=comps.filter(function(x){return !x.good;}).slice(0,3);
   h+='<div class="g2s">';
   h+='<div class="card"><h3 style="color:var(--green)">\u2714 Vos points solides</h3>'+
-    (forces.length?forces.map(function(f){ return '<div class="ind"><div class="n"><b>'+f.n+'</b><span>vous '+bfmt(f.cli,f.s.u)+' \u00b7 rep\u00e8re '+bfmt(f.s.sec,f.s.u)+'</span></div><div class="s" style="width:auto">'+deltaChip(f.cli,f.s.sec,f.s.inv,f.s.u,"")+'</div></div>'; }).join(""):'<p class="sub">Aucun indicateur au-dessus de son rep\u00e8re pour l\u2019instant.</p>')+'</div>';
+    (forces.length?forces.map(function(f){ return '<div class="ind"><div class="n"><b>'+f.n+'</b><span>vous '+bfmt(f.cli,f.s.u)+' \u00b7 '+(f.s.gen?'rep\u00e8re g\u00e9n\u00e9ral ':'rep\u00e8re ')+bfmt(f.s.sec,f.s.u)+'</span></div><div class="s" style="width:auto">'+deltaChip(f.cli,f.s.sec,f.s.inv,f.s.u,"")+'</div></div>'; }).join(""):'<p class="sub">Aucun indicateur au-dessus de son rep\u00e8re pour l\u2019instant.</p>')+'</div>';
   h+='<div class="card"><h3 style="color:var(--orange)">\u26a0 Vos points \u00e0 travailler</h3>'+
-    (vigil.length?vigil.map(function(f){ return '<div class="ind"><div class="n"><b>'+f.n+'</b><span>vous '+bfmt(f.cli,f.s.u)+' \u00b7 rep\u00e8re '+bfmt(f.s.sec,f.s.u)+'</span></div><div class="s" style="width:auto">'+deltaChip(f.cli,f.s.sec,f.s.inv,f.s.u,"")+'</div></div>'; }).join(""):'<p class="sub">Tous vos indicateurs atteignent leur rep\u00e8re Verdict.</p>')+'</div>';
+    (vigil.length?vigil.map(function(f){ return '<div class="ind"><div class="n"><b>'+f.n+'</b><span>vous '+bfmt(f.cli,f.s.u)+' \u00b7 '+(f.s.gen?'rep\u00e8re g\u00e9n\u00e9ral ':'rep\u00e8re ')+bfmt(f.s.sec,f.s.u)+'</span></div><div class="s" style="width:auto">'+deltaChip(f.cli,f.s.sec,f.s.inv,f.s.u,"")+'</div></div>'; }).join(""):'<p class="sub">Tous vos indicateurs atteignent leur rep\u00e8re Verdict.</p>')+'</div>';
   h+='</div>';
   /* ── 5. les 9 cartes détaillées ── */
   h+='<h2 class="sec">Les 9 rep\u00e8res de pilotage</h2>';
@@ -24102,7 +24139,7 @@ function drawBench(R,el){
     var good=s.inv?(cli<=s.sec):(cli>=s.sec);
     var meCol=(s.sain!=null&&(s.inv?cli<=s.sain:cli>=s.sain))?"var(--green)":(good?"var(--yellow)":"var(--orange)");
     h+='<div class="card"><h3>'+s.n+' <span class="r">'+s.d+'</span></h3>'+
-      bar(cli,meCol,"Vous",true)+bar(s.sec,"#5f6873","Rep\u00e8re")+
+      bar(cli,meCol,"Vous",true)+bar(s.sec,"#5f6873",s.gen?"Rep\u00e8re g\u00e9n\u00e9ral":"Rep\u00e8re")+
       (s.sain!=null?bar(s.sain,"rgba(34,197,94,.8)","Saine"):"")+
       '<div style="margin-top:7px">'+deltaChip(cli,s.sec,s.inv,s.u,"vs rep\u00e8re")+(s.sain!=null?" "+deltaChip(cli,s.sain,s.inv,s.u,"vs zone cible"):"")+'</div></div>';
   });
