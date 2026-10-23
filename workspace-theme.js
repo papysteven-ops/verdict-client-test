@@ -103,12 +103,18 @@
       var tint=h.map(function(v){return Math.round(255-(255-v)*0.12);}),edge=h.map(function(v){return Math.round(v*0.72);});
       return {tint:'rgb('+tint.join(',')+')',edge:'rgb('+edge.join(',')+')'};}
     return bc.length?{keepBorder:true}:null;}
+  function vdlVoile(win,e){var cs=win.getComputedStyle(e);if(cs.position!=='fixed'||(cs.backgroundImage&&cs.backgroundImage!=='none'))return false;
+    var m=(cs.backgroundColor||'').match(/rgba\(([^)]+)\)/);if(!m||!(+m[1].split(',')[3]<1))return false;
+    var r=e.getBoundingClientRect();return r.width>=win.innerWidth*0.9&&r.height>=win.innerHeight*0.9;}
   var VDL_SKIP=/^(SCRIPT|STYLE|NOSCRIPT|OPTION|TEMPLATE|SVG|PATH|IMG|VIDEO|CANVAS|IFRAME|BR|HEAD|META|LINK)$/i;
   /* Lecture seule : décide sans rien écrire (évite les recalculs de style en chaîne). Renvoie [élément, type, couleur]. */
   function vdlDecide(doc,win,e,vh,out){
     if(VDL_SKIP.test(e.tagName))return;
     /* V2 : l’écran d’ouverture (anneau VERDICT / score) garde son fond sombre dans les deux thèmes. */
     if(e.id==='splash'||e.id==='verdictIntroHandoff'||(e.closest&&e.closest('#splash,#verdictIntroHandoff,#vr16,#vr16-cache,#vd-theme-btn,#maj18,#nv53,#vd-plus,.vd-cta,.vd-cta-hint,#decReveal,.dec-scene,.av31-full>summary,#decTotalBar,.vd-pas,#vdRecit,#vdBiblio,#vdLecteur,#vdRecitCarte,#vdOffre,#vdPlanBadge,#vx41,#vx41-feuille,#refSh,#mDemoIntent'))){if(e.__vdl)vdlClear(e);return;}
+    /* C302 (V15-097) : un voile plein écran translucide (derrière la cloche, une fenêtre) reste un voile. Pris pour une
+       surface sombre, il était repeint en blanc opaque et cachait toute l'appli derrière le panneau des notifications. */
+    if(e.id==='notification-layer'||vdlVoile(win,e)){if(e.__vdl)vdlClear(e);return;}
     /* V2-A8 : un onglet qui n’est plus sélectionné perd son fond « sélectionné » (avant : « Indice de sérénité » restait allumé). */
     if((e.__vdl==='sel'&&!vdlSelected(e))||(e.__vdl==='btn'&&vdlSelected(e)))vdlClear(e);
     if(e.__vdl&&e.__vdlVals){for(var pk in e.__vdlVals){if(e.style.getPropertyValue(pk)!==e.__vdlVals[pk]||e.style.getPropertyPriority(pk)!=='important'){vdlClear(e);e.__vdlVals=null;break;}}}

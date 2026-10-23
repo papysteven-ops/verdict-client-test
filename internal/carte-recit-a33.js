@@ -60,7 +60,7 @@
   function tableaux(D) {
     var t = [], e = D.etat, pret = !!(e && e.ready && e.value != null), col = pret ? (e.color || teinte(e.value)) : '#94a3b8';
     /* 1 · Indice Carte */
-    t.push('<section class="cr-card cr-c1" data-cr="1"><span class="cr-k">1 · Votre carte</span><h2>' + (pret ? (e.value >= 75 ? 'Une carte qui tient ses marges' : e.value >= 60 ? 'Une carte correcte, à affiner' : e.value >= 31 ? 'Une carte fragile' : 'Une carte qui perd de l’argent') : 'Indice Carte en construction') + '</h2>' +
+    t.push('<section class="cr-card cr-c1" data-cr="1"><span class="cr-k">1 · Votre carte</span><h2>' + (pret ? (e.value >= 75 ? 'Une carte qui tient ses marges' : e.value >= 60 ? 'Une carte correcte, à affiner' : e.value >= 31 ? 'Une carte fragile' : 'Une carte loin de ses objectifs de marge') : 'Indice Carte en construction') + '</h2>' +
       '<div class="cr-dial">' + anneau(pret ? e.value : Math.round(D.couv), col) + '<div class="cr-dial-n"><b data-cr-count="' + (pret ? e.value : Math.round(D.couv)) + '">' + (pret ? e.value : Math.round(D.couv)) + '</b><small>' + (pret ? '/100' : '%') + '</small></div></div>' +
       '<p class="cr-big"><b>' + pct1(D.marge) + '</b><small>de vos ventes vous restent une fois les produits payés · objectif ' + pct1(D.obj) + '</small></p>' +
       '<p class="cr-p">' + (pret ? 'Indice Carte, calculé avec vos fiches et vos ventes.' : D.st.fiables + ' plats exploitables sur ' + D.st.actifs + ' · l’indice s’affiche à 100 % des fiches et un mois complet.') + '</p><span class="cr-suite">Où va chaque 100 € ↓</span></section>');
@@ -68,7 +68,7 @@
     t.push('<section class="cr-card cr-c2" data-cr="2"><span class="cr-k">2 · Sur chaque 100 € de carte</span><h2>Ce que vos plats gardent</h2>' +
       '<div class="cr-stack"><i style="--w:' + D.theo.toFixed(2) + '%;--c:#f59e0b"><span><small>Matière</small>' + pct1(D.theo).replace('\u00a0%', '\u00a0€') + '</span></i>' + (D.autres > 0.05 ? '<i style="--w:' + D.autres.toFixed(2) + '%;--c:#c084fc"><span><small>Plateformes, emballages</small>' + pct1(D.autres).replace('\u00a0%', '\u00a0€') + '</span></i>' : '') + '<i class="cr-res" style="--w:' + D.marge.toFixed(2) + '%;--c:#22c55e"><span><small>Gardés</small>' + pct1(D.marge).replace('\u00a0%', '\u00a0€') + '</span></i></div>' +
       '<p class="cr-big"><b data-cr-count="' + (Math.round(D.marge * 10) / 10) + '" data-cr-eur data-cr-dec>' + eur1(D.marge) + '</b><small>gardés sur 100 € encaissés, avant l’équipe, le loyer et l’impôt</small></p>' +
-      '<p class="cr-p">Matière théorique des fiches : ' + pct1(D.theo) + (D.apc && D.apc.ecart != null && D.apc.theoNour != null ? ' · nourriture : ' + pct1(D.apc.theoNour) + ' sur les fiches, ' + pct1(D.apc.theoNour + D.apc.ecart) + ' achetée (écart ' + (D.apc.ecart > 0 ? '+' : '') + pct1(D.apc.ecart).replace('\u00a0%', '\u00a0pt') + ')' : '') + '.</p><span class="cr-suite">Vos plats vedettes ↓</span></section>');
+      '<p class="cr-p">Matière théorique des fiches : ' + pct1(D.theo) + /* C301 (V15-003) Carte : le même écart que l'Audit */ (function () { var E = null; try { E = typeof w.VerdictEcartMatiere === 'function' ? w.VerdictEcartMatiere() : null; } catch (e) {} return E ? ' · ' + E.perimetre + ' : ' + pct1(E.theo) + ' sur les fiches, ' + pct1(E.reel) + ' achetée (' + esc(E.periode) + ', écart ' + (E.pts > 0 ? '+' : '') + pct1(E.pts).replace('\u00a0%', '\u00a0pt') + ')' : ''; })() + '.</p><span class="cr-suite">Vos plats vedettes ↓</span></section>');
     /* 3 · Vedettes */
     var best = (D.apc && D.apc.best || []).slice(0, 3), max = Math.max.apply(null, [1].concat(best.map(function (b) { return num(b.contrib); }))), somme = best.reduce(function (s, b) { return s + num(b.contrib); }, 0);
     if (best.length) t.push('<section class="cr-card cr-c3" data-cr="3"><span class="cr-k">3 · Vos plats vedettes</span><h2>Ceux qui font vivre la maison</h2><ol class="cr-bars">' +
@@ -201,3 +201,59 @@
   w.VerdictRecitCarte = { monter: monter, donnees: donnees };
   (function boot(n) { if (brancher()) { setTimeout(monter, 0); return; } if (n > 0) setTimeout(function () { boot(n - 1); }, 300); })(60);
 })();
+
+/* C301 (V15-050) — L'Indice Carte juge la carte, pas la structure. Avant : la formule de l'Indice de sérénité (équipe,
+   loyer, amortissements) en remplaçant seulement la matière par celle des fiches ; il valait l'Indice de sérénité dès que la
+   carte reproduisait le CA (12 modèles sur 16) et disait « une carte qui perd de l'argent » quand c'était la structure.
+   Maintenant (toutes les fiches vendues restent un prérequis) :
+     · 60 points : la marge de la carte (pondérée par les ventes) face à l'objectif des plats — 60 à l'objectif ou au-dessus,
+       0 à 20 points sous l'objectif, linéaire entre les deux ;
+     · 40 points : la part des ventes (en euros) faite par des plats qui atteignent leur propre objectif.
+   Les autres champs (période, disponibilité, lecture économique) restent ceux du moteur. */
+(function (w) {
+  'use strict';
+  function n(x) { x = Number(x); return isFinite(x) ? x : 0; }
+  function noter(st) {
+    var D = w.DB || {}, tot = 0, ok = 0, objW = 0;
+    (D.plats || []).forEach(function (p) {
+      if (!p || p.cpArchived) return; var v = n(p.vol); if (!(v > 0)) return;
+      var k = null; try { k = w.platCalc(p); } catch (e) {} if (!k || !k.complete) return;
+      var poids = v * n(k.htPond || k.ht), obj = n(k.objPond); if (!(poids > 0)) return;
+      tot += poids; objW += poids * obj; if (n(k.contribPct) >= obj - 1e-9) ok += poids;
+    });
+    if (!(tot > 0)) return null;
+    var obj = objW / tot, marge = n(st && st.margePond), pm = 60 * Math.max(0, Math.min(1, (marge - (obj - 20)) / 20)), pv = 40 * ok / tot;
+    return { objectif: obj, marge: marge, ventesOk: ok / tot * 100, margePoints: Math.round(pm), ventesPoints: Math.round(pv), total: Math.round(pm + pv) };
+  }
+  var COPIE = {
+    fr: { independent: 'Note de la carte seule : les marges de vos plats face à vos objectifs', formulaText: 'Marge de la carte face à votre objectif : {m} / 60 points · part des ventes faite par des plats au-dessus de leur objectif : {c} / 40 points · total {t} / 100. Toutes les fiches vendues sont un prérequis, pas des points bonus.', limit: 'La note juge la carte seule, avec les recettes et les ventes renseignées. Le loyer, l’équipe et les autres charges n’y entrent pas : ils sont dans l’Indice de sérénité.' },
+    en: { independent: 'Score of the menu alone: your dishes’ margins against your targets', formulaText: 'Menu margin against your target: {m} / 60 points · share of sales from dishes above their target: {c} / 40 points · total {t} / 100. Every dish sold must have its recipe: a prerequisite, not bonus points.', limit: 'This score judges the menu alone, with the recipes and sales entered. Rent, staff and other costs are not in it: they are in the Serenity index.' },
+    es: { independent: 'Nota de la carta sola: los márgenes de sus platos frente a sus objetivos', formulaText: 'Margen de la carta frente a su objetivo: {m} / 60 puntos · parte de las ventas de platos por encima de su objetivo: {c} / 40 puntos · total {t} / 100. Todas las fichas vendidas son un requisito, no puntos extra.', limit: 'La nota juzga solo la carta, con las recetas y las ventas indicadas. El alquiler, el equipo y los demás gastos no entran: están en el Índice de serenidad.' },
+    it: { independent: 'Voto del solo menu: i margini dei suoi piatti rispetto agli obiettivi', formulaText: 'Margine del menu rispetto all’obiettivo: {m} / 60 punti · quota delle vendite di piatti sopra il loro obiettivo: {c} / 40 punti · totale {t} / 100. Tutte le schede vendute sono un prerequisito, non punti bonus.', limit: 'Il voto giudica solo il menu, con le ricette e le vendite inserite. Affitto, personale e altri costi non vi entrano: sono nell’Indice di serenità.' },
+    de: { independent: 'Bewertung nur der Karte: die Margen Ihrer Gerichte gegenüber Ihren Zielen', formulaText: 'Marge der Karte gegenüber Ihrem Ziel: {m} / 60 Punkte · Umsatzanteil der Gerichte über ihrem Ziel: {c} / 40 Punkte · gesamt {t} / 100. Alle verkauften Rezepturen sind Voraussetzung, keine Bonuspunkte.', limit: 'Die Bewertung beurteilt nur die Karte, mit den eingegebenen Rezepturen und Verkäufen. Miete, Personal und andere Kosten fließen nicht ein: Sie stehen im Gelassenheitsindex.' },
+    nl: { independent: 'Score van de kaart alleen: de marges van uw gerechten tegenover uw doelen', formulaText: 'Marge van de kaart tegenover uw doel: {m} / 60 punten · deel van de omzet uit gerechten boven hun doel: {c} / 40 punten · totaal {t} / 100. Alle verkochte fiches zijn een voorwaarde, geen bonuspunten.', limit: 'De score beoordeelt alleen de kaart, met de ingevoerde recepten en verkopen. Huur, team en andere kosten tellen niet mee: die staan in de Rustindex.' },
+    pt: { independent: 'Nota só da carta: as margens dos seus pratos face aos seus objetivos', formulaText: 'Margem da carta face ao seu objetivo: {m} / 60 pontos · parte das vendas de pratos acima do seu objetivo: {c} / 40 pontos · total {t} / 100. Todas as fichas vendidas são um pré-requisito, não pontos extra.', limit: 'A nota julga só a carta, com as receitas e as vendas indicadas. Renda, equipa e outros custos não entram: estão no Índice de serenidade.' }
+  };
+  function brancher() {
+    var sc = w.scoreCarte, cc = w.cardScoreCopy;
+    if (typeof sc !== 'function' || typeof cc !== 'function') return false;
+    if (!sc.__c301) {
+      var nsc = function (st) {
+        var r = sc.apply(this, arguments);
+        try { if (r && r.available) { var N = noter(st); if (N) { r.c301 = N; r.total = N.total; r.contributionPoints = N.margePoints; r.coveragePoints = N.ventesPoints; r.perfPct = Math.round(N.ventesOk); r.contributionPct = N.marge; } } } catch (e) {}
+        return r;
+      };
+      nsc.__c301 = true; w.scoreCarte = nsc;
+    }
+    if (!cc.__c301) {
+      var ncc = function () {
+        var C = cc.apply(this, arguments);
+        try { var l = String(w.LOCALE || document.documentElement.lang || 'fr').slice(0, 2), A = COPIE[l] || COPIE.fr, o = {}, k; for (k in C) o[k] = C[k]; for (k in A) o[k] = A[k]; return o; } catch (e) { return C; }
+      };
+      ncc.__c301 = true; w.cardScoreCopy = ncc;
+    }
+    return true;
+  }
+  if (!brancher() && typeof w.setInterval === 'function') { var k = 0, iv = w.setInterval(function () { if (brancher() || ++k > 40) w.clearInterval(iv); }, 250); }
+  w.VerdictIndiceCarte = { noter: noter };
+})(window);

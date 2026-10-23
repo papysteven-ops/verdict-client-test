@@ -8,6 +8,7 @@
   var w = window, doc = document;
   if (doc.getElementById('vd-plus-css')) return;
   var ICONES = {
+    afaire: '<path d="M9 11l3 3 8-8"/><path d="M20 12v6a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h9"/>',
     equipe: '<path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3.5"/><path d="M22 19v-1a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
     budget: '<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="m9 15 2 2 4-4"/>',
     caisse: '<path d="M7 7h13l-3-3"/><path d="M17 17H4l3 3"/>',
@@ -23,8 +24,12 @@
   function demo() { try { return typeof w.getMode === 'function' && w.getMode() === 'demo'; } catch (e) { return false; } }
   function modeleDemo() { try { return !w.VERDICT_TEST_SESSION && typeof w.modeleDansDemonstration === 'function' && !!w.modeleDansDemonstration(); } catch (e) { return false; } }
   var portail = typeof w.VERDICT_TEAM_PORTAL_URL === 'string' && !!w.VERDICT_TEAM_PORTAL_URL;
+  function pilotage() { try { return typeof w.verdictNiveau === 'function' && w.verdictNiveau() === 'pilotage'; } catch (e) { return false; } }
   var ACTIONS = {
-    equipe: function () { w.go('planning'); },
+    /* C305 (V15-101) : en Pilotage, l'équipe (à l'année et au mois) est comprise : on l'ouvre directement, au lieu du cadenas
+       Pro « Coût par service ». « À faire » et les Alertes, compris dans Pilotage, ont enfin un chemin visible. */
+    equipe: function () { w.go(pilotage() ? 'sal' : 'planning'); },
+    afaire: function () { w.go('priorities'); },
     budget: function () { w.go('obj'); },
     caisse: function () { if (w.VerdictFluxV451 && w.VerdictFluxV451.openConnection) w.VerdictFluxV451.openConnection(); else w.go('in'); },
     importer: function () { w.go('in'); },
@@ -35,7 +40,7 @@
   };
   function groupes() {
     var g = [
-      { t: 'Piloter', l: [['equipe', 'Équipe & services', 'Coût humain, planning et rentabilité des services'], ['budget', 'Budget de ventes', 'Objectifs datés, comparés à vos ventes réelles']] },
+      { t: 'Piloter', l: [['afaire', 'À faire et alertes', 'Ce qui compte aujourd’hui, et ce qui demande votre attention'], ['equipe', 'Équipe & services', pilotage() ? 'Coût de l’équipe, à l’année et au mois' : 'Coût humain, planning et rentabilité des services'], ['budget', 'Budget de ventes', 'Objectifs datés, comparés à vos ventes réelles']] },
       { t: 'Données', l: [['caisse', 'Connexion de la caisse', 'Bientôt : vos ventes arriveront seules, sans saisie'], ['importer', 'Importer mes chiffres', 'Document comptable, saisie ou mise à jour']] },
       /* C210 (V35) : en démonstration, ce bouton ouvre le choix des modèles fictifs (openEtabs → openModeles) : le dire. */
       { t: 'Établissement & compte', l: [['etabs', 'Établissements', modeleDemo() ? 'Démonstration : changer de modèle d’établissement' : 'Ajouter, renommer ou changer d’établissement']] }
@@ -62,7 +67,8 @@
   }
   var css = doc.createElement('style'); css.id = 'vd-plus-css';
   css.textContent =
-    '#v-plus>*:not(#vd-plus),html body section#v-plus>div#menuGrid,html body section#v-plus>#menuGrid.menugrid.v45-plus-pilotage{display:none!important}' +
+    /* C302 (V15-057) : le guide de la démonstration (#demoInline, étape 30/30 « Donner accès uniquement à Inventaire ») reste visible sur Plus. */
+    '#v-plus>*:not(#vd-plus):not(#demoInline),html body section#v-plus>div#menuGrid,html body section#v-plus>#menuGrid.menugrid.v45-plus-pilotage{display:none!important}' +
     '#vd-plus{--vp-bg:transparent;--vp-card:#ffffff;--vp-line:#e7ebf0;--vp-txt:#0f172a;--vp-sub:#64748b;--vp-tile:#eef6f1;--vp-ic:#15803d;--vp-input:#f4f6f9;--vp-shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.06);max-width:720px;margin:0 auto;padding:6px 2px 120px;color:var(--vp-txt)}' +
     'html.vd-workspace-dark #vd-plus{--vp-card:#11161d;--vp-line:#222b36;--vp-txt:#f1f5f9;--vp-sub:#94a3b8;--vp-tile:#14251c;--vp-ic:#4ade80;--vp-input:#0b0f14;--vp-shadow:0 1px 0 rgba(255,255,255,.03),0 10px 30px rgba(0,0,0,.45)}' +
     '#vd-plus .vp-head{padding:8px 4px 18px}#vd-plus .vp-kicker{font:700 12px/1 -apple-system,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--vp-ic)}' +

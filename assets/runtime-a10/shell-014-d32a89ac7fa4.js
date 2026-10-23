@@ -273,8 +273,11 @@
 /* R199 point 47 (WCAG 3.1.1) : la langue du document hote suit celle du module affiche. Sans effet hors coque (pas de frame-verdict). */
 ;(function(){try{
   var fv=document.getElementById('frame-verdict');if(!fv)return;
-  function sync(){try{var d=fv.contentDocument,l=d&&d.documentElement&&d.documentElement.lang;if(l&&/^[a-z]{2}/i.test(l)&&document.documentElement.lang!==l)document.documentElement.lang=l;}catch(e){}}
+  /* C302 (V15-064) : Pilotage absent (Inventaire gratuit, lien d'équipe) : la coque prend la langue choisie sur cet appareil
+     au lieu de rester en français (« En ligne », « Inventaire ») à côté d'un Inventaire en allemand. */
+  function choisie(){try{var l=String(localStorage.getItem('verdict_locale')||'').replace(/"/g,'').slice(0,2).toLowerCase();return /^(fr|en|es|it|de|nl|pt)$/.test(l)?l:'';}catch(e){return '';}}
+  function sync(){try{var d=fv.getAttribute('src')&&fv.contentDocument,l=d&&d.documentElement&&d.documentElement.lang;if(!(l&&/^[a-z]{2}/i.test(l)))l=choisie();if(l&&document.documentElement.lang!==l)document.documentElement.lang=l;}catch(e){}}
   function attach(){try{var d=fv.contentDocument,r=d&&d.documentElement;if(!r||fv.__lgObs===r)return;fv.__lgObs=r;new MutationObserver(sync).observe(r,{attributes:true,attributeFilter:['lang']});sync();}catch(e){}}
-  fv.addEventListener('load',attach);attach();window.setTimeout(attach,1500);window.setTimeout(attach,4000);
+  fv.addEventListener('load',attach);attach();sync();window.setTimeout(attach,1500);window.setTimeout(attach,4000);window.setTimeout(sync,1500);
 }catch(e){}})();
 

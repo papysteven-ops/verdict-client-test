@@ -519,7 +519,8 @@
        minuterie et aucune animation de démarrage rejouée. */
     if(waitForReady){
       state.pendingModuleSwitch={module:module,options:Object.assign({},options),historyMode:historyMode};
-      setLoading(true,'Ouverture d’Inventaire…');syncModuleTabs();return true;
+      /* C302 (V15-066) : le libellé suit la destination (il disait « Inventaire » en allant vers Pilotage). */
+      setLoading(true,module==='inventory'?'Ouverture d’Inventaire…':(state.profile==='carte'?'Ouverture de Carte…':'Ouverture de Pilotage…'));syncModuleTabs();return true;
     }
     state.pendingModuleSwitch=null;
     state.module=module;

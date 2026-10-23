@@ -197,7 +197,8 @@
     var vv=global.visualViewport,offset=vv&&Number.isFinite(vv.offsetTop)?vv.offsetTop:0;
     var height=vv&&Number.isFinite(vv.height)?vv.height:(global.innerHeight||doc.documentElement.clientHeight||0);
     var top=offset+10,bottom=offset+height-10,nav=doc.querySelector('nav');
-    if(nav){var nr=nav.getBoundingClientRect();if(nr.height>0&&nr.top>0)bottom=Math.min(bottom,nr.top-10);}
+    /* C302 (V15-057) : seule une barre placée dans le bas de l'écran limite la fiche ; sur ordinateur, le nav de l'Inventaire est en haut. */
+    if(nav){var nr=nav.getBoundingClientRect();if(nr.height>0&&nr.top>offset+height/2)bottom=Math.min(bottom,nr.top-10);}
     return {top:top,bottom:bottom,height:Math.max(0,bottom-top)};
   }
 

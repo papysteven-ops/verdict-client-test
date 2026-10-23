@@ -234,7 +234,9 @@
     (lignes || []).forEach(function (l) {
       if (!(l.qte > 0) || !(l.pu > 0)) return;
       var nom = l.art || l.libelle || '', cible = null;
-      if (l.produitInv) cible = produitParId(l.produitInv);
+      var ingCarte = /^ing:/.test(String(l.produitInv || '')) ? String(l.produitInv).slice(4) : '';
+      if (ingCarte) { cible = produitParNom(ingCarte); if (!cible) { var u0 = uniteProduit(l), b0 = prixBase(l), pr0 = b0 ? prixPourProduit({ unit: u0 }, b0) : null; cible = creerProduit({ name: ingCarte, sup: l.four, unit: u0, price: pr0 && pr0.prix, priceDate: String(l.d || l.dateFacture || '').slice(0, 10), origine: 'facture' }); if (cible) { cible.p.ingredient = ingCarte; res.ajoutes.push(cible.p.name); journal(D, cible, null, cible.p.price, l); } return; } }
+      else if (l.produitInv) cible = produitParId(l.produitInv);
       if (!cible && l.produitInv !== '__nouveau__') cible = produitParNom(nom) || (l.nomCatalogue ? produitParNom(l.nomCatalogue) : null);
       var b = prixBase(l);
       if (!cible) {
@@ -293,11 +295,16 @@
 
   /* ── W64 · carte Factures propre à l'Inventaire, quand Pilotage n'est pas là (Inventaire gratuit) ── */
   var EN_COURS = null, RESULTAT = '';
-  function catalogueInv() { return rows().map(function (x) { return { id: x.p.id, nom: x.p.name }; }); }
+  /* C302 (V15-115) : les ingrédients de la Carte sont proposés aussi (« Entrecote VBF » relié à « Entrecôte de bœuf » au lieu d'un doublon). */
+  function ingredientsCarte() { var deja = {}; rows().forEach(function (x) { deja[norm(x.p.name)] = 1; if (x.p.ingredient) deja[norm(x.p.ingredient)] = 1; }); var out = []; try { var F = verdictF(); if (F && !carteExemple(F)) (F.DB.ing || []).forEach(function (i) { if (i && i.nom && !deja[norm(i.nom)] && !NON_COMPTABLE.test(i.nom)) { deja[norm(i.nom)] = 1; out.push({ id: 'ing:' + i.nom, nom: i.nom }); } }); } catch (e) {} return out; }
+  function catalogueInv() { return rows().map(function (x) { return { id: x.p.id, nom: x.p.name }; }).concat(ingredientsCarte()); }
   function analyser(texte, nom) {
     var X = w.VerdictFacturesXML, D = DBi(); if (!X) return;
     var hist = (D.facturesInventaire || []);
-    var f = X.analyser(texte, { catalogue: catalogueInv(), memoire: D.factureMemoireInv || {}, dejaImportees: hist.map(function (h) { return h.empreinte; }), historiqueDocs: hist });
+    var ici = ''; try { ici = String(w.siteName(D.site) || '').replace(/&[a-z]+;/gi, ' ').trim(); } catch (e) {}
+    var f = X.analyser(texte, { catalogue: catalogueInv(), memoire: D.factureMemoireInv || {}, dejaImportees: hist.map(function (h) { return h.empreinte; }), historiqueDocs: hist, etablissement: /^mon (e|é)tablissement$/i.test(ici) ? '' : ici });
+    /* C302 (V15-075, V15-115) : destinataire contrôlé — adressée à un autre établissement du compte, elle est bloquée ici ; nom inconnu, il faut confirmer. */
+    try { f.__ici = ici; f.__autre = ''; if (f.acheteur && (f.controles || []).some(function (c) { return !c.ok && c.code === 'etablissement-destinataire'; })) (D.siteList || []).forEach(function (s) { if (s !== D.site && !f.__autre && norm(w.siteName(s)) === norm(f.acheteur)) f.__autre = String(w.siteName(s)); }); } catch (e) {}
     f.fichier = nom || null; EN_COURS = f; RESULTAT = '';
   }
   w.invFacLire = function (inp) {
@@ -320,13 +327,19 @@
   w.invFacValider = function () {
     var f = EN_COURS, D = DBi(); if (!f || !w.VerdictFacturesXML || !D) return;
     if (f.doublon) { RESULTAT = 'Cette facture a déjà été importée : rien n’a changé.'; EN_COURS = null; redessiner(); return; }
+    if (f.doublonProbable) { var dp = doc.querySelector('#facturesInv .fi-dp-ok'); if (!dp || !dp.checked) { RESULTAT = 'Rien n’a été importé : cette facture ressemble à une facture déjà importée. Cochez « Ce n’est pas un doublon » pour l’importer quand même.'; redessiner(); return; } f = Object.assign({}, f, { statut: 'a-valider', doublonProbable: null }); }
+    var dest = (f.controles || []).some(function (c) { return !c.ok && c.code === 'etablissement-destinataire'; });
+    if (dest && f.__autre) { RESULTAT = 'Rien n’a été importé : cette facture est pour « ' + f.__autre + ' ».'; redessiner(); return; }
+    if (dest) { var ok = doc.querySelector('#facturesInv .fi-dest-ok'); if (!ok || !ok.checked) { RESULTAT = 'Confirmez d’abord que cette facture concerne « ' + (f.__ici || 'cet établissement') + ' ».'; redessiner(); return; } }
     var v = {}, choix = {};
     [].forEach.call(doc.querySelectorAll('#facturesInv .fi-l'), function (row) { var id = row.getAttribute('data-ligne'), ck = row.querySelector('.fi-ok'), sel = row.querySelector('.fi-prod'); var val = sel ? sel.value : ''; choix[id] = val; v[id] = { valide: !!(ck && ck.checked) && val !== '__ignorer__', produitId: val ? val : null }; });
     var A = w.VerdictFacturesXML.versAchats(f, v), lignes = A.lignes.map(function (a) { var l = (f.lignes || []).filter(function (x, i) { return (x.id || String(i + 1)) === a.ligne; })[0] || {}, c = choix[a.ligne]; return { art: l.libelle || a.art, produitInv: c, qte: a.qte, pu: a.pu, unite: a.unite, cond: a.cond, d: a.d, dateFacture: a.dateFacture, four: a.four, facture: a.facture }; });
     var res = appliquerLignes(lignes, { creer: false });
     D.factureMemoireInv = w.VerdictFacturesXML.memoriser(D.factureMemoireInv || {}, f, v);
     D.facturesInventaire = (D.facturesInventaire || []).filter(function (h) { return h.empreinte !== f.empreinte; });
-    D.facturesInventaire.push({ empreinte: f.empreinte, fournisseur: f.fournisseur, numero: f.numero, date: f.date, ttc: f.totaux && f.totaux.ttc, lignes: lignes.length, fichier: f.fichier, importeLe: new Date().toISOString(), achats: A.lignes });
+    D.facturesInventaire.push({ site: D.site, empreinte: f.empreinte, fournisseur: f.fournisseur, numero: f.numero, date: f.date, ht: f.totaux && f.totaux.ht, ttc: f.totaux && f.totaux.ttc, lignes: lignes.length, fichier: f.fichier, importeLe: new Date().toISOString(), achats: A.lignes });
+    /* C302 : avec Pilotage sur le même établissement, les achats validés y entrent aussi (comme l'ancienne carte de Pilotage). */
+    try { var F = verdictF(); if (F && F.DB && F.VerdictFacturesXML && A.lignes.length && F.DB.inventoryLink && String(F.DB.inventoryLink.siteId || '') === String(D.site)) { var noms = {}; lignes.forEach(function (x) { var c = x.produitInv && !/^(__|ing:)/.test(x.produitInv) ? produitParId(x.produitInv) : null; noms[x.facture + '|' + x.art] = c ? c.p.name : (/^ing:/.test(String(x.produitInv || '')) ? String(x.produitInv).slice(4) : x.art); }); var pa = A.lignes.map(function (a) { var l = (f.lignes || []).filter(function (x, i) { return (x.id || String(i + 1)) === a.ligne; })[0] || {}, nm = noms[a.facture + '|' + (l.libelle || a.art)] || a.art; return Object.assign({}, a, { art: nm, produitId: typeof F.achCle === 'function' ? F.achCle(nm) : nm }); }); var M = F.VerdictFacturesXML.fusionnerAchats(F.DB.achats || [], pa, f.versionCorrigee && f.versionCorrigee.remplace); F.DB.achats = M.achats; if (typeof F.save === 'function') F.save('facture-inventaire'); } } catch (e) {}
     if (D.facturesInventaire.length > 120) D.facturesInventaire = D.facturesInventaire.slice(-120);
     sauver(); EN_COURS = null; RESULTAT = texteResultat(res) || 'Facture enregistrée : aucune ligne validée.';
     try { w.toast('Facture enregistrée ✓'); } catch (e) {}
@@ -336,6 +349,7 @@
   function selectProduit(l, i) {
     var c = l.correspondance || {}, def = c.statut === 'exact' ? c.produitId : (c.statut === 'probable' ? c.proposition : '__nouveau__');
     var opts = rows().map(function (x) { return '<option value="' + esc(x.p.id) + '"' + (x.p.id === def ? ' selected' : '') + '>' + esc(x.p.name) + (x.p.unit ? ' · ' + esc(x.p.unit) : '') + '</option>'; }).join('');
+    var ing = ingredientsCarte(); if (ing.length) opts += '<optgroup label="Ingrédients de votre Carte">' + ing.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === def ? ' selected' : '') + '>' + esc(x.nom) + '</option>'; }).join('') + '</optgroup>';
     return '<select class="fi-prod" style="min-height:44px;width:100%;font:inherit;font-size:15px;padding:8px 10px;border-radius:12px;border:1px solid var(--line,#cbd5dc);background:var(--card,#fff);color:inherit" aria-label="Produit de l’Inventaire pour ' + esc(l.libelle) + '"><option value="__nouveau__"' + (def === '__nouveau__' ? ' selected' : '') + '>➕ Nouveau produit « ' + esc(l.libelle) + ' »</option>' + opts + '<option value="__ignorer__">Ignorer cette ligne</option></select>' + (c.statut === 'probable' ? '<small class="fi-a">proposition à confirmer</small>' : '');
   }
   function carteNative() {
@@ -348,18 +362,28 @@
       else {
         h += '<p style="margin:0 0 8px"><b>' + esc(f.fournisseur || 'Fournisseur') + '</b> · n° ' + esc(f.numero || '—') + ' · ' + esc(jj(f.date)) + (f.totaux && f.totaux.ht != null ? ' · ' + nbFr(f.totaux.ht) + ' € HT' : '') + '</p>';
         if (f.doublon) h += '<p class="sub" style="color:var(--orange)">Cette facture a déjà été importée.</p>';
+        /* C302 : un doublon probable (même fournisseur, même montant, à quelques jours) n'était jamais dit : toutes ses lignes étaient écartées en silence. */
+        if (f.doublonProbable && !f.doublon) h += '<label class="fi-dp" style="display:flex;gap:8px;align-items:flex-start;margin:0 0 8px;color:var(--orange)"><input type="checkbox" class="fi-dp-ok"><span><b>Très proche d’une facture déjà importée</b> (même fournisseur, même montant, à quelques jours). Ce n’est pas un doublon : l’importer quand même.</span></label>';
+        var dest = (f.controles || []).some(function (c) { return !c.ok && c.code === 'etablissement-destinataire'; });
+        if (dest && f.__autre) h += '<p class="sub fi-dest" style="color:var(--orange)"><b>Facture adressée à « ' + esc(f.__autre) + ' »</b>, pas à « ' + esc(f.__ici) + ' ». Ouvrez l’Inventaire de « ' + esc(f.__autre) + ' » pour l’importer.</p>';
+        else if (dest) h += '<label class="fi-dest" style="display:flex;gap:8px;align-items:flex-start;margin:0 0 8px;color:var(--orange)"><input type="checkbox" class="fi-dest-ok"><span><b>Facture adressée à « ' + esc(f.acheteur) + ' »</b>. Je confirme qu’elle concerne « ' + esc(f.__ici) + ' ».</span></label>';
         h += (f.lignes || []).map(function (l, i) { var id = l.id || String(i + 1), u = l.unite || l.uniteCode || ''; return '<div class="fi-l" data-ligne="' + esc(id) + '" style="display:grid;gap:6px;padding:9px 0;border-top:1px solid var(--line)"><label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" class="fi-ok"' + (f.doublon ? '' : ' checked') + '><span><b>' + esc(l.libelle) + '</b><br><small>' + nbFr(l.quantite, l.quantite % 1 ? 2 : 0) + ' ' + esc(u === 'piece' ? 'pièce' + (l.quantite > 1 ? 's' : '') : u) + ' × ' + nbFr(l.prix) + ' € HT</small></span></label>' + selectProduit(l, i) + '</div>'; }).join('');
-        h += '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" onclick="invFacValider()">Valider les lignes cochées</button><button class="btn ghost" onclick="invFacAnnuler()">Annuler</button></div>';
+        h += '<div style="display:flex;gap:8px;margin-top:10px">' + (dest && f.__autre ? '' : '<button class="btn" onclick="invFacValider()">Valider les lignes cochées</button>') + '<button class="btn ghost" onclick="invFacAnnuler()">' + (dest && f.__autre ? 'Fermer' : 'Annuler') + '</button></div>';
       }
     }
     if (RESULTAT) h += '<p class="sub fi-res" style="margin:10px 0 0">' + esc(RESULTAT) + '</p>';
-    var hist = (D && D.facturesInventaire || []).slice(-3).reverse();
+    /* C302 (V15-115) : les achats facturés entrent dans l'Analyse, par mois (HT, factures de cet établissement). */
+    try { var mois = {}, premier = (D.siteList || [])[0], ceSite = (D.facturesInventaire || []).filter(function (x) { return (x.site || premier) === D.site; }); ceSite.forEach(function (x) { var m = String(x.date || '').slice(0, 7); if (!/^\d{4}-\d{2}$/.test(m)) return; var ht = x.ht != null ? Number(x.ht) : (x.achats || []).reduce(function (s, a) { return s + (Number(a.qte) || 0) * (Number(a.pu) || 0); }, 0); if (!isFinite(ht)) return; mois[m] = mois[m] || { ht: 0, n: 0 }; mois[m].ht += ht; mois[m].n++; });
+      var cles = Object.keys(mois).sort().reverse().slice(0, 3); if (cles.length) h += '<div class="fi-achats" style="margin:10px 0 0;padding:10px 12px;border-radius:12px;border:1px solid var(--line)"><b>Achats facturés</b>' + cles.map(function (m) { var d = new Date(m + '-15T12:00:00'); return '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px"><span>' + esc(d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })) + ' · ' + mois[m].n + ' facture' + (mois[m].n > 1 ? 's' : '') + '</span><b>' + nbFr(mois[m].ht) + ' € HT</b></div>'; }).join('') + '</div>'; } catch (e) {}
+    var hist = (D && D.facturesInventaire || []).filter(function (x) { return (x.site || (D.siteList || [])[0]) === D.site; }).slice(-3).reverse();/* sans site : d'avant C302, au premier établissement */
     if (hist.length && !f) h += '<p class="sub" style="margin:10px 0 0">Dernières factures&nbsp;: ' + hist.map(function (x) { return esc(x.fournisseur || '') + ' ' + esc(jj(x.date)); }).join(' · ') + '. Elles restent ici et serviront à l’analyse si vous passez à Pilotage.</p>';
     return h + '</div>';
   }
   function envelopperFactures() {
     var o = w.facturesHtml; if (typeof o !== 'function' || o.__c217) return;
-    var f2 = function () { var F = verdictF(); if (F && typeof F.verdictFacturesCarteHTML === 'function') { var h = o.apply(this, arguments); return h + (dernierTexte ? '<p class="sub" style="margin:-6px 0 14px">' + esc(dernierTexte) + '</p>' : ''); } if (!planInventaire() && verdictDemande()) return '<div class="card"><h3>Factures fournisseurs</h3><p class="sub" style="margin:0">Préparation de Pilotage…</p></div>'; return carteNative(); };
+    /* C302 (V15-074, V15-115) : dans l'Inventaire, toujours sa propre carte — la carte de Pilotage ne savait ni créer un produit ni
+       proposer les boissons (« 2 non importée(s) »). Les achats validés partent aussi dans Pilotage quand c'est le même établissement. */
+    var f2 = function () { return carteNative(); };
     f2.__c217 = true; w.facturesHtml = f2;
   }
 

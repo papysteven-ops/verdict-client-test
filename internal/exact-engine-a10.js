@@ -185,7 +185,8 @@
     var s=fromExact(stock.exact),need=null;
     if(goal!==null&&goal!==undefined){var gap=fraction(goal).sub(s),unit=pack.state==='known'?fromExact(pack.exact):fraction(step);need=gap.cmp(0)>0?new Fraction(gap.div(unit).units(0,'ceil')).mul(unit).number():0;}
     if(s.cmp(0)===0)return {state:'out',need:need};
-    if(minimum.state==='known'&&s.cmp(fromExact(minimum.exact))<=0)return {state:'minimum',need:need};
+    /* C302 (V15-137) : l'alerte se lit « si moins de X » : un stock égal au minimum n'est pas dessous. */
+    if(minimum.state==='known'&&s.cmp(fromExact(minimum.exact))<0)return {state:'minimum',need:need};
     if(need>0)return {state:'order',need:need};
     return {state:goal===null||goal===undefined||minimum.state!=='known'?'unknown':'ok',need:need};
   }

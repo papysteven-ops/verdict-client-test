@@ -22,8 +22,9 @@
   var DELAIS = [[0, 'Immédiatement'], [60, 'Après 1 minute'], [300, 'Après 5 minutes'], [900, 'Après 15 minutes'], [3600, 'Après 1 heure'], [14400, 'Après 4 heures']];
   var PALIERS = [0, 0, 0, 0, 0, 60, 300, 900, 3600];
   var S = { locked: true, hiddenAt: 0, entry: '', mode: '', tmp: '', busy: false, timer: 0 };
-  var IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  var MAC = !IOS && /Mac/.test(navigator.platform || '');
+  /* C302 (V15-133) : un Android (ou un Android émulé sur Mac) n'est jamais un iPad : « Face ID » n'y a pas de sens. */
+  var IOS = !/Android/i.test(navigator.userAgent) && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+  var MAC = !IOS && !/Android/i.test(navigator.userAgent) && /Mac/.test(navigator.platform || '');
   var BIO = IOS ? 'Face ID' : MAC ? 'Touch ID' : 'empreinte ou visage';
   /* C218 (W82) : Touch ID (Mac) lit l'empreinte, Face ID (iPhone) le visage : la phrase suit le capteur. */
   var BIO_GESTE = IOS ? 'Ouvrez Verdict d’un regard.' : MAC ? 'Ouvrez Verdict d’un simple toucher.' : 'Ouvrez Verdict avec votre empreinte ou votre visage.';

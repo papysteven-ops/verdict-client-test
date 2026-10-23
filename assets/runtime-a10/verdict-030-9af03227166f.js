@@ -592,7 +592,7 @@ function ntfT(k,v){var i=['fr','en','es','it','de','nl','pt'].indexOf(typeof LOC
 var NTF_CATS=['action','mesure','cloture','anomalie','risque','choisi'];
 function ntfPrefs(){var p=DB.notifPrefs||{},o={};NTF_CATS.forEach(function(c){o[c]=p[c]!=null?!!p[c]:c!=='choisi';});return o;}
 function verdictSignaux(){var out=[],clk=verdictOperationalClock(),jj=function(x){x=String(x||'').slice(0,10);return x?x.split('-').reverse().join('/'):'';};
-  try{var J=joursMois(),today=Number(String(clk.civilKey).slice(8)),manq=[];for(var d=1;d<today;d++){if(J[d]&&J[d].ca!=null)continue;if(typeof estFerme==='function'&&estFerme(d))continue;manq.push(d);}
+  try{var J=joursMois(),today=Number(String(clk.civilKey).slice(8)),manq=[],d0=1;/* C301 (V15-098) : depuis le début du suivi */try{var _an=String(clk.civilKey).slice(0,4),_P=DB.performanceYearPlans&&DB.performanceYearPlans[_an],_ts=String(_P&&_P.trackingStart||'');if(_ts.slice(0,7)===String(clk.civilKey).slice(0,7))d0=Math.max(1,Number(_ts.slice(8))||1);}catch(_e){}for(var d=d0;d<today;d++){if(J[d]&&J[d].ca!=null)continue;if(typeof estFerme==='function'&&estFerme(d))continue;manq.push(d);}
     if(manq.length===1)out.push({cat:'action',cle:'action:'+clk.civilKey.slice(0,8)+String(manq[0]).padStart(2,'0'),txt:ntfT('s_action',{d:jj(clk.civilKey.slice(0,8)+String(manq[0]).padStart(2,'0'))})});
     else if(manq.length>1)out.push({cat:'action',cle:'action:manquantes:'+clk.civilKey.slice(0,7)+':'+manq.length,txt:ntfT('s_actions',{n:manq.length,d:jj(clk.civilKey.slice(0,8)+String(manq[0]).padStart(2,'0'))})});}catch(e){}
   try{(decisionsRegistre().decisions||[]).forEach(function(z){if(z.etat==='a-mesurer')out.push({cat:'mesure',cle:'mesure:'+(z.d.id||z.d.trackingId),txt:ntfT('s_mesure',{n:z.d.lib||z.d.id})});});}catch(e){}
@@ -671,10 +671,10 @@ window.ntfPref=ntfPref;window.verdictNotifHTML=verdictNotifHTML;window.ntfSyncTe
 
 /* ---------- rendu Conseil ---------- */
 function prioChip(p){
-  if(p>=80) return '<span class="v5chip" style="background:rgba(239,68,68,.12);color:#ef4444"><span class="dt"></span>URGENT \u00b7 '+p+'/100</span>';
-  if(p>=65) return '<span class="v5chip" style="background:rgba(249,115,22,.12);color:#f97316"><span class="dt"></span>IMPORTANT \u00b7 '+p+'/100</span>';
-  if(p>=50) return '<span class="v5chip" style="background:rgba(234,179,8,.12);color:#eab308"><span class="dt"></span>\u00c0 CONSID\u00c9RER \u00b7 '+p+'/100</span>';
-  return '<span class="v5chip" style="background:rgba(34,197,94,.12);color:#22c55e"><span class="dt"></span>SUIVI \u00b7 '+p+'/100</span>';
+  if(p>=80) return '<span class="v5chip" style="background:rgba(239,68,68,.12);color:#ef4444"><span class="dt"></span>URGENT \u00b7 priorit\u00e9 '+p+'</span>';
+  if(p>=65) return '<span class="v5chip" style="background:rgba(249,115,22,.12);color:#f97316"><span class="dt"></span>IMPORTANT \u00b7 priorit\u00e9 '+p+'</span>';
+  if(p>=50) return '<span class="v5chip" style="background:rgba(234,179,8,.12);color:#eab308"><span class="dt"></span>\u00c0 CONSID\u00c9RER \u00b7 priorit\u00e9 '+p+'</span>';
+  return '<span class="v5chip" style="background:rgba(34,197,94,.12);color:#22c55e"><span class="dt"></span>SUIVI \u00b7 priorit\u00e9 '+p+'</span>';
 }
 window.v5fb = function(id,val){
   syncFB();

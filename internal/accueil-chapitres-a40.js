@@ -240,6 +240,9 @@
       if (!f.__vx40) { f.__vx40 = true; f.addEventListener('load', function () { setTimeout(function () { ranger(f); tour(); }, 60); }); }
     });
   }
+  /* C298 (V15-084) : une journée enregistrée se lit dans « Jour », quel que soit le chapitre ouvert avant la saisie. */
+  w.verdictAccueilChapitre = function (k) { if (!CHAP.some(function (c) { return c.k === k; })) return; ecrire(k);
+    [].forEach.call(doc.querySelectorAll('iframe.p41-ecran'), function (f) { try { var d = f.contentDocument; if (d && !d.querySelector('.vx40-nav button[aria-selected="true"][data-k="' + k + '"]')) montrer(d, k, false); } catch (e) {} }); };
   setInterval(tour, 1500);
   doc.addEventListener('DOMContentLoaded', tour);
   w.addEventListener('load', function () { setTimeout(tour, 300); });

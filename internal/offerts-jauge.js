@@ -124,7 +124,9 @@
     });
     S.gestes = (S.offerts == null && S.remises == null) ? null : (S.offerts || 0) + (S.remises || 0);
     S.pour100 = (S.gestes != null && S.caCents > 0) ? S.gestes / S.caCents * 100 : null;
-    var dom = Number(d.slice(8, 10));
+    /* C298 (V15-045) : le rythme se compte jusqu'au dernier jour renseigné du mois (aujourd'hui non saisi n'en fait pas partie). */
+    var dernier = ''; (D.histJour || []).concat(D.caisseAjust || []).forEach(function (x) { var k = String(x && x.date || ''); if (k.slice(0, 7) === ym && k <= d && k > dernier) dernier = k; });
+    var dom = Number((dernier || d).slice(8, 10));
     S.projCents = (S.gestes != null && dom > 0) ? Math.round(S.gestes / dom * 365) : null;
     if (typeof D.offertsEnveloppe === 'number' && D.offertsEnveloppe > 0) {
       S.env = D.offertsEnveloppe;

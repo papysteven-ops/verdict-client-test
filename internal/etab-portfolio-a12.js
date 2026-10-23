@@ -327,6 +327,25 @@ root.addEventListener('message',function(ev){var d=ev&&ev.data;if(!d||!d.context
         pt:['Voltar ao meu estabelecimento','Está a ver uma demonstração','Os seus próprios números esperam por si.']},lg=String(root.LOCALE||root.document.documentElement.lang||'fr').slice(0,2),x=L[lg]||L.fr;
       var fr=x===L.fr;root.ask(x[0]+(fr?' ?':'?'),x[1]+(nm?(fr?' (« '+nm+' »)':' (“'+nm+'”)'):'')+'. '+x[2],x[0],function(){root.quitterDemo();});return true;}
   }catch(e){}return f.apply(this,arguments);};for(var k in f)if(Object.prototype.hasOwnProperty.call(f,k))g[k]=f[k];g.__c289=true;root.switchEtab=g;})();
+/* C301 (V15-023) : majValidationVisible (029) ne retire l'aide « Depuis votre compte de résultat : … €/an ÷ 12 » que
+   lorsqu'il en pose une nouvelle ; un établissement sans compte de résultat gardait celle du précédent (87 000 € de
+   l'équipe du coffee sous le champ de la brasserie). Toutes les aides sont retirées avant chaque passage : seules
+   celles de l'établissement affiché sont reposées. */
+(function(){var f=root.majValidationVisible;if(typeof f!=='function'||f.__c301)return;var g=function(){
+  try{[].forEach.call(doc.querySelectorAll('.src-champ'),function(x){if(x.parentNode)x.parentNode.removeChild(x);});}catch(e){}
+  return f.apply(this,arguments);};for(var k in f)if(Object.prototype.hasOwnProperty.call(f,k))g[k]=f[k];g.__c301=true;root.majValidationVisible=g;})();
+/* C301 (V15-090) : la pastille Carte d'un établissement dont l'Indice Carte attend encore des données (ventes d'un mois
+   complet, toutes les fiches) dit ce qui est connu — la marge de la carte — au lieu de « Non calculable ». */
+(function(){var em=root.etabCarteMeta,vi=root.verdictIndicesHTML;if(typeof em!=='function'||typeof vi!=='function'||em.__c301)return;
+  var W={fr:['À compléter','il reste {m} une fois les produits payés'],en:['To complete','{m} left once products are paid'],es:['Por completar','queda {m} una vez pagados los productos'],it:['Da completare','resta {m} una volta pagati i prodotti'],de:['Zu ergänzen','{m} bleiben nach Wareneinsatz'],nl:['Aan te vullen','{m} blijft over na de producten'],pt:['A completar','sobra {m} depois de pagos os produtos']};
+  var nem=function(d){var r=em.apply(this,arguments);try{if(r&&r.score==null&&d){var prev=root.DB;try{root.DB=d;var st=root.carteStats();if(st&&st.ca>0&&isFinite(st.margePond))r.marge=st.margePond;}finally{root.DB=prev;}}}catch(e){}return r;};
+  nem.__c301=true;root.etabCarteMeta=nem;
+  var nvi=function(p,c){var h=vi.apply(this,arguments);try{if(c&&c.score==null&&c.marge!=null&&typeof h==='string'){var l=String(root.LOCALE||'fr').slice(0,2),x=W[l]||W.fr,i=h.indexOf('data-index="carte"');if(i>=0){var a=h.slice(0,i),b=h.slice(i),m=(Math.round(c.marge*10)/10).toLocaleString(root.LOCALE_TAG||'fr-FR')+' %';
+        b=b.replace(/(<b style="color:[^"]*">)[^<]*(<\/b>)/,'$1'+x[0]+'$2');if(b.indexOf('<small style="display:block')<0)b=b.replace('</b></span>','</b><small style="display:block;color:var(--mut2)">'+x[1].replace('{m}',m)+'</small></span>');h=a+b;}}}catch(e){}return h;};
+  nvi.__c301=true;root.verdictIndicesHTML=nvi;})();
+/* C301 (V15-103) : la liste des modèles ne dit plus « Le chargement remplace votre saisie actuelle » (faux : le modèle
+   s'ouvre dans une démonstration isolée, l'établissement et ses chiffres restent à leur place). */
+(function(){var om=root.openModeles;if(typeof om!=='function'||om.__c301)return;var g=function(){var r=om.apply(this,arguments);try{var tw=doc.createTreeWalker(doc.body,4,null),n,L=[];while((n=tw.nextNode()))if(n.nodeValue.indexOf('Le chargement remplace votre saisie actuelle.')>=0)L.push(n);L.forEach(function(x){x.nodeValue=x.nodeValue.replace('Le chargement remplace votre saisie actuelle.','Chaque modèle s’ouvre dans une démonstration isolée : votre établissement et vos chiffres restent à leur place.');});}catch(e){}return r;};for(var k in om)if(Object.prototype.hasOwnProperty.call(om,k))g[k]=om[k];g.__c301=true;root.openModeles=g;})();
 root.VerdictNomCompte=nomDuCompte;root.verdictNewEtabChooser=openChooser;root.verdictNewEtabModel=openModel;root.verdictNewEtabSame=openSame;root.verdictNewEtabFresh=openFresh;root.verdictNewEtabClose=closeSheet;
 root.verdictNewEtabCreateSame=createSame;root.verdictNewEtabCreateBlank=createBlank;root.verdictEtabDuplicate=duplicate;root.verdictDupFec=goFec;root.verdictDupEntry=goEntry;
 root.VerdictEtabPortfolio={conceptKeys:CONCEPT_KEYS.slice(),duplicate:duplicate,duplicateRequestsKey:DUP_KEY,placeOf:placeOf};

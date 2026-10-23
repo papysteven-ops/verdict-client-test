@@ -244,7 +244,7 @@
   /* « À faire » : la phrase chiffrée remplace « comparez vous-même ». */
   function brancher() {
     if (typeof w.p11StaffAction === 'function' && !w.p11StaffAction.__sh52) {
-      var o = w.p11StaffAction, f = function (type) { try { var R = etat('mois'); if (R && !R.vide && R.lourd) return phrase(R); } catch (e) {} return o.apply(this, arguments); };
+      var o = w.p11StaffAction, f = function (type) { try { var R = etat('mois'); if (R && !R.vide && R.lourd) return phrase(R).replace(' pèse le plus : ', ' pèse le plus ce mois-ci : ') /* C298 (V15-109) : la période, à côté d'une carte du jour */; } catch (e) {} return o.apply(this, arguments); };
       f.__sh52 = true; f.__r158 = true; w.p11StaffAction = f;
     }
   }

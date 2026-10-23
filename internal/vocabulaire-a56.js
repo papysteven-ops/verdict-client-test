@@ -26,7 +26,8 @@
     /* point mort */
     [/\bPoints morts\b/g, 'Chiffres minimums'], [/\bpoints morts\b/g, 'chiffres minimums'], [/\bPoint mort\b/g, 'Chiffre minimum'], [/\bpoint mort\b/g, 'chiffre minimum'], [/\bPOINT MORT\b/g, 'CHIFFRE MINIMUM'], /* le nom déjà employé partout dans l'appli */
     /* prime cost */
-    [/\bPrime cost\b/g, 'Total marchandise + équipe'], [/\bprime cost\b/g, 'total marchandise + équipe'],
+    /* C301 (V15-050) : le prime cost du moteur est la nourriture + l'équipe, hors boissons (v.pc) ; « Cuisine + salaires » est la même notion */
+    [/\bLe prime cost\b/g, 'La nourriture + équipe'], [/\ble prime cost\b/g, 'la nourriture + équipe'], [/\b([Dd])u prime cost\b/g, '$1e la nourriture + équipe'], [/\bPrime cost\b/g, 'Nourriture + équipe'], [/\bprime cost\b/g, 'nourriture + équipe'], [/\bCuisine \+ salaires\b/g, 'Nourriture + équipe'],
     /* ETP : avec un nombre devant, puis seul */
     [/\bd[’']ETP\b/g, 'de temps pleins'],
     [/(\d+(?:[,.]\d+)?)\s?ETP\b/g, function (m, n) { var v = Number(String(n).replace(',', '.')); return n + ' temps plein' + (v > 1 ? 's' : ''); }],
@@ -41,6 +42,12 @@
     [/\bObjectif du jour\b/g, 'Minimum du jour'], [/\bobjectif du jour\b/g, 'minimum du jour'], [/\bObjectif dépassé de\b/g, 'Minimum dépassé de'],
     [/^Écart à l[’']objectif$/g, 'Écart au minimum'], [/Écart à l[’']objectif(?= ?:\s?[+−-])/g, 'Écart au minimum'] /* jamais « Écart à l’objectif matière » de la Carte, qui est une vraie cible */, [/\bObjectif non disponible\b/g, 'Minimum non disponible'], [/\bObjectif à recalculer\b/g, 'Minimum à recalculer'],
     [/\bsur un objectif de\b/g, 'sur un minimum de'], [/ (sous|au-dessus de) cet objectif\b/g, ' $1 ce minimum'],
+    /* C299 (V15-121) : la courbe de Performances juge le minimum du jour, comme le reste de l'écran */
+    [/\bOBJECTIF À DATE\b/g, 'MINIMUM À DATE'], [/\bOBJECTIF DU JOUR\b/g, 'MINIMUM DU JOUR'],
+    [/\bIl manque (jusqu’à 5|5 à 10|plus de 10)([\s\u00a0\u202f])%([\s\u00a0\u202f])de l[’']objectif\b/g, 'Il manque $1$2%$3du minimum'],
+    [/^(\d+(?:,\d+)?)([\s\u00a0\u202f])%([\s\u00a0\u202f])de l[’']objectif$/g, '$1$2%$3du minimum'],
+    [/ : objectif dépassé de\b/g, ' : minimum dépassé de'], [/ : objectif atteint\b/g, ' : minimum atteint'], [/(^|\s)à son (propre )?objectif\b(?! choisi| de résultat)/g, '$1à son $2minimum'],
+    [/(€|\u00a0€) au-dessus de l[’']objectif$/g, '$1 au-dessus du minimum'],
     /* C205 (V55) : une seule orthographe */
     [/\b([Pp])etit déjeuner\b/g, '$1etit-déjeuner'],
     /* C205 (V43, V44) : écriture française des montants et des dates, partout à l'affichage.
@@ -57,7 +64,7 @@
     /* C187 : une bouteille compte en « unités » partout (l'Inventaire dit unités, l'écart disait pièces) */
     [/(\d)(\s|\u00a0)pièces\b/g, '$1$2unités'], [/(\d)(\s|\u00a0)pièce\b/g, '$1$2unité']
   ];
-  var TEST = /\(s\)|(^|[\s(·:=≈→])-\d|20\d\d-\d\d-\d\d|(^|\s)1\s|objectif|etit déjeuner|co[uû]t humain|masse salariale|food cost|point mort|prime cost|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b|\dpièce|\d\spièce|contribution|\d\s?pts?\b|\d\.\d+\s?%/i;
+  var TEST = /\(s\)|(^|[\s(·:=≈→])-\d|20\d\d-\d\d-\d\d|(^|\s)1\s|objectif|etit déjeuner|co[uû]t humain|masse salariale|food cost|point mort|prime cost|cuisine \+ salaires|ETP|COÛT HUMAIN|MASSE SALARIALE|POINT MORT|unite\b|\dpièce|\d\spièce|contribution|\d\s?pts?\b|\d\.\d+\s?%/i;
   var EXCLU = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, SELECT: 1, OPTION: 1, NOSCRIPT: 1, CODE: 1, PRE: 1 };
   function francais(d) { try { var l = (d.defaultView && d.defaultView.LOCALE) || w.LOCALE || d.documentElement.lang || 'fr'; return /^fr/i.test(String(l)); } catch (e) { return true; } }
   function corriger(t) {
@@ -87,3 +94,74 @@
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', tour); else tour();
   w.VerdictVocabulaire = { corriger: corriger, regles: R, tour: tour, texte: function (v) { for (var i = 0; i < R.length; i++) v = v.replace(R[i][0], R[i][1]); return v; } };
 })();
+
+/* C301 (V15-026, V15-027, V15-028, V15-003) — Alertes, sans toucher au moteur 029 (enveloppe d'alertesState) :
+   · chiffre minimum : « 97 % » est la part du CA de l'ANNÉE qui paie les charges fixes, pas le mois ; rouge seulement quand
+     l'année ne couvre pas les charges (≥ 100 %), orange au-dessus du repère de votre format, vert en dessous ;
+   · « Rentabilité avant impôt » (le mot de partout) ; « bien au-dessus du repère » quand on dépasse les meilleurs ;
+   · coût de la nourriture : le mot « nourriture » et, à côté, la marchandise complète (nourriture + boissons) ;
+   · écart matière : le même que l'Audit et Simuler (window.VerdictEcartMatiere : même périmètre, période écrite) ;
+   · en-tête « N alerte(s) grave(s) · N vigilance(s) » : les dates limites (lignes jaunes) comptent comme vigilances. */
+(function (w) {
+  'use strict';
+  function n1(x) { return (Math.round(x * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+  function pc0(x) { return Math.round(x).toLocaleString('fr-FR') + ' %'; }
+  function fam() { try { return (typeof w.famActive === 'function' && w.famActive()) || (w.FAMILLES && w.FAMILLES.trad) || null; } catch (e) { return null; } }
+  function corriger(A) {
+    if (!A || !A.ready || !A.checks) return A;
+    var R = null; try { R = w.moteur(); } catch (e) {} if (!R || !R.ready) return A;
+    var v = R.v || {}, d = R.d || {}, F = fam(), fmt = ''; try { fmt = (typeof w.fmtActif === 'function' && w.fmtActif()) || ''; } catch (e) {}
+    A.checks.forEach(function (c) {
+      if (c.n === 'Rentabilité nette') {
+        var rr = w.verdictRepereRN(), m = rr.repere, b = rr.cible, N = w.verdictRepereRNNum || n1;
+        c.n = 'Rentabilité avant impôt';
+        c.ok = v.rn >= m; c.warn = v.rn >= 0;
+        c.msg = v.rn < 0 ? 'Structure en perte' : v.rn < m ? 'Sous le repère de votre format (' + N(m) + ' %, les meilleurs ' + N(b) + ' %)'
+          : v.rn < b ? 'Au niveau du repère de votre format (' + N(m) + ' %, les meilleurs ' + N(b) + ' %)'
+          : 'Bien au-dessus du repère de votre format (' + N(m) + ' %), au niveau des meilleurs (' + N(b) + ' %)';
+      } else if (c.n === 'Point mort' && v.pm < 999) {
+        var med = F && F.pm ? F.pm[1] : 85;
+        c.n = 'Point mort sur l’année';
+        c.ok = v.pm <= med; c.warn = v.pm < 100;
+        c.msg = v.pm >= 100 ? 'Sur l’année, le chiffre d’affaires ne paie pas toutes les charges'
+          : 'Sur l’année, ' + pc0(v.pm) + ' du chiffre d’affaires paie les charges fixes ; il reste ' + pc0(100 - v.pm) +
+            (v.pm > med ? ' (repère ' + (fmt || 'de votre format') + ' : ' + pc0(med) + ' au plus)' : '');
+      } else if (c.n === 'Food cost') {
+        c.n = 'Coût de la nourriture (hors boissons)';
+        var ca = Number(d.ca), mat = Number(d.mat);
+        if (ca > 0 && mat > 0) c.msg += ' · avec les boissons : ' + n1(mat / ca * 100) + ' % du CA';
+      } else if (/^Écart food cost/.test(c.n)) {
+        var E = typeof w.VerdictEcartMatiere === 'function' ? w.VerdictEcartMatiere(R) : null;
+        if (E) {
+          c.n = 'Écart matière (' + E.perimetre + ') : achats ' + E.periode + ' contre fiches';
+          c.ok = E.pts < 4; c.warn = E.pts < 8; c.val = n1(E.pts) + ' point' + (Math.abs(E.pts) >= 2 ? 's' : '');
+          c.msg = E.pts >= 8 ? 'Écart notable à investiguer' : E.pts >= 4 ? 'Écart modéré' : 'Concorde';
+        }
+      }
+    });
+    A.critical = A.checks.filter(function (c) { return !c.warn; });
+    A.warning = A.checks.filter(function (c) { return c.warn && !c.ok; });
+    A.ok = A.checks.filter(function (c) { return c.ok; });
+    return A;
+  }
+  var dessin = false;
+  function brancher() {
+    var f = w.alertesState, g = w.drawAlertes;
+    if (typeof f !== 'function' || typeof g !== 'function') return false;
+    if (f.__c301) return true;
+    var nf = function () {
+      var A = corriger(f.apply(this, arguments));
+      /* les dates limites (jaunes) entrent dans le compte des vigilances de l'en-tête ; l'écran Alertes les compte à part */
+      if (!dessin && A && A.ready) { try { var dl = (typeof w.verdictAlertPreferenceOn !== 'function' || w.verdictAlertPreferenceOn('verdict_deadline')) && typeof w.rappels === 'function' ? w.rappels() : []; if (dl && dl.length) A.warning = A.warning.concat(dl.map(function (r) { return { n: r.titre, deadline: true }; })); } catch (e) {} }
+      return A;
+    };
+    nf.__c301 = true; w.alertesState = nf;
+    /* C301 (V15-098, suite) : un mois d'avant le début du suivi n'est pas réclamé (« Septembre n'est pas renseigné » pour un client arrivé le 21 octobre) */
+    var rp = w.rappels; if (typeof rp === 'function' && !rp.__c301) { var nrp = function () { var L = rp.apply(this, arguments); try { var D = w.DB || {}, now = new Date(), an = String(now.getFullYear()), P = D.performanceYearPlans && D.performanceYearPlans[an], ts = String(P && P.trackingStart || ''); if (/^\d{4}-\d{2}-\d{2}$/.test(ts)) { var debutMois = an + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01'; if (ts >= debutMois) L = (L || []).filter(function (r) { return !r || r.cle !== 'mois'; }); } } catch (e) {} return L; }; nrp.__c301 = true; w.rappels = nrp; }
+    var ng = function () { dessin = true; try { return g.apply(this, arguments); } finally { dessin = false; } };
+    ng.__c301 = true; w.drawAlertes = ng;
+    return true;
+  }
+  if (!brancher() && typeof w.setInterval === 'function') { var k = 0, iv = w.setInterval(function () { if (brancher() || ++k > 40) w.clearInterval(iv); }, 250); }
+  w.VerdictAlertesC301 = { corriger: corriger };
+})(window);

@@ -106,6 +106,35 @@ pt:{open:'Comparar',title:'Comparar os meus estabelecimentos',kicker:'Leitura la
   why:{score:'a pontuação mais alta',caNet:'mantém a maior parte da faturação',caNetM:'mantém a maior parte da faturação',cmd:'o maior número de pedidos por dia',mat:'a matéria-prima mais baixa',ms:'a equipa mais leve',prime:'matéria + equipa mais baixos',pm:'o ponto de equilíbrio mais baixo'}}
 };
 for(var l in X)TXT[l]=m(TXT.fr,X[l]);})();
+/* C301 (V15-009, V15-010) : la carte et le côte à côte montrent l'Indice de chacun (le même que l'en-tête, mêmes zones que
+   le moteur) ; le classement est un rang, écrit « 1er sur 3 », jamais une note sur 100 ni un mot d'état ; une donnée
+   inconnue (aucun ticket lu) reste « inconnu », hors classement, jamais zéro ; pas de médiane sous trois dossiers. */
+(function(){var A={
+  fr:{score:'Indice de sérénité',overall:'Classement général',overallSub:'rang moyen du dossier sur les repères connus de chacun (Indice, CA → net, matière, équipe, prime cost, point mort, fréquentation) ; une donnée inconnue reste hors classement',unknown:'inconnu',subScore:'le même que l’en-tête de chaque établissement',whyScore:'l’Indice le plus haut',ord:function(r,n){return (r===1?'1er':r+'e')+' sur '+n;}},
+  en:{score:'Serenity index',overall:'Overall ranking',overallSub:'average rank of the file on the benchmarks known for each (index, sales → net, food cost, labour, prime cost, break-even, footfall); unknown data stays out of the ranking',unknown:'unknown',subScore:'the same as each business’s header',whyScore:'the highest index',ord:function(r,n){var s=r%100>10&&r%100<14?'th':r%10===1?'st':r%10===2?'nd':r%10===3?'rd':'th';return r+s+' of '+n;}},
+  es:{score:'Índice de serenidad',overall:'Clasificación general',overallSub:'rango medio del expediente en las referencias conocidas de cada uno (índice, ventas → neto, materia, equipo, prime cost, equilibrio, afluencia); un dato desconocido queda fuera de la clasificación',unknown:'desconocido',subScore:'el mismo que el encabezado de cada establecimiento',whyScore:'el índice más alto',ord:function(r,n){return r+'.º de '+n;}},
+  it:{score:'Indice di serenità',overall:'Classifica generale',overallSub:'posizione media del dossier sui riferimenti noti per ciascuno (indice, fatturato → netto, materia, personale, prime cost, punto di pareggio, affluenza); un dato sconosciuto resta fuori classifica',unknown:'sconosciuto',subScore:'lo stesso dell’intestazione di ogni attività',whyScore:'l’indice più alto',ord:function(r,n){return r+'° su '+n;}},
+  de:{score:'Gelassenheitsindex',overall:'Gesamtrangliste',overallSub:'mittlerer Rang des Dossiers bei den für jeden bekannten Kennzahlen (Index, Umsatz → Ergebnis, Wareneinsatz, Personal, Prime Cost, Break-even, Frequenz); unbekannte Daten bleiben außerhalb der Rangliste',unknown:'unbekannt',subScore:'derselbe wie im Kopf jedes Betriebs',whyScore:'der höchste Index',ord:function(r,n){return 'Platz '+r+' von '+n;}},
+  nl:{score:'Rustindex',overall:'Algemene rangschikking',overallSub:'gemiddelde rang van het dossier op de richtwaarden die voor elk bekend zijn (index, omzet → netto, grondstoffen, team, prime cost, break-even, bezoekers); een onbekend gegeven blijft buiten de rangschikking',unknown:'onbekend',subScore:'dezelfde als in de kop van elke zaak',whyScore:'de hoogste index',ord:function(r,n){return r+'e van '+n;}},
+  pt:{score:'Índice de serenidade',overall:'Classificação geral',overallSub:'posição média do processo nas referências conhecidas de cada um (índice, faturação → líquido, matéria, equipa, prime cost, equilíbrio, afluência); um dado desconhecido fica fora da classificação',unknown:'desconhecido',subScore:'o mesmo do cabeçalho de cada estabelecimento',whyScore:'o índice mais alto',ord:function(r,n){return r+'.º de '+n;}}};
+  for(var l in A){var t=TXT[l];if(!t)continue;var a=A[l];t.score=a.score;t.overall=a.overall;t.overallSub=a.overallSub;t.unknown=a.unknown;t.ord=a.ord;
+    var s={},k;for(k in t.sub)s[k]=t.sub[k];s.score=a.subScore;t.sub=s;var w={};for(k in t.why)w[k]=t.why[k];w.score=a.whyScore;t.why=w;}})();
+/* C301 (V15-051, V15-050) : chaque établissement est jugé sur le repère de SON format (FAMILLES du moteur : résultat,
+   équipe, chiffre minimum), écrit sous sa valeur ; plus de seuils « CHR » communs à tous. La matière (nourriture +
+   boissons) et « matière + équipe » n'ont pas de repère de format : aucun mot d'état. Un seul nom : « matière + équipe ». */
+(function(){var A={
+  fr:{repRow:'repère du format de chaque établissement, écrit sous sa valeur',repCell:'repère {f} : {m} % · meilleurs {b} %'},
+  en:{repRow:'each business’s format benchmark, written under its value',repCell:'{f} benchmark: {m} % · best {b} %'},
+  es:{repRow:'referencia del formato de cada establecimiento, escrita bajo su valor',repCell:'referencia {f}: {m} % · mejores {b} %'},
+  it:{repRow:'riferimento del formato di ogni attività, scritto sotto il suo valore',repCell:'riferimento {f}: {m} % · migliori {b} %'},
+  de:{repRow:'Richtwert des Formats jedes Betriebs, unter seinem Wert',repCell:'Richtwert {f}: {m} % · beste {b} %'},
+  nl:{repRow:'richtwaarde van het formaat van elke zaak, onder de waarde',repCell:'richtwaarde {f}: {m} % · beste {b} %'},
+  pt:{repRow:'referência do formato de cada estabelecimento, escrita sob o seu valor',repCell:'referência {f}: {m} % · melhores {b} %'}};
+  for(var l in A){var t=TXT[l];if(!t)continue;t.repCell=A[l].repCell;t.rep={caNet:A[l].repRow,caNetM:A[l].repRow,ms:A[l].repRow,pm:A[l].repRow};}
+  var F=TXT.fr;F.prime='Matière + équipe';F.chipPrime='Matière + équipe';F.overallSub=F.overallSub.replace('prime cost','matière + équipe');
+  var s={},k;for(k in F.sub)s[k]=F.sub[k];s.prime='nourriture + boissons + équipe : le couple à surveiller';s.mat='part du CA partie en matière : nourriture + boissons';F.sub=s;})();
+function repCell(key,s,T){var R=s&&s.rep;if(!R||!T.repCell)return '';var m,b;if(key==='caNet'||key==='caNetM'){m=R.rn[1];b=R.rn[2];}else if(key==='ms'){m=R.ms[1];b=R.ms[0];}else if(key==='pm'){m=R.pm[1];b=R.pm[0];}else return '';
+  return '<em>'+esc(T.repCell.replace('{f}',R.fmt||R.nom||'').replace('{m}',fNum(m,1)).replace('{b}',fNum(b,1)))+'</em>';}
 function L(){var l=String(root.LOCALE||doc.documentElement.lang||'fr').slice(0,2);return TXT[l]||TXT.fr;}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function num(n){n=Number(n);return isFinite(n)?n:null;}
@@ -113,23 +142,23 @@ function fEur(n){if(n==null)return L().na;try{return new Intl.NumberFormat((root
 function fEur2(n){if(n==null)return L().na;try{return new Intl.NumberFormat((root.LOCALE_TAG||'fr-FR'),{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}catch(e){return n.toFixed(2)+' €';}}
 function fPct(n){if(n==null)return L().na;return (Math.round(n*10)/10).toLocaleString((root.LOCALE_TAG||'fr-FR'))+' %';}
 function fNum(n,d){if(n==null)return L().na;return (Math.round(n*Math.pow(10,d||0))/Math.pow(10,d||0)).toLocaleString((root.LOCALE_TAG||'fr-FR'));}
-function median(a){a=a.filter(function(x){return x!=null;}).sort(function(x,y){return x-y;});if(!a.length)return null;var m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;}
+function median(a){a=a.filter(function(x){return x!=null;}).sort(function(x,y){return x-y;});if(a.length<3)return null;var m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;}
 
 /* Une photographie par dossier, par le moteur exact, sans toucher au dossier actif. */
 function snapshot(id){
   var d=root.STORE&&root.STORE.etabs?root.STORE.etabs[id]:null;if(!d)return null;
-  var prev=root.DB,R=null;try{root.DB=d;R=root.moteur();}catch(e){R=null;}root.DB=prev;
+  var prev=root.DB,R=null,rep=null;try{root.DB=d;R=root.moteur();try{var FA=(typeof root.famActive==='function'?root.famActive():null)||(root.FAMILLES&&root.FAMILLES.trad)||null;if(FA&&FA.rn&&FA.ms&&FA.pm)rep={nom:FA.n,rn:FA.rn,ms:FA.ms,pm:FA.pm,fmt:typeof root.fmtActif==='function'?root.fmtActif():''};}catch(e){}}catch(e){R=null;}root.DB=prev;
   var x=R&&R.d?R.d:{},v=R&&R.v?R.v:{},ca=num(x.ca)||0,calc=!!(R&&R.ready&&ca>0);
   var mat=calc&&ca>0?(num(x.mat)||0)/ca*100:null,ms=calc?num(v.ms):null;
   var identity=typeof root.verdictEtabIdentity==='function'?root.verdictEtabIdentity(d):{name:d.etab||'—',kind:''};
   var nature=typeof root.etabNature==='function'?root.etabNature(d):{key:'',label:'',period:''};
   var truth=null;try{truth=R&&R.ready&&typeof root.verdictScoreTruth==='function'?root.verdictScoreTruth(R,d):null;}catch(e){}
   var mois=num(x.mois)||12;
-  return {id:id,name:String(identity.name||'—'),kind:String(identity.kind||''),nature:nature,calculated:calc,
+  return {id:id,rep:rep,name:String(identity.name||'—'),kind:String(identity.kind||''),nature:nature,calculated:calc,
     conclusive:!!(calc&&R.scoreFinalAllowed===true&&nature.key==='closed'),scoreFinal:!!(truth&&truth.final),
     zone:calc&&typeof root.zone==='function'?root.zone(R.score):null,
     missing:(R&&R.manquants||[]).length,
-    k:{score:calc?Math.round(R.score):null,res:calc?num(x.res):null,resM:calc?num(x.resM):null,ca:calc?ca:null,caM:calc?ca/mois:null,ticket:calc?num(x.panierHT):null,cmd:calc?num(x.cmdj):null,
+    k:{score:calc?Math.round(R.score):null,res:calc?num(x.res):null,resM:calc?num(x.resM):null,ca:calc?ca:null,caM:calc?ca/mois:null,ticket:calc&&num(x.panierHT)>0?num(x.panierHT):null,cmd:calc&&num(x.cmdj)>0?num(x.cmdj):null,
        mat:mat,ms:ms,prime:(mat!=null&&ms!=null)?mat+ms:null,marge:calc?num(v.rn):null,pm:calc?num(v.pm):null}};
 }
 /* Couleurs Verdict® : la palette de zone() de l'application (critique, fragile, correcte, saine) ; repli sur les mêmes teintes. */
@@ -137,7 +166,7 @@ var PALETTE_FALLBACK=['#ef4444','#f97316','#eab308','#22c55e'];
 function palette(){try{if(typeof root.zone==='function'){var z=[root.zone(10),root.zone(45),root.zone(65),root.zone(90)];if(z.every(function(x){return x&&x.h;}))return z.map(function(x){return x.h;});}}catch(e){}return PALETTE_FALLBACK;}
 function lvlHigh(v,a,b,c){return v<a?0:v<b?1:v<c?2:3;}   /* plus haut = mieux : seuils croissants */
 function lvlLow(v,a,b,c){return v>c?0:v>b?1:v>a?2:3;}    /* plus bas = mieux : seuils croissants */
-var LEVEL={score:function(v){return v<35?0:v<55?1:v<75?2:3;},caNet:function(v){return lvlHigh(v,0,2,4.5);},caNetM:function(v){return lvlHigh(v,0,2,4.5);},mat:function(v){return lvlLow(v,28,32,35);},ms:function(v){return lvlLow(v,33,38,42);},prime:function(v){return lvlLow(v,62,68,72);},pm:function(v){return lvlLow(v,80,90,100);}};
+var LEVEL={score:function(v){try{var z=typeof root.zone==='function'&&root.zone(v),i=z?['crit','frag','corr','saine'].indexOf(z.c):-1;if(i>=0)return i;}catch(e){}return v<31?0:v<60?1:v<75?2:3;},caNet:function(v,s){var r=s&&s.rep;return r?(v<0?0:v<r.rn[1]?1:v<r.rn[2]?2:3):lvlHigh(v,0,2,4.5);},caNetM:function(v,s){return LEVEL.caNet(v,s);},ms:function(v,s){var r=s&&s.rep;return r?lvlLow(v,r.ms[0],r.ms[1],r.ms[2]):lvlLow(v,33,38,42);},pm:function(v,s){var r=s&&s.rep;return r?lvlLow(v,r.pm[0],r.pm[1],r.pm[2]):lvlLow(v,80,90,100);}};
 var ROWS=[
   {key:'score',fmt:function(n){return n==null?L().na:fNum(n,0)+'/100';},better:'high',bar:function(n){return n;},max:100},
   {key:'caNet',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.ca)+' '+L().ofSales+' \u2192 '+fEur(s.k.res)+' '+L().netWord;},note:function(v,s){return '= '+fPct(v)+' '+L().ofCa;},better:'high',hint:'better_net',bar:function(n){return Math.max(0,n);},max:30,unit:'pt'},
@@ -228,7 +257,7 @@ function ensureStyle(){
 '.cmp12-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}'+
 '.cmp12-card{display:flex;flex-direction:column;gap:9px;padding:13px 14px;border-radius:16px;border:1px solid rgba(128,128,128,.22);background:rgba(128,128,128,.05);animation:cmp12In .45s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i)*45ms)}'+
 '.cmp12-card.crit{border-color:rgba(239,68,68,.7);background:rgba(239,68,68,.06)}.cmp12-card.actif{box-shadow:0 0 0 2px rgba(34,197,94,.45) inset}'+
-'.cmp12-card header{display:flex;align-items:flex-start;gap:10px}.cmp12-rk{flex:none;min-width:38px;padding:5px 0;border-radius:10px;background:rgba(37,99,235,.1);color:#2563eb;font:900 13px/1 var(--mono);text-align:center}.cmp12-id{flex:1;min-width:0}.cmp12-id b{display:block;font-size:15px;line-height:1.25}.cmp12-id span{display:block;font-size:11px;opacity:.68;margin-top:2px}'+
+'.cmp12-card header{display:flex;align-items:flex-start;gap:10px}.cmp12-rk{flex:none;min-width:38px;padding:5px 8px;white-space:nowrap;border-radius:10px;background:rgba(37,99,235,.1);color:#2563eb;font:900 13px/1 var(--mono);text-align:center}.cmp12-id{flex:1;min-width:0}.cmp12-id b{display:block;font-size:15px;line-height:1.25}.cmp12-id span{display:block;font-size:11px;opacity:.68;margin-top:2px}'+
 '.cmp12-pick{flex:none;display:flex;align-items:center;gap:5px;font:600 11.5px inherit;cursor:pointer;opacity:.85}.cmp12-pick input{width:18px;height:18px;accent-color:#2563eb}'+
 '.cmp12-score{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:10px}.cmp12-score b{font:900 26px/1 var(--mono)}.cmp12-score b small{font-size:12px;opacity:.6;font-weight:700}.cmp12-score .cmp12-bar{height:8px}'+
 '.cmp12-line{margin:0;font-size:13px;line-height:1.45}.cmp12-chips{display:flex;flex-wrap:wrap;gap:6px}.cmp12-chip{display:inline-flex;align-items:baseline;gap:5px;padding:4px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 10%,transparent);font-size:11.5px}.cmp12-chip i{font-style:normal;opacity:.75}.cmp12-chip b{color:var(--c);font:800 12px var(--mono)}.cmp12-chip.crit{border-width:2px}'+
@@ -253,22 +282,22 @@ function isModel(s){var d=root.STORE&&root.STORE.etabs[s.id];return !!(d&&(d._mu
 function placeOfId(id){var d=root.STORE&&root.STORE.etabs[id]||{};return [d.etabVille,d.etabQuartier].map(function(x){return String(x==null?'':x).trim();}).filter(Boolean).join(' \u00b7 ');}
 function barHidden(id){var d=root.STORE&&root.STORE.etabs[id];return !!(d&&d._barHidden);}
 function cardHtml(s,RK,T,i){
-  var o=RK[s.id],ix=o.index,lv=ix==null?null:LEVEL.score(ix),col=lv==null?'inherit':palette()[lv];
+  var o=RK[s.id],ix=o.index,sc=s.k.score,lv=sc==null?null:LEVEL.score(sc),col=lv==null?'inherit':palette()[lv];
   var reasons=ROWS.filter(function(r){return bestIndex(r,DATA.snaps)===DATA.snaps.indexOf(s)&&T.why&&T.why[r.key];}).map(function(r){return T.why[r.key];}).filter(function(x,i,a){return a.indexOf(x)===i;});
-  var chip=function(key,label){var r=ROWS.filter(function(x){return x.key===key;})[0],v=r?(r.get?r.get(s):s.k[key]):null;if(v==null)return '';var l=LEVEL[key]?LEVEL[key](v):null,c=l==null?'inherit':palette()[l];return '<span class="cmp12-chip'+(l===0?' crit':'')+'" style="--c:'+c+'"><i>'+esc(label)+'</i><b>'+esc(key==='caNet'?fPct(v):r.fmt(v,s))+'</b></span>';};
+  var chip=function(key,label){var r=ROWS.filter(function(x){return x.key===key;})[0],v=r?(r.get?r.get(s):s.k[key]):null;if(v==null)return '';var l=LEVEL[key]?LEVEL[key](v,s):null,c=l==null?'inherit':palette()[l];return '<span class="cmp12-chip'+(l===0?' crit':'')+'" style="--c:'+c+'"><i>'+esc(label)+'</i><b>'+esc(key==='caNet'?fPct(v):r.fmt(v,s))+'</b></span>';};
   var picked=UI.sel.indexOf(s.id)>=0,hiddenBar=barHidden(s.id);
   return '<article class="cmp12-card'+(lv===0?' crit':'')+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+Math.min(i,12)+'">'+
-    '<header><span class="cmp12-rk">'+(o.rank!=null?'#'+o.rank:'—')+'</span><div class="cmp12-id"><b>'+esc(s.name)+'</b>'+(placeOfId(s.id)?'<span class="cmp12-place">\ud83d\udccd '+esc(placeOfId(s.id))+'</span>':'')+'<span>'+esc([s.kind,s.nature.label].filter(Boolean).join(' · '))+(hiddenBar?' · '+esc(T.barHiddenTag):'')+'</span></div>'+
+    '<header><span class="cmp12-rk">'+(o.rank!=null?esc(T.ord(o.rank,o.n)):'—')+'</span><div class="cmp12-id"><b>'+esc(s.name)+'</b>'+(placeOfId(s.id)?'<span class="cmp12-place">\ud83d\udccd '+esc(placeOfId(s.id))+'</span>':'')+'<span>'+esc([s.kind,s.nature.label].filter(Boolean).join(' · '))+(hiddenBar?' · '+esc(T.barHiddenTag):'')+'</span></div>'+
     '<label class="cmp12-pick" title="'+esc(T.pickTitle)+'"><input type="checkbox"'+(picked?' checked':'')+' onchange="verdictCompareToggle(\''+esc(s.id)+'\')"><span>'+esc(T.pick)+'</span></label></header>'+
     /* C218 (W72) : un établissement complet n'est jamais « non calculable » ; tant qu'il est le seul calculé, il garde son
        indice et ses chiffres, et le classement attend un deuxième dossier. */
     (ix==null&&s.calculated&&s.k.score!=null?'<div class="cmp12-score"><b style="color:'+palette()[LEVEL.score(s.k.score)]+'">'+s.k.score+'<small>/100</small></b><span class="cmp12-lvl" style="color:'+palette()[LEVEL.score(s.k.score)]+'">'+esc(T.scoreOwn||'')+' · '+esc(T.levels[LEVEL.score(s.k.score)])+'</span><div class="cmp12-bar"><i data-w="'+s.k.score+'" style="background:'+palette()[LEVEL.score(s.k.score)]+'"></i></div></div>'+
-      '<p class="cmp12-line">'+esc(fEur(s.k.ca))+' '+esc(T.ofSales)+' → <b>'+esc(fEur(s.k.res))+' '+esc(T.netWord)+'</b> = <b style="color:'+(LEVEL.caNet(s.k.marge)!=null?palette()[LEVEL.caNet(s.k.marge)]:'inherit')+'">'+esc(fPct(s.k.marge))+'</b> '+esc(T.ofCa)+'</p>'+
+      '<p class="cmp12-line">'+esc(fEur(s.k.ca))+' '+esc(T.ofSales)+' → <b>'+esc(fEur(s.k.res))+' '+esc(T.netWord)+'</b> = <b style="color:'+(LEVEL.caNet(s.k.marge,s)!=null?palette()[LEVEL.caNet(s.k.marge,s)]:'inherit')+'">'+esc(fPct(s.k.marge))+'</b> '+esc(T.ofCa)+'</p>'+
       '<div class="cmp12-chips">'+chip('mat',T.chipMat)+chip('ms',T.chipMs)+chip('prime',T.chipPrime)+chip('pm',T.chipPm)+'</div>'+
       '<p class="cmp12-na">'+esc(T.alone||'')+'</p>':
     ix==null?'<div class="cmp12-na">'+esc(T.notCalc)+' · '+esc(T.incomplete)+'</div>':
-      '<div class="cmp12-score"><b style="color:'+col+'">'+ix+'<small>/100</small></b><span class="cmp12-lvl" style="color:'+col+'">'+esc(T.levels[lv])+'</span><div class="cmp12-bar"><i data-w="'+ix+'" style="background:'+col+'"></i></div></div>'+
-      '<p class="cmp12-line">'+esc(fEur(s.k.ca))+' '+esc(T.ofSales)+' → <b>'+esc(fEur(s.k.res))+' '+esc(T.netWord)+'</b> = <b style="color:'+(LEVEL.caNet(s.k.marge)!=null?palette()[LEVEL.caNet(s.k.marge)]:'inherit')+'">'+esc(fPct(s.k.marge))+'</b> '+esc(T.ofCa)+'</p>'+
+      (sc!=null?'<div class="cmp12-score"><b style="color:'+col+'">'+sc+'<small>/100</small></b><span class="cmp12-lvl" style="color:'+col+'">'+esc(T.scoreOwn||'')+'</span><div class="cmp12-bar"><i data-w="'+sc+'" style="background:'+col+'"></i></div></div>':'')+
+      '<p class="cmp12-line">'+esc(fEur(s.k.ca))+' '+esc(T.ofSales)+' → <b>'+esc(fEur(s.k.res))+' '+esc(T.netWord)+'</b> = <b style="color:'+(LEVEL.caNet(s.k.marge,s)!=null?palette()[LEVEL.caNet(s.k.marge,s)]:'inherit')+'">'+esc(fPct(s.k.marge))+'</b> '+esc(T.ofCa)+'</p>'+
       '<div class="cmp12-chips">'+chip('mat',T.chipMat)+chip('ms',T.chipMs)+chip('prime',T.chipPrime)+chip('pm',T.chipPm)+'</div>'+
       (reasons.length?'<p class="cmp12-why">★ '+esc(reasons.slice(0,3).join(' · '))+'</p>':''))+
     '<footer><button type="button" class="cmp12-eye" onclick="verdictCompareBar(\''+esc(s.id)+'\')">'+(hiddenBar?'👁 '+esc(T.barShow):'◌ '+esc(T.barHide))+'</button>'+
@@ -279,7 +308,7 @@ function filtered(){
   var q=UI.query.trim().toLowerCase();
   return DATA.snaps.filter(function(s){
     if(UI.filter==='real'&&isModel(s))return false;if(UI.filter==='model'&&!isModel(s))return false;
-    if(UI.filter==='crit'){var o=DATA.RK[s.id];if(!(o.index!=null&&LEVEL.score(o.index)===0))return false;}
+    if(UI.filter==='crit'){if(!(s.k.score!=null&&LEVEL.score(s.k.score)===0))return false;}
     return !q||(s.name+' '+placeOfId(s.id)).toLowerCase().indexOf(q)>=0;});
 }
 function rankHtml(T){
@@ -294,21 +323,21 @@ function tableHtml(T){
   if(snaps.length<2)return '<div class="cmp12-state">'+esc(T.pickHint)+'</div>';
   h+='<div class="cmp12-wrap"><div class="cmp12-grid" style="--n:'+snaps.length+'">';
   h+='<div class="cmp12-head cmp12-lab"><small>'+esc(T.ind)+'</small></div>';
-  snaps.forEach(function(s,i){var rkInfo=RK[s.id];h+='<div class="cmp12-head cmp12-col'+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+i+'">'+(rkInfo.rank!=null?'<i class="cmp12-rank">#'+rkInfo.rank+'</i>':'')+'<b style="color:'+(s.zone?s.zone.h:'inherit')+'">'+esc(s.name)+'</b>'+(placeOfId(s.id)?'<span class="cmp12-place">\ud83d\udccd '+esc(placeOfId(s.id))+'</span>':'')+'<span>'+esc([s.kind,s.nature.label,s.nature.period].filter(Boolean).join(' · '))+'</span>'+(s.calculated?'':'<span>'+esc(T.incomplete)+'</span>')+'</div>';});
+  snaps.forEach(function(s,i){var rkInfo=RK[s.id];h+='<div class="cmp12-head cmp12-col'+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+i+'">'+(rkInfo.rank!=null?'<i class="cmp12-rank">'+esc(T.ord(rkInfo.rank,rkInfo.n))+'</i>':'')+'<b style="color:'+(s.zone?s.zone.h:'inherit')+'">'+esc(s.name)+'</b>'+(placeOfId(s.id)?'<span class="cmp12-place">\ud83d\udccd '+esc(placeOfId(s.id))+'</span>':'')+'<span>'+esc([s.kind,s.nature.label,s.nature.period].filter(Boolean).join(' · '))+'</span>'+(s.calculated?'':'<span>'+esc(T.incomplete)+'</span>')+'</div>';});
   h+='<div class="cmp12-lab">'+esc(T.overall)+'<small>'+esc(T.overallSub)+'</small></div>';
-  snaps.forEach(function(s,i){var o=RK[s.id];if(o.index==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(s.calculated?T.alone||T.notCalc:T.notCalc)+'</div>';return;}var lv=LEVEL.score(o.index),col=palette()[lv];h+='<div class="cmp12-val cmp12-col'+(lv===0?' critique':'')+'" style="--i:'+i+'"><span style="color:'+col+'">'+o.index+'/100</span><small class="cmp12-lvl" style="color:'+col+'">'+esc(T.levels[lv])+'</small><em>'+esc(T.rank)+' #'+o.rank+' '+esc(T.of)+' '+o.n+'</em><div class="cmp12-bar"><i data-w="'+o.index+'" style="background:'+col+'"></i></div></div>';});
+  snaps.forEach(function(s,i){var o=RK[s.id];if(o.index==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(s.calculated?T.alone||T.notCalc:T.notCalc)+'</div>';return;}h+='<div class="cmp12-val cmp12-col" style="--i:'+i+'"><span>'+esc(T.ord(o.rank,o.n))+'</span></div>';});
   ROWS.forEach(function(r){
     var vals=snaps.map(function(s){return r.get?r.get(s):s.k[r.key];}),med=median(vals),best=bestIndex(r,snaps);
     h+='<div class="cmp12-lab">'+esc(T[r.key])+(T.sub&&T.sub[r.key]?'<small>'+esc(T.sub[r.key])+'</small>':'')+(T.rep&&T.rep[r.key]?'<small>'+esc(T.rep[r.key])+'</small>':'')+'<small>'+esc(r.hint?T[r.hint]:(r.better==='low'?T.better_low:r.better==='high'?T.better_high:T.neutral))+(med!=null&&!r.noDelta?' · '+esc(T.median)+' '+esc(r.get?fPct(med):r.fmt(med)):'')+'</small></div>';
     snaps.forEach(function(s,i){
       var v=r.get?r.get(s):s.k[r.key];
-      if(v==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(T.na)+'</div>';return;}
+      if(v==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(s.calculated&&T.unknown?T.unknown:T.na)+'</div>';return;}
       var delta=(med!=null&&r.key!=='score'&&!r.noDelta)?v-med:null,dTxt='';
       if(delta!=null&&Math.abs(delta)>0.0001){var amount=r.key==='ticket'?fEur2(Math.abs(delta)):r.key==='cmd'?fNum(Math.abs(delta),1):fPct(Math.abs(delta)).replace(' %',' pt');var good=r.better==='neutral'?null:(r.better==='high'?delta>0:delta<0);dTxt=amount+' '+(delta>0?T.above:T.below)+(good==null?'':' · '+(good?T.good:T.bad));}
-      var lvl=LEVEL[r.key]?LEVEL[r.key](v):null,col=lvl==null?null:palette()[lvl];
+      var lvl=LEVEL[r.key]?LEVEL[r.key](v,s):null,col=lvl==null?null:palette()[lvl];
       var bar=r.bar?'<div class="cmp12-bar"><i data-w="'+Math.max(0,Math.min(100,r.bar(v)/r.max*100)).toFixed(1)+'"'+(col?' style="background:'+col+'"':'')+'></i></div>':'';
       var badge=lvl==null?'':'<small class="cmp12-lvl" style="color:'+col+'">'+esc(T.levels[lvl])+'</small>';
-      h+='<div class="cmp12-val cmp12-col'+(i===best?' best':'')+(lvl===0?' critique':'')+'" style="--i:'+i+'" data-best="'+esc(T.best)+'"><span'+(col?' style="color:'+col+'"':'')+'>'+esc(r.fmt(v,s))+'</span>'+badge+(r.note?'<em>'+esc(r.note(v,s))+'</em>':'')+(dTxt?'<em>'+esc(dTxt)+'</em>':'')+(i===best?'<small class="cmp12-why">★ '+esc(T.best)+(T.why&&T.why[r.key]?' · '+esc(T.why[r.key]):'')+'</small>':'')+bar+'</div>';
+      h+='<div class="cmp12-val cmp12-col'+(i===best?' best':'')+(lvl===0?' critique':'')+'" style="--i:'+i+'" data-best="'+esc(T.best)+'"><span'+(col?' style="color:'+col+'"':'')+'>'+esc(r.fmt(v,s))+'</span>'+badge+repCell(r.key,s,T)+(r.note?'<em>'+esc(r.note(v,s))+'</em>':'')+(dTxt?'<em>'+esc(dTxt)+'</em>':'')+(i===best?'<small class="cmp12-why">★ '+esc(T.best)+(T.why&&T.why[r.key]?' · '+esc(T.why[r.key]):'')+'</small>':'')+bar+'</div>';
     });
   });
   h+='</div></div><div class="cmp12-vera"><i>V</i><div><b>'+esc(T.vera)+'</b> · '+esc(veraLine(snaps))+'</div></div>';
@@ -338,7 +367,7 @@ function open(){
   else{
     var allConclusive=snaps.every(function(s){return s.conclusive;});
     var podium=snaps.filter(function(s){return RK[s.id].rank!=null;}).slice(0,3);
-    if(podium.length){h+='<div class="cmp12-podium"><div class="cmp12-k">'+esc(T.podium)+' · '+snaps.length+' '+esc(T.etabs)+'</div><div class="cmp12-pods">'+podium.map(function(s,i){var ix=RK[s.id].index,lv=LEVEL.score(ix),col=palette()[lv];return '<button type="button" class="cmp12-pod'+(i===0?' first':'')+'" onclick="verdictCompareGo(\''+esc(s.id)+'\')"><span class="cmp12-medal">'+(i===0?'🥇':i===1?'🥈':'🥉')+'</span><b>'+esc(s.name)+'</b><span style="color:'+col+'">'+ix+'/100 · '+esc(T.levels[lv])+'</span></button>';}).join('')+'</div><p>'+esc(T.overallSub)+'</p></div>';}
+    if(podium.length){h+='<div class="cmp12-podium"><div class="cmp12-k">'+esc(T.podium)+' · '+snaps.length+' '+esc(T.etabs)+'</div><div class="cmp12-pods">'+podium.map(function(s,i){var ix=s.k.score,lv=ix==null?null:LEVEL.score(ix),col=lv==null?'inherit':palette()[lv];return '<button type="button" class="cmp12-pod'+(i===0?' first':'')+'" onclick="verdictCompareGo(\''+esc(s.id)+'\')"><span class="cmp12-medal">'+(i===0?'🥇':i===1?'🥈':'🥉')+'</span><b>'+esc(s.name)+'</b>'+(ix!=null?'<span style="color:'+col+'">'+esc(T.scoreOwn||'')+' '+ix+'</span>':'')+'</button>';}).join('')+'</div><p>'+esc(T.overallSub)+'</p></div>';}
     h+='<div class="cmp12-body">'+bodyHtml()+'</div>';
     h+='<div class="cmp12-state'+(allConclusive?' ok':'')+'">'+esc(allConclusive?T.conclusive:T.indicative)+'</div>';
     var persoState=typeof root.verdictPersoPortfolioState==='function'?root.verdictPersoPortfolioState():null;

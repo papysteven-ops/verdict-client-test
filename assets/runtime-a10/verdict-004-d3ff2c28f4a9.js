@@ -26,7 +26,8 @@ function nextHTML(c,draft){
  var isTomorrow=tomorrow&&tomorrow.toISOString().slice(0,10)===c.next;
  var date=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}).format(new Date(c.next+'T12:00:00Z'));
  var title=isTomorrow?'Demain · '+date:'Prochain jour ouvert · '+date;
- var explanation=c.deficit>0?'Base du jour '+money(c.base)+' + retard à rattraper '+money(c.deficit)+' = '+money(c.catchup)+' à réaliser aujourd’hui.':(c.advance>0?'Avance cumulée restante : '+money(c.advance)+'. La base du prochain jour reste à faire.':'Aucun retard cumulé. La base du prochain jour reste à faire.');
+ var bA=Math.round(c.base),zA=Math.round(c.catchup),quand=isTomorrow?'demain':'ce jour-là';/* C298 (V15-029) : l’opération écrite est juste à l’euro près */
+ var explanation=c.deficit>0?'Base du jour '+money(bA)+(zA>=bA?' + part du retard '+money(zA-bA):' − '+money(bA-zA))+' ('+money(c.deficit)+' de retard réparti sur les '+c.openRemaining+' jours ouverts restants) = '+money(zA)+' à réaliser '+quand+'.':(c.advance>0?'Avance cumulée restante : '+money(c.advance)+'. La base du prochain jour reste à faire.':'Aucun retard cumulé. La base du prochain jour reste à faire.');
  return '<p>'+(draft?'Aperçu après enregistrement':'Journée enregistrée')+'</p><strong>'+title+' : '+money(c.catchup)+' TTC</strong><p>'+explanation+'</p>'+dayExplanation(c,c.selectedDate)+(draft?'<small>Montant non enregistré : confirme avec le bouton.</small>':'');
 }
 function savedHTML(c,date,amount){

@@ -802,7 +802,7 @@ function wSave(){
   ["wPrenom","wResto"].forEach(function(id){var el=document.getElementById(id);el.classList.toggle("miss",!el.value.trim());});
   if(!pre||!res){ document.getElementById(!pre?"wPrenom":"wResto").focus(); toast("Votre pr\u00e9nom et votre \u00e9tablissement : les deux sont n\u00e9cessaires"); return; }
   DB.profile={prenom:pre,done:true};
-  if(DB.sites&&DB.sites[DB.site]){ if(res)DB.sites[DB.site].name=res; DB.sites[DB.site].emo=WEMO; }
+  if(DB.sites&&DB.sites[DB.site]){ if(res)DB.sites[DB.site].name=res; DB.sites[DB.site].emo=WEMO; if(!(SP().products||[]).length)DB.space=espaceDeDepart(DB.site); }
   save(); drawSpaces(); brandSub(); renderGreet();
   document.getElementById("w2t").innerHTML=(res?esc(res):"C\u2019est pr\u00eat")+"<br>est pr&ecirc;t.";
   document.getElementById("w2s").textContent=hourGreet()+(pre?" "+pre:"")+", vous pouvez compter d\u00e8s maintenant. Trois choses valent le d\u00e9tour :";
@@ -853,6 +853,11 @@ function drawEmo(){
 }
 function pickEmo(e){ SEMO=e; drawEmo(); }
 function closeSpace(){ document.getElementById("mSpace").classList.remove("on"); }
+/* C302 (V15-137) : un bar (icône 🍸 ou nom « Bar… », « Pub », « Café », « Cave ») s'ouvre sur son espace Bar : ses produits y vont
+   d'office au lieu de la Cuisine. Les autres établissements gardent leur premier espace. */
+function espaceDeDepart(k){var s=DB.sites&&DB.sites[k],z=spList(k),i;if(!s)return z[0];
+  if(s.emo==="\ud83c\udf78"||/(^|[\s'’-])(bar|pub|caf[eé]|cave|cocktails?)([\s'’-]|$)/i.test(String(s.name||"")))for(i=0;i<z.length;i++)if(DB.meta[z[i]]&&DB.meta[z[i]].kind==="bar")return z[i];
+  return z[0];}
 function saveSpace(){
   if(DEMO){toast("Établissement verrouillé dans la démonstration fictive");return;}
   var name=document.getElementById("sName").value.trim();
@@ -864,7 +869,7 @@ function saveSpace(){
     DB.spaces[kc]=newSpace("cuisine",false); DB.spaces[kb]=newSpace("bar",false);
     DB.meta[kc]={name:"Cuisine",emo:"\ud83c\udf73",site:k,kind:"cuisine"};
     DB.meta[kb]={name:"Bar",emo:"\ud83c\udf78",site:k,kind:"bar"};
-    DB.list.push(kc,kb); DB.site=k; DB.space=kc;
+    DB.list.push(kc,kb); DB.site=k; DB.space=espaceDeDepart(k);
   }else{ DB.sites[k].name=name; DB.sites[k].emo=SEMO; DB.site=k; }
   /* Multi-établissements : ajouter ou modifier un site conserve la page active. */
   save(); closeSpace(); drawSpaces(); brandSub(); go(VIEW);
@@ -916,14 +921,24 @@ function finishCount(){
     ask("Enregistrer ce comptage ?","Comptage partiel : "+v.counted+"/"+v.total+" produits compt\u00e9s. Verdict le conservera comme partiel, jamais comme un inventaire complet.","Enregistrer",doIt);
   }else doIt();
 }
+/* C302 (V15-105) : un comptage enregistré par un employé sans accès aux prix n'en garde aucun (« sans prix · — » chez le
+   patron alors que les prix sont connus). Chez qui voit les prix, il est valorisé aux prix connus aujourd'hui, et c'est dit. */
+function historiqueAuxPrixActuels(x){
+  if(!x||!x.lines||!x.lines.length||(STAFF&&!staffCan("view_prices")))return x;
+  if(x.lines.some(function(l){return l&&l.price>0;}))return x;
+  var prix={};Object.keys(DB.spaces||{}).forEach(function(k){((DB.spaces[k]||{}).products||[]).forEach(function(p){var v=px(p);if(v!==null&&isFinite(v)&&v>0)prix[p.id]=v;});});
+  var tot=0,n=0,lines=x.lines.map(function(l){var v=l&&prix[l.id];if(v&&l.qty!==null&&isFinite(l.qty)){tot+=l.qty*v;n++;return Object.assign({},l,{price:v});}return l;});
+  return n?Object.assign({},x,{lines:lines,eur:Math.round(tot*100)/100,__prixActuels:true}):x;
+}
 function historyHtml(){
   var a=(DB.snapshots||[]).filter(function(x){return x.site===DB.site;}).slice(-5).reverse();
   if(!a.length)return '<div class="card"><h3>Historique des comptages</h3><p class="sub" style="margin:0">Enregistrez un comptage termin&eacute; : sa date, sa couverture et sa valeur seront conserv&eacute;es ici.</p></div>';
   return '<div class="card"><h3>Historique des comptages<span class="n">'+a.length+' r&eacute;cents</span></h3>'+a.map(function(x){
+    x=historiqueAuxPrixActuels(x);
     /* C217 W60 : comptage (tout compté ?) et valorisation (prix connus) sont dits séparément ; un ancien comptage « complet » à 0 € sans aucun prix est relu comme « sans prix ». */
     var d=new Date(x.date).toLocaleDateString("fr-FR"), connus=x.lines&&x.lines.length?x.lines.filter(function(l){return l&&l.price>0;}).length:(x.eur>0?(x.counted||0):0), tout=x.total>0&&x.counted===x.total;
     var q=tout?(connus>=x.total?"complet":("comptage complet \u00b7 "+(connus?connus+"/"+x.total+" prix connus":"sans prix"))):("partiel \u00b7 "+(x.counted||0)+"/"+(x.total||0)+" compt\u00e9s");
-    return '<div class="line"><span>'+d+'<span class="sp">'+q+'</span></span><span class="q">'+(connus?eur(x.eur):"\u2014")+'</span></div>';
+    return '<div class="line"><span>'+d+'<span class="sp">'+q+(x.__prixActuels?' \u00b7 aux prix actuels':'')+'</span></span><span class="q">'+(connus?eur(x.eur):"\u2014")+'</span></div>';
   }).join("")+'</div>';
 }
 /* R134 · point 11 — consommation RÉELLE par produit entre deux comptages détaillés (11.3, 11.12–11.17, 11.95).
@@ -1031,7 +1046,7 @@ function tr(text,language){var raw=String(text==null?'':text),k=normalize(raw),i
  var cur='';function applique(){var l=lire();if(l&&l!==cur&&w.VerdictInventoryI18n){var avant=cur;cur=l;
  /* C266 : la page est déjà traduite dans une autre langue que le français : chaque traducteur ne reconnaît que le texte français
     d'origine, on recharge donc l'Inventaire (comptages enregistrés avant) au lieu de traduire par-dessus. */
- if(avant){/* C272 : aussi en quittant le français (des textes rendus après l'ouverture restaient en français) */try{if(typeof w.flushInventoryFastSave==='function')w.flushInventoryFastSave();}catch(e){}try{w.location.reload();return;}catch(e){}}
+ if(avant){/* C272 : aussi en quittant le français (des textes rendus après l'ouverture restaient en français) */try{if(typeof w.flushInventoryFastSave==='function')w.flushInventoryFastSave();}catch(e){}try{sessionStorage.setItem('verdict:inv:vue-langue',String(w.VIEW||''));}catch(e){}/* C302 */try{w.location.reload();return;}catch(e){}}
  w.VerdictInventoryI18n.setLocale(l);}}
  applique();try{w.addEventListener('storage',applique);}catch(e){}var n=0;(function tick(){applique();if(n++<3600)setTimeout(tick,1500);})();
  /* C266 : choix de la langue depuis Plus. La langue passe par Pilotage quand il est là (même réglage partout), sinon par la coque ;
@@ -1043,7 +1058,9 @@ function tr(text,language){var raw=String(text==null?'':text),k=normalize(raw),i
   applique();};
  function choixLangue(){var s=document.getElementById('inventaireLangueChoix');if(s&&s.value!==(lire()||'fr'))s.value=lire()||'fr';}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',choixLangue);else choixLangue();
- w.addEventListener('load',function(){try{var l=lire();if(l&&l!=='fr'&&w.VerdictInventoryI18n)w.VerdictInventoryI18n.setLocale(l);}catch(e){}});/* C266 : jours des créneaux (VerdictOrdering chargé après) */
+ w.addEventListener('load',function(){try{var l=lire();if(l&&l!=='fr'&&w.VerdictInventoryI18n)w.VerdictInventoryI18n.setLocale(l);}catch(e){}
+  /* C302 (V15-064) : après le rechargement dû à la langue, on revient sur l'écran où elle a été choisie (Plus), pas sur Compter. */
+  try{var vu=sessionStorage.getItem('verdict:inv:vue-langue');if(vu){sessionStorage.removeItem('verdict:inv:vue-langue');if(/^(order|stats|prod)$/.test(vu)&&typeof w.go==='function')setTimeout(function(){w.go(vu);},60);}}catch(e){}});/* C266 : jours des créneaux (VerdictOrdering chargé après) */
 })(window);
 /* C248 : fin de R207. L'Inventaire est traduit (R216) : les cartes de Verdict suivent la langue choisie, sans bandeau « en français seulement ». */ function matiereEcartHtml(){var F=matiereVerdictFrame();if(!F)return '';try{return F.verdictMatiereCarteHTML(F.verdictMatiereDepuisInventaire(inventaireDonneesMatiere()))||'';}catch(e){return '';}}
 
@@ -1426,6 +1443,8 @@ if(STAFF_PROFILE_INCOMPLETE){
 }else if(DEMO){
   authHide(); document.getElementById("whoami").style.display="none"; document.getElementById("demoBanner").classList.add("on");
   document.getElementById("exampleButton").hidden=true; document.getElementById("backupButton").hidden=true; document.getElementById("restoreButton").hidden=true;
+  /* C302 (V15-072) : en démonstration il n'existe aucun compte : ni « Compte gratuit · synchronisées », ni « Se déconnecter » / « Supprimer mon compte ». */
+  var demoOutils=document.getElementById("staffAccountTools");if(demoOutils)demoOutils.style.display="none";var demoNote=document.getElementById("storageNote");if(demoNote)demoNote.textContent="D\u00e9monstration fictive \u00b7 rien n\u2019est enregistr\u00e9 ni synchronis\u00e9";
   if(STAFF){document.documentElement.classList.add('staff-mode');applyStaffZoneScope();applyStaffPermissions();}
   firstRun();
 }else{ drawSpaces(); brandSub(); if(STAFF){document.documentElement.classList.add('staff-mode');document.getElementById('authGate').style.display='none';document.getElementById('whoami').style.display='none';applyStaffPermissions();}authBoot(); }

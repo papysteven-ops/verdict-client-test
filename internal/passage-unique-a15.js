@@ -139,6 +139,8 @@ function appliquerJournees(P){
 }
 /* Jours d'ouverture par semaine : le nombre de jours ouverts le plus fréquent sur les semaines entières couvertes par la caisse
    (fermetures annuelles et jours fériés n'y changent rien). « extra » : journées sur le point d'être ajoutées. */
+/* C300 (V15-082) : des jours d'ouverture réellement indiqués (Mes chiffres, calendrier du patron, fiche d'exercice) — pas la valeur par défaut d'un dossier neuf. */
+function jsemSaisi(d){return !!(d&&((d.maj&&d.maj.activite)||(d.fermesSource&&d.fermesSource.source==='patron')||(d.refSource&&d.refSource.nature&&!/fec/.test(String(d.refSource.nature)))));}
 function joursSemaine(extra){
   var d=DB(),vu={};(d&&d.histJour||[]).forEach(function(r){if(r&&r.date&&journeeCaisse(r)&&num(r.caJ)>0)vu[String(r.date).slice(0,10)]=1;});
   (extra||[]).forEach(function(x){if(x&&x.caJ>0)vu[x.date]=1;});
@@ -174,7 +176,7 @@ function majJoursRepos(){var e=etatRepos(),d=DB();if(!e)return null;
   if(e.egal){if(!e.explicite)d.fermesSource={source:'caisse',repos:e.repos.slice(),journees:e.journees,semaines:e.semaines,at:new Date().toISOString()};return null;}
   if(e.explicite)return {garde:true,avant:e.fermes,caisse:e.repos};
   return prendreRepos();}
-function jsemLigne(js){if(!js)return '';var d=DB(),avant=num(d&&d.in&&d.in.jsem),R=js.repos,fe=(d&&d.fermes||[]).slice().sort(nb),conflit=!!(R&&fe.join(',')!==R.join(',')&&reposExplicite(d));return 'Jours d’ouverture : <b>'+js.jours+' par semaine'+(R?', '+reposTexte(R):'')+'</b>, lus dans ces journées'+(avant!=null&&avant!==js.jours?' (vous aviez indiqué '+String(avant).replace('.',',')+')':'')+' : rien à saisir.'+(conflit?' Vous aviez indiqué '+reposTexte(fe)+' : votre choix est gardé, Mes services vous propose celui de la caisse.':'');}
+function jsemLigne(js){if(!js)return '';var d=DB(),avant=jsemSaisi(d)?num(d&&d.in&&d.in.jsem):null/* C300 (V15-082) : la valeur 6 d'un dossier neuf n'a pas été indiquée par le patron */,R=js.repos,fe=(d&&d.fermes||[]).slice().sort(nb),conflit=!!(R&&fe.join(',')!==R.join(',')&&reposExplicite(d));return 'Jours d’ouverture : <b>'+js.jours+' par semaine'+(R?', '+reposTexte(R):'')+'</b>, lus dans ces journées'+(avant!=null&&avant!==js.jours?' (vous aviez indiqué '+String(avant).replace('.',',')+')':'')+' : rien à saisir.'+(conflit?' Vous aviez indiqué '+reposTexte(fe)+' : votre choix est gardé, Mes services vous propose celui de la caisse.':'');}
 function journeesLigne(P){
   if(!P)return '';var n=P.nouveaux.length+P.remplacees.length;
   if(!n)return 'Journées de caisse : déjà à jour ('+int(P.rows.length)+' jours'+(P.gardees?', '+int(P.gardees)+' clôture'+(P.gardees>1?'s':'')+' de caisse gardée'+(P.gardees>1?'s':'')+' telle'+(P.gardees>1?'s':'')+' quelle'+(P.gardees>1?'s':''):'')+').';
@@ -187,7 +189,11 @@ function jCard(){return doc.getElementById('a15-journees');}
 function jEtat(){var d=DB(),L=(d&&d.histJour||[]).filter(journeeCaisse).map(function(r){return String(r.date).slice(0,10);}).sort(),js=joursSemaine();
   /* C210 (V34) : en démonstration, les journées de caisse sont fictives (source « demo-pos ») ; à la main, elles sont saisies.
      Ne plus écrire « aucune journée » quand l’Accueil en suit : dire ce qu’il y a et d’où cela vient. */
-  if(!L.length){var hj=(d&&d.histJour)||[],D=hj.filter(function(r){return r&&r.demo&&/pos|caisse/i.test(String(r.source||''))&&r.date;}).map(function(r){return String(r.date).slice(0,10);}).sort(),
+  /* C300 (V15-081) : un dossier réel annonçait « 618 journées de caisse de démonstration » (reste d'une démo ouverte avant) et la
+     démo Bar-restaurant « aucune journée » (ses 1 818 journées n'ont pas la source « pos »). Les journées de démonstration ne se
+     comptent que dans une démonstration, quelle que soit leur source. */
+  var enDemo=!!(d&&(d._demo||d.exempleCharge||(d.dataProvenance&&(d.dataProvenance.nature==='model_estimate'||d.dataProvenance.verificationLevel==='simulation'))));
+  if(!L.length){var hj=(d&&d.histJour)||[],D=enDemo?hj.filter(function(r){return r&&r.date&&(r.demo||r.fictional||/demo/i.test(String(r.source||'')))&&(+r.caJ>0||+r.ca>0);}).map(function(r){return String(r.date).slice(0,10);}).sort():[],
     M=hj.filter(function(r){return r&&!r.demo&&r.date&&!journeeCaisse(r)&&(+r.caJ>0||+r.ca>0);}).length;
     if(D.length)return '<div class="a15-sum a15-ok"><b>'+int(D.length)+' journée'+(D.length>1?'s':'')+' de caisse de démonstration</b>, du '+esc(dateLabel(D[0]))+' au '+esc(dateLabel(D[D.length-1]))+(js?' · '+js.jours+' jour'+(js.jours>1?'s':'')+' d’ouverture par semaine'+(js.repos&&js.repos.length?', '+reposTexte(js.repos):''):'')+'. Avec vos chiffres, les clôtures de votre caisse les remplacent.</div>';
     if(M)return '<div class="a15-sum">Aucune clôture de caisse importée pour l’instant : '+int(M)+' journée'+(M>1?'s':'')+' saisie'+(M>1?'s':'')+' à la main sui'+(M>1?'vent':'t')+' vos ventes à l’Accueil. L’export « ventes par article » ci-dessus apporte aussi les clôtures.</div>';
@@ -414,6 +420,17 @@ function install(){
   return true;
 }
 root.VerdictPassageUnique={journees:journees,planJournees:planJournees,appliquerJournees:appliquerJournees,joursSemaine:joursSemaine,majJoursSemaine:majJoursSemaine,etatRepos:etatRepos,prendreRepos:prendreRepos,garderRepos:garderRepos,majJoursRepos:majJoursRepos,reposTexte:reposTexte,renderJournees:jRender,mois:mois,moyenneOption:moyenneOption,analyse:analyse,infosArticles:infosArticles,periodLabel:periodLabel,tvaNum:tvaNum,createDish:createDish,readCsv:readCsv,volumes:volumes,unitPrice:unitPrice,guessCategory:guessCategory,similarDish:similarDish,draftRecipe:draftRecipe,render:render,preview:preview,apply:apply,state:S,setText:function(t,per){S.text=String(t||'');if(per){S.period=per;S.periodChosen=true;}preview();}};
+/* C300 (V15-113) : l'aperçu d'import des journées de caisse annonçait « 1 conflit · un conflit reste visible avant validation »
+   sans montrer ni la date, ni la saisie, ni la caisse. Chaque conflit est écrit sous l'aperçu (dix au plus). */
+function conflitsCaisse(){var r=root.DAILY_CSV_LOT,e=doc.getElementById('daily-csv-result');if(!e||!r||!r.conflicts||!r.conflicts.length||e.querySelector('[data-a15-conflits]'))return;
+  var sel=doc.getElementById('daily-csv-conflict'),garde=sel&&sel.value==='keep',L=r.conflicts.slice(0,10).map(function(c){var a=c.existing||{},b=c.incoming||{},src=/manual/i.test(String(a.source||''))||!a.source?'saisie à la main':'déjà importée';
+    return '<li>'+esc(dateLabel(String(b.date).slice(0,10)))+' : '+src+' <b>'+money(a.caJ)+'</b>'+(a.tkJ!=null?' ('+int(a.tkJ)+' tickets)':'')+', caisse <b>'+money(b.caJ)+'</b>'+(b.tkJ!=null?' ('+int(b.tkJ)+' tickets)':'')+'</li>';}).join('');
+  var d=doc.createElement('div');d.setAttribute('data-a15-conflits','1');d.className='note';d.style.margin='0 0 9px';
+  d.innerHTML='<b>'+(r.conflicts.length>1?r.conflicts.length+' journées différentes':'1 journée différente')+' de ce que Verdict connaît déjà :</b><ul style="margin:4px 0 0 18px;padding:0">'+L+'</ul>'+(r.conflicts.length>10?'<p style="margin:4px 0 0">… et '+int(r.conflicts.length-10)+' autres.</p>':'')+'<p style="margin:4px 0 0">'+(garde?'Vous avez choisi de garder les journées déjà connues.':'La caisse fait foi : ces journées prendront le chiffre de la caisse (l’ancienne valeur reste dans l’historique des corrections).')+'</p>';
+  e.appendChild(d);}
+function wrapPreview(){var f=root.dailyCsvPreview;if(typeof f!=='function'||f.__c300)return;var g=function(){var r=f.apply(this,arguments);try{conflitsCaisse();}catch(x){}return r;};g.__c300=true;root.dailyCsvPreview=g;}
+if(doc.addEventListener)doc.addEventListener('change',function(ev){if(ev.target&&ev.target.id==='daily-csv-conflict'){var o=doc.querySelector('#daily-csv-result [data-a15-conflits]');if(o)o.remove();try{conflitsCaisse();}catch(x){}}},true);
+wrapPreview();setTimeout(wrapPreview,500);setTimeout(wrapPreview,2000);
 function boot(n){if(install())return;if(n>0)setTimeout(function(){boot(n-1);},300);}
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',function(){boot(60);});else boot(60);
 })(window);

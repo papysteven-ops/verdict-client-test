@@ -94,7 +94,7 @@
       ? 'Chaque jour reçoit sa part selon ce qu’il fait d’habitude. ' + quand + ', un <b>' + JOURS[js] + '</b> rapporte en moyenne <b>' + eur(lui) + '</b>' + (bas !== null ? ', un ' + JOURS[bas] + ' ' + eur(M[bas]) : '') + ' : la base du ' + JOURS[js] + ' est ' + (bas !== null && lui > M[bas] ? 'plus haute' : 'adaptée') + '. Base de ce jour : <b>' + eur(base) + '</b>.'
       : 'Aucune caisse jour par jour ne dit encore ce que rapporte chaque jour de semaine : chaque jour ouvert reçoit la même part, <b>' + eur(base) + '</b>.';
     var annee = g && Math.abs(Number(g.ecartAnnee) || 0) >= 1 ? ' L’année porte ' + (g.ecartAnnee > 0 ? 'un retard' : 'une avance') + ' de <b>' + eur(Math.abs(g.ecartAnnee)) + '</b> sur les mois passés, réparti sur les ' + g.moisRestants + ' mois restants : minimum du mois <b>' + eur(input.minimum) + '</b> (' + signe(g.partMois) + ').' : '';
-    var reste = (/reste du mois/.test(resteMois(input.minimum, date)) ? 'Minimum du reste du mois ' : 'Minimum du mois ') /* C264 (R1) */ + eur(input.minimum) + ' − encaissé ' + eur(c.actual) + ' = <b>' + eur(c.remaining) + '</b> à faire sur les <b>' + c.openRemaining + ' jours ouverts</b> restants, ' + (aujourdHui ? 'partagés' : 'qui étaient partagés') + ' selon leur poids : un retard fait monter la part de chaque jour, une avance la fait baisser.';
+    var reste = (/reste du mois/.test(resteMois(input.minimum, date)) ? 'Minimum du reste du mois ' : 'Minimum du mois ') /* C264 (R1) */ + eur(input.minimum) + ' − encaissé ' + eur(c.actual) + ' = <b>' + eur(Math.max(0, Math.round(input.minimum) - Math.round(c.actual))) /* C298 (V15-044) : opération juste telle qu'écrite */ + '</b> à faire sur les <b>' + c.openRemaining + ' jours ouverts</b> restants, ' + (aujourdHui ? 'partagés' : 'qui étaient partagés') + ' selon leur poids : un retard fait monter la part de chaque jour, une avance la fait baisser.';
     return '<details class="vx39" data-vx39="' + date + '"' + (ouverts[date] ? ' open' : '') + '><summary class="vx39-t"><span>Pourquoi ' + (aujourdHui ? 'ce montant aujourd’hui' : 'ce montant le ' + libJour(date)) + ' ?</span><i aria-hidden="true">›</i></summary><div class="vx39-c"><ol>' +
       '<li><b>Le budget du mois</b> : <b>' + eur(budget) + '</b> de chiffre d’affaires, la part de ce mois dans le minimum annuel qui couvre vos charges, salaires et loyer, sur <b>' + input.days.length + ' jours ouverts</b> (jours de repos exclus).' + debutMois(plan, date) + saisonMois(date) + annee + '</li>' +
       '<li><b>La part de ce jour</b> : ' + part + '</li>' +
@@ -159,13 +159,17 @@
     try { var ap = w.DB.performanceYearPlans[k.slice(0, 4)]; full = ap && ap.fullMonthlyTargets ? Number(ap.fullMonthlyTargets[k]) : null; } catch (e) {}
     if (/^\d{4}-\d{2}-\d{2}$/.test(s) && s.slice(0, 7) === k && s.slice(8) !== '01' && full > Number(min) + 0.5) return 'Minimum du reste du mois, depuis le ' + Number(s.slice(8)) + ' ' + MOIS[Number(s.slice(5, 7)) - 1] + ' : <b>' + eur(min) + '</b> (mois entier : ' + eur(full) + ').';
     return 'Minimum du mois : <b>' + eur(min) + '</b>.'; }
+  /* C298 (V15-070) : la date de la journée de la carte de saisie (une journée passée choisie par « Corriger cette journée » ; avec tous, aussi aujourd'hui). */
+  function cleSaisie(S, tous) { if (!S || (!S.passe && !tous) || S.cle || !(S.n >= 1)) return null; var k; try { k = String(w.verdictOperationalClock().key).slice(0, 8); } catch (e) { return null; } return k + (S.n < 10 ? '0' : '') + S.n; }
   function clair(lp, c, S) {
     var t = montant(lp.textContent), base = Number(S.obj) || t, passe = /pour cette journée/.test(lp.textContent);
     if (!(t > 0)) return;
     if (joursInconnus()) { lp.className = 'vx53-o'; lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>à confirmer</b>';
       var ex0 = lp.nextElementSibling; if (!ex0 || !ex0.classList.contains('vx53-e')) { ex0 = lp.ownerDocument.createElement('p'); ex0.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex0); }
       ex0.innerHTML = 'Il dépend de vos jours d’ouverture : répondez à « Combien de jours ouvrez-vous par semaine ? », en haut de l’Accueil.' + (c && c.input && Number(c.input.minimum) > 0 ? ' ' + resteMois(c.input.minimum, S.cle || (c && c.next) || (function () { try { return String(w.verdictOperationalClock().key); } catch (e) { return ''; } })()) : ''); return; }
-    var date = S.cle || (c && c.next), jourDate = S.cle || (function () { try { return String(w.verdictOperationalClock().key).slice(0, 10); } catch (e) { return date; } })(), jour = jourDate ? JOURS[jourSem(jourDate)] : 'jour', extra = Math.round(t) - Math.round(base); /* C240 : le jour de la carte (après la saisie, c.next est déjà demain) */
+    var cleS = S.cle || cleSaisie(S, true); /* C298 (V15-070, 084) : la journée de la carte (passée, ou aujourd'hui déjà saisi) se lit avec l'avance du mois et les jours restants de ce jour-là */
+    if (cleS && c && c.input && Array.isArray(c.input.days) && c.next !== cleS && w.VerdictCHR) { try { var c0 = w.VerdictCHR.calculate({ minimum: c.input.minimum, today: cleS, days: c.input.days.map(function (x) { return Object.assign({}, x, { ca: x.date >= cleS ? null : x.ca }); }) }); if (c0 && c0.exact && c0.next === cleS) c = c0; } catch (e) {} }
+    var date = cleS || (c && c.next), jourDate = cleS || (function () { try { return String(w.verdictOperationalClock().key).slice(0, 10); } catch (e) { return date; } })(), jour = jourDate ? JOURS[jourSem(jourDate)] : 'jour', extra = Math.round(t) - Math.round(base); /* C240 : le jour de la carte (après la saisie, c.next est déjà demain) */
     var meme = c && c.exact && c.next === date, em = meme ? ecartMois(c) : { retard: 0, avance: 0 }, retard = em.retard, avance = em.avance, ouv = meme ? Number(c.openRemaining) || 0 : 0;
     /* C177 (Steven, 20/10 : « je comprends rien : 2 300 c'est quoi, si 1 676… là tu additionnes, mais pourquoi ? Je ne
        comprends pas l'info d'après ») : l'avance (ou le retard) du mois est partagée entre les jours ouverts qui restent ;
@@ -196,12 +200,12 @@
     var input = cw.VD.chr && cw.VD.chr.input; if (!input) return;
     try { uneSeuleAvance(d, cw.VD.chr); uneSeuleAvance(doc, cw.VD.chr); mentionTTC(d); } catch (e) {}
     /* Saisie du jour : le prochain jour ouvert à faire. */
-    var saisie = d.getElementById('modSaisie'), next = cw.VD.chr.next;
+    var saisie = d.getElementById('modSaisie'), next = cw.VD.chr.next, cleS = cleSaisie(cw.VD.saisie), quand = cleS || next; /* C298 (V15-070) */
     if (saisie) { var lp = [].filter.call(saisie.querySelectorAll('.day-total p'), function (p) { return /^À réaliser (aujourd|pour cette journée)/.test((p.textContent || '').trim()); })[0];
       if (lp) clair(lp, cw.VD.chr, cw.VD.saisie || {}); arrondir(saisie); }
-    if (saisie && next) {
+    if (saisie && quand) {
       var ex = saisie.querySelector('.vx39');
-      if (!ex || ex.getAttribute('data-vx39') !== next) { if (ex) ex.remove(); var h = bloc(input, next, !input.today || input.today === next) /* C131 : jour fermé aujourd'hui → titre du prochain jour ouvert */; if (h) saisie.insertAdjacentHTML('beforeend', h); }
+      if (!ex || ex.getAttribute('data-vx39') !== quand) { if (ex) ex.remove(); var h = bloc(input, quand, !cleS && (!input.today || input.today === next)) /* C131 : jour fermé aujourd'hui → titre du prochain jour ouvert */; if (h) saisie.insertAdjacentHTML('beforeend', h); }
       /* C142 : le détail de la position (reste du mois, couverts, année à date) est en tête du volet replié. */
       var vol = saisie.querySelector('.vx39 .vx39-c');
       if (vol && !vol.querySelector('.vx39-d')) { var hp2 = position(cw.VD.chr); if (hp2) { var t = d.createElement('div'); t.innerHTML = hp2; var lignes = t.querySelectorAll('small'); if (lignes.length) { var dd = d.createElement('div'); dd.className = 'vx39-d'; [].forEach.call(lignes, function (x) { dd.appendChild(x); }); vol.insertBefore(dd, vol.firstChild); } } }
@@ -285,7 +289,9 @@
     var orig = w.point3Calc; if (typeof orig !== 'function' || orig.__c130) return;
     var f = function () { var p = orig.apply(this, arguments); try { var cap = capitalAnnuel(), taux = Number(p && p.contributionRate) / 100; if (p && p.attainable && cap > 0 && taux > 0 && isFinite(Number(p.breakEvenTresorerie))) { p = Object.assign({}, p); p.capitalRembourseAn = Math.round(cap * 100) / 100; p.breakEvenTresorerie = Math.round((Number(p.breakEvenTresorerie) + cap / taux) * 100) / 100; } } catch (e) {} return p; };
     f.__c130 = true; w.point3Calc = f;
-    var t0 = w.verdictSeuilsT; if (typeof t0 === 'function' && !t0.__c130) { var t = function (k) { var v = t0.apply(this, arguments); if (k === 'tresoD') { var cap = capitalAnnuel(); if (cap > 0) v = 'Pour couvrir les sorties d’argent : charges hors amortissements, plus ' + eur(cap) + ' de capital d’emprunt remboursé par an. Le minimum économique quotidien inclut les amortissements.'; } return v; }; t.__c130 = true; w.verdictSeuilsT = t; }
+    var t0 = w.verdictSeuilsT; if (typeof t0 === 'function' && !t0.__c130) { var t = function (k) { var v = t0.apply(this, arguments); if (k === 'tresoD') { var cap = capitalAnnuel(); if (cap > 0) v = 'Pour couvrir les sorties d’argent : charges hors amortissements, plus ' + eur(cap) + ' de capital d’emprunt remboursé par an. Le minimum économique quotidien inclut les amortissements.'; }
+        /* C299 (V15-046) : dire pourquoi le seuil comptable, qui inclut les amortissements, est plus bas que le seuil de trésorerie. */
+        if (k === 'comptaD') { try { var cap2 = capitalAnnuel(), R2 = typeof w.moteur === 'function' ? w.moteur() : null, am = R2 && R2.d ? Number(R2.d.amort) || 0 : 0; if (cap2 > am) v += ' Il est plus bas que le seuil de trésorerie : vos amortissements (' + eur(am) + ' par an) pèsent moins que le capital d’emprunt remboursé (' + eur(cap2) + ' par an).'; } catch (e) {} } return v; }; t.__c130 = true; w.verdictSeuilsT = t; }
   })();
   (function () {
     var orig = w.progObjJour; if (typeof orig !== 'function' || orig.__c129) return;

@@ -46,14 +46,15 @@
        carte est fiable : c'est de l'argent qui s'échappe vraiment, à côté des leviers à récupérer. */
     var fuite = null;
     try {
-      var C = P && P.carte, st = typeof w.carteStats === 'function' ? w.carteStats() : null, reel = num(d.ca) > 0 ? num(d.mat) / num(d.ca) * 100 : 0, theo = st ? num(st.theoR) : 0;
-      if (C && C.ok && num(C.couverture) >= 80 && reel > 0 && theo > 0 && reel - theo >= 0.5) fuite = { reel: reel, theo: theo, pts: reel - theo, eur: (reel - theo) / 100 * num(d.ca), compte: reel - theo >= 4 };
+      /* C301 (V15-003, décision 5) : le même écart que partout (window.VerdictEcartMatiere) : même périmètre des deux côtés, période écrite. */
+      var C = P && P.carte, E = typeof w.VerdictEcartMatiere === 'function' ? w.VerdictEcartMatiere(R) : null;
+      if (C && C.ok && num(C.couverture) >= 80 && E && E.reel > 0 && E.theo > 0 && E.pts >= 0.5) fuite = { reel: E.reel, theo: E.theo, pts: E.pts, eur: E.eur, compte: E.compte, perimetre: E.perimetre, periode: E.periode };
     } catch (e) {}
     var leviers = (G && G.leviers || []).slice(0, 8);
     return {
       R: R, ca: num(d.ca), res: num(d.res), rn: rn, score: Math.round(num(R.score)), postes: postes,
       mini: mini, securite: isFinite(Number(seuil.securiteEur)) ? Number(seuil.securiteEur) : num(d.ca) - mini,
-      leviers: leviers, fuite: fuite, cible: G && G.max ? num(G.max.res) : null, cibleScore: G && G.max ? Math.round(num(G.max.score)) : null,
+      leviers: leviers, fuite: fuite, cible: G && G.max ? num(d.res) + leviers.reduce(function (s, x) { return s + num(x.gain); }, 0) : null, /* C301 (V15-041) : le possible est la somme des lignes */ cibleScore: G && G.max ? Math.round(num(G.max.score)) : null,
       nom: (function () { try { return (w.DB && w.DB.etab) || 'Votre établissement'; } catch (e) { return 'Votre établissement'; } })()
     };
   }
@@ -100,7 +101,7 @@
       var n0 = 0, fuites = '';
       if (D.fuite) {
         var fpt = (Math.round(D.fuite.pts * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-        fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière</b><small>Achats ' + pct(D.fuite.reel) + ' du CA, fiches ' + pct(D.fuite.theo) + ' (nourriture + boissons) : ' + fpt + ' point de pertes, portions ou offerts non saisis' + (D.fuite.compte ? ' ; un tiers compté ci-dessous' : ' ; sous 4 points, non compté dans le gain') + '</small></div><strong>≈\u00a0<em data-rc-count="' + Math.round(D.fuite.eur) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
+        fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière (' + esc(D.fuite.perimetre || 'nourriture + boissons') + ')</b><small>Achats ' + esc(D.fuite.periode || '') + ' : ' + pct(D.fuite.reel) + ' du CA ; fiches : ' + pct(D.fuite.theo) + '. ' + fpt + ' point' + (D.fuite.pts >= 2 ? 's' : '') + ' de pertes, portions ou offerts non saisis' + (D.fuite.compte ? ' ; Verdict n’en compte qu’un tiers, dans le levier « Coût de la nourriture » ci-dessous' : ' ; sous 4 points, non compté dans le gain') + '</small></div><strong>≈\u00a0<em data-rc-count="' + Math.round(D.fuite.eur) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
         n0 = 1;
       }
       fuites += D.leviers.map(function (x, i) {
@@ -209,9 +210,15 @@
     if (!box) { box = doc.createElement('div'); box.id = 'vdRecit'; }
     box.setAttribute('data-cle', cle);
     var corps = tableaux(D), noms = { 1: 'Verdict', 2: 'Où part l’argent', 3: 'Seuil', 4: 'Fuites', 5: 'Remonter', 6: 'Prochain pas' }, puces = '';
-    corps.replace(/data-rc="(\d)"/g, function (m, n) { puces += '<button type="button" data-rc-nav="' + n + '"><i>' + n + '</i>' + noms[n] + '</button>'; return m; });
-    box.innerHTML = '<header class="rc-head"><span>Audit Verdict · ' + esc(D.nom) + '</span><h1>Votre audit en 6 images</h1><p><span class="rc-m">Faites défiler : chaque image se joue quand elle arrive.</span><span class="rc-l">Six images, une idée chacune, toutes calculées avec vos chiffres.</span></p></header>' +
+    /* C301 (V15-080) : autant d'images annoncées que d'images affichées, numérotées à la suite (plus « en 6 images » pour 1, 2, 3, 6) */
+    var rang = {}, nImg = 0; corps.replace(/data-rc="(\d)"/g, function (m, n) { if (!rang[n]) rang[n] = ++nImg; return m; });
+    corps = corps.replace(/(<span class="rc-k">)(\d)( · )/g, function (m, a, n, b) { return a + (rang[n] || n) + b; });
+    corps.replace(/data-rc="(\d)"/g, function (m, n) { puces += '<button type="button" data-rc-nav="' + n + '"><i>' + (rang[n] || n) + '</i>' + noms[n] + '</button>'; return m; });
+    var MOTS = ['', 'une image', 'deux images', 'trois images', 'quatre images', 'cinq images', 'six images'], motN = MOTS[nImg] || (nImg + ' images');
+    box.innerHTML = '<header class="rc-head"><span>Audit Verdict · ' + esc(D.nom) + '</span><h1>Votre audit en ' + nImg + ' image' + (nImg > 1 ? 's' : '') + '</h1><p><span class="rc-m">Faites défiler : chaque image se joue quand elle arrive.</span><span class="rc-l">' + motN.charAt(0).toUpperCase() + motN.slice(1) + ', une idée chacune, toutes calculées avec vos chiffres.</span></p></header>' +
       '<div class="rc-navwrap"><div class="rc-nav" role="navigation" aria-label="Chapitres de l’audit">' + puces + '</div></div>' + corps;
+    /* C301 (V15-080) : chaque montant est écrit dès le départ (l'animation repart de 0 à l'écran seulement) */
+    [].forEach.call(box.querySelectorAll('[data-rc-count]'), function (x) { var v = Number(x.getAttribute('data-rc-count')); if (isFinite(v) && x.hasAttribute('data-rc-eur')) x.textContent = eur(v); });
     var wrap = body.querySelector('.au-wrap') || body;
     if (box.parentNode !== wrap || wrap.firstChild !== box) wrap.insertBefore(box, wrap.firstChild);
     [].forEach.call(box.querySelectorAll('[data-rc-go]'), function (b) {

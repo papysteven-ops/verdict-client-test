@@ -363,6 +363,7 @@ function open(tab){
     '<div class="vc-tabs"><button class="vc-tab" data-t="dish">Un plat</button><button class="vc-tab" data-t="menu">Une nouvelle carte</button><button class="vc-tab" data-t="memory">Mémoire de la carte</button></div><div class="vc-body"></div></div>';
   doc.body.appendChild(w);
   w.addEventListener('click',function(e){if(e.target===w)close();});w.querySelector('.vc-x').addEventListener('click',close);
+  if(!open.__c301){open.__c301=true;doc.addEventListener('keydown',function(e){if((e.key==='Escape'||e.key==='Esc')&&doc.getElementById('vc14'))close();});}
   [].forEach.call(w.querySelectorAll('.vc-tab'),function(b){b.addEventListener('click',function(){UI.tab=b.getAttribute('data-t');render();});});
   render();
 }
@@ -401,7 +402,7 @@ function showDishes(out,list){
   out.innerHTML=list.map(function(x,i){var mg=x.margin;return '<div class="vc-card">'+originBadge(x)+'<h3>'+esc(x.p.nom)+'</h3><div class="vc-kpi"><span>Prix <b>'+money(x.price)+'</b></span>'+(x.p.cpVeraSaison&&x.p.cpVeraSaison.principalManque?'<span>Coût matière <b>à compléter <small>(il manque '+esc(x.p.cpVeraSaison.principalManque)+')</small></b></span><span>Marge <b>non calculée</b></span>':'<span>Coût matière <b>'+money(mg&&mg.cost)+(x.p.cpVeraSaison&&x.p.cpVeraSaison.manque.length?' <small>(incomplet : sans '+esc(x.p.cpVeraSaison.manque.join(', '))+')</small>':'')+'</b></span>'+(x.p.cpVeraSaison&&x.p.cpVeraSaison.manque.length?'<span>Marge <b>≈ '+pct(mg&&mg.pct,0)+' <small>provisoire</small></b></span><span>Contribution <b>≈ '+money(mg&&mg.contrib)+'</b></span>':'<span>Marge <b>'+pct(mg&&mg.pct,0)+'</b></span><span>Contribution <b>'+money(mg&&mg.contrib)+'</b></span>'))+'</div><ul class="vc-why">'+x.why.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>'+
     (i===0?malin(x):'')+
     '<div class="vc-act">'+(x.origin==='active'?'<button type="button" data-open="'+esc(x.p.id)+'">Voir la fiche</button>':'<button type="button" class="pri" data-add="'+i+'">Ajouter à ma carte</button>')+'</div></div>';}).join('')+'<p class="vc-note">Calcul local avec le moteur Verdict et vos prix fournisseurs du jour. Saison : normales de température du mois en cours et du mois suivant (pas de prévision en ligne) ; les nouveautés sont composées avec vos produits, ce qui manque est indiqué.</p>';
-  [].forEach.call(out.querySelectorAll('[data-add]'),function(b){b.addEventListener('click',function(){var x=list[Number(b.getAttribute('data-add'))];var p=addToMenu(x.p,x.price);try{root.save('vera-add-dish');root.refreshAll();}catch(e){}b.textContent='Ajouté ✓';b.disabled=true;try{if(typeof root.toast==='function')root.toast('« '+p.nom+' » ajouté à la carte · vérifiez la fiche');}catch(e){}});});
+  [].forEach.call(out.querySelectorAll('[data-add]'),function(b){b.addEventListener('click',function(){var x=list[Number(b.getAttribute('data-add'))];var p=addToMenu(x.p,x.price);try{root.save('vera-add-dish');root.refreshAll();}catch(e){}b.textContent='Ajouté ✓';b.disabled=true;/* C301 (V15-086) : la fenêtre se ferme après l'ajout */root.setTimeout(close,700);try{if(typeof root.toast==='function')root.toast('« '+p.nom+' » ajouté à la carte · vérifiez la fiche');}catch(e){}});});
   [].forEach.call(out.querySelectorAll('[data-open]'),function(b){b.addEventListener('click',function(){close();try{root.openPlat(b.getAttribute('data-open'));}catch(e){}});});
 }
 /* Suggestion maline : le meilleur accord pour faire monter le ticket sans nouvel achat. */
@@ -466,4 +467,48 @@ function install(){
 root.VerdictVeraCarte={_prixNouveaute:function(n,cat){prixSaison(n,cat,null);var ok=coutAuPrix(n,n.ttc);return {ttc:n.ttc,ok:ok,marge:marginAt(n,n.ttc),corrige:n.cpCoutCorrige||null,carte:n.cpCarte||null};},version:'C104',open:open,close:close,ensureMemory:ensureMemory,proposeDish:proposeDish,proposeMenu:proposeMenu,applyMenu:applyMenu,addToMenu:addToMenu,watchCosts:watchCosts,bestSellers:bestSellers,qtyOn:qtyOn,seasonFit:seasonFit,warmth:warmth,isSimulated:isSimulated,_newCreation:newCreation};
 function boot(n){if(install())return;if(n>0)setTimeout(function(){boot(n-1);},300);}
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',function(){boot(60);});else boot(60);
+})(window);
+
+/* C301 (V15-073) — « Pourquoi je perds de l'argent ? » répondait « Je ne vais pas inventer une réponse » alors que l'Audit
+   l'explique ; « C'est quoi mon chiffre minimum ? » ouvrait une fiche d'aide sans chiffre. Deux intentions de plus, qui
+   passent par la réponse de rentabilité de Vera (chiffres du moteur), complétée : pour la perte, ce qui pèse le plus (les
+   priorités de l'Audit) ; pour le minimum, l'année, le mois et le jour, d'abord. */
+(function(root){
+  'use strict';
+  var DERNIERE=null;
+  var REGLES=[
+    {re:/(je |on |nous )?perd(s|ons|ez|re)? (de l.?)?argent|pourquoi .*(perte|deficit|deficitaire|perd)|suis(-je)? en perte|losing money|lose money|perdiendo dinero|perdo soldi|verliere geld|verlies geld|perder dinheiro/,k:'rentabilite',c301:'perte'},
+    {re:/chiffre minimum|point mort|seuil de rentabilite|minimum (du|de mon|de ce) (mois|annee|jour)|break.?even|punto de equilibrio|punto di pareggio|gewinnschwelle|break-evenpunt|ponto morto/,k:'rentabilite',c301:'minimum'}
+  ];
+  function premiere(s){s=String(s||'');var i=s.search(/[.!?](\s|$)/);return i>0?s.slice(0,i+1):s;}
+  function brancher(){
+    var vi=root.veraIntention,vr=root.veraReponseRentabilite;
+    if(typeof vi!=='function'||typeof vr!=='function'||!root.VINT_RULES)return false;
+    if(vi.__c301)return true;
+    var nvi=function(question){var r=vi.apply(this,arguments);DERNIERE=null;if(r)return r;
+      var q=String(question||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/’/g,"'");
+      for(var i=0;i<REGLES.length;i++)if(REGLES[i].re.test(q)){DERNIERE=REGLES[i].c301;return REGLES[i];}return null;};
+    nvi.__c301=true;root.veraIntention=nvi;
+    var nvr=function(){var o=vr.apply(this,arguments),quoi=DERNIERE;DERNIERE=null;if(!o||!o.lignes||!quoi)return o;
+      try{var R=root.moteur();if(!R||!R.ready)return o;var d=R.d,v=R.v,res=Number(d.res),L=o.lignes.slice();
+        if(quoi==='perte'){
+          var tete=res<0?'Oui : sur vos chiffres, la structure perd '+root.eur(Math.abs(res))+' par an.':'Sur vos chiffres, vous ne perdez pas d’argent sur l’année : il reste '+root.eur(res)+' avant impôt.';
+          var A=[];try{A=(root.auActions()||[]).slice(0,2);}catch(e){}
+          var causes=A.map(function(p,i){return (i+1)+'. '+(p.diagnosis||p.title||'')+(p.detail?' — '+premiere(p.detail):'');}).filter(function(x){return x.length>4;});
+          L=[tete].concat(causes.length?['Ce qui pèse le plus, comme dans l’Audit :'].concat(causes):[]).concat(L.slice(1));
+          L.push('Le détail chiffré, poste par poste, est dans l’Audit (« Où part l’argent »).');
+        }else{
+          var pm=Number(v.pmEur),ca=Number(d.ca),T=['Votre chiffre minimum, c’est le chiffre d’affaires qui paie toutes les charges, sans perte ni bénéfice.'];
+          if(pm>0)T.push('Sur l’année : '+root.eur(pm)+' HT'+(ca>0?' ; votre CA '+(ca>=pm?'le dépasse de ':'reste sous ce minimum de ')+root.pc(Math.abs(ca-pm)/ca*100,1):'')+'.');
+          /* le mois et le jour : les lignes de Vera elles-mêmes (mêmes bases que l'Accueil), pas une moyenne recalculée ici */
+          L=T.concat(L.slice(2));
+        }
+        try{root.setTimeout(function(){var e=document.querySelector('#aideBody .help-empty');if(e)e.parentNode.removeChild(e);},0);}catch(x){}
+        return {lignes:L};}catch(e){return o;}};
+    nvr.__c301=true;root.veraReponseRentabilite=nvr;
+    /* C301 (V15-073, suite) : Vera a répondu avec les chiffres de Verdict : pas de « Aucune réponse pour … » en dessous */
+    var ad=root.aideDessiner;if(typeof ad==='function'&&!ad.__c301){var nad=function(){var r=ad.apply(this,arguments);try{var v=document.getElementById('veraReponse'),e=document.querySelector('#aideBody .help-empty');if(e&&v&&/\bon\b/.test(v.className)&&v.querySelector('.v-answer-row'))e.parentNode.removeChild(e);}catch(x){}return r;};nad.__c301=true;root.aideDessiner=nad;}
+    return true;
+  }
+  if(!brancher()&&typeof root.setInterval==='function'){var k=0,iv=root.setInterval(function(){if(brancher()||++k>40)root.clearInterval(iv);},250);}
 })(window);

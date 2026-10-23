@@ -35,6 +35,21 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function signe(x){return (x>=0?'+':'−')+eur(Math.abs(x));}
 function ctrlLib(id){var c=CTRL[id];return c>=1?'élevé':(c>=.5?'partiel':'faible');}
 
+/* C301 (V15-003, décision 5) — L'écart matière se lit sur le MÊME périmètre des deux côtés : achats nourriture + boissons
+   contre fiches nourriture + boissons quand les fiches comptent des boissons ; sinon nourriture contre nourriture (une carte
+   sans boissons ne peut pas expliquer les achats de boissons). La période des achats est écrite. Une seule fonction pour
+   l'Audit, Simuler, Priorités, les Alertes et la Carte : window.VerdictEcartMatiere(). */
+function periodeAchats(R){var D=w.DB||{},y=D.refSource&&D.refSource.exerciseYear;if(y)return 'exercice '+y;var m=num(R&&R.d&&R.d.mois);return m&&m<12?'sur '+Math.round(m)+' mois':'sur l’année';}
+function ecartMatiere(R,st){
+  try{R=R||w.moteur();if(!R||!R.ready)return null;if(st===undefined)st=typeof w.carteStats==='function'&&w.DB&&w.DB.plats&&w.DB.plats.length?w.carteStats():null;}catch(e){return null;}
+  if(!st||!(num(st.theoR)>0))return null;var d=R.d,ca=num(d.ca);if(!(ca>0))return null;
+  var tn=st.theoNourR!=null?num(st.theoNourR):num(st.theoR),avec=num(st.theoR)-tn>0.05;
+  var reel=(avec?num(d.nour)+num(d.boi):num(d.nour))/ca*100,theo=avec?num(st.theoR):tn,pts=reel-theo;
+  return {perimetre:avec?'nourriture + boissons':'nourriture',avecBoissons:avec,reel:reel,theo:theo,pts:pts,eur:pts/100*ca,compte:pts>=4,tiers:pts>=4?pts/3/100*ca:0,periode:periodeAchats(R),ca:ca};
+}
+function pts1(x){return (Math.round(x*10)/10).toLocaleString(tag(),{minimumFractionDigits:1,maximumFractionDigits:1})+' point'+(Math.abs(x)>=2?'s':'');}
+w.VerdictEcartMatiere=ecartMatiere;
+
 /* ── Repères du format (FAMILLES / FORMATS de 029) ── */
 function format(){
   var t=null,F=null,fmt=null;
@@ -70,7 +85,7 @@ function cartePlanCalc(capPct){
     if(p.vol==null||!(num(p.vol)>0))return;
     var k=w.platCalc(p);if(!k||!k.complete||!(k.objPond>0)||!isFinite(k.contribPct)||k.contribPct>=k.objPond)return;
     out.sous++;
-    var ttc=num(p.ttc),c=p.cat||'Autre',limite=ttc>=catMax[c]?ttc*(1+capPct/100):Math.min(catMax[c],ttc*(1+capPct/100));
+    var ttc=num(p.ttc),c=p.cat||'Autre',limite=ttc>=catMax[c]?ttc:Math.min(catMax[c],ttc*(1+capPct/100));/* C301 (V15-061) : le plus cher de sa catégorie ne monte pas */
     var lo=1,hi=limite/ttc,ok=function(f){var n=w.platCalc(scaled(p,f));return n&&n.complete&&n.contribPct>=n.objPond;};
     var f=hi;if(ok(hi)){for(var i=0;i<30;i++){var m=(lo+hi)/2;if(ok(m))hi=m;else lo=m;}f=hi;}
     var np=Math.min(Math.ceil(ttc*f*10-1e-9)/10,Math.floor(limite*10+1e-9)/10);if(!(np>ttc+0.049))return;
@@ -99,9 +114,12 @@ function overAll(state){
     /* un jour ajouté (ou retiré) ne vaut pas une journée moyenne : 60 % de la demande d'une journée moyenne */
     if(dj)over.cmdj=(over.cmdj!=null?over.cmdj:cmdj)*(jsem+JOUR_DEMANDE*dj)/nj;}
   var d1=(vP||vC||vJ)?w.deriv(over):d0,k=d0.ca>0?d1.ca/d0.ca:1,renfort=0;
+  /* C301 (V15-002, décision 2, la règle de verdictGainPanier) : une hausse du panier à volume constant ne consomme pas de
+     matière ni d'emballages ; la TVA et les commissions suivent le CA. Seuls les clients en plus (commandes, jours) en consomment. */
+  var oV={};for(var q in over)if(q!=='panier')oV[q]=over[q];var dV=vP&&(vC||vJ)?w.deriv(oV):(vP?d0:d1),kv=d0.ca>0?dV.ca/d0.ca:1;
   if(Math.abs(k-1)>1e-9){
-    /* un client de plus consomme de la matière, des emballages et des commissions */
-    over.nour=inp('nour')*k;over.boi=inp('boi')*k;over.emb=inp('emb')*k;over.autv=inp('autv')*k;over.com=inp('com')*k;
+    /* un client de plus consomme de la matière, des emballages et des commissions ; un prix plus haut, seulement des commissions */
+    over.nour=inp('nour')*kv;over.boi=inp('boi')*kv;over.emb=inp('emb')*kv;over.autv=inp('autv')*kv;over.com=inp('com')*k;
     var salM=num(d0.salM),volPct=cmdj>0?vC/cmdj:0;
     if(vJ&&over.jsem!==jsem)renfort+=salM*(over.jsem-jsem)/jsem*(over.jsem>jsem?JOUR_EQUIPE:.5);
     if(volPct>.05)renfort+=salM*(volPct-.05)*.5;
@@ -147,8 +165,8 @@ function plan(){
   /* matière : la carte (recettes et fuite) quand elle est fiable, sinon l'écart structurel */
   var why=null,pts=0;
   if(cf){var st=null;try{st=w.carteStats();}catch(e){}
-    if(st&&st.theoR>0){var tn=st.theoNourR!=null?st.theoNourR:st.theoR,rec=tn>fam.fc[1]?(tn-fam.fc[1])/3:0,fuite=(v.fc-tn)>=4?(v.fc-tn)/3:0;pts=rec+fuite;
-      why='Coût de la nourriture d’après vos fiches '+pc(tn)+' du CA, hors boissons (repère '+pc(fam.fc[1],0)+')'+(fuite?' ; écart avec vos achats de nourriture de '+pc(v.fc-tn)+' : pertes, portions ou offerts invisibles.':'.')+' Un tiers de chaque écart.';}}
+    if(st&&st.theoR>0){var tn=st.theoNourR!=null?st.theoNourR:st.theoR,E=ecartMatiere(R,st),rec=tn>fam.fc[1]?(tn-fam.fc[1])/3:0,fuite=E&&E.compte?E.pts/3:0;pts=rec+fuite;
+      why='Coût de la nourriture d’après vos fiches '+pc(tn)+' du CA, hors boissons (repère '+pc(fam.fc[1],0)+')'+(fuite?' ; écart '+E.perimetre+' entre vos achats ('+E.periode+', '+pc(E.reel)+' du CA) et vos fiches ('+pc(E.theo)+') : '+pts1(E.pts)+' de pertes, portions ou offerts invisibles.':'.')+' Un tiers de chaque écart.';}}
   else if(v.fc>fam.fc[1]){pts=(v.fc-fam.fc[1])/3;why='Coût de la nourriture à '+pc(v.fc)+' du CA, hors boissons ; repère médian '+pc(fam.fc[1],0)+'. Un tiers de l’écart.';}
   pts=Math.floor(pts*2)/2;if(pts>=.5)add('fc',-pts,why,'Repeser les portions clés, mettre à jour les fiches techniques, renégocier le premier fournisseur.');
   /* carte : prix des plats sous leur objectif, plafonnés */
@@ -161,7 +179,7 @@ function plan(){
   var bornePanier=0;
   if(pa>0){var vp=Math.floor(pa*PANIER_PCT*10)/10;bornePanier=vp;}
   if(pa>0&&vp>0&&!(cp&&cp.dContribAn>0)){
-    add('panier',vp,'Panier '+fr2(pa)+' € TTC. Verdict compte au plus +'+Math.round(PANIER_PCT*100)+' % de votre propre panier, auprès des clients déjà là : la matière et les commissions suivent.',txt('p11BasketAction',type)||'Entrées, desserts et boissons mis en avant, sans toucher aux prix affichés.');}
+    add('panier',vp,'Panier '+fr2(pa)+' € TTC. Verdict compte au plus +'+Math.round(PANIER_PCT*100)+' % de votre propre panier, auprès des clients déjà là : à volume constant, une hausse de prix ne consomme pas de matière ; la TVA et les commissions suivent.',txt('p11BasketAction',type)||'Entrées, desserts et boissons mis en avant, sans toucher aux prix affichés.');}
   /* C218 (W70) : le nombre de commandes n'est jamais proposé (doctrine C189 : on ne dit pas « vendez plus » quand la
      clientèle n'est pas là ; la fréquentation ne se décide pas). Le curseur reste dans Simuler, comme une hypothèse. */
   L.sort(function(a,b){return ORDER.indexOf(a.id)-ORDER.indexOf(b.id);});
@@ -186,11 +204,16 @@ function plan(){
   var bornesLevier=bornes;if(plafonne){bornes={};for(var bi in bornesLevier)bornes[bi]=state[bi]||0;}
   var cumul={},prev=base,steps=[];
   retenus.forEach(function(x){cumul[x.id]=x.v;var Mx=w.moteur(overAll(cumul)),g=Mx.d.res-prev;prev=Mx.d.res;x.gain=g;steps.push(x);});
+  /* C301 (V15-041) : un levier qui ne rapporte rien (gain nul ou négatif une fois les autres appliqués) n'est pas retenu ;
+     le possible est alors exactement la somme des lignes affichées. */
+  var nuls=steps.filter(function(x){return !(x.gain>0.5);});
+  if(nuls.length&&nuls.length<steps.length){retenus=retenus.filter(function(x){return nuls.indexOf(x)<0;});state={};retenus.forEach(function(x){state[x.id]=x.v;});cumul={};prev=base;steps=[];
+    retenus.forEach(function(x){cumul[x.id]=x.v;var Mx=w.moteur(overAll(cumul)),g=Mx.d.res-prev;prev=Mx.d.res;x.gain=g;steps.push(x);});}
   var MC=w.moteur(overAll(state));
   attente.forEach(function(x){var o={};o[x.id]=x.v;x.gain=w.moteur(overAll(o)).d.res-base;});
   var central=MC.d.res-base;
   var r={R:R,format:F,leviers:L,retenus:steps,attente:attente,state:state,bornes:bornes,bornesLevier:bornesLevier,carte:cp,carteFiable:cf,
-    central:{gain:central,mois:central/12,res:MC.d.res,rn:MC.v.rn,score:MC.score},
+    central:{gain:central,mois:central/12,res:MC.d.res,rn:MC.v.rn,score:MC.score,ca:MC.d.ca},
     base:{res:base,rn:v.rn,score:R.score},plafond:{rn:haut,atteint:plafonne}};
   CACHE={k:k,v:r};return r;
 }
@@ -201,7 +224,9 @@ function installerSimuler(){
      complète (nourriture + boissons) pour qu'aucun écran ne présente 18,6 % comme « le coût de la marchandise ». */
   var fcd=def('fc');if(fcd&&!fcd.__c218){fcd.__c218=true;fcd.t='Coût de la nourriture';fcd.label='Je modifie le coût de la nourriture (hors boissons) de';
     var fb0=fcd.dispBase;if(typeof fb0==='function')fcd.dispBase=function(){var r=fb0.apply(this,arguments);try{var R=w.moteur(),ca=num(R.d.ca),m=num(R.d.mat);if(ca>0&&m>0)r=String(r)+' · nourriture seule ; avec les boissons : '+pc(m/ca*100);}catch(e){}return r;};}
-  var p=def('panier');if(p)p.step=0.1;var sl=def('sal');if(sl)sl.step=50;var c=def('cmd');if(c){c.step=0.5;c.fmt=function(v){return (v>0?'+':v<0?'\u2212':'')+String(Math.abs(Math.round(v*10)/10)).replace('.',',')+' / jour';};}var x=def('fix');if(x)x.step=1;
+  var p=def('panier');if(p)p.step=0.1;
+  /* C301 (V15-002, écran) : la règle du panier est écrite sous le curseur, la même que l'Audit (verdictGainPanier) */
+  if(p&&!p.__c301){p.__c301=true;var pb0=p.dispBase;if(typeof pb0==='function')p.dispBase=function(){/* C301 (V15-078) : aucun ticket lu = panier inconnu, jamais 0,00 € */if(!(inp('panier')>0))return 'inconnu : aucun ticket lu dans votre caisse';var r=pb0.apply(this,arguments);return String(r)+' · volume constant : pas de matière en plus ; la TVA et les commissions suivent';};}var sl=def('sal');if(sl)sl.step=50;var c=def('cmd');if(c){c.step=0.5;c.fmt=function(v){return (v>0?'+':v<0?'\u2212':'')+String(Math.abs(Math.round(v*10)/10)).replace('.',',')+' / jour';};}var x=def('fix');if(x)x.step=1;
   if(!def('carte')){
     var at=w.DEC_DEFS.indexOf(def('panier'))+1;
     w.DEC_DEFS.splice(at,0,{id:'carte',t:'Prix de la carte',icon:'🍽️',step:1,min:0,max:CARTE_CAP,def:0,
@@ -214,6 +239,24 @@ function installerSimuler(){
     try{w.DEC_CONTROLE.carte=['partiel','vous fixez les prix ; la réaction des clients ne se décide pas'];}catch(e){}
   }
   w.decOverAll=overAll;
+  /* C301 (V15-126) : « Premium » n'existe pas dans les offres (Pilotage, Pro) : le bandeau de Simuler dit « VERDICT · … » */
+  try{var PU=w.DEC_PREMIUM_UI;if(PU)for(var lg in PU)if(PU[lg]&&typeof PU[lg].tag==='string')PU[lg].tag=PU[lg].tag.replace(/^VERDICT PREMIUM\s*·\s*/,'VERDICT · ');}catch(e){}
+  /* C301 (V15-140) : le poste le plus lourd des charges fixes est un montant mensuel, et il est dit */
+  if(typeof w.point11Decision==='function'&&!w.point11Decision.__c301){var p11b=w.point11Decision;w.point11Decision=function(){var r=p11b.apply(this,arguments);try{(r&&r.items||[]).forEach(function(it){if(it&&typeof it.detail==='string')it.detail=it.detail.replace(/(Le poste le plus lourd est « [^»]+ » \()([^)]*\d\s?€)\)/,'$1$2 par mois)');});}catch(e){}return r;};for(var kp in p11b)if(Object.prototype.hasOwnProperty.call(p11b,kp))w.point11Decision[kp]=p11b[kp];w.point11Decision.__c301=true;}
+  /* C301 (V15-069) : la décision enregistrée depuis Simuler apparaît tout de suite dans le registre (au-dessus), rattachée à
+     l'établissement affiché, et le texte ne renvoie plus vers des écrans absents du menu. */
+  if(typeof w.decEnDecision==='function'&&!w.decEnDecision.__c301){var ed=function(){
+    var T=null;try{T=w.decImpactTotal();}catch(e){}
+    if(!T||!T.n){try{w.toast('Modifiez d’abord un levier');}catch(e){}return;}
+    var lib=String(w.decNomScenario()||'Scénario simulé');lib=lib.charAt(0).toUpperCase()+lib.slice(1);
+    w.ask('En faire une décision ?',lib+'\u00a0— gain estimé '+(T.delta>=0?'+':'−')+eur(Math.abs(T.delta))+' par an. Verdict l’inscrit dans le registre des décisions, en haut de Simuler. Pour en mesurer le résultat, lancez ensuite une seule action depuis « À faire » : sa source et sa date de contrôle seront figées. Vos chiffres ne sont pas modifiés.','Enregistrer',function(){
+      var D=w.DB;D.decisions=D.decisions||[];var eid=(D._demo&&D._demo.establishmentId)||(typeof w.point12EstablishmentId==='function'?w.point12EstablishmentId():'');
+      D.decisions.push({version:'10.12',kind:'scenario',status:'recorded',date:new Date().toISOString().slice(0,10),id:'SIMU_'+Date.now(),lib:lib,est:Math.round(T.delta),profile:String(D.etabType||''),establishmentId:String(eid||'')});
+      try{w.save();}catch(e){}
+      try{var r=document.getElementById('decRegistre');if(r&&typeof w.decisionsRegistreHTML==='function'){var t=document.createElement('div');t.innerHTML=w.decisionsRegistreHTML();if(t.firstChild)r.parentNode.replaceChild(t.firstChild,r);}}catch(e){}
+      try{w.toast('Décision enregistrée : elle est dans le registre des décisions, en haut de Simuler');}catch(e){}
+      try{w.decDrawTotal(true);}catch(e){}
+    });};ed.__c301=true;w.decEnDecision=ed;}
   w.decImpact=function(id,v){
     var R0=w.moteur();if(!R0.ready)return null;var s={};s[id]=v;var R1=w.moteur(overAll(s));
     return {R0:R0,R1:R1,before:R0.d.res,after:R1.d.res,delta:R1.d.res-R0.d.res,score0:R0.score,score1:R1.score,rn0:R0.v.rn,rn1:R1.v.rn};
@@ -379,10 +422,10 @@ function decBest(){
     '<div class="c88-amount"><span>Gain réaliste</span><strong>'+signe(delta/12)+' <small>/ mois</small></strong><em>'+signe(delta)+' / an</em></div>'+
     '<div class="autoline"><span class="k">'+U.result+'</span><b>'+eur(Rt.d.res)+'</b></div>'+
     '<div class="autoline"><span class="k">'+U.score+'</span><b>'+Rt.score+' /100 ('+(Rt.score-Rb.score>=0?'+':'')+(Rt.score-Rb.score)+')</b></div>'+
-    '<div class="autoline"><span class="k">'+U.profit+'</span><b>'+pc(Rt.v.rn,1)+'</b></div>'+
+    '<div class="autoline"><span class="k">'+U.profit+'</span><b>'+pc(Rt.v.rn,1)+' <small>sur un CA de '+eur(Rt.d.ca)+'</small></b></div>'+/* C301 (V15-041) CA écrit */
     (!had&&P.plafond.atteint?'<p class="note">Verdict ne propose pas d’aller au-delà de '+pc(P.plafond.rn,0)+' de résultat, le niveau des meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+'.</p>':'')+
     (P.attente.length&&!had?'<p class="note">'+P.attente.map(function(x){return 'Coût humain : jusqu’à '+signe(x.gain)+' / an possibles, proposés seulement après une décision d’organisation mesurée (onglet Équipe).';}).join(' ')+'</p>':'')+
-    '<p class="note" style="margin:6px 0 0">Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+' ; une vente en plus consomme de la matière et des commissions ; le nombre de clients n’est jamais compté comme un levier ; tout est recalculé ensemble, sans rien compter deux fois.</p>'+
+    '<p class="note" style="margin:6px 0 0">Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+' ; une vente en plus consomme de la matière et des commissions, une hausse de prix à clients constants seulement des commissions (et la TVA) ; le nombre de clients n’est jamais compté comme un levier ; tout est recalculé ensemble, sans rien compter deux fois.</p>'+
     '<div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--line)"><div style="font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:#93c5fd">'+U.proof+'</div><p class="note" style="margin:4px 0 0">'+U.proofD+'</p></div>'+
     '<button class="btn sec" style="margin-top:10px" onclick="decApplyBest()">'+(had?U.applyAdd:U.applyStart)+'</button></div>';
   out.innerHTML=h;
@@ -399,10 +442,12 @@ function chapitreHTML(P){
   var cf=P.carteFiable,c=P.central;
   return '<div class="au-sc vu" id="auGainReel"><div class="au-tag">Le gain réaliste · structure + carte</div>'+
     '<h2 class="au-h">'+signe(c.mois)+' par mois, soit '+signe(c.gain)+' par an</h2>'+
+    /* C301 (V15-032, suite) : la décision annoncée au chapitre 4 (l'équipe) n'est pas dans ce montant tant qu'elle n'est pas mesurée */
+    (P.attente.length&&(function(){try{var a=w.auActions()[0];return a&&ACTIONS[a.id]&&ACTIONS[a.id].indexOf('sal')>=0;}catch(e){return false;}})()?'<p class="au-p"><b>La décision du chapitre précédent, l’équipe, n’est pas encore dans ce montant</b> : elle y entrera après une décision d’organisation mesurée (jusqu’à '+signe(P.attente[0].gain)+' par an). Ce montant vient des autres leviers.</p>':'')+
     '<p class="au-p">Un seul calcul, rejoué dans le moteur avec vos chiffres. Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':' (repères généraux de la restauration traditionnelle)')+' (un tiers de l’écart au repère, comme vos priorités). Les étapes s’enchaînent : chaque montant est ce que le levier ajoute après les précédents, aucun euro n’est compté deux fois.</p>'+
     '<div class="au-card"><span class="au-k">Pas à pas</span>'+
       '<div class="au-ok"><span style="flex:1"><b>Résultat actuel</b></span><b>'+eur(P.base.res)+' · '+pc(P.base.rn)+'</b></div>'+lignes(P)+
-      '<div class="au-ok"><span style="flex:1"><b>Résultat visé</b></span><b>'+eur(c.res)+' · '+pc(c.rn)+' · score '+c.score+'</b></div></div>'+
+      '<div class="au-ok"><span style="flex:1"><b>Résultat visé</b></span><b>'+eur(c.res)+' · '+pc(c.rn)+(c.ca?' d’un CA de '+eur(c.ca):'')+' · score '+c.score+'</b></div></div>'+
     (P.plafond.atteint?'<p class="note">Verdict ne propose pas d’aller au-delà de '+pc(P.plafond.rn,0)+' de résultat : c’est le niveau des meilleurs établissements de votre format'+(P.format.type?' ('+esc(P.format.type)+')':'')+'. Au-delà, ce ne serait plus réaliste.</p>':'')+
     '<div class="au-card"><span class="au-k">Ce qui n’est pas compté</span><p class="note" style="margin:0">'+
       [P.attente.length?'Le coût humain (jusqu’à '+signe(P.attente[0].gain)+' / an) : proposé seulement après une décision d’organisation mesurée.':'',
@@ -420,7 +465,7 @@ function sceneDecision(P){
 }
 function patchAudit(){
   try{
-    var el=document.getElementById('auditBody');if(!el)return;var P=plan();if(!P)return;
+    var el=document.getElementById('auditBody');if(!el)return;try{var R0=w.moteur();if(R0&&R0.ready)lectureResistance(el,R0);}catch(e){}var P=plan();if(!P)return;
     var full=el.querySelector('.av31-full-body');
     if(full&&!full.querySelector('#auGainReel')){var t=document.createElement('div');t.innerHTML=chapitreHTML(P);full.insertBefore(t.firstChild,full.firstChild);}
     var s5=el.querySelector('[data-av31-scene="4"]');if(s5&&!s5.getAttribute('data-c88')){s5.innerHTML=sceneDecision(P);s5.setAttribute('data-c88','1');s5.setAttribute('aria-label','Gain réaliste');}
@@ -430,7 +475,53 @@ function patchAudit(){
       s4.className='av31-risk'+(risk?'':' good');s4.innerHTML=risk?'<span>Écart au repère Verdict ('+rrTxt+')</span><b>'+eur(risk)+'</b>':'<span>Au-dessus du repère Verdict ('+rrTxt+')</span><b>'+String(Math.round(R.v.rn*10)/10).replace('.',',')+' €</b>';}
   }catch(e){}
 }
+/* C301 (V15-054) : un document comptable importé (FEC) fait foi. L'Audit le disait « Période non documentée · donnée
+   non fournie · données déclarées par le client · preuves 1 / 5 » tant que la période n'avait pas été choisie à la main.
+   Sans rien écrire dans le dossier : la période et la source se lisent dans le FEC tant que le patron n'a rien choisi ;
+   les journées de caisse et les ventes par article comptent comme preuves opérationnelles. */
+function fecOuvert(){var D=w.DB||{},r=D.refSource||{},p=D.dataProvenance||{};if(r.nature==='closed-fec-local'||p.source==='fec-local')return {annee:String(r.exerciseYear||p.period||D.exerciseYear||'')};return null;}
+function journeesCaisse(){var h=w.DB&&w.DB.histJour;if(!Array.isArray(h))return 0;return h.filter(function(x){return x&&/^(pos|csv|caisse|import)/.test(String(x.source||''));}).length;}
+function articlesCaisse(){var c=w.DB&&w.DB.carteRef;return !!(c&&c.confirmed&&/caisse|import|pos/.test(String(c.origine||'')+' '+String(c.source||'')));}
+function envelopperPreuves(){
+  var ok=true;
+  var ev=w.auEvidence;if(typeof ev==='function'&&!ev.__c301){var nev=function(){var E=ev.apply(this,arguments),F=fecOuvert();if(!F||!E||(E.period&&E.source))return E;
+      var V={};Object.defineProperty(V,'period',{enumerable:true,get:function(){return E.period||'closed';},set:function(x){E.period=x;}});
+      Object.defineProperty(V,'source',{enumerable:true,get:function(){return E.source||'accounting';},set:function(x){E.source=x;}});
+      Object.defineProperty(V,'docs',{enumerable:true,get:function(){return E.docs;},set:function(x){E.docs=x;}});return V;};
+    nev.__c301=true;w.auEvidence=nev;}else if(typeof ev!=='function')ok=false;
+  var dm=w.auDossierMode;if(typeof dm==='function'&&!dm.__c301){var ndm=function(){var m=dm.apply(this,arguments),F=fecOuvert();
+      if(F&&m&&(m.key==='closed'||m.key==='unknown'))return {key:'closed',lib:'Exercice clos'+(F.annee?' '+F.annee:'')+' · document comptable (FEC) qui fait foi',limit:'Le document comptable importé fait foi : les montants sont réalisés, pas estimés.'};return m;};
+    ndm.__c301=true;w.auDossierMode=ndm;}else if(typeof dm!=='function')ok=false;
+  var ad=w.auDonnees;if(typeof ad==='function'&&!ad.__c301){var nad=function(){var q=ad.apply(this,arguments);try{if(!q||!fecOuvert())return q;var L=(q.operationalList||[]).slice(),j=journeesCaisse();
+      if(j>=20&&L.indexOf('journées du mois')<0)L.push('journées de caisse ('+j+')');if(articlesCaisse()&&L.indexOf('ventes par article')<0)L.push('ventes par article');
+      q.operationalList=L;q.operational=L.length;var E=q.evidence||{};
+      if(q.pct===100){q.level='Calculable';q.levelWhy='Le moteur peut calculer, mais la source ou la période n’est pas encore documentée.';
+        if(E.source&&E.period){q.level='Étayé';q.levelWhy='La source et la période sont déclarées ; les preuves opérationnelles restent partielles.';}
+        if(E.source&&E.period&&q.ctx&&q.ctx.n>=6&&q.operational>=2){q.level='Documenté';q.levelWhy='Source, période, contexte terrain et au moins deux preuves opérationnelles sont renseignés.';}}}catch(e){}return q;};
+    nad.__c301=true;w.auDonnees=nad;}else if(typeof ad!=='function')ok=false;
+  var tl=w.auTruthLedgerHTML;if(typeof tl==='function'&&!tl.__c301){var ntl=function(){var h=tl.apply(this,arguments),F=fecOuvert();if(!F||typeof h!=='string')return h;
+      h=h.replace('Origine : données déclarées par le client','Origine : document comptable (FEC)'+(F.annee?' de l’exercice '+F.annee:'')+', qui fait foi');
+      if(F.annee)h=h.replace('Période économique : non datée','Période économique : exercice '+F.annee);return h;};
+    ntl.__c301=true;w.auTruthLedgerHTML=ntl;}
+  /* C301 (V15-032) : le ch. 04 (« Une seule décision ») ne nomme pas l'équipe tant qu'elle n'est pas comptée dans le gain du
+     ch. 05 (proposée seulement après une décision d'organisation mesurée) : la priorité suivante passe devant. */
+  /* C301 (V15-079) : un plan 90 jours dont la revue complète est déjà passée sans être fini repart de la date de l'audit */
+  var ae=w.au90Etat;if(typeof ae==='function'&&!ae.__c301){var nae=function(){var E=ae.apply(this,arguments);try{if(E&&/^\d{4}-\d{2}-\d{2}$/.test(String(E.start||''))&&E.fait<E.total){var fin=new Date(E.start+'T12:00:00');fin.setDate(fin.getDate()+90);var auj=new Date();if(fin<auj)E.start=auj.toISOString().slice(0,10);}}catch(e){}return E;};nae.__c301=true;w.au90Etat=nae;}
+  var aa=w.auActions;if(typeof aa==='function'&&!aa.__c301){var naa=function(){var o=aa.apply(this,arguments);try{if(!payrollOk()&&o&&o.length>1){var eq=o.filter(function(p){return p&&ACTIONS[p.id]&&ACTIONS[p.id].indexOf('sal')>=0;});
+      if(eq.length&&o.indexOf(eq[0])===0)o=o.filter(function(p){return eq.indexOf(p)<0;}).concat(eq);}}catch(e){}return o;};
+    naa.__c301=true;w.auActions=naa;}else if(typeof aa!=='function')ok=false;
+  return ok;
+}
+/* C301 (V15-031) : la phrase de lecture (« … décrit une structure rentable et solide ») suit aussi le Test de résistance de
+   Structure (stressStruct) : solide si aucun choc ne fait passer en perte, sinon elle dit combien. */
+var FRAGILE=['','rentable ; elle tient, mais un choc sur quatre la fait passer en perte (Test de résistance)','rentable, mais fragile : deux chocs sur quatre la font passer en perte (Test de résistance)','rentable, mais exposée : trois chocs sur quatre la font passer en perte (Test de résistance)','rentable, mais exposée : les quatre chocs la font passer en perte (Test de résistance)'];
+function lectureResistance(el,R){
+  var n=0;try{n=w.stressStruct(R).pertes||0;}catch(e){return;}if(!n||!FRAGILE[n])return;
+  var tw=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null),t,L=[];while((t=tw.nextNode()))if(t.nodeValue.indexOf('rentable et solide')>=0)L.push(t);
+  L.forEach(function(x){x.nodeValue=x.nodeValue.replace('rentable et solide',FRAGILE[n]);});
+}
 function installerAudit(){
+  if(!envelopperPreuves()&&typeof w.setInterval==='function'){var k=0,iv=w.setInterval(function(){if(envelopperPreuves()||++k>40)w.clearInterval(iv);},250);}
   var prev=w.drawAudit;if(typeof prev!=='function'||prev.__c88)return;
   w.drawAudit=function(){var r=prev.apply(this,arguments);patchAudit();return r;};w.drawAudit.__c88=true;
 }

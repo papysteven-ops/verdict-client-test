@@ -144,6 +144,8 @@ html.p40-app .view:not(#v-audit) .btn.ghost,html.p40-app .modal .btn.ghost{backg
 html.p40 .p40-cta{background:var(--p40-ivoire)!important;background-image:none!important;color:var(--p40-encre)!important;
   border-color:transparent!important;box-shadow:0 10px 24px -14px rgba(255,255,255,.32)!important;text-shadow:none!important}
 html.p40 .p40-cta *{color:inherit!important}
+/* C302 (V15-094) : en thème clair, l'ivoire disparaissait sur le fond blanc (« Enregistrer ce comptage », « Commencer ») : encre. */
+html.vd-workspace-light.p40 .p40-cta{background:var(--p40-encre)!important;color:#fff!important;box-shadow:0 10px 22px -14px rgba(11,13,16,.55)!important}
 
 /* ---------- 9. Champs ------------------------------------------------ */
 html.p40-app .view:not(#v-audit) input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]),

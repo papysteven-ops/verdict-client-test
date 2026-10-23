@@ -21,7 +21,7 @@
   function ent(r) { var v = Math.round(r * 100); return r < 1 && v >= 100 ? 99 : v; }
   function pct(r) { var v = Math.round(r * 1000) / 10; if (r < 1 && v >= 100) v = 99.9; return v.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
   /* C250 : vert seulement avec une vraie marge (5 % ou plus au-dessus du minimum) ; de 100 à 105 %, le minimum est couvert de justesse. */
-  function etat(r) { if (r != null) r = Math.round(r * 1e9) / 1e9; return r == null ? 'vide' : r >= 1.05 ? 'vert' : r >= 1 ? 'juste' : r >= 0.95 ? 'jaune' : r >= 0.9 ? 'orange' : 'rouge'; }
+  function etat(r) { if (r != null) { var v = Math.round(r * 1000) / 1000; r = r < 1 && v >= 1 ? r : v; } /* C298 (V15-110) : l'état suit le pourcentage affiché (104,98 % s'affiche 105,0 % : « Atteint ») */ return r == null ? 'vide' : r >= 1.05 ? 'vert' : r >= 1 ? 'juste' : r >= 0.95 ? 'jaune' : r >= 0.9 ? 'orange' : 'rouge'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function moisCle() { try { return w.verdictOperationalClock().key.slice(0, 7); } catch (e) { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); } }
 

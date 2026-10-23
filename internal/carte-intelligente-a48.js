@@ -185,9 +185,11 @@
        si l'Idéale n'en reprend qu'une partie (petite catégorie, plat retiré), au prorata. */
     var g = null; try { g = typeof w.VerdictGainCarte === 'function' ? w.VerdictGainCarte() : null; } catch (e) {}
     R.gc = g;
-    if (g && g.fiable && g.rows && g.rows.length && R.gainPrix > 0) {
-      var tot = g.rows.reduce(function (t, r) { return t + (Number(r.contribMois) || 0); }, 0);
-      if (tot > 0) { var aj = Math.max(0, g.mois) * Math.min(1, R.gainPrix / tot); R.gainMois += aj - R.gainPrix; R.gainPrix = aj; R.prixTous = R.prixPlats >= g.rows.length; }
+    /* C301 (V15-040) : Kebab « +402 € par mois, 6 plats » ici contre 464 € dans Décisions, l'Audit et Simuler ; Food truck
+       « +60 €, 1 plat » contre 62 €, 2 plats. Le montant des nouveaux prix est désormais celui du plan entier (tous les plats
+       sous leur objectif, comme Décisions) : la liste ci-dessous n'en montre que les plats très vendus. */
+    if (g && g.fiable && g.rows && g.rows.length && g.mois > 0) {
+      var aj = g.mois; R.gainMois += aj - R.gainPrix; R.gainPrix = aj; R.prixPlats = g.rows.length; R.prixTous = true;
     }
     R.saison = saison(D);
     R.formuleMidi = P.services !== 'soir' && (P.tourisme !== 'non' && !hauteSaison(P, m) || P.habitants === 'village');
@@ -425,8 +427,10 @@
   function okMarge(k) { return !!(k && k.complete && k.contribPct >= k.objPond - 1e-9); }
   function vol(p) { var v = num(p && p.vol); return v != null && v > 0 ? v : null; }
   function parMois(p) { var k = calc(p), v = vol(p); return k.complete && v ? k.contribPond * v : null; }
-  function indice() { try { return w.scoreCarte(w.carteStats()).total; } catch (e) { return null; } }
-  function resteCarte() { try { return w.carteStats().margePond; } catch (e) { return null; } }
+  /* C301 (V15-088) : un Indice Carte non calculable est inconnu, jamais 0 ; une carte sans vente n'a pas de marge */
+  function indiceDe(st) { try { var s = w.scoreCarte(st); return s && s.available ? s.total : null; } catch (e) { return null; } }
+  function indice() { try { return indiceDe(w.carteStats()); } catch (e) { return null; } }
+  function resteCarte() { try { var st = w.carteStats(); return st && st.ca > 0 ? st.margePond : null; } catch (e) { return null; } }
   function platById(d, id) { return (d && d.plats || []).filter(function (p) { return p && p.id === id; })[0] || null; }
   /* Un bouton du bandeau peut servir après un rechargement de la base (démo, coque, autre établissement) : le plat est
      relu par son identifiant, jamais modifié sur une copie périmée. */
@@ -579,7 +583,7 @@
   function statsCarte() {
     /* C254 (L3) : le moteur exclut lui-même les plats retirés et le dit (`retires`) ; le calcul local ne sert qu'aux
        éditions qui n'ont pas encore C254. */
-    try { var st0 = w.carteStats(); if (st0 && st0.retires) return { i: w.scoreCarte(st0).total, m: st0.margePond }; } catch (e) {}
+    try { var st0 = w.carteStats(); if (st0 && st0.retires) return { i: indiceDe(st0), m: st0.ca > 0 ? st0.margePond : null }; } catch (e) {}
     var d = D(), P = d && d.plats; if (!Array.isArray(P)) return { i: null, m: null };
     var arch = P.filter(function (p) { return p && p.cpArchived && vol(p); });
     if (!arch.length) return { i: indice(), m: resteCarte() };
@@ -589,11 +593,12 @@
       if (tot > 0) meme.forEach(function (p) { p.vol = vol(p) + 0.7 * vol(a) * vol(p) / tot; });
     });
     var out = { i: null, m: null }; d.plats = act;
-    try { var st = w.carteStats(); out.m = st.margePond; out.i = w.scoreCarte(st).total; } catch (e) {} finally { d.plats = P; }
+    try { var st = w.carteStats(); out.m = st.ca > 0 ? st.margePond : null; out.i = indiceDe(st); } catch (e) {} finally { d.plats = P; }
     return out;
   }
   function avantApres(i0, m0) {
     var s1 = statsCarte(), i1 = s1.i, m1 = s1.m;
+    if (i0 == null && i1 == null && m0 == null && m1 == null) return '<span class="c251-k">Indice Carte <b>à compléter</b> : il faut les ventes des plats pour le calculer</span>';
     return '<span class="c251-k">Indice Carte <b>' + (i0 == null ? '—' : i0) + ' → ' + (i1 == null ? '—' : i1) + '</b></span><span class="c251-k">Il reste <b>' + pct(m0, 1) + ' → ' + pct(m1, 1) + '</b> une fois les produits payés</span>';
   }
   function bandeauVera(corr) {
@@ -738,7 +743,7 @@
   /* ── 4. Ajout en un geste ──────────────────────────────────────────────────────────────────────────────────────── */
   var G = null;
   function mots(s) { var F = w.VerdictFichesTypes, n = F ? F.norm(s) : String(s || '').toLowerCase(); return n.split(' ').filter(function (m) { return m.length > 2 && !/^(les|des|aux|avec|sur|une|par|maison|du|de|la|le)$/.test(m); }); }
-  function categories() { var d = D(), c = []; (d.plats || []).forEach(function (p) { if (actif(p) && p.cat && c.indexOf(p.cat) < 0 && !/formule|menu/i.test(p.cat)) c.push(p.cat); }); ['Entrées', 'Plats', 'Desserts', 'Boissons'].forEach(function (x) { if (c.indexOf(x) < 0) c.push(x); }); return c; }
+  function categories() { var d = D(), c = []; (d.plats || []).forEach(function (p) { if (actif(p) && p.cat && c.indexOf(p.cat) < 0) c.push(p.cat); }); /* C301 (V15-061) : les catégories de VOTRE carte (menus compris) ; les catégories types seulement pour une carte vide */ if (!c.length) ['Entrées', 'Plats', 'Desserts', 'Boissons'].forEach(function (x) { c.push(x); }); return c; }
   function tvaPour(cat, fiche) { if (fiche && fiche.tva != null) return fiche.tva; var p = (D().plats || []).filter(function (x) { return actif(x) && x.cat === cat && num(x.tva) != null; })[0]; if (p) return num(p.tva); return /alcool|vin|biere|bière|cocktail|spiritueux|champagne/i.test(cat || '') ? 20 : 10; }
 
   /* C258 (T1 N6) : desserts courants reconnus (tarte aux pommes, tiramisu, mousse au chocolat…) — quantités habituelles
@@ -780,11 +785,15 @@
     return re && (!vu || vu.cpPrixType) ? re.nom : vu ? vu.nom : null;
   }
   /* La catégorie se lit dans le nom quand rien d'autre ne la donne (« Tiramisu » → Desserts), rangée dans celle de la carte. */
+  /* C301 (V15-060) : un alcool de cuisson (« au vin », « à la bière », « sauce au calvados », « flambé au cognac ») est une
+     préparation, pas une boisson : il est retiré avant de chercher une boisson dans le nom. */
+  var CUISSON = /\b(au|aux|a la|a l|a|sauce|flambee?s?|marinee?s?|braisee?s?|cuite?s?|parfumee?s?|deglacee?s?|poche(?:e|es|s)?)\s+(?:(?:au|aux|a la|a l)\s+)?(?:vins?(?:\s+(?:rouge|blanc|jaune|rose|de \w+))?|bieres?|cidre|champagne|rhum|cognac|whisky|calvados|porto|madere|pastis|armagnac|marsala|xeres|kirsch|gin)\b/g;
+  function estBoissonCat(c) { return /boisson|\bbar\b|\bvins?\b|bi[eè]re|alcool|cocktail|ap[eé]ritif|digestif|\bsoft/i.test(String(c || '')); }
   function catDuNom(nom) {
-    var n = nrm(nom);
+    var n = nrm(nom), nb = n.replace(CUISSON, ' ');
     if (/\b(the|cafe) glace/.test(n)) return 'Boissons';
     if (/^tarte\b(?!.*\b(flambee|tomates?|poireaux?|oignons?|saumon|chevre|legumes?|fine aux tomates)\b)|tiramisu|mousse au chocolat|ile flottante|profiterole|panna ?cotta|crumble|cheese ?cake|riz au lait|salade de fruits|\bglaces?\b|sorbet|\bcrepes?\b|gaufre|brownie|eclair|\bbaba\b|fraisier|clafoutis|pain perdu|fondant|moelleux|creme brulee|creme caramel|gourmand|\bflan\b|financier|madeleine|cookie|macaron|meringue|pavlova|charlotte|mille ?feuille|paris brest|religieuse|cannele|beignet|dessert/.test(n)) return 'Desserts';
-    if (/\b(biere|pinte|demi|vins?|cocktail|spritz|mojito|whisky|vodka|gin|champagne|kir|pastis|aperitif|cidre|digestif|cognac|calvados|rhum)\b/.test(n)) return 'Boissons alcoolisées';
+    if (/\b(biere|pinte|demi|vins?|cocktail|spritz|mojito|whisky|vodka|gin|champagne|kir|pastis|aperitif|cidre|digestif|cognac|calvados|rhum)\b/.test(nb)) return 'Boissons alcoolisées';
     if (/\b(cafe|expresso|espresso|the|infusion|tisane|chocolat chaud|jus|soda|coca|eau|limonade|sirop|smoothie|milkshake|cappuccino|latte|diabolo)\b/.test(n)) return 'Boissons';
     if (/\b(soupe|veloute|terrine|gaspacho|foie gras|escargots?|huitres?|rillettes?|carpaccio|burrata|bruschetta|tapas|planche|oeufs? mayo)/.test(n)) return 'Entrées';
     return null;
@@ -798,7 +807,8 @@
     var F = w.VerdictFichesTypes, d = D(), out = { rec: [], preps: [], nouveaux: [], source: '', variable: false };
     if (F && F.variable(nom)) { out.variable = true; return out; }
     var f = (F ? F.trouver(nom) : null) || ficheLocale(nom), m = mots(nom), best = null, sc = 0;
-    (d.plats || []).forEach(function (p) { if (!actif(p) || !p.rec || !p.rec.length) return; var s = 0, pm = mots(p.nom); m.forEach(function (x) { if (pm.indexOf(x) >= 0) s += 2; }); if (s && p.cat === cat) s += 1; if (s > sc) { sc = s; best = p; } });
+    var veutBoisson = estBoissonCat(cat || catDuNom(nom));
+    (d.plats || []).forEach(function (p) { if (!actif(p) || !p.rec || !p.rec.length) return; if (estBoissonCat(p.cat) !== veutBoisson) return; /* C301 (V15-060) : jamais la recette d'une boisson pour un plat */ var s = 0, pm = mots(p.nom); m.forEach(function (x) { if (pm.indexOf(x) >= 0) s += 2; }); if (s && p.cat === cat) s += 1; if (s > sc) { sc = s; best = p; } });
     /* Un plat de la carte du même genre (« Burger de la brasserie » pour « Burger maison ») garde vos vrais produits et vos
        vrais prix : il passe avant la fiche type quand celle-ci ajouterait des produits au prix type. */
     var GEN = /^(salade|salades|assiette|plat|tarte|soupe|creme|pave|filet|portion|verre|menu|formule)$/;
@@ -807,7 +817,7 @@
       out.fiche = f; out.source = 'Recette habituelle « ' + f.nom + ' » avec vos produits, à vérifier';
       f.rec.forEach(function (l) {
         var n = F.dansCatalogue(l[0], d.ing) || dansCatLocal(l[0], d.ing);
-        if (!n) { var t = produitLocal(l[0]); if (!t) return; n = t.nom; if (!out.nouveaux.some(function (x) { return x.nom === n; })) out.nouveaux.push({ id: 'ft-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), nom: t.nom, type: t.type, prix: t.prix, perte: t.perte, prixSource: 'type', cpPrixType: true, cpCreatedAt: new Date().toISOString() }); }
+        if (!n) { var t = produitLocal(l[0]); if (!t) { (out.manque = out.manque || []).push(l[0]); return; } /* C301 (V15-087) : dit, jamais oublié */ n = t.nom; if (!out.nouveaux.some(function (x) { return x.nom === n; })) out.nouveaux.push({ id: 'ft-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), nom: t.nom, type: t.type, prix: t.prix, perte: t.perte, prixSource: 'type', cpPrixType: true, cpCreatedAt: new Date().toISOString() }); }
         out.rec.push([n, l[1]]);
       });
       if (!out.nouveaux.length || !proche()) return out;
@@ -832,8 +842,10 @@
       var cons = prixConseille(p0), mini = cons, med = medianeCat(b.p.cat), niveau = false;
       /* C258 : un prix réaliste — jamais sous le prix habituel de la catégorie (médiane de la carte) quand l'objectif est déjà atteint plus bas. */
       if (cons && med && med > cons) { cons = Math.round(med * 10) / 10; niveau = true; }
+      /* C301 (V15-061) : jamais au-dessus du plat le plus cher de la catégorie ; au-delà, c'est le coût qu'il faut réduire */
+      var mx = maxCat(b.p.cat, null), haut = false; if (cons && mx && cons > mx) { cons = mx; haut = true; niveau = false; }
       var kc = cons ? calc(prixAvec(p0, cons)) : null, prix = num(G.prix), kp = prix > 0 ? calc(prixAvec(p0, prix)) : null;
-      return { b: b, cout: k.cout, obj: k.objPond, cons: cons, mini: mini, niveau: niveau, kc: kc, prix: prix, kp: kp };
+      return { b: b, cout: k.cout, obj: k.objPond, cons: cons, mini: mini, niveau: niveau, haut: haut, kc: kc, prix: prix, kp: kp };
     });
   }
   function resultat() {
@@ -841,9 +853,14 @@
     var r = null; try { r = chiffrer(); } catch (e) {}
     if (!r) { el.innerHTML = G.nom.trim() ? '<p class="c251-sub">' + (G.variable || !G.rec.length ? 'Indiquez le coût des produits d’une portion : Verdict calcule le prix conseillé.' : 'Il manque une quantité.') + '</p>' : ''; go.disabled = true; go.textContent = 'Ajouter à ma carte'; return; }
     if (!(num(G.prix) > 0) && r.cons) { G.prix = r.cons.toFixed(2).replace('.', ','); var ip = doc.getElementById('c251-prix'); if (ip) ip.value = G.prix; r = chiffrer(); }
-    var ok = okMarge(r.kp), h = '<div class="c251-kk"><span class="c251-k">Coût des produits <b>' + esc(eur(r.cout)) + '</b> par portion</span><span class="c251-k">Prix conseillé <b>' + esc(eur(r.cons)) + '</b>' + (r.niveau ? ' <small>(prix habituel de vos ' + esc(String(G.cat || '').toLowerCase()) + ' ; objectif atteint dès ' + esc(eur(r.mini)) + ')</small>' : '') + '</span></div>';
+    var ok = okMarge(r.kp), h = '<div class="c251-kk"><span class="c251-k">Coût des produits <b>' + esc(eur(r.cout)) + '</b> par portion</span><span class="c251-k">Prix conseillé <b>' + esc(eur(r.cons)) + '</b>' + (r.niveau ? ' <small>(prix habituel de vos ' + esc(String(G.cat || '').toLowerCase()) + ' ; objectif atteint dès ' + esc(eur(r.mini)) + ')</small>' : '') + (r.haut ? ' <small>(le prix le plus haut de vos ' + esc(String(G.cat || '').toLowerCase()) + ' ; l’objectif demanderait ' + esc(eur(r.mini)) + ' : réduisez plutôt le coût de la portion)</small>' : '') + '</span></div>';
     if (r.kp && r.kp.complete) h += '<p class="c251-' + (ok ? 'v' : 'r') + '"><b>À ' + esc(eur(r.prix)) + ' : il reste ' + esc(eur(r.kp.contribPond)) + ' par vente (' + esc(pct(r.kp.contribPct)) + ')</b>' + (ok ? ', objectif de ' + esc(pct(r.obj)) + ' atteint.' : ', sous l’objectif de ' + esc(pct(r.obj)) + '. À ' + esc(eur(r.cons)) + ', il resterait ' + esc(eur(r.kc && r.kc.contribPond)) + ' par vente : <button type="button" class="c251-lien" data-c251-cons>prendre le prix conseillé</button>') + '</p>';
     if (r.b.nouveaux.length && !G.portion) h += '<p class="c251-sub">Ajouté au catalogue avec un prix type, remplacé ensuite par vos factures : ' + esc(r.b.nouveaux.map(function (g) { return g.nom; }).join(', ')) + '.</p>';
+    /* C301 (V15-087) : recette habituelle incomplète → rien n'est ajouté avant les produits manquants ; un plat du même nom est signalé */
+    var manque = (G.manque || []).filter(function (n) { return !(D().ing || []).some(function (g) { return g && nrm(g.nom) === nrm(n); }); });
+    var doublon = (D().plats || []).filter(function (p) { return actif(p) && nrm(p.nom) === nrm(G.nom); })[0];
+    if (doublon) h = '<p class="c251-r"><b>« ' + esc(doublon.nom) + ' » est déjà à votre carte' + (num(doublon.ttc) > 0 ? ' (' + esc(eur(num(doublon.ttc))) + ')' : '') + '.</b> Ajoutez-le seulement s’il s’agit d’un autre plat.</p>' + h;
+    if (manque.length) { el.innerHTML = '<p class="c251-r"><b>Recette incomplète : il manque ' + esc(manque.join(', ')) + '.</b> Ajoutez ' + (manque.length > 1 ? 'ces produits' : 'ce produit') + ' à votre catalogue (facture ou catalogue fournisseur) : sans ' + (manque.length > 1 ? 'eux' : 'lui') + ', le coût et la marge de « ' + esc(G.nom.trim()) + ' » seraient faux.</p>' + (doublon ? h.slice(0, h.indexOf('</p>') + 4) : ''); go.disabled = true; go.textContent = 'Recette incomplète'; return; }
     el.innerHTML = h; go.disabled = !(r.prix > 0); go.textContent = 'Ajouter à ma carte à ' + eur(r.prix);
   }
   function lignes() {
@@ -861,7 +878,7 @@
   var attente = null;
   function surNom() {
     var r = deviner(G.nom, G.cat);
-    G.rec = r.rec; G.preps = r.preps; G.nouveaux = r.nouveaux; G.source = r.source; G.variable = r.variable; G.esp = r.fiche ? r.fiche.esp : (r.proche && r.proche.esp) || null;
+    G.rec = r.rec; G.preps = r.preps; G.nouveaux = r.nouveaux; G.source = r.source; G.variable = r.variable; G.manque = r.fiche && r.manque ? r.manque.slice() : []; G.esp = r.fiche ? r.fiche.esp : (r.proche && r.proche.esp) || null;
     if (!G.catChoisie) { var c = r.fiche ? carteCat(r.fiche.cat) : r.proche ? r.proche.cat : carteCat(catDuNom(G.nom)); if (c) { G.cat = c; var s = doc.getElementById('c251-cat'); if (s) { if (![].some.call(s.options, function (o) { return o.value === c; })) { var o = doc.createElement('option'); o.value = o.textContent = c; s.appendChild(o); } s.value = c; } } }
     G.tva = tvaPour(G.cat, r.fiche); var t = doc.getElementById('c251-tva'); if (t) t.value = String(G.tva);
     if (!G.prixChoisi) { G.prix = ''; var ip = doc.getElementById('c251-prix'); if (ip) ip.value = ''; }

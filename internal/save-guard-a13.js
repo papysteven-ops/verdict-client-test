@@ -439,6 +439,14 @@ root.VerdictSaveGuard={
   rebase:rebase,
   _state:S,_sig:sigOf,_value:valueOf,_install:install
 };
+/* C300 (V15-102) : sur un profil effacé, Verdict proposait de restaurer une copie automatique venue de la session de
+   démonstration (« Restaurer cette copie » en bouton principal). Une copie qui contient une démonstration fictive n'est jamais
+   proposée ni restaurée dans un dossier réel (029 : verdictSafetyRecordStoreAllowed, verdictPayloadHasDemo). */
+function sansDemo(){var f=root.verdictSafetyRecordStoreAllowed;if(typeof f!=='function'||f.__c300)return;
+  var g=function(record){if(!f.apply(this,arguments))return false;try{var o=JSON.parse(record.data);if(typeof root.verdictPayloadHasDemo==='function'&&root.verdictPayloadHasDemo(o))return false;
+    var E=o&&o.etabs||{};for(var k in E)if(Object.prototype.hasOwnProperty.call(E,k)&&E[k]&&E[k]._demo&&E[k]._demo.fictional===true)return false;}catch(e){return false;}return true;};
+  g.__c300=true;root.verdictSafetyRecordStoreAllowed=g;}
+sansDemo();setTimeout(sansDemo,0);setTimeout(sansDemo,400);
 function boot(tries){if(install())return;if(tries>0)setTimeout(function(){boot(tries-1);},250);}
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',function(){boot(40);});else boot(40);
 })(window);

@@ -3596,25 +3596,39 @@ function deleteArchivedEtab(id){
 /* ═══ MOTEUR DATA (calibré) ═══ */
 /* Notation transcrite cellule par cellule de RESULTATS!E19:E34 (fichier Brasserie) */
 function R0(x){ return Math.round(x); }
+/* C299 (V15-044) : une note qui tombe sur 62,4999… vaut 62,5 et s'arrondit à 63 : les notes s'arrondissent sur la valeur exacte, pas
+   sur l'erreur de calcul des nombres à virgule. */
+function R0n(v){return R0(Math.round(v*1e9)/1e9);}
 function tierUp(x,T1,T2,T3,T4){
   if(x>=T1)return 100;
-  if(x>=T2)return R0(75+(x-T2)/(T1-T2)*25);
-  if(x>=T3)return R0(40+(x-T3)/(T2-T3)*35);
-  if(x>=T4)return R0(10+(x-T4)/(T3-T4)*30);
-  return Math.max(0,R0(10-(T4-x)*100));
+  if(x>=T2)return R0n(75+(x-T2)/(T1-T2)*25);
+  if(x>=T3)return R0n(40+(x-T3)/(T2-T3)*35);
+  if(x>=T4)return R0n(10+(x-T4)/(T3-T4)*30);
+  return Math.max(0,R0n(10-(T4-x)*100));
 }
 function tierDown(x,T1,T2,T3,T4){
   if(x<=T1)return 100;
-  if(x<=T2)return R0(75+(T2-x)/(T2-T1)*25);
-  if(x<=T3)return R0(40+(T3-x)/(T3-T2)*35);
-  if(x<=T4)return R0(10+(T4-x)/(T4-T3)*30);
-  return Math.max(0,R0(10-(x-T4)*100));
+  if(x<=T2)return R0n(75+(T2-x)/(T2-T1)*25);
+  if(x<=T3)return R0n(40+(T3-x)/(T3-T2)*35);
+  if(x<=T4)return R0n(10+(T4-x)/(T4-T3)*30);
+  return Math.max(0,R0n(10-(x-T4)*100));
+}
+/* C299 (V15-007, décision de Steven : « le barème suit le repère du format ») : la note du résultat et celle de l'équipe se calent
+   sur les repères du type d'établissement (FAMILLES[format], restauration traditionnelle sans type), comme Repères et Simuler.
+   Résultat : 100 au repère des meilleurs, 75 au repère médian, 40 au repère bas, 10 à 0 % (avant : 15 / 8 / 5 / 0 % fixes).
+   Équipe : 100 au niveau sain, 75 au repère, 40 au seuil « trop lourd », 10 huit points au-delà (avant : 30 / 35 / 42 / 50 %).
+   Plafond de l'Indice : 30 en perte, 60 sous le repère médian, 75 sous celui des meilleurs (avant : 5 et 8 % fixes). */
+function verdictBaremeFormat(){
+  var F=null;try{F=(typeof famActive==='function'&&famActive())||null;}catch(e){}
+  /* FAMILLES est déclaré plus bas dans ce fichier : un calcul fait au chargement ne doit jamais lever d'erreur (repli = repères de la restauration traditionnelle, les mêmes chiffres). */
+  var T=(typeof FAMILLES!=='undefined'&&FAMILLES&&FAMILLES.trad)||{rn:[2,5,9],ms:[30,36,42]},r=(F&&F.rn)||T.rn,m=(F&&F.ms)||T.ms;
+  return {rn:[r[2]/100,r[1]/100,r[0]/100,0],ms:[m[0]/100,m[1]/100,m[2]/100,(m[2]+8)/100],capMed:r[1]/100,capHaut:r[2]/100};
 }
 var NOTES={
- rn:function(x){ return tierUp(x,.15,.08,.05,0); },
+ rn:function(x){ var B=verdictBaremeFormat(); return tierUp(x,B.rn[0],B.rn[1],B.rn[2],B.rn[3]); },
  mc:function(x){ return tierUp(x,.60,.50,.40,.30); },
  cv:function(x){ return tierDown(x,.30,.40,.50,.60); },
- ms:function(x){ return tierDown(x,.30,.35,.42,.50); },
+ ms:function(x){ var B=verdictBaremeFormat(); return tierDown(x,B.ms[0],B.ms[1],B.ms[2],B.ms[3]); },
  acf:function(x){ return tierDown(x,.10,.18,.25,.35); },
  tc:function(x){ return tierDown(x,.85,.92,.97,1.00); },
  pm:function(x){ return tierDown(x,.60,.75,.85,1.00); },
@@ -3732,6 +3746,12 @@ function deriv(over){
     d._saisiesIgnorees=ignored;d._saisiesParDefaut=defaults;
     /* C245 : document comptable seul, jours d’ouverture non donnés → ni 6 ni 7 dans les calculs (à renseigner) */
     if(!(over&&Object.prototype.hasOwnProperty.call(over,'jsem'))&&verdictJoursInconnus()){d.jSemInconnu=true;d.jSem=null;d.jMois=null;d.jAn=null;d.hNote=0;d.hKpi=0;d._saisiesParDefaut=defaults.filter(function(x){return x.k!=='jsem';});}
+    /* C299 (V15-005, V15-006) : jours ouverts et tickets de l'exercice lus dans la caisse quand elle couvre l'exercice (313 jours,
+       23 290 tickets), jamais 6 × 4,33 × 12 ; pour les modèles, les journées suivent le calendrier de l'Accueil : un seul nombre de jours. */
+    if(!(over&&(Object.prototype.hasOwnProperty.call(over,'jsem')||Object.prototype.hasOwnProperty.call(over,'cmdj')))){try{var _JC=verdictJoursCaisse(DB,d);if(_JC){d.jAn=_JC.jours;d.jMois=Math.round(_JC.jours/Math.max(1,Number(d.mois)||12));if(_JC.tickets>0){d.cmdAn=_JC.tickets;d.cvu=d.cvT/d.cmdAn;d.mcCmd=d.mc/d.cmdAn;}d.joursSource='caisse';d.joursCaisse=_JC;if(d.hNote>0)d.hNote=_JC.jours*8;if(d.hKpi>0)d.hKpi=_JC.jours*8;}}catch(e){}}
+    /* C299 (V15-039) : la productivité se mesure sur les heures d'ouverture réelles (Mon équipe › Heures d'ouverture par semaine) ;
+       sans elles, les 8 h par jour restent une base supposée, affichée comme indicative et hors Indice. */
+    try{var _ouv=Number(DB&&DB.equipeOuverture);if(d.jAn>0&&_ouv>0){var _js=Number(d.jSem)>0?Number(d.jSem):(Number(DB.in&&DB.in.jsem)||6);d.hNote=_ouv/_js*d.jAn;d.hKpi=d.hNote;d.heuresSource='saisie';}else d.heuresSource=d.hNote>0?'supposees':null;}catch(e){}
     return d;
   }catch(error){
     var d=verdictLegacyInvalidDerivA10(over);d.exactEngineError=String(error.message||'INVALID');d._saisiesIgnorees=ignored;d._saisiesParDefaut=defaults;return d;
@@ -3988,7 +4008,7 @@ function verdictWeightedScore(d){
   s.ms=NOTES.ms(v.ms/100); s.acf=NOTES.acf(v.acf/100); s.tc=NOTES.tc(v.tc/100);
   s.pm=NOTES.pm(v.pm/100); s.sen=NOTES.sen(senX);
   s.fc=NOTES.fc(v.fc/100); s.pc=NOTES.pc(v.pc/100); s.com=NOTES.com(v.com/100);
-  var prodAvailable=d.hNote>0&&d.cmdAn>0;
+  var prodAvailable=d.hNote>0&&d.cmdAn>0&&d.heuresSource==='saisie';/* C299 (V15-039) : jamais sur des heures supposées */
   s.prod=prodAvailable?NOTES.prod(d.mc/d.hNote):null;
   var n1=0,n2=0,n3=0,n3Weight=0,k;
   for(k in W1)n1+=s[k]*W1[k];
@@ -3996,7 +4016,7 @@ function verdictWeightedScore(d){
   for(k in W3){if(k==='prod'&&!prodAvailable)continue;n3+=s[k]*W3[k];n3Weight+=W3[k];}
   if(n3Weight>0)n3=n3/n3Weight;
   var raw=.50*n1+.25*n2+.25*n3;
-  var rnx=v.rn/100, cap=rnx<0?30:(rnx<0.05?60:(rnx<0.08?75:100));
+  var _B=verdictBaremeFormat(),rnx=v.rn/100, cap=rnx<0?30:(rnx<_B.capMed?60:(rnx<_B.capHaut?75:100));/* C299 (V15-007) */
   var score=Math.round(Math.min(raw,cap));
 
   return {v:v,s:s,n1:n1,n2:n2,n3:n3,cap:cap,score:isFinite(score)?score:0};
@@ -4011,6 +4031,26 @@ function verdictDocumentsEnAttenteOver(){
     var E=F.ecarts(DB)||[];if(!E.length)return null;var R=DB.docRef.in,o={},n=0;
     E.forEach(function(e){(VERDICT_DOC_CHAMPS[e.k]||[]).forEach(function(c){if(Object.prototype.hasOwnProperty.call(R,c)){o[c]=R[c];n++;}});});
     return n?o:null;}catch(e){return null;}
+}
+/* C299 (V15-005) : les journées de caisse de l'exercice (clôtures caJ, tickets tkJ), seulement si la caisse couvre l'exercice
+   (son CA HT à 10 % près de celui du calcul). Sinon null : le calcul garde les jours déclarés. */
+function verdictJoursCaisse(D,d){
+  D=D||(typeof DB!=='undefined'?DB:null);if(!D||!Array.isArray(D.histJour)||!D.histJour.length)return null;
+  var an=Number((D.refSource&&D.refSource.exerciseYear)||(D.ref&&D.ref.exercice)||D.exerciseYear);if(!an)return null;
+  var vu={},jours=0,tk=0,ttc=0,tkOk=true;
+  D.histJour.forEach(function(r){var k=String(r&&r.date||'').slice(0,10);if(k.slice(0,4)!==String(an)||vu[k])return;var ca=Number(r.caJ);if(!(ca>0))return;vu[k]=1;jours++;ttc+=ca;var t=Number(r.tkJ);if(t>0)tk+=t;else tkOk=false;});
+  if(jours<20)return null;var tva=d&&d.tva!=null&&isFinite(d.tva)?Number(d.tva):((Number(D.in&&D.in.tva)||10)/100),ht=ttc/(1+tva);
+  if(!(d&&d.ca>0)||Math.abs(ht-d.ca)>d.ca*0.1)return null;
+  return {annee:an,jours:jours,tickets:tkOk?Math.round(tk):null,ht:ht};
+}
+/* C299 (V15-002, règle confirmée par Steven le 23/10 : « pas de matière en plus, commissions et TVA suivent ») : une hausse du
+   panier moyen à volume constant ajoute du CA HT (TTC ÷ TVA) ; la matière ne bouge pas ; les commissions suivent leur taux. Une
+   seule fonction pour l'Audit et Simuler. */
+function verdictGainPanier(deltaTTC,R){
+  try{R=R||moteur();}catch(e){return null;}if(!R||!R.d)return null;var d=R.d,tk=Number(d.cmdAn)||0,tva=Number(d.tva)||0,delta=Number(deltaTTC)||0;if(!(tk>0)||!delta)return null;
+  var caHT=tk*delta/(1+tva),tauxCom=d.ca>0?(Number(d.com)||0)/d.ca:0,commissions=caHT*tauxCom,gain=caHT-commissions;
+  return {delta:delta,tickets:tk,ticketsSource:d.joursSource==='caisse'?'caisse':'calcul',caHT:caHT,commissions:commissions,gain:gain,gainMois:gain/12,
+    rn:(d.ca+caHT)>0?(d.res+gain)/(d.ca+caHT)*100:null,hypothese:'À volume constant, une hausse de prix ne coûte pas de matière ; seules la TVA et les commissions suivent.'};
 }
 function moteur(over){
   var _docAttente=null;if(over==null){_docAttente=verdictDocumentsEnAttenteOver();if(_docAttente)over=_docAttente;}
@@ -4168,14 +4208,16 @@ function auditPremiumCalc(R){
   c.productivite={commandes:d.cmdAn,jours:d.jAn,
     caJour:d.jAn>0?d.ca/d.jAn:null, contributionHeure:v.prod,
     etp:d.etp||0, caEtp:d.caSalarie==null?null:d.caSalarie};
-  var p1=moteur({panier:d.panierTTC+1}), p2=moteur({panier:d.panierTTC+2});
+  /* C299 (V15-002) : la règle unique du panier (verdictGainPanier), la même que Simuler. */
+  var g1=verdictGainPanier(1,R),g2=verdictGainPanier(2,R);
   c.prix={base:d.panierTTC,
-    plus1:p1&&p1.d?p1.d.res-d.res:0,
-    plus1M:p1&&p1.d?(p1.d.res-d.res)/12:0,
-    rn1:p1&&p1.v?p1.v.rn:v.rn,
-    plus2:p2&&p2.d?p2.d.res-d.res:0,
-    plus2M:p2&&p2.d?(p2.d.res-d.res)/12:0,
-    rn2:p2&&p2.v?p2.v.rn:v.rn};
+    plus1:g1?g1.gain:0,
+    plus1M:g1?g1.gainMois:0,
+    rn1:g1&&g1.rn!=null?g1.rn:v.rn,
+    plus2:g2?g2.gain:0,
+    plus2M:g2?g2.gainMois:0,
+    rn2:g2&&g2.rn!=null?g2.rn:v.rn,
+    hypothese:g1?g1.hypothese:''};
   c.canaux={commission:d.com,commissionPct:v.com,pfN:0,pfMarge:null};
   c.carte={ok:false,actifs:0,fiables:0,couverture:0,score:0,theo:0,marge:null,ecart:null,perte:0,best:[],weak:[]};
   try{
@@ -4184,7 +4226,7 @@ function auditPremiumCalc(R){
     c.carte.score=sc&&isFinite(sc.total)?sc.total:0;
     c.carte.fiables=st.fiables||0;c.carte.couverture=st.actifs?Math.round((st.fiables||0)/st.actifs*100):0;
     c.carte.theo=st.theoR||0;c.carte.marge=st.ca>0?st.margePond:null;
-    c.carte.ecart=st.theoR>0&&isFinite(v.fc)?v.fc-st.theoNourR:null;c.carte.theoNour=st.theoNourR;c.carte.perte=st.perte||0;
+    /* C301 (V15-003) : écart matière unique */var _E301=typeof VerdictEcartMatiere==='function'?VerdictEcartMatiere(R,st):null;c.carte.ecart=_E301?_E301.pts:(st.theoR>0&&isFinite(v.fc)?v.fc-st.theoNourR:null);c.carte.theoNour=_E301?_E301.theo:st.theoNourR;c.carte.reelM=_E301?_E301.reel:v.fc;c.carte.perimetre=_E301?_E301.perimetre:'nourriture';c.carte.periode=_E301?_E301.periode:'';c.carte.perte=st.perte||0;
     c.canaux.pfN=st.pfN||0;
     (DB.plats||[]).forEach(function(p){
       var vol=+p.vol||0; if(vol<=0)return;
@@ -5403,7 +5445,7 @@ function openModeles(){
     autres.forEach(function(k){h+=modeleBouton(k);});
     h+='</div></details>';
   }
-  h+='</div><div class="modeles-actions">'+(VERDICT_DEMO_FROM_PORTFOLIO&&VERDICT_DEMO_PORTFOLIO_MODEL_ACTIVE?'<button class="btn sec" onclick="retourPortefeuilleDepuisModele()">Retour à mes établissements réels</button>':'')+'<button class="btn ghost" onclick="annulerModeles()">'+(VERDICT_DEMO_FROM_PORTFOLIO&&VERDICT_DEMO_PORTFOLIO_MODEL_ACTIVE?'Fermer':'Annuler')+'</button></div></div>';
+  h+='</div><div class="modeles-actions">'+(VERDICT_DEMO_FROM_PORTFOLIO&&VERDICT_DEMO_PORTFOLIO_MODEL_ACTIVE?'<button class="btn sec" onclick="retourPortefeuilleDepuisModele()">Revenir à mon établissement</button>':'')+'<button class="btn ghost" onclick="annulerModeles()">'+(VERDICT_DEMO_FROM_PORTFOLIO&&VERDICT_DEMO_PORTFOLIO_MODEL_ACTIVE?'Fermer':'Annuler')+'</button></div></div>';
   var m=document.createElement('div'); m.className='modal on verdict-adaptive-modal'; m.id='mModeles'; m.innerHTML=h;
   m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');
   m.addEventListener('click',function(e){ if(e.target===m) annulerModeles(); });
@@ -6445,6 +6487,13 @@ function chrCockpitPeriodHTML(){
       '<p class="chr-period-priority">'+chrCockpitEscape(chrCockpitText('criticalData'))+'</p></section>';
   }
   var z=zone(R.score),p=chrCockpitPriority(R),truth=verdictScoreText('label',R);
+  /* C299 (V15-052) : en année partielle, pas de note sur 100 là où l'en-tête dit « aucun score annuel » (comme C239 pour Structure). */
+  if(typeof estModeRecent==='function'&&estModeRecent()){
+    return '<section class="chr-period-signature is-incomplete" data-chr-signature="verdict-period" data-state="recent" aria-label="'+chrCockpitEscape(chrCockpitText('verdictPeriod'))+'">'+
+      '<div class="chr-signature-kicker">'+chrCockpitEscape(chrCockpitText('verdictPeriod'))+' · '+period+'</div>'+
+      '<div class="chr-period-main"><strong class="chr-period-state">'+chrCockpitEscape(recentT('partial'))+'</strong></div>'+
+      '<p class="chr-period-priority">'+chrCockpitEscape(recentT('gateBody'))+'</p></section>';
+  }
   /* point11 produit aujourd'hui ses diagnostics dynamiques en français. Une
      autre langue reçoit donc un libellé neutre traduit plutôt qu'un fragment
      français ou une traduction par morceaux. */
@@ -6730,6 +6779,8 @@ function go(v){
   if(typeof estModeRecent==='function'&&estModeRecent()&&typeof recentRestrictedView==='function'&&recentRestrictedView(v)&&!(VIEW===v&&target.classList.contains('on'))){
     recentFeatureGate(v);return false;
   }/* C226 (X17) : redessiner l'écran déjà ouvert (import en cours) n'ouvre jamais la fenêtre « exercice clôturé » */
+  /* C299 (V15-112) : la fenêtre « Cette lecture exige un exercice clôturé » ne reste jamais par-dessus l'écran où l'on va. */
+  try{var _rg=document.getElementById('refP');if(_rg&&_rg.hasAttribute('data-recent-feature')&&_rg.closest('.on')){var _rh=_rg.querySelector('h3');if(_rh&&typeof recentT==='function'&&_rh.textContent===recentT('gateTitle')){_rg.removeAttribute('data-recent-feature');refClose();}}}catch(e){}
   var previousView=VIEW,current=document.querySelector('.view.on');
   var revision=String(VERDICT_VIEW_REVISION);
   var reuse=target.getAttribute('data-verdict-render-revision')===revision&&v!=='abo';/* C214 (W28) : Abonnement suit toujours l'établissement actif */
@@ -6900,6 +6951,9 @@ function hsub(n,b){ if(sub("h",n,b)===false)return false; verdictRefreshSubview(
 /* ═══ SCORE VERDICT : animation + panneau de décomposition (V4.28) ═══ */
 var SC_GENERATION=0;
 var SC_LAST=null;
+/* C302 (V15-135) : la note précédente n'est comparée qu'à celle du même établissement (même nom, même modèle de démo). */
+var SC_LAST_ETAB=null;
+function scEtabCourant(){try{return String((typeof STORE!=='undefined'&&STORE&&STORE.actif)||'')+'|'+String((typeof DB!=='undefined'&&DB&&DB.etab)||'');}catch(e){return '';}}
 
 /* Durée du mouvement du score : proportionnelle au chemin parcouru, assez
    lente pour être vue (1,8 s minimum, 4 s au maximum). */
@@ -7064,6 +7118,7 @@ function scSet(ts,val,hex){
   }
   try{if(box)box.setAttribute('aria-label',scAriaLabel(val,zone(val)));}catch(e){}
   var prev=SC_LAST;
+  var scEtab=scEtabCourant();if(SC_LAST_ETAB!==null&&scEtab!==SC_LAST_ETAB)prev=null;SC_LAST_ETAB=scEtab;/* C302 : autre établissement, pas d'animation ni de « −10 » */
   if(prev===val){ ts.textContent=val; scPaint(val,hex); return; }
   SC_LAST=val;
   if(prev===null||scReduced()){ ts.textContent=val; scPaint(val,hex); if(prev!==null)scTrace(prev,val,hex,0); return; }
@@ -7405,7 +7460,7 @@ function drawData(){
     '<div class="kpi"><div class="k">'+t('ind.mc')+'</div><div class="v">'+pc(v.mc,0)+'</div><div class="d">'+eur(d.mc)+(d.cmdAn>0?' \u00b7 '+eur2(d.mcCmd)+' '+t('d.perOrder'):'')+'</div></div>'+
     '<div class="kpi"><div class="k">'+t('ind.fc')+'</div><div class="v">'+pc(v.fc,1)+'</div><div class="d">'+eur(d.nour)+' '+t('d.foodBuy')+'</div></div>'+
     '<div class="kpi"><div class="k">'+t('ind.pc')+'</div><div class="v">'+pc(v.pc,0)+'</div><div class="d">'+t('d.foodPay')+' \u00b7 '+eur(d.nour+d.sal)+'</div></div>'+
-    '<div class="kpi"><div class="k">'+t('ind.prod')+'</div><div class="v">'+(R.s.prod==null?'\u2014':fr(v.prod,1)+' \u20ac/h')+'</div><div class="d">'+(R.s.prod==null?'\u00e0 mesurer : tickets de caisse n\u00e9cessaires':t('d.prodD')+' \u00b7 8 h par jour suppos\u00e9es')+'</div></div>'+
+    '<div class="kpi"><div class="k">'+t('ind.prod')+'</div><div class="v">'+(R.s.prod==null&&!(d.heuresSource==='supposees'&&v.prod>0)?'\u2014':fr(v.prod,1)+' \u20ac/h')+'</div><div class="d">'+(d.heuresSource==='supposees'&&v.prod>0?'indicatif \u00b7 8 h par jour suppos\u00e9es, hors Indice':(R.s.prod==null?'\u00e0 mesurer : tickets de caisse n\u00e9cessaires':t('d.prodD')+' \u00b7 vos heures d\u2019ouverture'))+'</div></div>'+
     '<div class="kpi"><div class="k">'+t('d.cover')+'</div><div class="v">'+(d.mc>0?fr(d.cf/d.mc*d.mois,1):"\u2014")+'</div><div class="d">'+t('d.coverD')+'</div></div></div>';
   var niv=[[0,6,t('d.n1')],[6,8,t('d.n2')],[8,12,t('d.n3')]];
   niv.forEach(function(nv){
@@ -7413,7 +7468,7 @@ function drawData(){
     IND.slice(nv[0],nv[1]).forEach(function(ind){
       var s=R.s[ind[0]],iz=zone(s);
       if(s==null||!isFinite(s)){ h+='<div class="ind" data-a-mesurer="1"><div class="n"><b>'+ind[1]+'</b><span>'+ind[2]+'</span></div><div class="v">à mesurer</div><div class="bario"><i style="width:0"></i></div><div class="s" style="color:var(--mut2)">—</div></div>'+
-        '<div class="indx"><span>'+(ind[0]==='prod'?'Il faut vos tickets de caisse (nombre de commandes) pour la mesurer. D’ici là, elle ne compte pas dans votre Indice.':'Donnée manquante : elle ne compte pas dans votre Indice.')+'</span></div>'; return; }
+        '<div class="indx"><span>'+(ind[0]==='prod'?(R.d&&R.d.heuresSource==='supposees'?'Elle se calcule sur vos heures d’ouverture réelles (Mon équipe › Heures d’ouverture par semaine), jamais sur 8 h par jour supposées. D’ici là, elle ne compte pas dans votre Indice.':'Il faut vos tickets de caisse (nombre de commandes) pour la mesurer. D’ici là, elle ne compte pas dans votre Indice.'):'Donnée manquante : elle ne compte pas dans votre Indice.')+'</span></div>'; return; }
       h+='<div class="ind"><div class="n"><b>'+ind[1]+'</b><span>'+ind[2]+'</span></div>'+
         '<div class="v">'+indVal(ind[0],v)+'</div>'+
         '<div class="bario"><i style="width:'+Math.max(3,Math.min(100,s))+'%;background:'+iz.h+'"></i></div>'+
@@ -8682,11 +8737,12 @@ function point11Decision(db){
         impact:{kind:'threshold_gap',annual:0,monthly:0,amount:contrib,assumption:'Montant de contribution supplémentaire nécessaire pour ramener le point mort au repère interne de '+p11Pct(pm[1])+', à taux de contribution inchangé. Ce n’est pas un gain prévu.'}});
     }
     if(fmt&&d.panierTTC>0&&d.panierTTC<fmt.tk[0]){
-      var target=Math.min(fmt.tk[1],d.panierTTC*1.10),delta=Math.max(0,target-d.panierTTC),gTk=Math.round(d.cmdAn*(delta/(1+(d.tva||0)))*.5*(ca>0?d.mc/ca:0));
+      /* C299 (V15-002) : la règle unique du panier, sans matière en plus ; commissions et TVA suivent. */
+      var target=Math.min(fmt.tk[1],d.panierTTC*1.10),delta=Math.max(0,target-d.panierTTC),_gP=verdictGainPanier(delta,{d:d}),gTk=Math.round((_gP?_gP.gain:0)*.5);
       op({id:'PANIER_LOW',base:'ventes',level:'opportunity',urgency:'month',difficulty:'easy',groups:['activite'],baseConfidence:.82,trend:p11Trend('panier',fmt.tk[0],d.panierTTC,true),
         diagnosis:'Le panier moyen est de '+eur(d.panierTTC)+' TTC',detail:'Il est sous le repère de travail de '+eur(fmt.tk[0])+' pour '+type+'.',action:p11BasketAction(type),
         metric:'Panier TTC, contribution par commande et volume sur deux périodes comparables.',whyFirst:'Le test est réversible et mesurable, mais il reste derrière toute alerte de trésorerie ou de structure.',
-        impact:{kind:'scenario_gain',annual:gTk,monthly:Math.round(gTk/12),amount:gTk,assumption:'Simulation prudente : hausse plafonnée à 10 % du panier, adoption à 50 %, volume et taux de contribution inchangés. Ce n’est pas un gain garanti.'}});
+        impact:{kind:'scenario_gain',annual:gTk,monthly:Math.round(gTk/12),amount:gTk,assumption:'Simulation prudente : hausse plafonnée à 10 % du panier, adoption à 50 % ; à volume constant, une hausse de prix ne coûte pas de matière, seules la TVA et les commissions suivent. Ce n’est pas un gain garanti.'}});
     }
     if(fmt&&d.cmdj>0&&d.cmdj<fmt.cl[0]){
       var extraCmd=d.cmdAn*.05,gVol=Math.round(extraCmd*Math.max(0,d.mcCmd)*.5);
@@ -8697,11 +8753,11 @@ function point11Decision(db){
     }
     try{
       if(DB.plats&&DB.plats.length&&DB.carteRef&&DB.carteRef.confirmed){
-        var cs=carteStats(),gap=cs&&cs.theoR>0?v.fc-cs.theoNourR:0;
+        var cs=carteStats(),_E301=typeof VerdictEcartMatiere==='function'?VerdictEcartMatiere(null,cs):null,gap=_E301?_E301.pts:(cs&&cs.theoR>0?v.fc-cs.theoNourR:0);
         if(gap>=4){
           var gapE=Math.round(gap/100*ca);
           op({id:'FOOD_GAP_VERIFY',base:'measurement',level:gap>=12?'critical':'warning',urgency:gap>=12?'today':'week',difficulty:'medium',groups:['activite','achats'],baseConfidence:.73,trend:p11Trend('fc',cs.theoNourR,v.fc),
-            diagnosis:'Vous achetez plus de nourriture que vos plats vendus n’en utilisent',detail:'Vos factures de nourriture (document comptable) font '+p11Pct(v.fc)+' de vos ventes ; vos fiches recettes, pour les plats vendus, n’en prévoient que '+p11Pct(cs.theoNourR)+'. L’écart, '+p11Pct(Math.round(v.fc*10)/10-Math.round(cs.theoNourR*10)/10)+', représente environ '+eur(gapE)+' sur l’année : de la nourriture payée qu’on ne retrouve pas dans les assiettes vendues.',
+            diagnosis:'Vous achetez plus de nourriture que vos plats vendus n’en utilisent',detail:(function(){var _p=_E301?_E301.perimetre:'nourriture',_r=_E301?_E301.reel:v.fc,_t=_E301?_E301.theo:cs.theoNourR;return 'Vos achats ('+_p+(_E301&&_E301.periode?', '+_E301.periode:'')+', document comptable) font '+p11Pct(_r)+' de vos ventes ; vos fiches recettes, pour les ventes de la carte, n’en prévoient que '+p11Pct(_t)+'. L’écart, '+p11Pct(Math.round(_r*10)/10-Math.round(_t*10)/10)+', représente environ '+eur(gapE)+' sur l’année : de la marchandise payée qu’on ne retrouve pas dans ce qui est vendu.';})(),
             action:'Cette semaine, dans l’ordre : 1) comptez votre stock de nourriture (Inventaire › Compter), car un stock qui grossit fait monter les achats sans être mangé ; 2) pesez vos 3 plats les plus vendus et comparez à leur fiche ; 3) notez ce qui part à la poubelle et les repas offerts ou pris par l’équipe. Ne changez aucun prix de vente avant d’avoir trouvé la cause.',
             metric:'Achats de nourriture du mois ÷ ventes du mois, comparés au coût que vos fiches recettes prévoient pour les plats vendus.',whyFirst:'Cet écart revient chaque mois tant que sa cause n’est pas trouvée, et le chercher ne coûte qu’un comptage et quelques pesées.',
             impact:{kind:'unexplained_gap',annual:0,monthly:0,amount:gapE,assumption:'Nourriture payée sur un an qu’on ne retrouve pas dans les plats vendus, si achats et ventes couvrent la même période. Ce n’est pas un gain promis : il dépend de la cause trouvée.'}});
@@ -9040,7 +9096,7 @@ function drawX(){
   if(!R.ready||!DB.plats.length){
     el.innerHTML='<div class="warn on">L\&#39;\u00e9cart food cost a besoin de vos chiffres (Saisie) ET de votre carte (plats). '+(R.ready?"Ajoutez vos plats.":"Remplissez la saisie.")+'</div>';
   } else {
-    var reel=R.v.fc, theo=st.theoNourR, pts=reel-theo, xz=xzone(Math.abs(pts));
+    var _E301=typeof VerdictEcartMatiere==='function'?VerdictEcartMatiere(R,st):null,reel=_E301?_E301.reel:R.v.fc, theo=_E301?_E301.theo:st.theoNourR, pts=reel-theo, xz=xzone(Math.abs(pts));
     var eurAn=Math.round((reel-theo)/100*R.d.ca);
     var h="";
 
@@ -12058,7 +12114,9 @@ function demoRevealInline(inline,onReady){
       var docStyle=getComputedStyle(document.documentElement),cssSafe=parseFloat(docStyle.getPropertyValue('--app-safe-top'))||0,cssViewer=parseFloat(docStyle.getPropertyValue('--app-viewer-top'))||0,cssBottom=parseFloat(docStyle.getPropertyValue('--app-safe-bottom'))||0;
       var vv=window.visualViewport,vTop=vv&&Number.isFinite(vv.offsetTop)?vv.offsetTop:0,vHeight=vv&&Number.isFinite(vv.height)?vv.height:(window.innerHeight||document.documentElement.clientHeight||0);
       var safe=Math.max(10,vTop+cssSafe+cssViewer+10),usableBottom=vTop+vHeight-cssBottom-10,mainNav=document.querySelector('nav'),navRect=mainNav&&mainNav.getBoundingClientRect();
-      if(navRect&&navRect.height>0)usableBottom=Math.min(usableBottom,navRect.top-10);
+      /* C302 (V15-057) : seul un dock placé SOUS le guide le limite ; sur ordinateur, le premier nav est la barre d'onglets du haut
+         (collante, en haut de l'écran) : la prendre pour un dock ramenait le guide à 96 px, boutons seuls (titre, question, explication invisibles). */
+      if(navRect&&navRect.height>0&&navRect.top>vTop+vHeight/2)usableBottom=Math.min(usableBottom,navRect.top-10);
       function obstacleBottom(node){
         if(!node||!node.isConnected)return 0;var style=getComputedStyle(node),rect=node.getBoundingClientRect();
         return style.display!=='none'&&style.visibility!=='hidden'&&rect.height>0&&rect.top<=safe+4&&rect.bottom>safe?Math.ceil(rect.bottom)+10:0;
@@ -13605,16 +13663,21 @@ var AU_BANK_DOCS=[
 function auEvidence(){
   DB.auditEvidence=DB.auditEvidence||(typeof estModeRecent==='function'&&estModeRecent()?{period:'current',source:'management',docs:{}}:{period:'',source:'',docs:{}});
   if(typeof estModeRecent==='function'&&estModeRecent()){DB.auditEvidence.period='current';if(!DB.auditEvidence.source)DB.auditEvidence.source='management';}
-  DB.auditEvidence.docs=DB.auditEvidence.docs||{};return DB.auditEvidence;
+  DB.auditEvidence.docs=DB.auditEvidence.docs||{};
+  /* C299 (V15-054) : les documents font foi. Un FEC d'exercice clos importé dit lui-même la période et la source : l'Audit ne parle plus
+     de « période non documentée ». Lecture seulement (rien n'est écrit) ; un choix du patron reste prioritaire. */
+  var E0=DB.auditEvidence;if(!(E0.period&&E0.source)){try{var dr=DB.docRef,an=Number(dr&&dr.source==='fec'&&dr.year),cur=Number(String(typeof verdictOperationalClock==='function'?verdictOperationalClock().year:new Date().getFullYear()));
+    if(an&&an<cur)return Object.assign({},E0,{period:E0.period||'closed',source:E0.source||'accounting',docs:E0.docs,documentFoi:true});}catch(e){}}
+  return E0;
 }
 function auEvidenceOption(list,v){var out='Donnée non fournie';list.forEach(function(x){if(x[0]===v)out=x[1];});return out;}
 function auEvidenceSet(kind,v){
   if(kind!=='period'&&kind!=='source')return;var list=kind==='period'?AU_EVIDENCE_PERIODS:AU_EVIDENCE_SOURCES;
-  if(!list.some(function(x){return x[0]===v;}))return;auEvidence()[kind]=v;save();drawAudit();
+  if(!list.some(function(x){return x[0]===v;}))return;auEvidence();DB.auditEvidence[kind]=v;save();drawAudit();/* C299 : écrit dans le dossier, jamais dans la lecture déduite du FEC */
   toast('Preuve documentaire enregistrée — aucun calcul modifié');
 }
 function auEvidenceDoc(id){
-  if(!AU_BANK_DOCS.some(function(x){return x[0]===id;}))return;var E=auEvidence();E.docs[id]=!E.docs[id];save();drawAudit();
+  if(!AU_BANK_DOCS.some(function(x){return x[0]===id;}))return;auEvidence();var E=DB.auditEvidence;E.docs[id]=!E.docs[id];save();drawAudit();
   toast(E.docs[id]?'Document déclaré disponible — contenu non vérifié':'Document remis à « à joindre »');
 }
 function auDossierMode(){
@@ -13742,9 +13805,10 @@ var DIAG_RULES=[
       {v:'non', lib:'Non, m\u00eames prix', cause:'M\u00eames prix en livraison qu\u2019en salle : la commission est absorb\u00e9e enti\u00e8rement par votre marge.'},
       {v:'nsp', lib:'Je ne sais pas', cause:'\u00c0 comparer carte en main avant de conclure.'}]}},
  {id:'FIXES_LOURDS', base:'fixes', grav:2,
-  si:function(v){ return v.acf>20; },
+  /* C299 (V15-121) : le repère du format (charges fixes hors équipe, valeur médiane de son type), comme Repères & secteur. */
+  si:function(v){ var F=null;try{F=famActive();}catch(e){}var A=(F&&F.acf)||(typeof FAMILLES!=='undefined'&&FAMILLES.trad&&FAMILLES.trad.acf)||[15,20,26];return v.acf>A[1]; },
   titre:'Vos autres charges fixes sont \u00e9lev\u00e9es',
-  cause:'Loyer, \u00e9nergie, assurances et abonnements p\u00e8sent plus que le rep\u00e8re de pilotage interne Verdict.',
+  cause:'Loyer, \u00e9nergie, assurances et abonnements p\u00e8sent plus que le rep\u00e8re de votre type d\u2019\u00e9tablissement.',
   preuves:['acf','pm'],
   action:'Reprendre chaque ligne : assurances, \u00e9nergie, abonnements, maintenance.',
   question:{id:'loyer', texte:'Votre loyer a-t-il \u00e9t\u00e9 ren\u00e9goci\u00e9 depuis trois ans ?',
@@ -15545,7 +15609,7 @@ function auProductivitePremiumHTML(R,P){
       '<div class="au-ok"><span style="flex:1">Contribution / h repère (base 8 h/jour)</span><b>'+eur(q.contributionHeure)+'</b></div>'+
       '<div class="au-ok"><span style="flex:1">CA par ETP saisi</span><b>'+(q.etp&&q.caEtp!=null?eur(q.caEtp):'Non renseigné')+'</b></div>'+
     '</div>'+
-    '<p class="note">Le nombre d\u2019ETP vient uniquement de votre saisie : s\u2019il manque, Verdict ne l\u2019estime pas. L\u2019indice horaire du diagnostic utilise une base transparente de 8 h par jour ouvert ; vos heures réelles se saisissent dans Performance des services.</p></div>';
+    '<p class="note">Le nombre d\u2019ETP vient uniquement de votre saisie : s\u2019il manque, Verdict ne l\u2019estime pas. L\u2019indice horaire n\u2019entre dans l\u2019Indice qu\u2019avec vos heures d\u2019ouverture réelles (Mon équipe › Heures d\u2019ouverture par semaine) ; sans elles, la base de 8 h par jour ouvert reste indicative.</p></div>';
 }
 function auSecteurPremiumHTML(R,P){
   var M=auProfil(), g=M.guide, q=P.reponses, lim=auFaible(R);
@@ -15587,8 +15651,8 @@ function auCartePremiumHTML(R,P){
       '<div class="au-ok"><span style="flex:1">Matière théorique pondérée (nourriture + boissons)</span><b>'+pct(c.theo)+'</b></div>'+
       '<div class="au-ok"><span style="flex:1">Marge matière pondérée</span><b>'+(c.marge==null?'Indisponible':pct(c.marge))+'</b></div>'+
       /* C205 (V22) : l’écart se lit entre ses deux bornes, sur le même périmètre (nourriture seule) */
-      '<div class="au-ok"><span style="flex:1">Nourriture : achats réels / fiches techniques</span><b>'+(c.ecart==null?'Indisponible':pct(R.v.fc)+' / '+pct(c.theoNour))+'</b></div>'+
-      '<div class="au-ok"><span style="flex:1">Écart nourriture réel / théorique</span><b>'+gap+'</b></div>'+
+      '<div class="au-ok"><span style="flex:1">'+(c.perimetre==='nourriture + boissons'?'Nourriture + boissons':'Nourriture')+' : achats'+(c.periode?' ('+esc(c.periode)+')':'')+' / fiches techniques</span><b>'+(c.ecart==null?'Indisponible':pct(c.reelM!=null?c.reelM:R.v.fc)+' / '+pct(c.theoNour))+'</b></div>'+
+      '<div class="au-ok"><span style="flex:1">Écart '+(c.perimetre||'nourriture')+' réel / théorique</span><b>'+gap+'</b></div>'+
       '<div class="au-ok"><span style="flex:1">Plats actifs</span><b>'+c.actifs+'</b></div>'+
       '<div class="au-ok"><span style="flex:1">Plats à marge unitaire négative</span><b>'+c.perte+'</b></div></div>'+
     '<div class="au-card"><span class="au-k">Plus fortes contributions mensuelles</span>'+lignes(c.best)+'</div>'+
@@ -15617,7 +15681,7 @@ function auPrixPremiumHTML(R,P){
       '<p class="au-p" style="margin:7px 0 0">+'+eur(p.plus1M)+'/mois · résultat/CA simulé '+pct(p.rn1)+'</p></div>'+
     '<div class="au-card"><span class="au-k">Panier moyen +2 € TTC</span><div class="au-eur" style="color:#22c55e">+'+eur(p.plus2)+' /an</div>'+
       '<p class="au-p" style="margin:7px 0 0">+'+eur(p.plus2M)+'/mois · résultat/CA simulé '+pct(p.rn2)+'</p></div>'+
-    '<p class="note"><b>Simulation mécanique, pas prévision.</b> Le volume est maintenu constant. Verdict ne connaît ni l\u2019élasticité de votre demande ni la réaction de vos clients : ce chapitre mesure un levier, il ne recommande pas une hausse automatique.</p></div>';
+    '<p class="note"><b>Simulation mécanique, pas prévision.</b> '+esc(p.hypothese||'Le volume est maintenu constant.')+' Verdict ne connaît ni l\u2019élasticité de votre demande ni la réaction de vos clients : ce chapitre mesure un levier, il ne recommande pas une hausse automatique.</p></div>';
 }
 
 /* La visite demande une preuve à la fois. Injecter les vingt chapitres du
@@ -22688,6 +22752,7 @@ function quitterDemo(clientOnly){
   "Panier moyen +1 € TTC":["Average ticket +€1 incl. tax","Ticket medio +1 € impuestos incl.","Scontrino medio +1 € IVA incl.","Durchschnittsbon +1 € inkl. MwSt.","Gemiddelde bon +€1 incl. btw","Ticket médio +1 € com impostos"],
   "Panier moyen +2 € TTC":["Average ticket +€2 incl. tax","Ticket medio +2 € impuestos incl.","Scontrino medio +2 € IVA incl.","Durchschnittsbon +2 € inkl. MwSt.","Gemiddelde bon +€2 incl. btw","Ticket médio +2 € com impostos"],
   "Simulation mécanique, pas prévision.":["Mechanical simulation, not a forecast.","Simulación mecánica, no previsión.","Simulazione meccanica, non previsione.","Rechnerische Simulation, keine Prognose.","Rekenkundige simulatie, geen prognose.","Simulação mecânica, não previsão."],
+  "À volume constant, une hausse de prix ne coûte pas de matière ; seules la TVA et les commissions suivent. Verdict ne connaît ni l’élasticité de votre demande ni la réaction de vos clients : ce chapitre mesure un levier, il ne recommande pas une hausse automatique.":["At constant volume, a price increase costs no extra ingredients; only VAT and commissions follow. Verdict knows neither demand elasticity nor customer reaction: this chapter measures a lever; it does not recommend an automatic increase.","A volumen constante, una subida de precio no cuesta materia prima; solo el IVA y las comisiones siguen. Verdict no conoce la elasticidad de la demanda ni la reacción de sus clientes: este capítulo mide una palanca, no recomienda una subida automática.","A volume costante, un aumento di prezzo non costa materia prima; seguono solo IVA e commissioni. Verdict non conosce elasticità della domanda o reazione dei clienti: il capitolo misura una leva, non raccomanda un aumento automatico.","Bei gleichem Volumen kostet eine Preiserhöhung keinen Wareneinsatz; nur MwSt. und Provisionen ziehen mit. Verdict kennt weder Nachfrageelastizität noch Kundenreaktion: Das Kapitel misst einen Hebel und empfiehlt keine automatische Erhöhung.","Bij gelijk volume kost een prijsverhoging geen grondstoffen; alleen btw en commissies volgen. Verdict kent vraagelasticiteit noch klantreactie: dit hoofdstuk meet een hefboom en adviseert geen automatische verhoging.","Com volume constante, um aumento de preço não custa matéria-prima; só o IVA e as comissões acompanham. O Verdict não conhece a elasticidade da procura nem a reação dos clientes: este capítulo mede uma alavanca, não recomenda aumento automático."],
   "Le volume est maintenu constant. Verdict ne connaît ni l’élasticité de votre demande ni la réaction de vos clients : ce chapitre mesure un levier, il ne recommande pas une hausse automatique.":["Volume is held constant. Verdict knows neither demand elasticity nor customer reaction: this chapter measures a lever; it does not recommend an automatic increase.","El volumen se mantiene constante. Verdict no conoce la elasticidad de la demanda ni la reacción de sus clientes: este capítulo mide una palanca, no recomienda una subida automática.","Il volume resta costante. Verdict non conosce elasticità della domanda o reazione dei clienti: il capitolo misura una leva, non raccomanda un aumento automatico.","Das Volumen bleibt konstant. Verdict kennt weder Nachfrageelastizität noch Kundenreaktion: Das Kapitel misst einen Hebel und empfiehlt keine automatische Erhöhung.","Het volume blijft gelijk. Verdict kent vraagelasticiteit noch klantreactie: dit hoofdstuk meet een hefboom en adviseert geen automatische verhoging.","O volume mantém-se constante. O Verdict não conhece a elasticidade da procura nem a reação dos clientes: este capítulo mede uma alavanca, não recomenda aumento automático."],
   "Exécution 30 jours":["30-day execution","Ejecución 30 días","Esecuzione 30 giorni","30-Tage-Umsetzung","Uitvoering 30 dagen","Execução 30 dias"],
   "Impact estimé :":["Estimated impact:","Impacto estimado:","Impatto stimato:","Geschätzte Wirkung:","Geschatte impact:","Impacto estimado:"],
@@ -22828,6 +22893,9 @@ function quitterDemo(clientOnly){
 /* Traductions V10.4 des libellés ETP : aucune estimation depuis la paie. */
 (function(){
   if(typeof TR==='undefined')return;
+  /* C299 (V15-039) */
+  TR['Elle se calcule sur vos heures d’ouverture réelles (Mon équipe › Heures d’ouverture par semaine), jamais sur 8 h par jour supposées. D’ici là, elle ne compte pas dans votre Indice.']=['It is calculated on your real opening hours (My team › Opening hours per week), never on an assumed 8 h a day. Until then, it does not count in your Index.','Se calcula con sus horas de apertura reales (Mi equipo › Horas de apertura por semana), nunca con 8 h al día supuestas. Mientras tanto, no cuenta en su Índice.','Si calcola sulle ore di apertura reali (Il mio team › Ore di apertura a settimana), mai su 8 h al giorno ipotizzate. Fino ad allora, non conta nel suo Indice.','Sie wird mit Ihren tatsächlichen Öffnungsstunden berechnet (Mein Team › Öffnungsstunden pro Woche), nie mit angenommenen 8 Std. pro Tag. Bis dahin zählt sie nicht in Ihrem Index.','Ze wordt berekend op uw werkelijke openingsuren (Mijn team › Openingsuren per week), nooit op veronderstelde 8 u per dag. Tot dan telt ze niet mee in uw Index.','É calculada com as suas horas reais de abertura (A minha equipa › Horas de abertura por semana), nunca com 8 h por dia supostas. Até lá, não conta no seu Índice.'];
+  TR['indicatif · 8 h par jour supposées, hors Indice']=['indicative · 8 h per day assumed, outside the Index','indicativo · 8 h al día supuestas, fuera del Índice','indicativo · 8 h al giorno ipotizzate, fuori Indice','Richtwert · 8 Std. pro Tag angenommen, außerhalb des Index','indicatief · 8 u per dag verondersteld, buiten de Index','indicativo · 8 h por dia supostas, fora do Índice'];
   TR['CA par ETP renseigné']=['Revenue per entered FTE','Ventas por ETC indicado','Fatturato per FTE inserito','Umsatz je erfasstem VZÄ','Omzet per opgegeven fte','Receita por ETI indicado'];
   TR['Le CA/ETP utilise uniquement l’effectif que vous avez renseigné. Sans effectif, cette mesure est volontairement omise. La rentabilité service par service reste dans Performance des services.']=[
     'Revenue per FTE uses only the headcount you entered. Without headcount, this metric is deliberately omitted. Service-by-service profitability remains under Service Performance.',
@@ -22867,6 +22935,7 @@ function quitterDemo(clientOnly){
   "Après les charges saisies, votre résultat avant impôt est de {rn}% (repère de pilotage interne Verdict : 8 %)":["After the entered costs, your pre-tax result is {rn}% (internal Verdict management benchmark: 8%).","Tras los costes introducidos, su resultado antes de impuestos es del {rn}% (referencia interna de gestión Verdict: 8 %).","Dopo i costi inseriti, il risultato ante imposte è {rn}% (riferimento gestionale interno Verdict: 8%).","Nach den erfassten Kosten beträgt Ihr Ergebnis vor Steuern {rn}% (interner Verdict-Steuerungsrichtwert: 8 %).","Na de ingevoerde kosten is uw resultaat vóór belasting {rn}% (interne Verdict-stuurrichtwaarde: 8%).","Após os custos inseridos, o seu resultado antes de impostos é {rn}% (referência interna de gestão Verdict: 8%)."],
   "sous le repère de pilotage interne Verdict de 8 %":["below the internal Verdict management benchmark of 8%","por debajo de la referencia interna de gestión Verdict del 8 %","sotto il riferimento gestionale interno Verdict dell'8%","unter dem internen Verdict-Steuerungsrichtwert von 8 %","onder de interne Verdict-stuurrichtwaarde van 8%","abaixo da referência interna de gestão Verdict de 8%"],
   "Simulations à structure inchangée par ailleurs, sur des repères de pilotage internes Verdict — une base pour décider, pas une promesse. Les combiner et les ajuster finement se fait dans Décisions.":["Simulations with the rest of the structure unchanged, using internal Verdict management benchmarks — a basis for deciding, not a promise. Combine and fine-tune them under Decisions.","Simulaciones manteniendo el resto de la estructura sin cambios, con referencias internas de gestión Verdict: una base para decidir, no una promesa. Combínelas y ajústelas en Decisiones.","Simulazioni a struttura invariata per il resto, su riferimenti gestionali interni Verdict: una base per decidere, non una promessa. Combinale e regolale in Decisioni.","Simulationen bei ansonsten unveränderter Struktur auf Basis interner Verdict-Steuerungsrichtwerte — eine Entscheidungsgrundlage, kein Versprechen. Kombinieren und verfeinern Sie sie unter Entscheidungen.","Simulaties met de rest van de structuur ongewijzigd, op basis van interne Verdict-stuurrichtwaarden — een basis om te beslissen, geen belofte. Combineer en verfijn ze bij Beslissingen.","Simulações mantendo o restante da estrutura inalterado, com referências internas de gestão Verdict — uma base para decidir, não uma promessa. Combine e ajuste em Decisões."],
+  "Loyer, énergie, assurances et abonnements pèsent plus que le repère de votre type d’établissement.":["Rent, energy, insurance and subscriptions weigh more than the benchmark for your type of business.","Alquiler, energía, seguros y suscripciones pesan más que la referencia de su tipo de establecimiento.","Affitto, energia, assicurazioni e abbonamenti pesano più del riferimento del suo tipo di locale.","Miete, Energie, Versicherungen und Abonnements liegen über dem Richtwert Ihres Betriebstyps.","Huur, energie, verzekeringen en abonnementen wegen zwaarder dan de richtwaarde voor uw type zaak.","Aluguel, energia, seguros e assinaturas pesam mais do que a referência do seu tipo de estabelecimento."],
   "Loyer, énergie, assurances et abonnements pèsent plus que le repère de pilotage interne Verdict.":["Rent, energy, insurance and subscriptions weigh more than the internal Verdict management benchmark.","Alquiler, energía, seguros y suscripciones pesan más que la referencia interna de gestión Verdict.","Affitto, energia, assicurazioni e abbonamenti pesano più del riferimento gestionale interno Verdict.","Miete, Energie, Versicherungen und Abonnements liegen über dem internen Verdict-Steuerungsrichtwert.","Huur, energie, verzekeringen en abonnementen wegen zwaarder dan de interne Verdict-stuurrichtwaarde.","Aluguel, energia, seguros e assinaturas pesam mais do que a referência interna de gestão Verdict."],
   "Audit généré le {date} · statistiques de contexte Banque de France et INSEE, séparées des repères Verdict":["Audit generated on {date} · context statistics from Banque de France and INSEE, kept separate from Verdict benchmarks","Auditoría generada el {date} · estadísticas de contexto de Banque de France e INSEE, separadas de las referencias Verdict","Audit generato il {date} · statistiche di contesto Banque de France e INSEE, separate dai riferimenti Verdict","Audit erstellt am {date} · Kontextstatistiken von Banque de France und INSEE, getrennt von den Verdict-Richtwerten","Audit gegenereerd op {date} · contextstatistieken van Banque de France en INSEE, gescheiden van Verdict-richtwaarden","Auditoria gerada em {date} · estatísticas de contexto do Banque de France e INSEE, separadas das referências Verdict"]
   };
@@ -23333,6 +23402,8 @@ function verdictIntroV45Demo(profile){
     (typeof getMode==='function'&&getMode()==='demo')||!!(DB&&DB.exempleCharge===true);}catch(e){return false;}
 }
 function verdictIntroScoreDisponible(R){
+  /* C299 (suite de V15-052) : en année partielle, l'ouverture ne compte jamais jusqu'à un score annuel (l'en-tête dit « aucun score annuel »). */
+  if(typeof estModeRecent==='function'&&estModeRecent())return false;
   return !!(R&&R.ready&&typeof R.score==='number'&&Number.isFinite(R.score)&&
     R.score>=0&&R.score<=100&&
     !(R.manquants&&R.manquants.length)&&!(R.anomalies&&R.anomalies.length)&&
