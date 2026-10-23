@@ -709,7 +709,7 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
 </style>
 <script data-mono="./shared-inventory-r32.js" src="../../assets/runtime-a10/inventory-010-aec23afa60af.js"></script>
 <script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/inventory-011-b00023ca8807.js"></script>
-<script src="../../assets/runtime-a10/inventory-012-4f0e7d6070dd.js"></script>
+<script src="../../assets/runtime-a10/inventory-012-f8f01822aa80.js"></script>
 <script data-mono="./supplier-ordering-v1.js" src="../../assets/runtime-a10/inventory-013-4a1fa3453d17.js"></script>
 <script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-50195c7e6d75.js"></script>
 <script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-236122e8e39f.js"></script>
@@ -854,6 +854,9 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
   function accountCompatible(context){
     if(!context||bool(context.demo)||personalEdition())return true;
     var incoming=String(context.accountScope||''),current=currentAccountScope();
+    /* C295 : l'Inventaire ouvert du Client (une seule mémoire par appareil, « client-open-local ») suit l'établissement choisi
+       dans Pilotage, quelle que soit la portée de Pilotage ; avant, le Café restait affiché sur l'Inventaire du Bar. */
+    if(module==='inventory'&&current==='client-open-local'&&incoming)return true;
     if(!incoming||!current)return !incoming&&!current;
     return incoming===current;
   }
@@ -894,7 +897,10 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
     return named.length===1?named[0]:'';
   }
   function createInventorySite(context){
-    if(!inventoryReady||bool(context.demo)||!DB||!DB.sites)return '';
+    /* C295 : en mémoire ouverte du Client (« client-open-local »), l'Inventaire est chargé dès l'ouverture : le site de
+       l'établissement choisi dans Pilotage (Café) peut être créé tout de suite, sans attendre un changement de site. */
+    var ouvert=typeof window!=='undefined'&&window.__vdInventaireOuvertCharge===true;
+    if(!(inventoryReady||ouvert)||bool(context.demo)||!DB||!DB.sites)return '';
     var siteId=safeSiteId(context.siteId);
     if(!siteId||Object.prototype.hasOwnProperty.call(DB.sites,siteId))return '';
     var base='u_'+siteId.replace(/[^a-zA-Z0-9_-]/g,'_'),cuisine=base+'_cuisine',bar=base+'_bar',suffix=1;
@@ -960,6 +966,9 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
     }
     if(module==='inventory'){
       if(typeof SHARED!=='undefined'&&SHARED){if(DB.site!==siteId)return false;pendingContext=null;publish(true);return true;}
+      /* C295 : Inventaire ouvert pas encore chargé (le chargement remplacerait le site choisi) : le contexte attend, il est
+         appliqué à la fin du chargement (VerdictUnified.reapplyContext, appelé par startOpenAccess). */
+      try{if(typeof OPEN_ACCESS!=='undefined'&&OPEN_ACCESS&&window.__vdInventaireOuvertCharge!==true)return false;}catch(e){}
       var isDemo=false;try{isDemo=!!(typeof DEMO!=='undefined'&&DEMO);}catch(e){}
       if(bool(context.demo)!==isDemo)return false;
       try{
@@ -1179,7 +1188,7 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
   window.addEventListener('message',function(event){
     if(event.source!==parent||(location.origin!=="null"&&location.protocol!=='file:')&&(location.origin!=="null"&&event.origin!==location.origin)||!event.data||typeof event.data!=='object')return;
     if(event.data.type==='verdict-unified-apply-context')applyContext(event.data.context);
-    if(event.data.type==='verdict-unified-shell-ready'){applyContext(event.data.context);publish(true);publishStartup(true);}
+    if(event.data.type==='verdict-unified-shell-ready'){var appliqueC295=applyContext(event.data.context);if(appliqueC295||!(module==='inventory'&&pendingContext))publish(true);publishStartup(true);}/* C295 : un contexte en attente n'est pas écrasé par l'ancien site */
     if(event.data.type==='verdict-unified-demo-resume')resumeUnifiedDemo(event.data);
     if(event.data.type==='verdict-unified-module-visible'&&module==='verdict')flushPendingDemoResume();
     if(event.data.type==='verdict-unified-apply-operations'&&module==='verdict'){
@@ -1199,7 +1208,7 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
     }
   },true);
   installPersistentSubnav();
-  window.VerdictUnified={embedded:true,module:module,requestSwitch:requestSwitch,unlockStartup:unlockStartup,publishContext:function(){publish(true);},getContext:getContext,demoProgress:publishDemoProgress,demoEnded:publishDemoEnded,refreshPersistentSubnav:persistentSubnavSchedule,version:'1.9.0'};
+  window.VerdictUnified={embedded:true,module:module,requestSwitch:requestSwitch,unlockStartup:unlockStartup,publishContext:function(){publish(true);},reapplyContext:function(){if(pendingContext)return applyContext(pendingContext);publish(true);return true;},getContext:getContext,demoProgress:publishDemoProgress,demoEnded:publishDemoEnded,refreshPersistentSubnav:persistentSubnavSchedule,version:'1.9.0'};
   var settleBridge=function(){names.forEach(wrap);if(pendingContext)applyContext(pendingContext);else publish(false);publishStartup(false);persistentSubnavSchedule();};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',settleBridge,{once:true});else if(typeof queueMicrotask==='function')queueMicrotask(settleBridge);else Promise.resolve().then(settleBridge);
   send({type:'verdict-unified-ready',module:module,context:getContext()});

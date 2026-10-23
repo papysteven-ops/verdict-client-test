@@ -56,6 +56,38 @@
             <p id="data-note" class="service-state">Vos données : en ouvrant Verdict sur cet appareil, connecté à ce compte, ses établissements sont envoyés dans votre compte. Rien n’est effacé de l’appareil.</p>
           </section>
 
+          <!-- C294 : réglages du compte -->
+          <section id="security-card" class="workspace-card" aria-labelledby="security-title">
+            <p class="kicker">SÉCURITÉ ET CONNEXION</p>
+            <h2 id="security-title">Mot de passe et adresse</h2>
+            <p id="deletion-banner" class="service-state blocked" role="status" hidden></p>
+            <button id="cancel-deletion" class="primary" type="button" hidden>Annuler la suppression</button>
+            <form id="password-form" novalidate>
+              <p class="service-state">Changer le mot de passe : 12 caractères au moins, avec une majuscule, une minuscule et un chiffre, différent de l’actuel. Vos autres appareils seront déconnectés et un e-mail vous le confirmera.</p>
+              <label>Mot de passe actuel<input id="current-password" type="password" autocomplete="current-password"></label>
+              <label>Nouveau mot de passe<input id="new-password" type="password" autocomplete="new-password" minlength="12"></label>
+              <label>Confirmer le nouveau mot de passe<input id="new-password-confirm" type="password" autocomplete="new-password" minlength="12"></label>
+              <button class="primary" type="submit">Changer le mot de passe</button>
+            </form>
+            <p id="login-email" class="service-state"></p>
+            <p id="pending-email" class="service-state" hidden></p>
+            <button id="cancel-email-change" class="account-link" type="button" hidden>Annuler le changement d’adresse</button>
+            <form id="email-form" novalidate>
+              <p class="service-state">Changer d’adresse : un lien de confirmation part à la nouvelle adresse et l’actuelle est prévenue. L’adresse actuelle reste celle du compte tant que la nouvelle n’est pas confirmée.</p>
+              <label>Nouvelle adresse<input id="new-email" type="email" autocomplete="email"></label>
+              <label>Mot de passe actuel<input id="email-password" type="password" autocomplete="current-password"></label>
+              <button class="primary" type="submit">Changer d’adresse</button>
+            </form>
+            <button id="logout-all" class="account-link" type="button">Se déconnecter de partout</button>
+            <form id="delete-form" novalidate>
+              <p id="delete-note" class="service-state">Supprimer le compte : votre compte et toutes vos données sont effacés définitivement 7 jours après la demande. D’ici là, vous pouvez l’annuler en vous reconnectant.</p>
+              <label>Mot de passe actuel<input id="delete-password" type="password" autocomplete="current-password"></label>
+              <label>Pour confirmer, écrivez SUPPRIMER<input id="delete-confirmation" autocomplete="off"></label>
+              <button class="account-link" type="submit">Supprimer mon compte</button>
+            </form>
+            <p id="security-feedback" class="feedback" aria-live="polite"></p>
+          </section>
+
           <section id="offers" aria-labelledby="offers-title">
             <h2 id="offers-title">Choisir une formule</h2>
             <label>Nombre d’établissements actifs<input id="active-sites" type="number" min="1" max="500" value="1"></label>

@@ -360,6 +360,8 @@ function startOpenAccess(){
   var accountTools=document.getElementById("staffAccountTools");if(accountTools)accountTools.style.display="none";
   var storageNote=document.getElementById("storageNote");if(storageNote)storageNote.innerHTML="Acc&egrave;s ouvert &middot; donn&eacute;es enregistr&eacute;es sur cet appareil &middot; sauvegarde recommand&eacute;e";
   firstRun();
+  /* C295 : l'Inventaire ouvert est chargé ; le pont applique l'établissement choisi dans Pilotage (Café) s'il attendait. */
+  window.__vdInventaireOuvertCharge=true;try{if(window.VerdictUnified&&typeof window.VerdictUnified.reapplyContext==='function')window.VerdictUnified.reapplyContext();}catch(e){}
 }
 function applyCloud(l,id,localExisted){
   if(!DEMO&&l&&l.data&&inventoryPayloadIsDemo(l.data)){syncBadge("⚠ démo refusée",false);return false;}

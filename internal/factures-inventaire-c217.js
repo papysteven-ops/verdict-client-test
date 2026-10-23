@@ -539,7 +539,7 @@
   /* ── C229 (X36) · « Le même inventaire pour votre équipe » : le vrai lien, par le compte (le portail R32 n'existe plus) ── */
   w.inventairePartagerEquipe = function () {
     var old = doc.getElementById('equipeSheet'); if (old) old.remove();
-    var etab = ''; try { if (w.VerdictSyncEspaceInv && w.VerdictSyncEspaceInv.actif()) etab = w.VerdictSyncEspaceInv.ancre() || ''; } catch (e) {}
+    var etab = ''; try { if (w.VerdictSyncEspaceInv && w.VerdictSyncEspaceInv.actif()) etab = (w.VerdictSyncEspaceInv.etabActif && w.VerdictSyncEspaceInv.etabActif()) || w.VerdictSyncEspaceInv.ancre() || ''; } catch (e) {}/* C295 : l'établissement affiché, plus le premier */
     var racine = new URL('../../', location.href), lien = etab ? new URL('?module=inventory&equipe=' + encodeURIComponent(etab), racine).href : '';
     var o = doc.createElement('div'); o.id = 'equipeSheet'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
     o.style.cssText = 'position:fixed;inset:0;z-index:2147482500;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,14,20,.5);padding:12px;box-sizing:border-box';

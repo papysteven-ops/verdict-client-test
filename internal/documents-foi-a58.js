@@ -27,7 +27,10 @@
 
   /* Les grands postes, calculés de la même façon pour la saisie et pour le document. */
   var POSTES = [
+    /* C296 (campagne finale, C-analyste n° 23) : emballages et commissions de plateforme manquaient au tableau, et donc au
+       « Résultat avant impôt » de l'écran (118 500 € au lieu de 75 824,40 € pour le Café) ; le lecteur FEC, lui, les comptait. */
     { k: 'ca', lib: 'Chiffre d’affaires HT' }, { k: 'nour', lib: 'Achats nourriture' }, { k: 'boi', lib: 'Achats boissons' },
+    { k: 'emb', lib: 'Emballages' }, { k: 'com', lib: 'Commissions plateformes' },
     { k: 'equipe', lib: 'Équipe (salaires et cotisations)' }, { k: 'loyer', lib: 'Loyer' }, { k: 'autres', lib: 'Autres charges fixes' },
     { k: 'amort', lib: 'Amortissements' }
   ];
@@ -36,10 +39,10 @@
     I = I || D.in || {}; var mois = num(I.mois) || 12, f = function (k) { return num(I[k]); }, autres = 0;
     for (var i = 2; i <= 10; i++) autres += f('f' + i);
     var eq = f('salb') * (1 + f('salt') / 100) + f('dirb') * (1 + f('dirt') / 100);
-    return { ca: caDeclare(D), nour: vide(I.nour) ? null : f('nour'), boi: vide(I.boi) ? null : f('boi'), equipe: eq * mois, loyer: f('f1') * mois, autres: autres * mois, amort: vide(I.amort) ? null : f('amort') };
+    return { ca: caDeclare(D), nour: vide(I.nour) ? null : f('nour'), boi: vide(I.boi) ? null : f('boi'), emb: vide(I.emb) ? null : f('emb'), com: vide(I.com) ? null : f('com'), equipe: eq * mois, loyer: f('f1') * mois, autres: autres * mois, amort: vide(I.amort) ? null : f('amort') };
   }
-  function valeursFEC(t) { return { ca: num(t.revenue), nour: num(t.food), boi: num(t.beverage), equipe: num(t.payroll), loyer: num(t.rent), autres: num(t.other_fixed), amort: num(t.amortization) }; }
-  function resultat(v) { return v.ca == null ? null : v.ca - num(v.nour) - num(v.boi) - v.equipe - v.loyer - v.autres - num(v.amort); }
+  function valeursFEC(t) { return { ca: num(t.revenue), nour: num(t.food), boi: num(t.beverage), emb: num(t.packaging), com: num(t.commissions), equipe: num(t.payroll), loyer: num(t.rent), autres: num(t.other_fixed), amort: num(t.amortization) }; }
+  function resultat(v) { return v.ca == null ? null : v.ca - num(v.nour) - num(v.boi) - num(v.emb) - num(v.com) - v.equipe - v.loyer - v.autres - num(v.amort); }
   function aDesDonnees(D) { var v = valeurs(D); return !!(v.ca || v.nour || v.equipe || v.loyer); }
 
   /* Tableau « votre saisie / votre document / écart » — affiché avant d'importer le FEC, et après. */
@@ -128,7 +131,7 @@
     else if (e.k === 'cmdj') { D.in.cmdj = Math.round(e.doc * 10) / 10; }/* C280 */
     else if (e.k === 'ca') { D.refSource.ca = D.docRef.ca; if (D.ref) D.ref.ca = D.docRef.ca; }
     else if (R) {
-      var champs = { nour: ['nour'], boi: ['boi'], amort: ['amort'], equipe: ['salb', 'salt', 'dirb', 'dirt', 'dirn', 'saln'], loyer: ['f1'], autres: ['f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10'] }[e.k] || [];
+      var champs = { nour: ['nour'], boi: ['boi'], emb: ['emb'], com: ['com'], amort: ['amort'], equipe: ['salb', 'salt', 'dirb', 'dirt', 'dirn', 'saln'], loyer: ['f1'], autres: ['f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10'] }[e.k] || [];
       champs.concat(['mois']).forEach(function (c) { if (c in R) D.in[c] = R[c]; });
     }
   }
