@@ -40,11 +40,20 @@
     var S = store(), out = [];
     if (S) (Array.isArray(S.ordre) ? S.ordre : Object.keys(S.etabs)).forEach(function (id) {
       var d = S.etabs[id] || {}, link = d.inventoryLink || {}, demo = d._demo || {};
-      out.push({ key: id, name: String(d.etab || 'Établissement'), alias: [id, d.establishmentId, link.siteId, demo.establishmentId].filter(Boolean).map(String), demo: !!(d._testFiction || d.exempleCharge || d.presentationProfile), hidden: !!d._barHidden });
+      /* C323 (décision 15) : un établissement de démonstration chargé d'un modèle est nommé en casse normale, sans « (démonstration estimative) » */
+      out.push({ key: id, name: (d._testFiction || d.exempleCharge || d.presentationProfile ? nomDemo : String)(String(d.etab || 'Établissement')), alias: [id, d.establishmentId, link.siteId, demo.establishmentId].filter(Boolean).map(String), demo: !!(d._testFiction || d.exempleCharge || d.presentationProfile), hidden: !!d._barHidden });
     });
     return out;
   }
+  var nomDemo = function(s){s=String(s||'').replace(/\s*\(d[ée]monstration estimative\)\s*$/i,'').trim();if(s.length>3&&s===s.toUpperCase()&&/[A-ZÀ-Ý]{3}/.test(s)){s=s.toLowerCase().replace(/\b(i{1,3}|iv|v|vi{1,3}|ix|x)\b/g,function(m){return m.toUpperCase();});s=s.charAt(0).toUpperCase()+s.slice(1);}return s;};
+  /* C323 (décision 15) : une alerte de l'Inventaire de démonstration porte le nom de son jeu fictif (Brasserie Collet, ou le modèle chargé),
+     même si Pilotage montre un autre modèle ; elle n'est pas purgée pour autant (siteBase garde le rattachement). */
   function siteOf(item) {
+    var b = siteBase(item), nm = item && item.demo && item.module === 'inventory' ? nomDemo(item.establishmentName) : '';
+    if (nm && norm(nm) !== norm(b.name)) return { key: 'demo-inv:' + norm(nm), name: nm, alias: b.alias, demo: true, base: b.key };
+    return b;
+  }
+  function siteBase(item) {
     var id = String(item.establishmentId || ''), nm = norm(item.establishmentName), list = etabs();
     for (var i = 0; i < list.length; i++) if (id && list[i].alias.indexOf(id) >= 0) return list[i];
     for (i = 0; i < list.length; i++) if (nm && norm(list[i].name) === nm) return list[i];
@@ -170,7 +179,7 @@
     var c = center(), it = c && c.getItems().filter(function (x) { return x.id === card.dataset.notificationId; })[0]; if (it) switchTo(it);
   }, true);
   function switchTo(it) {
-    var site = siteOf(it), S = store(), sh = shell(), ctx = sh && sh.getContext && sh.getContext();
+    var site = siteBase(it), S = store(), sh = shell(), ctx = sh && sh.getContext && sh.getContext();
     if (!site || site.key === currentKey()) return;
     /* Pilotage : changement direct d'établissement (même effet que la barre d'établissements). */
     try { var w = doc.getElementById('frame-verdict').contentWindow; if (S && S.etabs[site.key] && typeof w.switchEtab === 'function') w.switchEtab(site.key); } catch (e) {}
@@ -186,7 +195,7 @@
     var key = ctx.demo ? String(ctx.siteId || '') + '|' + String(ctx.name || '') : '';
     if (key === lastDemo) return; var prev = lastDemo; lastDemo = key; if (!prev) return;
     var cur = currentKey();
-    c.getItems().forEach(function (it) { if (it.demo && siteOf(it).key !== cur && String(it.establishmentId || '') !== String(ctx.siteId || '')) c.remove(it.id); });
+    c.getItems().forEach(function (it) { if (it.demo && siteBase(it).key !== cur && String(it.establishmentId || '') !== String(ctx.siteId || '')) c.remove(it.id); });
   }
 
   function start() {

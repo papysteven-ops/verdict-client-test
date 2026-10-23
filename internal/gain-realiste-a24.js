@@ -283,6 +283,9 @@ function installerSimuler(){
     DJ.__c311=true;}}catch(e){}
   /* C301 (V15-126) : « Premium » n'existe pas dans les offres (Pilotage, Pro) : le bandeau de Simuler dit « VERDICT · … » */
   try{var PU=w.DEC_PREMIUM_UI;if(PU)for(var lg in PU)if(PU[lg]&&typeof PU[lg].tag==='string')PU[lg].tag=PU[lg].tag.replace(/^VERDICT PREMIUM\s*·\s*/,'VERDICT · ');}catch(e){}
+  /* C324 (T4) : pas de jargon « moteur » pour un patron : « HYPOTHÈSE · calcul Verdict » */
+  try{var PJ={'HYPOTHÈSE · moteur économique Verdict':'HYPOTHÈSE · calcul Verdict','ASSUMPTION · Verdict economic engine':'ASSUMPTION · Verdict calculation','HIPÓTESIS · motor económico Verdict':'HIPÓTESIS · cálculo Verdict','IPOTESI · motore economico Verdict':'IPOTESI · calcolo Verdict','ANNAHME · Verdict-Wirtschaftsmotor':'ANNAHME · Verdict-Berechnung','AANNAME · economische motor van Verdict':'AANNAME · berekening van Verdict','HIPÓTESE · motor económico Verdict':'HIPÓTESE · cálculo Verdict'};
+    if(PU)for(var lj in PU)if(PU[lj]&&PJ[PU[lj].proof])PU[lj].proof=PJ[PU[lj].proof];}catch(e){}
   /* C301 (V15-140) : le poste le plus lourd des charges fixes est un montant mensuel, et il est dit */
   if(typeof w.point11Decision==='function'&&!w.point11Decision.__c301){var p11b=w.point11Decision;w.point11Decision=function(){var r=p11b.apply(this,arguments);try{(r&&r.items||[]).forEach(function(it){if(it&&typeof it.detail==='string')it.detail=it.detail.replace(/(Le poste le plus lourd est « [^»]+ » \()([^)]*\d\s?€)\)/,'$1$2 par mois)');});}catch(e){}return r;};for(var kp in p11b)if(Object.prototype.hasOwnProperty.call(p11b,kp))w.point11Decision[kp]=p11b[kp];w.point11Decision.__c301=true;}
   /* C301 (V15-069) : la décision enregistrée depuis Simuler apparaît tout de suite dans le registre (au-dessus), rattachée à
@@ -292,15 +295,33 @@ function installerSimuler(){
     if(!T||!T.n){try{w.toast('Modifiez d’abord un levier');}catch(e){}return;}
     var lib=String(w.decNomScenario()||'Scénario simulé');lib=lib.charAt(0).toUpperCase()+lib.slice(1);
     /* C311 (V16-060) : le geste lui-même est écrit dans la décision (« Panier moyen +0,30 € ») */
-    try{var gestes=[];w.DEC_DEFS.forEach(function(dd){var v=w.DEC_STATE[dd.id];if(v!=null&&num(v)!==num(dd.def))gestes.push(dd.t+' '+dd.fmt(v));});if(gestes.length&&lib.indexOf(gestes[0])<0)lib+=' : '+gestes.join(' · ');}catch(e){}
-    w.ask('En faire une décision ?',lib+'\u00a0— gain estimé '+(T.delta>=0?'+':'−')+eur(Math.abs(T.delta))+' par an. Verdict l’inscrit dans le registre des décisions, en haut de Simuler. Pour en mesurer le résultat, lancez ensuite une seule action depuis « À faire » : sa source et sa date de contrôle seront figées. Vos chiffres ne sont pas modifiés.','Enregistrer',function(){
+    var gIds=[];try{var gestes=[];w.DEC_DEFS.forEach(function(dd){var v=w.DEC_STATE[dd.id];if(v!=null&&num(v)!==num(dd.def)){gestes.push(dd.t+' '+dd.fmt(v));gIds.push({id:dd.id,v:num(v)});}});if(gestes.length&&lib.indexOf(gestes[0])<0)lib+=' : '+gestes.join(' · ');}catch(e){}
+    w.ask('En faire une décision ?',lib+'\u00a0— gain estimé '+(T.delta>=0?'+':'−')+eur(Math.abs(T.delta))+' par an. Verdict l’inscrit dans le registre des décisions, en haut de Simuler, et dans « À faire et alertes », avec ce qu’il faudra mesurer le mois suivant. Vos chiffres ne sont pas modifiés.','Enregistrer',function(){
       var D=w.DB;D.decisions=D.decisions||[];var eid=(D._demo&&D._demo.establishmentId)||(typeof w.point12EstablishmentId==='function'?w.point12EstablishmentId():'');
-      D.decisions.push({version:'10.12',kind:'scenario',status:'recorded',date:new Date().toISOString().slice(0,10),id:'SIMU_'+Date.now(),lib:lib,est:Math.round(T.delta),profile:String(D.etabType||''),establishmentId:String(eid||'')});
+      D.decisions.push({version:'10.12',kind:'scenario',status:'recorded',date:new Date().toISOString().slice(0,10),id:'SIMU_'+Date.now(),lib:lib,est:Math.round(T.delta),gestes:gIds,profile:String(D.etabType||''),establishmentId:String(eid||'')});
       try{w.save();}catch(e){}
       try{var r=document.getElementById('decRegistre');if(r&&typeof w.decisionsRegistreHTML==='function'){var t=document.createElement('div');t.innerHTML=w.decisionsRegistreHTML();if(t.firstChild)r.parentNode.replaceChild(t.firstChild,r);}}catch(e){}
-      try{w.toast('Décision enregistrée : elle est dans le registre des décisions, en haut de Simuler');}catch(e){}
+      try{w.toast('Décision enregistrée : dans le registre de Simuler et dans « À faire et alertes »');}catch(e){}
       try{w.decDrawTotal(true);}catch(e){}
     });};ed.__c301=true;w.decEnDecision=ed;}
+  /* C324 (A-C10) : une décision prise dans Simuler est une ligne d'« À faire » : la décision, son geste, son gain estimé et ce qu'il faut
+     mesurer le mois suivant (l'indicateur de chaque levier). Elle y reste tant qu'elle n'est ni mesurée ni abandonnée. */
+  var MESURE={panier:'votre panier moyen dans la caisse',cmd:'vos commandes par jour',jour:'vos jours d’ouverture et le chiffre de ces jours',carte:'les ventes et la marge des plats dont le prix a changé',fc:'vos achats de nourriture rapportés au chiffre d’affaires',boi:'vos achats de boissons rapportés au chiffre d’affaires',sal:'le coût de votre équipe rapporté au chiffre d’affaires',fix:'vos charges fixes du mois',com:'vos commissions de livraison',emb:'vos achats d’emballages'};
+  function decisionsSimuler(){var D=w.DB||{},J=String(new Date().toISOString()).slice(0,10);return (D.decisions||[]).filter(function(d){if(!d||d.kind!=='scenario')return false;
+      var e=typeof w.decisionEtat==='function'?w.decisionEtat(d):(d.status==='reviewed'?'mesuree':d.status==='stopped'?'abandonnee':'decidee');return e==='decidee'||e==='en-cours'||e==='a-mesurer';});}
+  function moisSuivant(iso){var d=new Date(String(iso||'').slice(0,10)+'T12:00:00');if(isNaN(d))d=new Date();d=new Date(d.getFullYear(),d.getMonth()+1,1);return d.toLocaleDateString(tag(),{month:'long',year:'numeric'});}
+  function aFaireDecisionsHTML(){var L=decisionsSimuler();if(!L.length)return '';
+    var h='<div class="card" id="c324-dec" style="margin-bottom:12px"><h3 style="margin:0 0 4px">Décidé dans Simuler</h3><p class="note" style="margin:0 0 6px">Ce que vous avez décidé, et ce qu’il faudra regarder pour savoir si cela a marché.</p>';
+    L.forEach(function(d){var g=(d.gestes||[]).map(function(x){return MESURE[x.id];}).filter(Boolean),est=num(d.est);
+      h+='<div class="c324-l" style="padding:8px 0;border-top:1px solid var(--line,rgba(127,127,127,.2))"><b>'+esc(d.lib||'Décision')+'</b>'+
+        '<p class="note" style="margin:4px 0 0">Décidée le '+esc(String(d.date||'').slice(0,10).split('-').reverse().join('/'))+(isFinite(est)&&est?' · gain estimé '+(est>=0?'+':'−')+eur(Math.abs(est))+' par an':'')+'</p>'+
+        '<p class="note" style="margin:2px 0 0">À mesurer en '+esc(moisSuivant(d.date))+' : '+esc(g.length?g.join(', '):'votre résultat du mois')+', comparé à ce gain estimé.</p></div>';});
+    return h+'<button type="button" class="btn sec" style="margin-top:8px" onclick="go(\'dec\')">Ouvrir Simuler</button></div>';}
+  w.verdictAFaireDecisions=aFaireDecisionsHTML;
+  (function(){var k=0;function br(){if(typeof w.drawPriorities!=='function')return false;if(w.drawPriorities.__c324)return true;var dp=w.drawPriorities;
+      w.drawPriorities=function(){var r=dp.apply(this,arguments);try{var el=document.getElementById('priorities-container');if(el){var old=document.getElementById('c324-dec');if(old&&old.parentNode)old.parentNode.removeChild(old);var h=aFaireDecisionsHTML();if(h)el.insertAdjacentHTML('afterbegin',h);}}catch(e){}return r;};
+      for(var kk in dp)if(Object.prototype.hasOwnProperty.call(dp,kk))w.drawPriorities[kk]=dp[kk];w.drawPriorities.__c324=true;return true;}
+    if(!br()&&typeof w.setInterval==='function'){var t=w.setInterval(function(){if(br()||++k>40)w.clearInterval(t);},250);}})();
   w.decImpact=function(id,v){
     var R0=w.moteur();if(!R0.ready)return null;var s={};s[id]=v;var R1=w.moteur(overAll(s));
     return {R0:R0,R1:R1,before:R0.d.res,after:R1.d.res,delta:R1.d.res-R0.d.res,score0:R0.score,score1:R1.score,rn0:R0.v.rn,rn1:R1.v.rn};

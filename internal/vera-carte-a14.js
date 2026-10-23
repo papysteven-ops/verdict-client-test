@@ -14,6 +14,8 @@ var doc=root.document;if(!doc||root.VerdictVeraCarte)return;
 /* ───────── Outils ───────── */
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function num(v){var n=typeof v==='number'?v:parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(',','.'));return isFinite(n)?n:null;}
+/* C324 (T4 n° 9) : « vos autres plats à la carte », jamais « vos autres à la carte » */
+function motCat(c){var m=String(c||'plats').trim().toLowerCase();return /^(à|a) /.test(m)?'plats '+m:m;}
 function money(v){v=num(v);return v==null?'—':v.toLocaleString(tag(),{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function pct(v,d){v=num(v);return v==null?'—':v.toLocaleString(tag(),{maximumFractionDigits:d==null?1:d})+' %';}
 function int(v){v=num(v);return v==null?'—':Math.round(v).toLocaleString(tag());}
@@ -247,7 +249,7 @@ function candidates(cat,o){
     else if(x.fit>.4)why.push('De saison : '+phraseSaison(m)+(wm>0?' — ce plat se vend mieux quand il fait bon':' — plat réconfortant'));
     else if(x.fit<-.4)why.push('Hors saison : '+(wm>0?'plat d\u2019été':'plat d\u2019hiver')+' — '+phraseSaison(m));
     if(x.shared>=.75&&x.origin!=='new')why.push('Ingrédients déjà utilisés par la carte : moins de gaspillage');
-    if(co&&num(x.price)>co.max*1.1)why.push('Prix au-dessus de vos autres '+String(cat).toLowerCase()+' (jusqu’à '+money(co.max)+')');
+    if(co&&num(x.price)>co.max*1.1)why.push('Prix au-dessus de vos autres '+motCat(cat)+' (jusqu’à '+money(co.max)+')');
     if(o.competitor&&num(x.price)>o.competitor*1.12)why.push('Plus cher que la concurrence ('+money(o.competitor)+' en moyenne)');
     x.why=why;
   });
@@ -286,7 +288,7 @@ function proposeMenu(o){
     rows.forEach(function(r){
       var dec={p:r.p,cls:r.cls,q:r.q,c:r.c,action:'keep',text:''},qty=r.q||0,cur=qty*(r.c||0);
       if(toReplace.indexOf(r)>=0){
-        if(dropN>0){dec.action='remove';dec.gain=qty*.6*avgCat-cur;dec.text='Peu vendu et peu rentable : retiré pour une carte plus courte (environ 60 % de ses ventes passent sur les autres '+String(cat).toLowerCase()+'). Il reste dans la mémoire, récupérable.';dropN--;}
+        if(dropN>0){dec.action='remove';dec.gain=qty*.6*avgCat-cur;dec.text='Peu vendu et peu rentable : retiré pour une carte plus courte (environ 60 % de ses ventes passent sur les autres '+motCat(cat)+'). Il reste dans la mémoire, récupérable.';dropN--;}
         else{var best=null,bestV=cur;cand.forEach(function(x){var v=expectedRep(x,qty);if(v>bestV&&(!best||v>expectedRep(best,qty))){best=x;bestV=v;}});
           if(best){cand.splice(cand.indexOf(best),1);dec.action='replace';dec.rep=best;dec.gain=bestV-cur;dec.text='Remplacé par « '+best.p.nom+' » (+'+money(bestV-cur)+' sur la période) — '+(best.why[0]||'meilleur choix de saison');}
           else dec.text='À revoir : aucun remplaçant plus rentable pour cette période, on le garde.';}
@@ -318,8 +320,16 @@ function addToMenu(src,price){
   if(!src.cpMemory&&!src.cpVeraNew&&src.cpArchived&&(d.plats||[]).indexOf(src)>=0){delete src.cpArchived;delete src.cpArchivedAt;if(price)src.ttc=price;return src;}
   var p=JSON.parse(JSON.stringify(src));p.id='qp-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);p.vol=null;if(price)p.ttc=price;
   ['cpArchived','cpArchivedAt','cpFrozenCost','cpMemory','cpYears','cpSeason','cpVeraSaison'].forEach(function(k){delete p[k];});p.cpOrigin=src.id;p.cpFromVera=true;
+  /* C324 (T4 n° 19) : la fiche garde ce qui manque (« provisoire : il manque butternut ») tant que la recette est incomplète */
+  var M0=src.cpVeraSaison&&src.cpVeraSaison.manque;if(M0&&M0.length)p.cpVeraSaison={manque:M0.slice()};
   d.plats.push(p);return p;
 }
+/* C324 : un produit qui manquait sort de la liste dès qu'il entre dans la recette ; la liste vide, la marge n'est plus provisoire */
+function manquesAJour(){try{var d=DB();(d&&d.plats||[]).forEach(function(p){var M=p&&p.cpFromVera&&p.cpVeraSaison&&p.cpVeraSaison.manque;if(!M||!M.length||p.cpVeraSaison.principalManque)return;
+  var noms=(p.rec||[]).filter(function(l){return Number(l[1])>0;}).map(function(l){return norm(l[0]);});var R=M.filter(function(n){var k=norm(n);return !noms.some(function(x){return x.indexOf(k)>=0;});});
+  if(R.length)p.cpVeraSaison.manque=R;else delete p.cpVeraSaison;});}catch(e){}}
+(function(){var k=0;function br(){var s0=root.save;if(typeof s0!=='function')return false;if(s0.__c324)return true;var g=function(){manquesAJour();return s0.apply(this,arguments);};for(var kk in s0)if(Object.prototype.hasOwnProperty.call(s0,kk))g[kk]=s0[kk];g.__c324=true;root.save=g;return true;}
+  if(!br()&&typeof root.setInterval==='function'){var t=root.setInterval(function(){if(br()||++k>40)root.clearInterval(t);},250);}})();
 
 /* ───────── Interface ───────── */
 var UI={tab:'dish',o:{samePeriod:true,maxMargin:false,vera:false,price:null,cat:null,size:'balanced',competitor:null}};
@@ -401,7 +411,7 @@ function showDishes(out,list){
   if(!list.length){out.innerHTML='<p class="vc-note">Pas assez de plats complets dans cette catégorie pour proposer quelque chose de chiffré.</p>';return;}
   out.innerHTML=list.map(function(x,i){var mg=x.margin;return '<div class="vc-card">'+originBadge(x)+'<h3>'+esc(x.p.nom)+'</h3><div class="vc-kpi"><span>Prix <b>'+money(x.price)+'</b></span>'+(x.p.cpVeraSaison&&x.p.cpVeraSaison.principalManque?'<span>Coût matière <b>à compléter <small>(il manque '+esc(x.p.cpVeraSaison.principalManque)+')</small></b></span><span>Marge <b>non calculée</b></span>':'<span>Coût matière <b>'+money(mg&&mg.cost)+(x.p.cpVeraSaison&&x.p.cpVeraSaison.manque.length?' <small>(incomplet : sans '+esc(x.p.cpVeraSaison.manque.join(', '))+')</small>':'')+'</b></span>'+(x.p.cpVeraSaison&&x.p.cpVeraSaison.manque.length?'<span>Marge <b>≈ '+pct(mg&&mg.pct,0)+' <small>provisoire</small></b></span><span>Contribution <b>≈ '+money(mg&&mg.contrib)+'</b></span>':'<span>Marge <b>'+pct(mg&&mg.pct,0)+'</b></span><span>Contribution <b>'+money(mg&&mg.contrib)+'</b></span>'))+'</div><ul class="vc-why">'+x.why.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>'+
     (i===0?malin(x):'')+
-    '<div class="vc-act">'+(x.origin==='active'?'<button type="button" data-open="'+esc(x.p.id)+'">Voir la fiche</button>':'<button type="button" class="pri" data-add="'+i+'">Ajouter à ma carte</button>')+'</div></div>';}).join('')+'<p class="vc-note">Calcul local avec le moteur Verdict et vos prix fournisseurs du jour. Saison : normales de température du mois en cours et du mois suivant (pas de prévision en ligne) ; les nouveautés sont composées avec vos produits, ce qui manque est indiqué.</p>';
+    '<div class="vc-act">'+(x.origin==='active'?'<button type="button" data-open="'+esc(x.p.id)+'">Voir la fiche</button>':'<button type="button" class="pri" data-add="'+i+'">Ajouter à ma carte</button>')+'</div></div>';}).join('')+'<p class="vc-note">Calcul Verdict sur votre appareil, avec vos prix fournisseurs du jour. Saison : normales de température du mois en cours et du mois suivant (pas de prévision en ligne) ; les nouveautés sont composées avec vos produits, ce qui manque est indiqué.</p>';
   [].forEach.call(out.querySelectorAll('[data-add]'),function(b){b.addEventListener('click',function(){var x=list[Number(b.getAttribute('data-add'))];var p=addToMenu(x.p,x.price);try{root.save('vera-add-dish');root.refreshAll();}catch(e){}b.textContent='Ajouté ✓';b.disabled=true;/* C301 (V15-086) : la fenêtre se ferme après l'ajout */root.setTimeout(close,700);try{if(typeof root.toast==='function')root.toast('« '+p.nom+' » ajouté à la carte · vérifiez la fiche');}catch(e){}});});
   [].forEach.call(out.querySelectorAll('[data-open]'),function(b){b.addEventListener('click',function(){close();try{root.openPlat(b.getAttribute('data-open'));}catch(e){}});});
 }

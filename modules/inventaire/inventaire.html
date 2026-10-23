@@ -490,6 +490,11 @@ html.staff-mode #vInvBtn,html.staff-mode #inventoryVerdictBridge,html.staff-mode
 <script data-verdict-a10-persistence src="../../internal/persistence-a10.js"></script>
 <script defer src="../../internal/persistence-hooks-a10.js"></script>
 <style id="inv-clair-c114">html.p40:not(.vd-workspace-dark) .tr{background:#e5eaee!important}.brand i{margin-right:6px}html:not(.verdict-unified-module) #welcome{color:#f3f5f7!important}html:not(.verdict-unified-module) #welcome :is(h1,h2,h3,b,strong,.brand){color:#f3f5f7!important}html:not(.verdict-unified-module) #welcome p{color:#aeb6bf!important}</style>
+<script>/* C323 (décision 15) : le bandeau de l'Inventaire de démonstration nomme le jeu fictif du site affiché (Brasserie Collet, ou le modèle chargé), en casse normale. */
+(function(){function nom(s){s=String(s||'').replace(/\s*\(d[ée]monstration estimative\)\s*$/i,'').trim();if(s.length>3&&s===s.toUpperCase()&&/[A-Z\u00c0-\u00dd]{3}/.test(s)){s=s.toLowerCase().replace(/\b(i{1,3}|iv|v|vi{1,3}|ix|x)\b/g,function(m){return m.toUpperCase();});s=s.charAt(0).toUpperCase()+s.slice(1);}return s;}
+  function maj(){try{var el=document.getElementById('demoBannerJeu');if(!el||typeof DB==='undefined'||!DB||!DB.sites)return;var id=DB.site||'',n=nom((DB.sites[id]||{}).name);
+    var t='Inventaire de d\u00e9monstration \u00b7 '+(id==='demo-brasserie'||!n||/brasserie collet/i.test(n)?'jeu de la Brasserie Collet':'jeu du mod\u00e8le '+n)+' \u00b7 aucune donn\u00e9e r\u00e9elle';if(el.textContent!==t)el.textContent=t;}catch(e){}}
+  setInterval(maj,1000);document.addEventListener('DOMContentLoaded',maj);})();</script>
 <style id="inv-clair-c312">/* C312 (V16-058) : en thème clair, l'accueil de l'Inventaire est clair (ouvert seul ou dans la coque), sans attendre le garde-contraste */
 html.vd-workspace-light #welcome{background:#fff!important;color:#17212b!important}
 html.vd-workspace-light #welcome :is(h1,h2,h3,b,strong,.wl){color:#17212b!important}
@@ -569,7 +574,7 @@ html.vd-workspace-light .inv-guide-marker *{color:inherit!important}</style>
 
 <div class="seg siteSeg" id="siteSeg"></div>
 <div class="seg zoneSeg" id="zoneSeg"></div>
-<div class="demo-banner" id="demoBanner"><div class="demo-banner-copy"><b>D&eacute;monstration fictive</b><span>Brasserie Collet · aucune donn&eacute;e r&eacute;elle</span></div><div class="demo-banner-actions"><button class="demo-guide-start" type="button" onclick="inventoryGuideOpen(0)">Parcours</button><button class="demo-link" type="button" onclick="inventoryDemoRestart()">Rejouer</button><button class="demo-link demo-exit" type="button" onclick="inventoryDemoExit()">Quitter</button></div></div>
+<div class="demo-banner" id="demoBanner"><div class="demo-banner-copy"><b>D&eacute;monstration fictive</b><span id="demoBannerJeu">Inventaire de d&eacute;monstration · jeu de la Brasserie Collet · aucune donn&eacute;e r&eacute;elle</span></div><div class="demo-banner-actions"><button class="demo-guide-start" type="button" onclick="inventoryGuideOpen(0)">Parcours</button><button class="demo-link" type="button" onclick="inventoryDemoRestart()">Rejouer</button><button class="demo-link demo-exit" type="button" onclick="inventoryDemoExit()">Quitter</button></div></div>
 
 <div class="lvl">
   <span>Activit&eacute;</span>
@@ -731,9 +736,9 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
 </style>
 <script data-mono="./shared-inventory-r32.js" src="../../assets/runtime-a10/inventory-010-aec23afa60af.js"></script>
 <script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/inventory-011-ca5dcfd7d962.js"></script>
-<script src="../../assets/runtime-a10/inventory-012-39063c0b462b.js"></script>
+<script src="../../assets/runtime-a10/inventory-012-f2b7f9542580.js"></script>
 <script data-mono="./supplier-ordering-v1.js" src="../../assets/runtime-a10/inventory-013-4a1fa3453d17.js"></script>
-<script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-9a25b39ad266.js"></script>
+<script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-2d4709696144.js"></script>
 <script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-236122e8e39f.js"></script>
 <script data-mono="./supplier-emergency-v1.js" src="../../assets/runtime-a10/inventory-016-556ea9c7bae3.js"></script>
 

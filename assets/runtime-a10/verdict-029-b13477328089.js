@@ -2175,7 +2175,7 @@ function drawAbonnement(){
     try{aboActionsInject();}catch(e){}
     /* C214 (W28) : le total pour vos établissements est toujours donné, aux deux formules, au mois et à l'an. */
     var count=Math.max(1,Number(VERDICT_PENDING_MULTISITE_COUNT)||Number(window.VERDICT_COMPTE&&window.VERDICT_COMPTE.etablissements)||Number(VERDICT_ACCOUNT_STATE.active_establishments)||0,(function(){try{return etabBillableList().length;}catch(e){return 1;}})());
-    if(VERDICT_PUBLIC_OPEN){multi.innerHTML=aboPrixHTML(count,null,verdictCompteCourant()?'':publicCopy[1]);return;}
+    if(VERDICT_PUBLIC_OPEN){multi.innerHTML=aboPrixHTML(count,null,'');return;}/* C324 (V16-089) : la ligne d'accès (aboTierDesc) dit déjà « Toutes les fonctions Client… », une seule fois */
     var _vo=(window.verdictOffrePourTier?window.verdictOffrePourTier():{m:129,a:1290,xm:69,xa:690}),totalM=_vo.m+(count-1)*_vo.xm,totalA=_vo.a+(count-1)*_vo.xa;
     var _fd=aboFondateurTotal(_C,count);/* C239 (Y15) : en Pro fondateur, le montant fondateur (comme la page Compte), jamais 198 € */
     multi.innerHTML=aboPrixHTML(count,_fd||(count>1?{m:totalM,a:totalA}:null),'');
@@ -5011,7 +5011,7 @@ function point5Calc(st){
   return {ref:ref,reliability:rel,items:items,priority:priority,counts:counts,stats:st,families:families};
 }
 function point5ReferenceHTML(P){
-  if(P.ref.demo)return (DB.modele==='FoodTruck'?'<details class="card"><summary>Food truck : hypothèses et sources</summary><p>'+esc(MODELES.FoodTruck.research.assumptions)+'</p><p>Les cartes publiques consultées servent à situer les prix ; elles ne donnent ni les charges ni les ventes de ces établissements. Les coûts, volumes et historiques de ce modèle sont fictifs.</p><a href="https://entreprendre.service-public.gouv.fr/vosdroits/F36831" target="_blank" rel="noopener">Service Public : food truck</a> · <a href="https://lacuisinedememe.fr/carte/" target="_blank" rel="noopener">La Cuisine de Mémé : prix publics</a> · <a href="https://www.nomadeburger.fr/menu" target="_blank" rel="noopener">Nomade Burger : prix publics</a></details>':'')+'<div class="card"><div class="autoline"><span class="k">'+point5T('periodSource')+'</span><b>'+point5T('demo')+'</b></div><p class="note" style="margin:8px 0 0">Les volumes et le mix de canaux sont des hypothèses de démonstration, jamais des statistiques sectorielles.</p></div>';
+  if(P.ref.demo)return (DB.modele==='FoodTruck'?'<details class="card"><summary>Food truck : hypothèses et sources</summary><p>'+esc(String(MODELES.FoodTruck.research.assumptions).replace(/^55 tickets\/jour, 14 € TTC, 5 jours\/semaine, 11 mois/,function(m){var t=modeleChiffresTexte('FoodTruck',', ');return t?t+' (tickets et panier lus dans sa caisse)':m;}))/* C317 : la caisse fait foi */+'</p><p>Les cartes publiques consultées servent à situer les prix ; elles ne donnent ni les charges ni les ventes de ces établissements. Les coûts, volumes et historiques de ce modèle sont fictifs.</p><a href="https://entreprendre.service-public.gouv.fr/vosdroits/F36831" target="_blank" rel="noopener">Service Public : food truck</a> · <a href="https://lacuisinedememe.fr/carte/" target="_blank" rel="noopener">La Cuisine de Mémé : prix publics</a> · <a href="https://www.nomadeburger.fr/menu" target="_blank" rel="noopener">Nomade Burger : prix publics</a></details>':'')+'<div class="card"><div class="autoline"><span class="k">'+point5T('periodSource')+'</span><b>'+point5T('demo')+'</b></div><p class="note" style="margin:8px 0 0">Les volumes et le mix de canaux sont des hypothèses de démonstration, jamais des statistiques sectorielles.</p></div>';
   var r=DB.carteRef||{},opts=['','caisse','import','manual','estimate'].map(function(x){var l=x?point5SourceLabel(x):'—';return '<option value="'+x+'"'+(r.source===x?' selected':'')+'>'+l+'</option>';}).join('');
   return '<details class="card" id="p5-reference-card"'+(!P.ref.ready?' open':'')+'><summary style="cursor:pointer;font-weight:800">'+point5T('periodSource')+(P.ref.ready?' · '+esc(r.moyenne?'moyenne '+point5PeriodeTxt(r.moyenne.debut)+' → '+point5PeriodeTxt(r.moyenne.fin):point5PeriodeTxt(r.periode))+' · '+esc(point5SourceLabel(r.source)):'')+'</summary><div class="g2" style="margin-top:12px"><label class="f"><span>'+point5T('period')+'</span><input id="p5-period" type="month" value="'+esc(r.periode||'')+'"></label><label class="f"><span>'+point5T('source')+'</span><select id="p5-source">'+opts+'</select></label></div><label class="f"><span><input type="checkbox" id="p5-full-month"'+(r.fullMonth?' checked':'')+'> Ces volumes couvrent toute la carte, boissons et canaux compris, sur un mois complet.</span></label><button class="btn" id="p5-save-ref" onclick="saveCarteRef()">'+point5T('save')+'</button></details>';
 }
@@ -5456,6 +5456,20 @@ function verdictIndicesHTML(p,c){
   return '<span class="etab-indices" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;text-align:left;font-weight:500">'+chip(w[0],p,'pilotage')+chip(w[1],c,'carte')+'</span>';
 }
 function etabIndicesHTML(id){return verdictIndicesHTML(etabScoreMeta(id),etabCarteMeta(STORE.etabs[id]));}
+/* C317 (règle du chef : la caisse fait foi) : les chiffres d'un modèle montrés dans sa légende se calculent sur sa caisse,
+   par le même chemin que le chargement (modeleDossierDemo, rien n'est enregistré) : tickets ÷ jours de caisse arrondis à l'unité,
+   panier = CA TTC ÷ tickets. Jamais un chiffre écrit à la main. */
+function modeleChiffresCaisse(k){
+  if(!MODELES[k])return null;var actif=DB&&DB.modele===k,prev=DB,prevM=MODELE_ACTIF,d=null,r=null;
+  try{d=actif?DB:modeleDossierDemo(k,true);}catch(e){d=null;}finally{MODELE_ACTIF=prevM;}if(!d)return null;
+  try{DB=d;r=moteur();}catch(e){r=null;}finally{DB=prev;}
+  if(!r||!r.ready||!(r.d.cmdj>0))return null;
+  return {tk:Math.round(r.d.cmdj),panier:Math.round(r.d.panierTTC*100)/100,jsem:Number(d.in&&d.in.jsem)||null,mois:Number(d.in&&d.in.mois)||null,source:r.d.caSource};
+}
+function modeleChiffresTexte(k,sep){
+  var c=modeleChiffresCaisse(k);if(!c)return '';sep=sep||' · ';var nb=function(x){return String(x).replace('.',',');};
+  return [c.tk+' tickets/jour','panier '+(c.panier%1?c.panier.toFixed(2).replace('.',','):nb(c.panier))+' € TTC'].concat(c.jsem?[nb(c.jsem)+' jours/semaine']:[],c.mois?[c.mois+' mois']:[]).join(sep);
+}
 function modeleResume(k){
   if(!MODELES[k])return '';
   /* C205 (V09) : le modèle actif montre les chiffres que l’appli affiche (même moteur, même dossier chargé), jamais ceux du modèle brut. */
@@ -5475,7 +5489,7 @@ function modeleBouton(k){
       '<span style="font:900 11px var(--mono);color:var(--mut2);min-width:24px">#'+rank+'</span>'+
       '<span style="flex:1;font-weight:700;font-size:14.5px">'+M.n+(on?' <span style="color:var(--green)">&#10003;</span>':'')+'</span>'+
     '</div><div style="font-size:12.5px;color:var(--mut2);margin:4px 0 0 34px;font-weight:500">Priorité France '+weight+'/5 &middot; '+
-    M.plats.length+' plats &middot; '+M.ing.length+' ingr&eacute;dients</div>'+(k==='FoodTruck'?'<small style="display:block;margin:8px 0">Scénario fictif documenté · 55 tickets/jour · panier 14 € · 5 jours/semaine · 11 mois · camion acheté et amorti, emplacements et renfort inclus.</small>':'')+modeleResume(k)+'</button>';
+    M.plats.length+' plats &middot; '+M.ing.length+' ingr&eacute;dients</div>'+(k==='FoodTruck'?'<small style="display:block;margin:8px 0">Scénario fictif documenté'+(function(){var t=modeleChiffresTexte(k);return t?' · '+t:'';})()+' · camion acheté et amorti, emplacements et renfort inclus.</small>':'')/* C317 : lus dans la caisse du modèle */+modeleResume(k)+'</button>';
 }
 function modeleDansDemonstration(){
   return !!((typeof getMode==='function'&&getMode()==='demo')||
@@ -5562,6 +5576,8 @@ function appliquerModele(k,demoActif){
   try{if(demoActif&&VERDICT_DEMO_SESSION){if(k==='Brasserie')sessionStorage.removeItem('verdict:demo:modele:v1');else sessionStorage.setItem('verdict:demo:modele:v1',String(k));}}catch(e){}
   /* C312 (V16-091) : un changement de modèle revient à aujourd'hui (le jour choisi dans l'ancien modèle n'a pas de sens dans le nouveau). */
   try{window.PIL_JOUR=null;}catch(e){}
+  /* C323 : le modèle choisi est gardé sur l'appareil (sa journée repart de zéro). */
+  try{if(demoActif&&VERDICT_DEMO_SESSION&&typeof verdictDemoEtatEcrire==='function')verdictDemoEtatEcrire();}catch(e){}
   verdictModelMarkStarted(STORE.actif);
   save("load-demo-model"); fillInputs(); readInputs(); drawEtabs(); refreshAll();
   try{ majBandeauDemo(); }catch(e){}
@@ -12555,7 +12571,7 @@ function refExemple(){
 function demoRestaurerSessionReelle(){
   if(!VERDICT_DEMO_SESSION)return false;
   verdictDemoResumeWrite(false);
-  try{sessionStorage.removeItem('verdict:demo:modele:v1');}catch(e){}
+  try{sessionStorage.removeItem('verdict:demo:modele:v1');localStorage.removeItem('verdict:demo:etat:v1');}catch(e){}
   var retour=VERDICT_DEMO_RETURN||{};VERDICT_DEMO_RESTORE_ACTIVE=true;
   try{
     var u=new URL(location.href), q;
@@ -22320,7 +22336,7 @@ function demoRecommencer(){
   try{refClose();}catch(e){}
   try{clearTimeout(window.VERDICT_DEMO_ENTRY_TIMER);clearTimeout(window.VERDICT_DEMO_ENTRY_TIMER2);}catch(e){}
   verdictDemoStorageReset();VERDICT_DEMO_INTENT_RUNTIME='';
-  try{sessionStorage.removeItem('verdict:demo:runtime-intent');sessionStorage.removeItem('verdict:demo:modele:v1');}catch(e){}
+  try{sessionStorage.removeItem('verdict:demo:runtime-intent');sessionStorage.removeItem('verdict:demo:modele:v1');localStorage.removeItem('verdict:demo:etat:v1');}catch(e){}
   demoInstallerBrasserieCanonique();VERDICT_DEMO_STARTED=true;VERDICT_DEMO_PORTFOLIO_MODEL_ACTIVE=false;
   /* Recommencer est le seul choix volontaire qui rejoue la révélation : une
      simple modification de curseur ou un recalcul ne la relance jamais. */
@@ -23481,6 +23497,8 @@ function verdictIntroPreparerSousSplash(mode){
 function verdictIntroNotifierCoque(){
   if(window.__verdictIntroCompleteNotified)return false;
   window.__verdictIntroCompleteNotified=true;
+  /* C323 : la démonstration ne posait jamais « intro vue » sur l'appareil (autre chemin de fin) : elle se rejouait à chaque rechargement. */
+  try{if(typeof VERDICT_DEMO_SESSION!=='undefined'&&VERDICT_DEMO_SESSION)localStorage.setItem('verdict:intro:seen:r268','1');}catch(e){}
   try{performance.mark('verdict-intro-complete');}catch(e){}
   try{window.dispatchEvent(new CustomEvent('verdict:intro-complete'));}catch(e){}
   try{
@@ -23568,6 +23586,9 @@ function runIntro(mode,done,profile){
   /* V2 (demande du 12/10) : chaque ouverture montre l'anneau. Sans données
      fiables, c'est l'animation VERDICT ; avec un score fiable, l'anneau se
      pose sur le score de l'établissement. Rythme court au quotidien. */
+  /* C323 (V16-051, T2 n° 19) : en démonstration, l'intro de l'Indice ne se joue qu'une fois par appareil, jamais au rechargement :
+     déjà vue ici, l'ouverture se termine aussitôt (même chemin que le secours). Hors démonstration, l'anneau du jour reste (V2). */
+  if(mode==='startup'&&!verdictIntroLangueRequise()&&verdictIntroDejaVue()&&verdictIntroV45Demo(profile)){try{if(verdictIntroDebloquer(mode,done,'c323-demo-deja-vue'))return;}catch(e){}}
   if(mode==='startup'&&!verdictIntroLangueRequise()&&(verdictIntroDejaVue()||!verdictIntroV45Demo(profile))){
     try{return runIntroInterne(mode,done,'daily');}
     catch(e){try{verdictIntroDebloquer(mode,done,'exception');}catch(e2){}return;}
@@ -23786,6 +23807,8 @@ function verdictIntroLancerQuandAffiche(){
     return;
   }
   VERDICT_STARTUP_STATE=verdictStartupResolve();
+  /* C323 : démonstration, intro déjà vue sur cet appareil : l'ouverture se termine tout de suite, sans attendre images ni verrou. */
+  if(verdictIntroDejaVue()&&verdictIntroV45Demo(VERDICT_STARTUP_STATE&&VERDICT_STARTUP_STATE.profile)){window.__verdictIntroLaunchStarted=true;try{if(verdictIntroDebloquer('startup',null,'c323-demo-deja-vue'))return;}catch(e){}}
   /* bug_06_acces_fec_sans_vd_boot — un dossier réel et l'entrée FEC ne
      dépendent d'aucune image ni de la visibilité de l'iframe. Le splash est
      retiré immédiatement ; seule une démonstration explicite attend le rendu
@@ -23846,6 +23869,26 @@ if(VERDICT_PRESENTATION_PROFILE){
    de revenir à la Brasserie. Seule la clé du modèle fictif est gardée (effacée à la fermeture de l'onglet, par « Recommencer » et
    à la sortie de la démonstration) ; le dossier est recalculé, aucun chiffre n'est conservé. */
 try{if(VERDICT_DEMO_SESSION&&STORE&&STORE.actif){var _c312m=sessionStorage.getItem('verdict:demo:modele:v1');if(_c312m&&_c312m!=='Brasserie'&&MODELES[_c312m]){var _c312d=modeleDossierDemo(_c312m,true);if(_c312d){STORE.etabs[STORE.actif]=_c312d;DB=_c312d;MODELE_ACTIF=_c312m;verdictModelMarkStarted(STORE.actif);window.__verdictDemoModeleRepris=_c312m;drawEtabs();try{SC_LAST=null;}catch(e){}}}}}catch(e){}
+/* C323 (V16-051, T2 n° 19) : la clé de session de C312 disparaissait quand l'appli est rouverte (écran d'accueil, nouvel onglet) :
+   le modèle revenait à la Brasserie et la journée saisie était perdue. L'état de la démonstration est gardé sur l'appareil
+   (14 jours au plus) : le modèle fictif et les seuls champs touchés par une saisie de journée (pas le dossier de 1,6 Mo).
+   Effacé par « Recommencer » et à la sortie de la démonstration ; jamais lu hors démonstration ; aucune donnée réelle. */
+var VERDICT_DEMO_ETAT_CLE='verdict:demo:etat:v1',VERDICT_DEMO_ETAT_CHAMPS=['pil','ouvertsJours','chrDays','caisseDecl','chrEntryMode','chrEntryServices','servicesJour'];
+function verdictDemoEtatLire(){try{var e=JSON.parse(localStorage.getItem(VERDICT_DEMO_ETAT_CLE)||'null');return e&&e.v===1&&Date.now()-e.at<14*864e5?e:null;}catch(x){return null;}}
+function verdictDemoEtatModele(){try{return String((DB&&DB.modele)||MODELE_ACTIF||'Brasserie');}catch(x){return 'Brasserie';}}
+function verdictDemoEtatEcrire(){try{if(!VERDICT_DEMO_SESSION||!DB)return;var j={};VERDICT_DEMO_ETAT_CHAMPS.forEach(function(k){if(DB[k]!==undefined)j[k]=DB[k];});
+  j.histJour=(DB.histJour||[]).filter(function(x){return x&&x.source==='manual';});
+  localStorage.setItem(VERDICT_DEMO_ETAT_CLE,JSON.stringify({v:1,at:Date.now(),modele:verdictDemoEtatModele(),jour:j}));}catch(x){}}
+function verdictDemoEtatEffacer(){try{localStorage.removeItem(VERDICT_DEMO_ETAT_CLE);}catch(x){}}
+try{if(VERDICT_DEMO_SESSION&&STORE&&STORE.actif){var _c323=verdictDemoEtatLire();if(_c323){
+  var _c323m=_c323.modele||'Brasserie';
+  if(_c323m!=='Brasserie'&&MODELES[_c323m]&&verdictDemoEtatModele()!==_c323m){var _c323d=modeleDossierDemo(_c323m,true);if(_c323d){STORE.etabs[STORE.actif]=_c323d;DB=_c323d;MODELE_ACTIF=_c323m;verdictModelMarkStarted(STORE.actif);window.__verdictDemoModeleRepris=_c323m;}}
+  var _c323j=_c323.jour;if(_c323j&&verdictDemoEtatModele()===_c323m){VERDICT_DEMO_ETAT_CHAMPS.forEach(function(k){if(_c323j[k]!==undefined)DB[k]=_c323j[k];});
+    if(Array.isArray(_c323j.histJour)&&_c323j.histJour.length){var _c323v={};_c323j.histJour.forEach(function(x){_c323v[x.date||x.d]=1;});
+      DB.histJour=(DB.histJour||[]).filter(function(x){return !_c323v[x.date||x.d];}).concat(_c323j.histJour).sort(function(a,b){return String(a.date||a.d).localeCompare(String(b.date||b.d));});}
+    window.__verdictDemoJourRepris=true;}
+  drawEtabs();try{SC_LAST=null;}catch(e){}}}}catch(e){}
+(function(){var s0=window.save;if(typeof s0!=='function'||s0.__c323)return;var t=0;var g=function(){var r=s0.apply(this,arguments);try{if(VERDICT_DEMO_SESSION){clearTimeout(t);t=setTimeout(verdictDemoEtatEcrire,300);}}catch(e){}return r;};g.__c323=true;window.save=g;})();
 try{VERDICT_INVENTORY_ACTIVE_AT_BOOT=verdictInventorySiteId(STORE&&STORE.actif);invActiverCibleDemandee();}catch(e){VERDICT_INVENTORY_ACTIVE_AT_BOOT='';}
 if(VERDICT_INVENTORY_REQUESTED_SITE==='demo-brasserie'&&typeof invDemoIsole==='function'&&invDemoIsole()){
   /* R18.8 — ce rappel à l'accueil ne doit jamais interrompre une visite guidée

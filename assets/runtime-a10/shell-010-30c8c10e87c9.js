@@ -165,6 +165,8 @@
   function bool(v){return v===true||v==='1';}
   function cleanId(v){return String(v||'').replace(/[^a-zA-Z0-9_.:-]/g,'').slice(0,100);}
   function cleanText(v){return String(v||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,100);}
+  /* C323 (décision 15) : la pastille « Démonstration fictive · … » montre le nom d'un modèle en casse normale, sans « (démonstration estimative) ». */
+  var nomDemoC323=function(s){s=String(s||'').replace(/\s*\(d[ée]monstration estimative\)\s*$/i,'').trim();if(s.length>3&&s===s.toUpperCase()&&/[A-ZÀ-Ý]{3}/.test(s)){s=s.toLowerCase().replace(/\b(i{1,3}|iv|v|vi{1,3}|ix|x)\b/g,function(m){return m.toUpperCase();});s=s.charAt(0).toUpperCase()+s.slice(1);}return s;};
   function cleanLocale(v){v=String(v||'').toLowerCase().slice(0,2);return /^(fr|en|es|it|de|nl|pt)$/.test(v)?v:'';}
   function cleanProfile(v){return v==='carte'?'carte':'pilotage';}
   function localeKey(){return cfg.storageKey+':session-locale';}
@@ -385,14 +387,14 @@
     var signature=contextSignature(next);
     if(signature&&signature===state.contextSignature){
       rememberLocale(next.locale);
-      if(els.context)els.context.textContent=(next.demo?'Démonstration fictive · ':'')+(next.name||next.siteId);
+      if(els.context)els.context.textContent=next.demo?'Démonstration fictive · '+nomDemoC323(next.name||next.siteId):(next.name||next.siteId);
       if(startupVisualReady){if(next.demo)queueDemoInventoryPreload();else queueWorkerRegistration(900);}
       return;
     }
     if(state.operations&&(cleanId(state.operations.establishment&&state.operations.establishment.id)!==next.siteId||bool(state.operations.demo)!==next.demo))state.operations=null;
     state.context=next;state.contextSignature=signature;
     rememberLocale(next.locale);
-    if(els.context)els.context.textContent=(next.demo?'Démonstration fictive · ':'')+(next.name||next.siteId);
+    if(els.context)els.context.textContent=next.demo?'Démonstration fictive · '+nomDemoC323(next.name||next.siteId):(next.name||next.siteId);
     try{
       var key=cfg.storageKey+':context';
       if(next.demo)sessionStorage.setItem(key,JSON.stringify(next));

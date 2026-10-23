@@ -340,7 +340,7 @@
       lienSimuler(R, part) +
       graphe(R, M) +
       '<div class="ci-range"><label for="ciPart"><span>Part des conseils appliqués</span><span>' + Math.round(part * 100) + ' %</span></label><input id="ciPart" type="range" min="0" max="100" step="10" value="' + Math.round(part * 100) + '"></div>' +
-      '<p class="ci-m" style="margin-top:8px">Mois par mois selon la saison de votre établissement' + (R.saison.annees.length ? ' (' + R.saison.annees.join(' et ') + (R.saison.annees.length > 1 ? ', l’année la plus récente compte pour 60 %' : '') + ')' : '') + (R.saison.coef.some(function (v) { return v > 1.12; }) ? ' ; les points jaunes marquent vos mois forts' : ' ; aucun mois nettement plus fort que les autres') + '. Hypothèses prudentes : hausse de prix limitée à 8 % avec 3 % de ventes en moins (comme Décisions et Simuler), 70 % des clients d’un plat retiré reportés sur les autres.</p></div>';
+      '<p class="ci-m" style="margin-top:8px">Mois par mois selon la saison de votre établissement' + (R.saison.annees.length ? ' (' + R.saison.annees.join(' et ') + (R.saison.annees.length > 1 ? ', l’année la plus récente compte pour 60 %' : '') + ')' : '') + (R.saison.coef.some(function (v) { return v > 1.12; }) ? ' ; les points jaunes marquent vos mois forts' : ' ; aucun mois nettement plus fort que les autres') + '. Hypothèses prudentes : ' + (R.gainPrix > 0.5 ? 'hausse de prix limitée à 8 % avec 3 % de ventes en moins (comme Décisions et Simuler), ' : '') + '70 % des clients d’un plat retiré reportés sur les autres.</p></div>'; /* C324 (F5) : la limite de hausse ne s'écrit que si une hausse est proposée (sinon « Aucune hausse de prix » plus haut) */
     h += '<div class="ci-sec"><h3>Votre établissement</h3><div class="ci-chips"><span class="ci-chip">' + esc(TYPES[P.type]) + '</span><span class="ci-chip">' + esc(HAB[P.habitants]) + '</span><span class="ci-chip">' + esc(TOUR[P.tourisme]) + '</span><span class="ci-chip">' + P.places + ' places</span><span class="ci-chip">' + Math.round(P.couverts) + ' couverts / jour</span><span class="ci-chip">' + esc(SERV[P.services]) + '</span></div>' +
       (R.formuleMidi ? '<p class="ci-m" style="margin-top:10px"><b>Conseil :</b> un menu du midi à prix d’appel (entrée et plat, ou plat et dessert) fidélise les habitants hors saison.</p>' : '') +
       '<div class="ci-a"><button type="button" class="ci-b" data-ci="profil">Modifier</button></div></div>';
@@ -465,6 +465,17 @@
   }
   function typeIng(nom) { var g = (D().ing || []).filter(function (x) { return x && x.nom === nom; })[0]; return g ? String(g.type || 'KG').toUpperCase() : null; }
   /* Ligne de recette la plus chère (au poids ou au volume : une pièce ne se coupe pas). */
+  /* C324 : les lignes de recette rangées du plus cher au moins cher (au poids ou au volume : une pièce ne se coupe pas). */
+  function lignesParCout(p) {
+    var c0 = calc(p).cout, L = [];
+    (p.rec || []).forEach(function (l, i) {
+      var t = typeIng(l[0]); if (!t || t === 'UNITE' || !(num(l[1]) > 0)) return;
+      var rec = p.rec.map(function (x) { return x.slice(); }); rec[i][1] = 0;
+      var q = {}; for (var k in p) q[k] = p[k]; q.rec = rec;
+      var c = c0 - (calc(q).cout || 0); if (c > 0) L.push({ i: i, nom: String(l[0]), type: t, cout: c });
+    });
+    return L.sort(function (a, b) { return b.cout - a.cout; });
+  }
   function lignePlusChere(p) {
     var c0 = calc(p).cout, best = null;
     (p.rec || []).forEach(function (l, i) {
@@ -479,40 +490,51 @@
   /* La version améliorée d'un plat proposé par Vera ; null si la marge est déjà bonne ou si le plat n'est pas chiffré. */
   /* C268 (Steven, 22/10 : « 37 € c'est trop cher ») : un prix conseillé ne dépasse jamais le plat le plus cher de la même
      catégorie ; au-delà, Verdict agit sur la portion. */
+  /* C324 (T4 n° 9) : le nom d'une catégorie dans une phrase (« vos plats à la carte », jamais « vos à la carte ») */
+  function motCatVos(c) { var m = String(c || 'plats').trim().toLowerCase(); return /^(à|a) /.test(m) ? 'plats ' + m : m; }
   function maxCat(cat, sauf) { var m = 0; (D() && D().plats || []).forEach(function (x) { if (x && x !== sauf && (!sauf || x.id !== sauf.id) && actif(x) && x.cat === cat && num(x.ttc) > m) m = num(x.ttc); }); return m || null; }
   function corriger(p) {
     var k = calc(p); if (!k.complete || okMarge(k) || !(num(p.ttc) > 0)) return null;
     var avant = { ttc: num(p.ttc), pfttc: p.pfttc, rec: JSON.parse(JSON.stringify(p.rec || [])), pct: k.contribPct, parVente: k.contribPond };
     var c = prixConseille(p); if (c == null) return null;
-    var plafond = Math.ceil(avant.ttc * 1.15 * 10 - 1e-9) / 10, out = { avant: avant, obj: k.objPond }, mc = maxCat(p.cat, p);
-    if (mc && mc < plafond) { plafond = Math.max(avant.ttc, mc); out.parCarte = true; }
-    /* C276 (T1 vague 10, N2) : le coût d'abord — la portion du produit le plus cher baisse (−25 % au plus), le prix reste ;
-       si cela ne suffit pas, recette d'origine et correction par le prix, dans les limites de la carte. */
-    var L0 = lignePlusChere(p);
-    if (L0) { var q00 = num(p.rec[L0.i][1]); for (var f0 = 0.95; f0 > 0.74; f0 = Math.round((f0 - 0.05) * 100) / 100) { p.rec[L0.i][1] = Math.max(5, Math.round(q00 * f0 / 5) * 5); if (okMarge(calc(p))) break; }
-      if (okMarge(calc(p))) out.portion = { nom: L0.nom, de: q00, a: p.rec[L0.i][1], u: unite(L0.type) }; else p.rec[L0.i][1] = q00; }
-    if (out.portion) {}
-    else {
-      /* C311 (V16-061) : le coût d'abord, aussi quand la portion seule ne suffit pas — portion au plus bas permis (−25 %), puis le plus
-         petit prix qui tient l'objectif (dans les limites de la carte), puis la portion remonte autant que ce prix le permet. */
-      var L = lignePlusChere(p), q0 = L ? num(p.rec[L.i][1]) : 0;
-      if (L) p.rec[L.i][1] = Math.max(5, Math.round(q0 * 0.75 / 5) * 5);
-      var px = avant.ttc; while (!okMarge(calc(p)) && px < plafond - 1e-9) { px = Math.min(plafond, Math.round((px + 0.1) * 10) / 10); setPrix(p, px); }
-      if (L) { for (var f2 = 0.8; f2 < 1.0001; f2 = Math.round((f2 + 0.05) * 100) / 100) { var av2 = p.rec[L.i][1]; p.rec[L.i][1] = Math.max(5, Math.round(q0 * f2 / 5) * 5); if (!okMarge(calc(p))) { p.rec[L.i][1] = av2; break; } }
-        if (num(p.rec[L.i][1]) !== q0) out.portion = { nom: L.nom, de: q0, a: p.rec[L.i][1], u: unite(L.type) }; }
+    /* C324 (A-C12, règle du chef « coût d'abord ») : le prix ne bouge que si les portions ne suffisent pas, et seulement dans la
+       fourchette de la carte (jamais au-dessus du plat le plus cher de la catégorie, +15 % au plus) ; sans autre plat de la catégorie
+       pour situer un prix, il ne bouge pas et Vera dit pourquoi. Portions : les deux produits les plus chers, −25 % au plus chacun. */
+    var mc = maxCat(p.cat, p), out = { avant: avant, obj: k.objPond, mc: mc };
+    var plafond = mc ? Math.max(avant.ttc, Math.min(mc, Math.ceil(avant.ttc * 1.15 * 10 - 1e-9) / 10)) : avant.ttc;
+    out.parCarte = !!mc && plafond < Math.ceil(avant.ttc * 1.15 * 10 - 1e-9) / 10;
+    var lignes = lignesParCout(p).slice(0, 2), q0 = {}, touchees = [];
+    lignes.forEach(function (l) { q0[l.i] = num(p.rec[l.i][1]); });
+    for (var li = 0; li < lignes.length && !okMarge(calc(p)); li++) {
+      var Li = lignes[li]; touchees.push(Li);
+      for (var f0 = 0.95; f0 > 0.74; f0 = Math.round((f0 - 0.05) * 100) / 100) { p.rec[Li.i][1] = Math.max(5, Math.round(q0[Li.i] * f0 / 5) * 5); if (okMarge(calc(p))) break; }
     }
+    if (!okMarge(calc(p))) {
+      /* les portions ne suffisent pas : le plus petit prix qui tient l'objectif, dans la fourchette de la carte, puis les portions
+         remontent autant que ce prix le permet (la dernière touchée d'abord) */
+      var px = avant.ttc; while (!okMarge(calc(p)) && px < plafond - 1e-9) { px = Math.min(plafond, Math.round((px + 0.1) * 10) / 10); setPrix(p, px); }
+      if (num(p.ttc) > avant.ttc && okMarge(calc(p))) touchees.slice().reverse().forEach(function (Lr) {
+        for (var f2 = 0.8; f2 < 1.0001; f2 = Math.round((f2 + 0.05) * 100) / 100) { var av2 = p.rec[Lr.i][1]; p.rec[Lr.i][1] = Math.max(5, Math.round(q0[Lr.i] * f2 / 5) * 5); if (!okMarge(calc(p))) { p.rec[Lr.i][1] = av2; break; } } });
+      if (num(p.ttc) === avant.ttc) out.prixBloque = mc ? 'carte' : 'seul';
+    }
+    out.portions = touchees.filter(function (Lx) { return num(p.rec[Lx.i][1]) !== q0[Lx.i]; }).map(function (Lx) { return { nom: Lx.nom, de: q0[Lx.i], a: p.rec[Lx.i][1], u: unite(Lx.type) }; });
+    if (out.portions.length) out.portion = out.portions[0];
     var k2 = calc(p); out.apres = { ttc: num(p.ttc), pct: k2.contribPct, parVente: k2.contribPond }; out.ok = okMarge(k2);
     if (!out.ok) { var L2 = lignePlusChere(p); out.cher = L2 ? { nom: L2.nom, cout: L2.cout } : null; out.conseil = c; }
     p.cpC251 = { at: new Date().toISOString(), avant: avant, prix: out.apres.ttc, portion: out.portion || null };
     return out;
   }
   function texteCorrection(p, c) {
-    var mot = String(p && p.cat || 'plats').toLowerCase();
-    var t = c.apres.ttc === c.avant.ttc ? 'Prix gardé à ' + eur(c.avant.ttc) + (c.parCarte ? ' (le plus haut de vos ' + mot + ')' : '')
-      : (c.portion || !c.ok ? 'Prix ' + eur(c.apres.ttc) + (c.parCarte ? ' (le prix le plus haut de vos ' + mot + ')' : ' (+15 % au plus)') : 'Prix conseillé ' + eur(c.apres.ttc)) + ' au lieu de ' + eur(c.avant.ttc);
-    if (c.portion) t += ', ' + c.portion.nom + ' : ' + nb(c.portion.a, 0) + c.portion.u + ' au lieu de ' + nb(c.portion.de, 0) + c.portion.u;
-    t += (c.portion ? ' ; il reste ' : ' : il reste ') + pct(c.apres.pct) + ' une fois les produits payés au lieu de ' + pct(c.avant.pct) + ' (' + eur(c.apres.parVente) + ' par vente au lieu de ' + eur(c.avant.parVente) + ')';
-    if (!c.ok) t += '. L’objectif de ' + pct(c.obj) + ' n’est pas encore atteint' + (c.parCarte ? '' : ' (il faudrait ' + eur(c.conseil) + ' avec la recette d’origine)') + (c.cher ? ' : remplacez ' + c.cher.nom + ' (' + eur(c.cher.cout) + ' par portion) par un produit moins cher' : '') + ', ou retirez ce plat';
+    var mot = motCatVos(p && p.cat);
+    /* C324 (A-C12) : les portions d'abord ; le prix seulement dans la fourchette de la carte, et la raison quand il ne bouge pas */
+    var P = c.portions || (c.portion ? [c.portion] : []), Pt = P.map(function (x) { return x.nom + ' : ' + nb(x.a, 0) + x.u + ' au lieu de ' + nb(x.de, 0) + x.u; }).join(', ');
+    var t = c.apres.ttc === c.avant.ttc
+      ? (P.length ? Pt + ', prix gardé à ' + eur(c.avant.ttc) : 'Prix gardé à ' + eur(c.avant.ttc)) +
+        (c.prixBloque === 'carte' ? ' (le plus haut de vos ' + mot + ' est à ' + eur(c.mc) + ' : le prix ne sort pas de votre carte)' : c.prixBloque === 'seul' ? ' (aucun autre plat de vos ' + mot + ' pour situer un prix : il ne monte pas)' : '')
+      : (P.length ? Pt + ' ; ces portions ne suffisant pas, prix ' : 'Prix ') + eur(c.apres.ttc) + ' au lieu de ' + eur(c.avant.ttc) + ' (dans votre carte : le plus haut de vos ' + mot + ' est à ' + eur(c.mc) + ')';
+    /* C324 : sous l'objectif, jamais « il reste 75 % » à côté de « l'objectif de 75 % n'est pas atteint » (une décimale) */
+    t += ' : il reste ' + (!c.ok && Math.round(c.apres.pct) >= Math.round(c.obj) ? pct(Math.floor(c.apres.pct * 10) / 10, 1) : pct(c.apres.pct)) + ' une fois les produits payés au lieu de ' + pct(c.avant.pct) + ' (' + eur(c.apres.parVente) + ' par vente au lieu de ' + eur(c.avant.parVente) + ')';
+    if (!c.ok) t += '. L’objectif de ' + pct(c.obj) + ' n’est pas encore atteint' + (c.parCarte || c.prixBloque ? '' : ' (il faudrait ' + eur(c.conseil) + ' avec la recette d’origine)') + (c.cher ? ' : remplacez ' + c.cher.nom + ' (' + eur(c.cher.cout) + ' par portion) par un produit moins cher' : '') + ', ou retirez ce plat';
     return t + '.';
   }
 
@@ -684,7 +706,7 @@
       var vcat = (doc.querySelector('#vc-cat') || {}).value, mcv = vcat ? maxCat(vcat, null) : null, parCarte = false; if (mcv && mcv < plafond) { plafond = Math.max(prix, mcv); parCarte = true; }
       var el = doc.createElement('div'); el.className = 'c251-vera';
       if (cons <= plafond) { var ht = cons / ratio; el.innerHTML = '✓ <b>Prix conseillé ' + esc(eur(cons)) + '</b> au lieu de ' + esc(eur(prix)) + ' : il reste ' + esc(pct((ht - cout) / ht * 100)) + ' une fois les produits payés (' + esc(eur(ht - cout)) + ' par vente), objectif atteint. « Ajouter à ma carte » l’ajoute à ce prix.'; }
-      else el.innerHTML = '✓ <b>Version corrigée prête</b> : ' + (plafond > prix ? 'prix ' + esc(eur(plafond)) + (parCarte ? ' (le prix le plus haut de vos ' + esc(String(vcat).toLowerCase()) + ')' : ' (+15 % au plus)') + ' et ' : 'prix gardé à ' + esc(eur(prix)) + ', ') + 'portion de l’ingrédient le plus cher ajustée. Le détail et l’effet en euros s’affichent à l’ajout ; la version d’origine reste à un clic.';
+      else el.innerHTML = '✓ <b>Version corrigée prête</b> : ' + (plafond > prix ? 'prix ' + esc(eur(plafond)) + (parCarte ? ' (le prix le plus haut de vos ' + esc(motCatVos(vcat)) + ')' : ' (+15 % au plus)') + ' et ' : 'prix gardé à ' + esc(eur(prix)) + ', ') + 'portion de l’ingrédient le plus cher ajustée. Le détail et l’effet en euros s’affichent à l’ajout ; la version d’origine reste à un clic.';
       var act = card.querySelector('.vc-act'); card.insertBefore(el, act || null);
     });
   }
@@ -865,7 +887,7 @@
     var r = null; try { r = chiffrer(); } catch (e) {}
     if (!r) { el.innerHTML = G.nom.trim() ? '<p class="c251-sub">' + (G.variable || !G.rec.length ? 'Indiquez le coût des produits d’une portion : Verdict calcule le prix conseillé.' : 'Il manque une quantité.') + '</p>' : ''; go.disabled = true; go.textContent = 'Ajouter à ma carte'; return; }
     if (!(num(G.prix) > 0) && r.cons) { G.prix = r.cons.toFixed(2).replace('.', ','); var ip = doc.getElementById('c251-prix'); if (ip) ip.value = G.prix; r = chiffrer(); }
-    var ok = okMarge(r.kp), h = '<div class="c251-kk"><span class="c251-k">Coût des produits <b>' + esc(eur(r.cout)) + '</b> par portion</span><span class="c251-k">Prix conseillé <b>' + esc(eur(r.cons)) + '</b>' + (r.niveau ? ' <small>(prix habituel de vos ' + esc(String(G.cat || '').toLowerCase()) + ' ; objectif atteint dès ' + esc(eur(r.mini)) + ')</small>' : '') + (r.haut ? ' <small>(le prix le plus haut de vos ' + esc(String(G.cat || '').toLowerCase()) + ' ; l’objectif demanderait ' + esc(eur(r.mini)) + ' : réduisez plutôt le coût de la portion)</small>' : '') + '</span></div>';
+    var ok = okMarge(r.kp), h = '<div class="c251-kk"><span class="c251-k">Coût des produits <b>' + esc(eur(r.cout)) + '</b> par portion</span><span class="c251-k">Prix conseillé <b>' + esc(eur(r.cons)) + '</b>' + (r.niveau ? ' <small>(prix habituel de vos ' + esc(motCatVos(G.cat)) + ' ; objectif atteint dès ' + esc(eur(r.mini)) + ')</small>' : '') + (r.haut ? ' <small>(le prix le plus haut de vos ' + esc(motCatVos(G.cat)) + ' ; l’objectif demanderait ' + esc(eur(r.mini)) + ' : réduisez plutôt le coût de la portion)</small>' : '') + '</span></div>';
     if (r.kp && r.kp.complete) h += '<p class="c251-' + (ok ? 'v' : 'r') + '"><b>À ' + esc(eur(r.prix)) + ' : il reste ' + esc(eur(r.kp.contribPond)) + ' par vente (' + esc(pct(r.kp.contribPct)) + ')</b>' + (ok ? ', objectif de ' + esc(pct(r.obj)) + ' atteint.' : ', sous l’objectif de ' + esc(pct(r.obj)) + '. À ' + esc(eur(r.cons)) + ', il resterait ' + esc(eur(r.kc && r.kc.contribPond)) + ' par vente : <button type="button" class="c251-lien" data-c251-cons>prendre le prix conseillé</button>') + '</p>';
     if (r.b.nouveaux.length && !G.portion) h += '<p class="c251-sub">Ajouté au catalogue avec un prix type, remplacé ensuite par vos factures : ' + esc(r.b.nouveaux.map(function (g) { return g.nom; }).join(', ')) + '.</p>';
     /* C301 (V15-087) : recette habituelle incomplète → rien n'est ajouté avant les produits manquants ; un plat du même nom est signalé */
@@ -1005,5 +1027,5 @@
     passe();
   }
   if (doc.body) boot(40); else doc.addEventListener('DOMContentLoaded', function () { boot(40); });
-  w.VerdictCarteGestes = { eur: eur, catDuNom: catDuNom, ficheLocale: ficheLocale, prixConseille: prixConseille, corriger: corriger, journaliser: journaliser, historique: ouvrirHistorique, geste: ouvrirGeste, retirer: retirer, remettre: remettre, deviner: deviner, statsCarte: statsCarte };
+  w.VerdictCarteGestes = { eur: eur, catDuNom: catDuNom, ficheLocale: ficheLocale, prixConseille: prixConseille, corriger: corriger, texteCorrection: texteCorrection, journaliser: journaliser, historique: ouvrirHistorique, geste: ouvrirGeste, retirer: retirer, remettre: remettre, deviner: deviner, statsCarte: statsCarte };
 })();

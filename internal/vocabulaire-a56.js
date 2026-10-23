@@ -63,6 +63,8 @@
     [/\bVera explique ; le moteur Verdict calcule\./g, 'Vera explique ; Verdict fait les calculs.'], [/\btrois occurrences comparables\b/g, 'au moins trois services comparables'],
     [/\bde l[’']application CHR\b/g, 'de Verdict'], [/\bsans exposer les données au personnel Inventaire\b/g, 'sans montrer ces chiffres à l’équipe qui fait l’inventaire'],
     [/\bstatistique FIBEN publiée\b/g, 'statistique publiée par la Banque de France'], [/\bstatistique sectorielle FIBEN\b/g, 'statistique sectorielle de la Banque de France'],
+    /* C317 (T4) : « FIBEN » est un mot de banquier ; le patron lit « Banque de France » (la source et la période restent écrites) */
+    [/\bBanque de France FIBEN\b/g, 'Banque de France'], [/ FIBEN(?=[\s.,;:)·]|$)/g, ' de la Banque de France'], [/\bFIBEN\b/g, 'Banque de France'],
     /* C205 (V55) : une seule orthographe */
     [/\b([Pp])etit déjeuner\b/g, '$1etit-déjeuner'],
     /* C205 (V43, V44) : écriture française des montants et des dates, partout à l'affichage.
@@ -178,7 +180,12 @@
     nf.__c301 = true; w.alertesState = nf;
     /* C301 (V15-098, suite) : un mois d'avant le début du suivi n'est pas réclamé (« Septembre n'est pas renseigné » pour un client arrivé le 21 octobre) */
     var rp = w.rappels; if (typeof rp === 'function' && !rp.__c301) { var nrp = function () { var L = rp.apply(this, arguments); try { var D = w.DB || {}, now = new Date(), an = String(now.getFullYear()), P = D.performanceYearPlans && D.performanceYearPlans[an], ts = String(P && P.trackingStart || ''); if (/^\d{4}-\d{2}-\d{2}$/.test(ts)) { var debutMois = an + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01'; if (ts >= debutMois) L = (L || []).filter(function (r) { return !r || r.cle !== 'mois'; }); } } catch (e) {} return L; }; nrp.__c301 = true; w.rappels = nrp; }
-    var ng = function () { dessin = true; try { return g.apply(this, arguments); } finally { dessin = false; } };
+    /* C324 (T4) : les cases de l'écran Alertes au bon nombre, avec les mots de l'en-tête (« 1 alerte grave », « 2 vigilances »),
+       jamais « critique(s) » */
+    var kpis = function () { try { if (String(w.LOCALE || 'fr').slice(0, 2) !== 'fr') return; var M = { 'critique(s)': ['alerte grave', 'alertes graves'], 'vigilance': ['vigilance', 'vigilances'], 'date(s) limite(s)': ['date limite', 'dates limites'] };
+      [].forEach.call(document.querySelectorAll('#alertesBody .kpi'), function (k) { var lb = k.querySelector('.k'), v = k.querySelector('.v'); if (!lb || !v) return; var key = lb.getAttribute('data-c324') || lb.textContent.trim(); if (!M[key]) return;
+        var n = parseInt(String(v.textContent).replace(/[^0-9]/g, ''), 10); lb.setAttribute('data-c324', key); lb.textContent = M[key][n > 1 ? 1 : 0]; }); } catch (e) {} };
+    var ng = function () { dessin = true; try { return g.apply(this, arguments); } finally { dessin = false; kpis(); } };
     ng.__c301 = true; w.drawAlertes = ng;
     /* C311 (V16-028) : l'en-tête dit les mêmes nombres que les cases (graves · vigilances · dates limites), au bon nombre */
     var ce = w.chrCockpitEvidence; if (typeof ce === 'function' && !ce.__c311) { var nce = function (v) { var r = ce.apply(this, arguments);

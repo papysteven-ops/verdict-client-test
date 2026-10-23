@@ -134,7 +134,26 @@ function prixEnPlus(){
   if(essai)return 'Pendant l’essai, cet établissement est compris. Ensuite, il s’ajoute à votre abonnement : '+ligne('pro')+' en Pro ; '+ligne('pilotage')+' en Pilotage.';
   return 'Cet établissement s’ajoute à votre abonnement '+(niveau==='pilotage'?'Pilotage':'Pro')+' : '+ligne(niveau)+' en formule annuelle.';
 }
-function prixHtml(){var l='';try{l=prixEnPlus();}catch(e){}return l?'<p class="ne12-prix">💶 '+esc(l)+'</p>':'';}
+function prixHtml(){var l='',srv=false;try{l=prixEnPlus();}catch(e){}try{srv=compteServeur();}catch(e){}
+  /* C324 (L4) : compte connecté, jamais la grille des prix un instant avant le devis : le devis récent tout de suite, sinon « Vérification… » */
+  if(srv){var c=DEVIS.q&&Date.now()-DEVIS.t<60000?prixServeurTexte(DEVIS.q):'';if(c)return '<p class="ne12-prix" data-ne12-prix data-ne12-serveur="'+(DEVIS.q.inclus?'inclus':'supplement')+'">💶 '+esc(c)+'</p>';
+    try{root.setTimeout(prixServeur,0);}catch(e){}return '<p class="ne12-prix" data-ne12-prix data-ne12-attente="1">💶 Vérification de votre abonnement…</p>';}
+  return l?'<p class="ne12-prix" data-ne12-prix>💶 '+esc(l)+'</p>':'';}
+/* C324 (L4, V16-092) : compte connecté, l'en-tête dit ce que le serveur chiffre (establishment_quote) : « Inclus dans votre abonnement »
+   pour un établissement compris (le 2e d'un Pro payé pour 2), le supplément exact sinon. Sans serveur, la phrase des prix reste. */
+var DEVIS={q:null,t:0,att:null};
+function prixServeurTexte(q){if(!q||q.ok===false)return '';if(q.inclus)return q.libelle?String(q.libelle):(q.raison==='essai'?'Établissement inclus pendant l’essai.':'Inclus dans votre abonnement.');
+  return 'Cet établissement s’ajoute à votre abonnement : '+(q.libelle?String(q.libelle)+(q.detail?'. '+String(q.detail):''):prixQuote(q))+'.';}
+function prixServeurPoser(q){var t=prixServeurTexte(q);if(!t)return;try{[].forEach.call(doc.querySelectorAll('[data-ne12-prix]'),function(p){p.textContent='💶 '+t.replace(/\.\.$/,'.');p.setAttribute('data-ne12-serveur',q.inclus?'inclus':'supplement');if(p.removeAttribute)p.removeAttribute('data-ne12-attente');});}catch(e){}
+  /* la 2e fenêtre (« Ajouter un établissement réel », 029) : la même phrase que l'en-tête, à la place de « 1 établissement inclus… » */
+  try{var pl=doc.querySelector('#mNewEtab .pil-sites-plan');if(pl){pl.textContent=t.replace(/\.\.$/,'.');pl.setAttribute('data-ne12-serveur',q.inclus?'inclus':'supplement');}}catch(e){}}
+/* le serveur ne répond pas : la grille des prix revient (jamais « Vérification… » sans fin) */
+function prixServeurRepli(){try{var l=prixEnPlus();[].forEach.call(doc.querySelectorAll('[data-ne12-attente]'),function(p){if(p.className==='ne12-prix')p.textContent='💶 '+l;else if(p.__ne12)p.innerHTML=p.__ne12;p.removeAttribute('data-ne12-attente');});}catch(e){}}
+function planServeur(){try{if(!compteServeur())return;var pl=doc.querySelector('#mNewEtab .pil-sites-plan');if(!pl)return;if(DEVIS.q&&Date.now()-DEVIS.t<60000){prixServeurPoser(DEVIS.q);return;}
+  pl.__ne12=pl.innerHTML;pl.textContent='Vérification de votre abonnement…';pl.setAttribute('data-ne12-attente','1');prixServeur();}catch(e){}}
+function prixServeur(){if(!compteServeur())return;if(DEVIS.q&&Date.now()-DEVIS.t<60000){prixServeurPoser(DEVIS.q);return;}if(DEVIS.att)return;
+  DEVIS.att=postServeur('/api/account',{action:'establishment_quote'}).then(function(r){DEVIS.att=null;if(r&&r.status===200&&r.j&&typeof r.j==='object'&&r.j.ok!==false){DEVIS.q=r.j;DEVIS.t=Date.now();prixServeurPoser(r.j);}else prixServeurRepli();})
+    .catch(function(){DEVIS.att=null;prixServeurRepli();});}
 /* C218 (W71) : un établissement qui vient d'être créé devient aussitôt celui de la coquille (barre latérale, Inventaire relié).
    Sans cela, la coquille gardait l'établissement d'origine et pouvait le réafficher sous le nom et les chiffres du nouveau.
    Le changement passe par switchEtab, que le pont de la coquille écoute (enveloppé ensuite par d'autres modules) ; le message
@@ -284,7 +303,7 @@ function declarer(nom,suite){
     if(q&&q.inclus)dire(q.raison==='essai'?'Établissement inclus pendant l’essai.':'Établissement inclus dans votre abonnement.');}
   function envoyer(q,confirme){var b={action:'add_establishment',etabId:id,name:String(nom||'Nouvel établissement').slice(0,100)};if(tz)b.timezone=tz;if(confirme!=null)b.confirmedAmount=confirme;
     postServeur('/api/workspace',b).then(function(r){
-      if(r.status===200&&r.j.ok!==false){creerLocal(r.j.quote||q);return;}
+      if(r.status===200&&r.j.ok!==false){if(typeof DEVIS!=='undefined'){DEVIS.q=null;DEVIS.t=0;}creerLocal(r.j.quote||q);return;}
       if(r.status===402&&r.j.quote){demander(r.j.quote);return;}
       if(r.status===409){root.ask('Abonnement à mettre à jour','Votre abonnement est géré dans la page Compte : ajoutez-y cet établissement, puis revenez le créer ici. Rien n’a été créé.','Ouvrir mon abonnement',function(){root.location.href='../../account.html?view=abo';});return;}
       echec(causeEchec(r));
@@ -345,6 +364,9 @@ function ensureStyle(){
   'html.vd-workspace-light #mNewEtab12 .sheet{background:#ffffff!important;background-image:none!important;border-color:#d5dde5!important;box-shadow:0 18px 48px rgba(16,24,40,.18)!important;color:#14202b}html.vd-workspace-light #mNewEtab12 .sh-fermer{background:#f3f5f7!important;color:#14202b!important;border-color:#cfd8e1!important}html.vd-workspace-light #mNewEtab12 h3{color:#14202b}'+
   /* C258 (T2) : « Ajouter un établissement réel » (029, #mNewEtab) claire aussi. */
   'html.vd-workspace-light #mNewEtab .sheet{background:#ffffff!important;background-image:none!important;border-color:#d5dde5!important;box-shadow:0 18px 48px rgba(16,24,40,.18)!important;color:#14202b}html.vd-workspace-light #mNewEtab .sheet h3{color:#14202b}html.vd-workspace-light #mNewEtab .btn.ghost{color:#14202b!important;border-color:#cfd8e1!important}html.vd-workspace-light #mNewEtab .sh-fermer{background:#f3f5f7!important;color:#14202b!important;border-color:#cfd8e1!important}'+
+  /* C324 (T1 A-C16) : la fenêtre ⚙ « Mes établissements » (029, #mEtabs, avec la comparaison de 03x) claire en thème clair. */
+  'html.vd-workspace-light #mEtabs .sheet{background:#ffffff!important;background-image:none!important;border-color:#d5dde5!important;box-shadow:0 18px 48px rgba(16,24,40,.18)!important;color:#14202b}html.vd-workspace-light #mEtabs .sh-fermer{background:#f3f5f7!important;color:#14202b!important;border-color:#cfd8e1!important}html.vd-workspace-light #mEtabs h3{color:#14202b}html.vd-workspace-light #mEtabs summary{color:#3d4b5a!important}'+
+  'html.vd-workspace-light #mEtabs .cmp10{background:#f7f9fc!important;background-image:none!important;border-color:#d5dde5!important;color:#14202b!important}html.vd-workspace-light #mEtabs .cmp10-place{background:#ffffff!important;background-image:none!important;border-color:#d5dde5!important;color:#14202b!important}html.vd-workspace-light #mEtabs .cmp10 b,html.vd-workspace-light #mEtabs .cmp10 strong,html.vd-workspace-light #mEtabs .cmp10 h4{color:#14202b!important}html.vd-workspace-light #mEtabs .etab-row{background:#f7f9fc!important;border-color:#dfe5ec!important;color:#14202b!important}'+
   '.dup12{margin:0 0 14px;padding:14px 15px;border-radius:16px;border:1px solid rgba(234,179,8,.6);background:rgba(234,179,8,.08)}.dup12-k{font:800 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#a16207;margin-bottom:6px}.dup12 b{display:block;font-size:15.5px;margin-bottom:4px}.dup12 p{margin:0 0 10px;font-size:13px;line-height:1.5;opacity:.85}.dup12-actions{display:flex;flex-wrap:wrap;gap:8px}';
   doc.head.appendChild(st);
 }
@@ -444,6 +466,15 @@ root.VerdictDeclarerEtab=declarer;
   /* la fiche de l'Italien dans la liste des modèles */
   function noteItalien(){try{var b=doc&&doc.querySelector('button[onclick="pickModele(\'Italien\')"]');if(b&&!b.querySelector('[data-c311-it]')){var s=doc.createElement('small');s.setAttribute('data-c311-it','1');s.style.cssText='display:block;margin:8px 0;font-weight:500';s.textContent='Carte détaillée pour la nourriture seule (pâtes, plats, desserts) : l’écart matière se lit sur la nourriture ; les boissons restent dans les achats.';var r=b.querySelector('.etab-indices');if(r)b.insertBefore(s,r);else b.appendChild(s);}}catch(e){}}
   (function(){var om=root.openModeles;if(typeof om!=='function'||om.__c311)return;var g=function(){var r=om.apply(this,arguments);noteItalien();return r;};for(var kk in om)if(Object.prototype.hasOwnProperty.call(om,kk))g[kk]=om[kk];g.__c311=true;root.openModeles=g;})();
+  /* C324 (V16-074, F10) : la carte d'un modèle se calcule toujours sur sa démonstration. Un établissement réel créé à partir d'un modèle
+     garde « modele: 'FoodTruck' » : modeleResume prenait alors ce dossier réel (ses propres chiffres, ou plus aucune note s'il est
+     incomplet). Seule la démonstration ouverte de ce modèle reste lue telle quelle. */
+  (function(){var k0=0;function br(){var mr=root.modeleResume;if(typeof mr!=='function')return false;if(mr.__c324)return true;
+      var g=function(k){var D=root.DB,demo=!!(D&&(D.exempleCharge===true||D._demo||D.userMode==='demo'));
+        if(!(D&&D.modele===k&&!demo))return mr.apply(this,arguments);
+        root.DB={modele:null};try{return mr.apply(this,arguments);}finally{root.DB=D;}};
+      g.__c324=true;root.modeleResume=g;return true;}
+    if(!br()&&typeof root.setInterval==='function'){var t=root.setInterval(function(){if(br()||++k0>40)root.clearInterval(t);},250);}})();
   if(!corriger()&&typeof root.setInterval==='function'){var i=0,t=root.setInterval(function(){if(corriger()||++i>40)root.clearInterval(t);},250);}})();
 /* C311 (V16-089) : Abonnement — « Toutes les fonctions Client sont ouvertes… » n'est plus écrit deux fois (la ligne d'accès le dit déjà) */
 (function(){function br(){var f=root.aboPrixHTML;if(typeof f!=='function'||f.__c311)return !!f;var g=function(count,total,intro){try{var dsc=doc.getElementById('aboTierDesc');if(intro&&dsc&&String(dsc.textContent).trim()===String(intro).trim())intro='';}catch(e){}return f.call(this,count,total,intro);};g.__c311=true;root.aboPrixHTML=g;return true;}
@@ -471,7 +502,7 @@ root.VerdictEtabPortfolio={conceptKeys:CONCEPT_KEYS.slice(),duplicate:duplicate,
 function hook(){
   if(typeof root.drawEtabs!=='function'||typeof root.openNewEtab!=='function'||typeof root.refreshAll!=='function')return false;
   if(!root.drawEtabs.__etab12){var od=root.drawEtabs,wd=function(){var r=od.apply(this,arguments);try{ensureStyle();decorateBar();}catch(e){}return r;};wd.__etab12=true;root.drawEtabs=wd;}
-  if(!root.openNewEtab.__etab12){originalOpenNew=root.openNewEtab;var wn=function(){
+  if(!root.openNewEtab.__etab12){originalOpenNew=(function(o){var g=function(){var r=o.apply(this,arguments);try{planServeur();}catch(e){}return r;};g.__c324=true;return g;})(root.openNewEtab);/* C324 (L4) : la 2e fenêtre dit aussi le devis du serveur */var wn=function(){
     /* Démonstration et quotas : le parcours d'origine garde la main. */
     if(!isTestSession()&&typeof root.modeleDansDemonstration==='function'&&root.modeleDansDemonstration())return originalOpenNew.apply(this,arguments);
     if(typeof root.verdictEtabCapacityAvailable==='function'&&typeof root.etabBillableList==='function'&&!root.verdictEtabCapacityAvailable(root.etabBillableList().length+1))return originalOpenNew.apply(this,arguments);

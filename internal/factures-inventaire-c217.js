@@ -591,15 +591,26 @@
   function nbInstantanes() { var D = DBi(); return (D && D.snapshots || []).length; }
   /* C253 : « avant » = nombre d'instantanés lu avant finishCount (comptage complet : l'instantané est ajouté pendant l'appel ;
      partiel : après la question « Enregistrer ce comptage ? »). Envoi dès qu'un nouvel instantané existe. */
+  /* C323 (T3 n° 23) : le comptage envoyé porte le prénom de l'employé (sinon le responsable ne sait pas qui a compté et la cloche
+     ne peut rien dire) : prénom de cet appareil, sinon le champ « Inventaire réalisé par », sinon demandé une fois. */
+  function nomEquipe() {
+    var n = ''; try { n = typeof w.equipeNom === 'function' ? w.equipeNom() : ''; } catch (e) {}
+    if (!n) { try { n = localStorage.getItem('verdict:equipe:prenom:v1') || ''; } catch (e) {} }
+    if (!n) { var f = doc.getElementById('countActor'); if (f && f.value) n = f.value.trim(); }
+    if (!n) { try { n = String(w.prompt('Votre prénom : votre responsable verra qui a compté.', '') || '').trim().slice(0, 80); } catch (e) {} }
+    if (n) { try { if (typeof w.equipeNom === 'function') w.equipeNom(n); localStorage.setItem('verdict:equipe:prenom:v1', n); } catch (e) {} try { var D = DBi(); if (D) { D.profile = D.profile || {}; D.profile.prenom = n; } } catch (e) {} }
+    return n;
+  }
+  function signer() { var n = nomEquipe() || 'Équipe', lim = Date.now() - 36 * 3600000; rows().forEach(function (x) { var p = x.p, at = Date.parse(p.countedAt || ''); if (p.stock != null && p.stock !== '' && isFinite(at) && at >= lim && !String(p.countedBy || '').trim()) p.countedBy = n; }); }
   function envoyerComptage(avantAppel) {
     if (!equipeLien() || typeof w.staffSubmitForReview !== 'function') return;
     var avant = typeof avantAppel === 'number' ? avantAppel : nbInstantanes(), essais = 0;
     (function attendre() {
-      if (nbInstantanes() > avant) { w.staffSubmitForReview(0); return; }   /* nouveau comptage enregistré : envoi */
+      if (nbInstantanes() > avant) { signer(); w.staffSubmitForReview(0); return; }   /* nouveau comptage enregistré : envoi (C323 : signé) */
       var q = doc.getElementById('mAsk'), ouverte = !!(q && q.classList.contains('on'));
       if (ouverte) { if (essais++ < 600) setTimeout(attendre, 300); return; }   /* « Enregistrer ce comptage ? » : on attend la réponse */
       /* rien de nouveau, aucune question : comptage déjà enregistré (ou annulé). Renvoyé seulement si son envoi avait échoué. */
-      if (essais === 0 && w.__c253NonEnvoye) w.staffSubmitForReview(0);
+      if (essais === 0 && w.__c253NonEnvoye) { signer(); w.staffSubmitForReview(0); }
     })();
   }
   function equipeResultat() {

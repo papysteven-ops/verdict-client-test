@@ -20,7 +20,10 @@
 
   function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
   function vide(v) { return v == null || v === '' || !isFinite(Number(v)); }
-  function eur(x) { return x == null || !isFinite(x) ? '—' : Math.round(x).toLocaleString('fr-FR') + ' €'; }
+  /* C325 (Langues) : montants et nombres au format de la langue, par la fonction commune de 029 (eur, localeTag) — jamais
+     « €619990,55 » ni « €22.600/month » écrits en brut. */
+  function tagL() { try { return (typeof w.localeTag === 'function' ? w.localeTag() : w.LOCALE_TAG) || 'fr-FR'; } catch (e) { return 'fr-FR'; } }
+  function eur(x) { if (x == null || !isFinite(x)) return '—'; if (typeof w.eur === 'function' && w.eur !== eur) { try { return w.eur(x); } catch (e) {} } return (Math.round(x) || 0).toLocaleString(tagL()) + '\u00a0€'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function copie(o) { return o == null ? o : JSON.parse(JSON.stringify(o)); }
   function differe(a, b) { if (a == null || b == null) return false; var d = Math.abs(num(a) - num(b)); return d > Math.max(TOL_EUR, Math.abs(num(b)) * TOL); }
@@ -138,7 +141,7 @@
   /* C310 (V16-034) : la TVA qui convertit les minimums en TTC vient-elle d'un document ? Sans FEC, c'est une saisie (un bilan n'a
      pas de TVA) : Verdict le dit, et l'Accueil peut l'écrire sous le minimum du jour (window.VerdictDocumentsFoi.tvaEstimee). */
   function tvaEstimee(D) { D = D || w.DB; if (!D || !D.in) return null; var lu = !!(D.fecImport && D.fecImport.totals) || !!(D.refSource && /fec/.test(String(D.refSource.nature || ''))); if (lu) return null;
-    var t = vide(D.in.tva) ? null : num(D.in.tva); return { tva: t, texte: (t != null ? 'TVA estimée à ' + t.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' %' : 'TVA non renseignée') + ' : importez votre document comptable (FEC) pour l’affiner, et avec elle vos minimums TTC.' }; }
+    var t = vide(D.in.tva) ? null : num(D.in.tva); return { tva: t, texte: (t != null ? 'TVA estimée à ' + t.toLocaleString(tagL(), { maximumFractionDigits: 2 }) + ' %' : 'TVA non renseignée') + ' : importez votre document comptable (FEC) pour l’affiner, et avec elle vos minimums TTC.' }; }
   function tvaRef(D) { var t = D.docRef && D.docRef.in && D.docRef.in.tva; return !vide(t) ? num(t) : num(D.in && D.in.tva); }
   /* C300 (V15-017) : une saisie à la main (Mes chiffres) n'a pas d'année d'exercice ; la caisse était alors ignorée : ni question
      sur le panier et les commandes, ni « elle fait foi ». Sans exercice, l'année de référence est la dernière année civile
@@ -185,6 +188,17 @@
      redemande pas chaque point, c'est long et pénible ; soit il prend tout le relevé, soit il laisse sa saisie »).
      Une seule question, tous les écarts dans un tableau, deux boutons, la conséquence écrite, pas de seconde confirmation.
      La question ne revient que pour un nouveau document ou un chiffre que le patron modifie lui-même ensuite. */
+  var CHAMPS = { nour: ['nour'], boi: ['boi'], emb: ['emb'], com: ['com'], amort: ['amort'], equipe: ['salb', 'salt', 'dirb', 'dirt', 'dirn', 'saln'], loyer: ['f1'], autres: ['f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10'] };
+  /* C325 (T1) : « Garder toute ma saisie » juste après le FEC remettait TOUTE la saisie d'avant (D.in = saisie d'avant) alors que
+     la question ne portait que sur le panier et les commandes : « 8 chiffres manquants », en-tête « — », Accueil « décrivez
+     votre situation ». Le choix ne porte que sur les postes comparés dans la question ; le document reste pris pour le reste. */
+  function garderPoste(D, S, k) {
+    var I = S && S.in || {};
+    if (k === 'ca') { if (S && S.refSource && S.refSource.ca != null) { D.refSource = D.refSource || {}; D.refSource.ca = S.refSource.ca; if (D.ref) D.ref.ca = S.refSource.ca; } return; }
+    if (k === 'panier' || k === 'cmdj') { if (!vide(I[k])) D.in[k] = I[k]; return; }
+    if (k === 'tva') { if (!vide(I.tva)) { D.in.tva = I.tva; D.reg = D.reg || {}; D.reg.tvac = I.tva; } return; }
+    (CHAMPS[k] || []).forEach(function (c) { if (c in I) D.in[c] = I[c]; });
+  }
   function appliquerDocument(D, e) {
     var R = D.docRef && D.docRef.in;
     if (e.k === 'caCaisse') { D.refSource = D.refSource || {}; D.refSource.ca = Math.round(e.doc * 100) / 100; if (D.ref) D.ref.ca = D.refSource.ca; D.refSource.caSource = 'caisse'; }
@@ -193,7 +207,7 @@
     else if (e.k === 'tva') { D.in.tva = e.doc; D.reg = D.reg || {}; D.reg.tvac = e.doc; }/* C300 (V15-018) */
     else if (e.k === 'ca') { D.refSource.ca = D.docRef.ca; if (D.ref) D.ref.ca = D.docRef.ca; }
     else if (R) {
-      var champs = { nour: ['nour'], boi: ['boi'], emb: ['emb'], com: ['com'], amort: ['amort'], equipe: ['salb', 'salt', 'dirb', 'dirt', 'dirn', 'saln'], loyer: ['f1'], autres: ['f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10'] }[e.k] || [];
+      var champs = CHAMPS[e.k] || [];
       champs.concat(['mois']).forEach(function (c) { if (c in R) D.in[c] = R[c]; });
     }
   }
@@ -244,7 +258,7 @@
   /* ——— La question (une seule, jamais pendant qu'il tape) ——— */
   var ETAT = { ouvert: null, bilan: null };
   function fermer() { var m = doc.getElementById('df58-m'); if (m) m.remove(); ETAT.ouvert = null; }
-  function montant(e, x) { if (e.pct) return x.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' %'; if (e.nombre) return x.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' / jour'; return e.cents ? x.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : eur(x); }
+  function montant(e, x) { if (e.pct) return x.toLocaleString(tagL(), { maximumFractionDigits: 2 }) + ' %'; if (e.nombre) return x.toLocaleString(tagL(), { maximumFractionDigits: 1 }) + ' / jour'; return e.cents ? x.toLocaleString(tagL(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : eur(x); }
   var SUITE = '<p>Erreur ou oubli dans la saisie ? Verdict conseille de prendre vos documents : ce sont vos vrais chiffres. Si vous gardez votre saisie sans raison, votre note sera une <b>lecture non finale</b> ; vous pourrez changer d’avis à tout moment dans Mes chiffres.</p>';
   /* C300 (V15-083) : les mêmes choix à chaque question (la fenêtre d'arrivée du FEC n'en avait que deux, sans « changements »). */
   function choixHTML(an, caSeul, kDoc, kChange, kSaisie, libDoc) {
@@ -329,8 +343,11 @@
     if (a === 'ok') { (O && O.extra || []).forEach(function (e) { if (!e.deja) appliquerDocument(D, e); }); if (D.docRef && D.docRef.in) { D.docRef.in.panier = D.in.panier; D.docRef.in.cmdj = D.in.cmdj; }
       D.docChoix = { cle: cleDocuments(D), choix: 'documents' }; enregistrer(!!(O && O.extra && O.extra.length)); fermer(); return; }
     if (a === 'saisie') { /* juste après le FEC : revenir à toute la saisie d'avant, en un clic */
-      var S = D.saisieAvantDocument; if (S) { D.docAccords = {}; var sv = valeurs({ in: S.in, ref: S.ref, refSource: S.refSource }); POSTES.forEach(function (p) { if (differe(sv[p.k], docValeurs(D)[p.k])) D.docAccords[p.k] = sv[p.k]; });
-        (O && O.extra || []).forEach(function (e) { D.docAccords[e.k] = e.saisie; });/* C300 : TVA, panier et commandes gardés aussi */ D.in = S.in; if (S.refSource && S.refSource.ca != null) { D.refSource.ca = S.refSource.ca; if (D.ref) D.ref.ca = S.refSource.ca; } D.docChoix = { cle: cleDocuments(D), choix: 'saisie' }; majVerrou(D); enregistrer(true); }
+      var S = D.saisieAvantDocument; if (S) { D.docAccords = {}; var sv = valeurs({ in: S.in, ref: S.ref, refSource: S.refSource }), dv = docValeurs(D), garde = [];
+        POSTES.forEach(function (p) { if (differe(sv[p.k], dv[p.k])) { D.docAccords[p.k] = sv[p.k]; garde.push(p.k); } });
+        (O && O.extra || []).forEach(function (e) { D.docAccords[e.k] = e.saisie; garde.push(e.k); });/* C300 : TVA, panier et commandes gardés aussi */
+        garde.forEach(function (k) { garderPoste(D, S, k); });/* C325 : seulement les postes de la question */
+        D.docChoix = { cle: cleDocuments(D), choix: 'saisie' }; majVerrou(D); enregistrer(true); }
       fermer(); return; }
     if (a === 'change-fec') { var mf = doc.getElementById('df58-m'), rf = {}, dpf = mf && mf.querySelector && mf.querySelector('[data-df58-depuis]'), S2 = D.saisieAvantDocument, df = dpf ? dpf.value : '';
       if (mf && mf.querySelectorAll) [].forEach.call(mf.querySelectorAll('[data-df58-raison]'), function (x) { if (x.value) rf[x.getAttribute('data-df58-raison')] = x.value; });
@@ -367,9 +384,15 @@
     if (D.docRef) t.push(!gardes.length ? '✓ Document comptable ' + (D.docRef.year || '') + ' : il fait foi pour vos ventes, achats, équipe et charges.' : restent.length ? '✓ Document comptable ' + (D.docRef.year || '') + ' : il fait foi pour ' + nommer(restent) + '.' : 'Document comptable ' + (D.docRef.year || '') + ' : votre saisie a été retenue à sa place.');
     if (C) { var ca = caDeclare(D), e = ca ? (C.ht - ca) / ca : 0; /* C216 (W49) : « identique » seulement à l'euro près ; sinon l'écart est dit en euros (et en % au-delà de 1 %). */
       var gap = ca ? C.ht - ca : 0;
-      t.push('✓ Caisse ' + an + ' : ' + C.jours + ' journées, ' + eur(C.ht) + ' HT' + (ca ? (Math.abs(gap) < 1 ? ', identique à votre chiffre d’affaires' : Math.abs(e) <= 0.01 ? ', à ' + eur(Math.abs(gap)) + ' près de votre chiffre d’affaires (' + (gap > 0 ? '+' : '−') + (Math.round(Math.abs(e) * 10000) / 100).toLocaleString('fr-FR') + ' %)' : ', ' + (e > 0 ? '+' : '−') + Math.abs(Math.round(e * 1000) / 10).toLocaleString('fr-FR') + ' % par rapport à votre chiffre d’affaires' + (D.docRef ? ' : vérifiez avec votre comptable (ventes hors caisse, avoirs)' : '')) : '') + '. Panier moyen ' + (C.panier ? C.panier.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : '—') + (C.cmdj ? ', ' + (Math.round(C.cmdj * 10) / 10).toLocaleString('fr-FR') + ' commandes par jour' : '') + '.' +
-        /* C300 (V15-017) : Mes chiffres dit aussi que la caisse fait foi pour le panier et les commandes. */
-        (C.panier && acc.indexOf('panier') < 0 && acc.indexOf('cmdj') < 0 ? ' Elle fait foi pour le panier et les commandes par jour.' : '')); }
+      /* C326 (L2, langues) : une phrase entière par gabarit (chacune dans son <span>), pour que le lot Langues la traduise entière. */
+      var pc = function (x) { return (Math.round(x * 100) / 100).toLocaleString(tagL()) + ' %'; }, tete = '✓ Caisse ' + an + ' : ' + C.jours + ' journées, ' + eur(C.ht) + ' HT', L = [];
+      L.push(!ca ? tete + '.' : Math.abs(gap) < 1 ? tete + ', identique à votre chiffre d’affaires.' : Math.abs(e) <= 0.01 ? tete + ', à ' + eur(Math.abs(gap)) + ' près de votre chiffre d’affaires (' + (gap > 0 ? '+' : '−') + pc(Math.abs(e) * 100) + ').' :
+        tete + ', ' + (e > 0 ? '+' : '−') + (Math.abs(Math.round(e * 1000) / 10)).toLocaleString(tagL()) + ' % par rapport à votre chiffre d’affaires' + (D.docRef ? ' : vérifiez avec votre comptable (ventes hors caisse, avoirs).' : '.'));
+      var pm = C.panier ? C.panier.toLocaleString(tagL(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : null, cj = C.cmdj ? (Math.round(C.cmdj * 10) / 10).toLocaleString(tagL()) : null;
+      if (pm) L.push('Panier moyen ' + pm + (cj ? ', ' + cj + ' commandes par jour.' : '.')); else if (cj) L.push(cj + ' commandes par jour.');
+      /* C300 (V15-017) : Mes chiffres dit aussi que la caisse fait foi pour le panier et les commandes. */
+      if (C.panier && acc.indexOf('panier') < 0 && acc.indexOf('cmdj') < 0) L.push('Elle fait foi pour le panier et les commandes par jour.');
+      t.push(L); }
     if (acc.length) { k = 'ko'; var nd = noteDocuments(D), Rg = null, raison = ''; try { Rg = w.moteur && w.moteur(); } catch (e) {}
       /* C280 (T4 vague 10) : si la saisie gardée fait retirer l'Indice (garde-fou C190, ex. marge exceptionnellement élevée), on ne parle pas d'une « note non finale » qui n'est plus affichée. */
       try { raison = (w.anomaliesNonConfirmees ? w.anomaliesNonConfirmees() : []).map(function (a) { var l = String(a.lb || ''); l = l.replace(/^Marge avant imp(ô|\u00f4)t /, 'marge '); return l.charAt(0).toLowerCase() + l.slice(1) + ' à vérifier'; }).join(' ; '); } catch (e) {}
@@ -377,13 +400,13 @@
       t.push(Rg && !Rg.ready ? garde + '. Avec votre saisie, Verdict n’affiche pas de note' + (raison ? ' (' + raison + ')' : '') + '.' + (nd != null ? ' Avec vos documents, votre note serait ' + nd + ' / 100.' : '') : garde + ' : votre note est une lecture non finale.' + (nd != null ? ' Avec vos documents, votre note serait ' + nd + ' / 100.' : '')); }
     var ch = D.docChangements || {}, chk = Object.keys(ch);
     if (chk.length) { var ndc = noteDocuments(D), anr = anneeDoc(D);
-      t.push('Changements depuis ' + anr + ' pris en compte : ' + chk.map(function (x) { var c = ch[x], f = function (v) { if (c.pct) return v.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' %'; if (c.nombre) return v.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' / jour'; return c.cents ? v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : eur(v); }; return c.lib.toLowerCase() + ' ' + f(c.doc) + ' → ' + f(c.saisie) + (c.raison || c.depuis ? ' (' + [c.raison, c.depuis ? 'depuis ' + moisLib(c.depuis) : null].filter(Boolean).join(', ') + ')' : ''); }).join(' ; ') + '.');
+      t.push('Changements depuis ' + anr + ' pris en compte : ' + chk.map(function (x) { var c = ch[x], f = function (v) { if (c.pct) return v.toLocaleString(tagL(), { maximumFractionDigits: 2 }) + ' %'; if (c.nombre) return v.toLocaleString(tagL(), { maximumFractionDigits: 1 }) + ' / jour'; return c.cents ? v.toLocaleString(tagL(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€' : eur(v); }; return c.lib.toLowerCase() + ' ' + f(c.doc) + ' → ' + f(c.saisie) + (c.raison || c.depuis ? ' (' + [c.raison, c.depuis ? 'depuis ' + moisLib(c.depuis) : null].filter(Boolean).join(', ') + ')' : ''); }).join(' ; ') + '.');
       t.push('Votre note en tient compte.' + (ndc != null ? ' D’après vos seuls documents ' + anr + ' : ' + ndc + ' / 100.' : '')); }
     var te = tvaEstimee(D); if (te && (C || caDeclare(D) != null)) t.push(te.texte);
     if (!D.docRef && !C) { k = D.docVerrou ? 'ko' : 'info'; /* C216 (W56) : sur un profil vide, il n'y a ni note ni saisie : on ne le prétend pas. */
       var pret = false; try { var Rm = w.moteur && w.moteur(); pret = !!(Rm && Rm.ready); } catch (e) {}
       t.push(D.docVerrou ? 'Vous avez confirmé des chiffres inhabituels sans document : votre note reste une lecture non finale.' : pret ? 'Note calculée sur votre saisie.' : 'Aucun chiffre pour l’instant : pas encore de note.'); t.push('Déposez votre document comptable (FEC) et l’export de votre caisse : Verdict s’appuiera sur vos vrais chiffres.'); }
-    var html = '<b>D’où viennent vos chiffres</b>' + t.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + (acc.length ? '<button type="button" class="btn" data-df58="tout-doc" style="margin-top:8px">Prendre mes documents</button>' : chk.length ? '<button type="button" class="btn ghost" data-df58="tout-doc" style="margin-top:8px">Annuler ces changements et revenir à mes documents</button>' : '');
+    var html = '<b>D’où viennent vos chiffres</b>' + t.map(function (x) { return '<p>' + (Array.isArray(x) ? x.map(function (y) { return '<span>' + esc(y) + '</span>'; }).join(' ') : esc(x)) + '</p>'; }).join('') + (acc.length ? '<button type="button" class="btn" data-df58="tout-doc" style="margin-top:8px">Prendre mes documents</button>' : chk.length ? '<button type="button" class="btn ghost" data-df58="tout-doc" style="margin-top:8px">Annuler ces changements et revenir à mes documents</button>' : '');
     var el = doc.getElementById('df58-ban');
     if (!el) { el = doc.createElement('div'); el.id = 'df58-ban'; var h1 = vue.querySelector('h1'); if (h1 && h1.parentNode === vue) h1.insertAdjacentElement('afterend', el); else vue.insertBefore(el, vue.firstChild); }
     if (el.__html === html + k) return; el.__html = html + k; el.className = 'df58-ban df58-' + k; el.innerHTML = html;
@@ -423,49 +446,86 @@
     var Dj = w.DB, saisi = !!(Dj && ((Dj.maj && Dj.maj.activite) || (Dj.fermesSource && Dj.fermesSource.source === 'patron') || (Dj.refSource && Dj.refSource.nature && !/fec/.test(String(Dj.refSource.nature)))));
     var rj = doc.getElementById('rf-jsem'), rm = doc.getElementById('rf-mois');
     if (rj && !rj.getAttribute('data-df58-j') && !saisi) { rj.setAttribute('data-df58-j', '1'); var jl = null; try { jl = w.VerdictPassageUnique && w.VerdictPassageUnique.joursSemaine ? w.VerdictPassageUnique.joursSemaine() : null; } catch (e) {}
-      if (jl && jl.jours) { rj.value = String(jl.jours); var sj = rj.parentNode && rj.parentNode.querySelector('small'); if (sj) sj.textContent = 'Lus dans vos journées de caisse.'; } else if (rj.value === '6') rj.value = '';
+      if (jl && jl.jours) { rj.value = String(jl.jours).replace('.', ',');/* C325 (T3) : « 5,9 », jamais « 5.9 » */ var sj = rj.parentNode && rj.parentNode.querySelector('small'); if (sj) sj.textContent = 'Lus dans vos journées de caisse.'; } else if (rj.value === '6') rj.value = '';
       if (rm && rm.value === '12') rm.value = ''; }
     var cv = doc.getElementById('rf-cv'), C = caisseFiche();
     if (cv && C && C.tickets > 0 && !String(cv.value || '').trim()) {
       cv.value = String(Math.round(C.tickets)); cv.setAttribute('data-df58-caisse', '1');
-      var sm = cv.parentNode && cv.parentNode.querySelector('small'); if (sm) sm.textContent = 'Lu dans votre caisse : ' + Math.round(C.tickets).toLocaleString('fr-FR') + ' tickets sur ' + C.jours + ' journées.';
+      var sm = cv.parentNode && cv.parentNode.querySelector('small'); if (sm) sm.textContent = 'Lu dans votre caisse : ' + Math.round(C.tickets).toLocaleString(tagL()) + ' tickets sur ' + C.jours + ' journées.';
     }
   }
   /* C300 (V15-111) : « J'ai ouvert récemment » (029, recentFormulaire) ignorait la caisse déjà importée : date d'ouverture à
      aujourd'hui alors que la caisse commence le 2 mars, fin de période aujourd'hui (journée pas finie), CA et tickets à retaper,
      jours ouverts « 6 » d'office. Les champs encore à leur valeur de départ sont repris de la caisse ; rien n'est inventé : sans
      TVA connue, le CA de la caisse (TTC) est écrit sous le champ hors taxes au lieu d'être converti. */
+  function isoJour(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function journeesCaisse(D) {
+    var auj = new Date(), today = isoJour(auj), depuis = isoJour(new Date(auj.getTime() - 400 * 864e5));
+    return ((D && D.histJour) || []).filter(function (r) { return r && r.date && !r.demo && /pos|csv|caisse|import/i.test(String(r.source || '')) && num(r.caJ) > 0 && String(r.date).slice(0, 10) >= depuis && String(r.date).slice(0, 10) < today; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  }
+  /* la date de la phrase C322 suit la langue (le mois n'est écrit en français qu'en français ; l'année seulement si ce n'est pas l'année en cours) */
+  function jourTexte(d) { if (w.LOCALE && w.LOCALE !== 'fr') { try { var o = { day: 'numeric', month: 'long' }; if (d.slice(0, 4) !== String(new Date().getFullYear())) o.year = 'numeric'; return new Intl.DateTimeFormat(w.LOCALE_TAG || w.LOCALE, o).format(new Date(d + 'T12:00:00')); } catch (e) {} }
+    var M = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'], j = Number(d.slice(8, 10)), m = Number(d.slice(5, 7)), a = d.slice(0, 4);
+    return (j === 1 ? '1er' : String(j)) + ' ' + M[m - 1] + (a !== String(new Date().getFullYear()) ? ' ' + a : ''); }
+  /* C322 (décision 14) : « J'ai ouvert récemment », ouverture tapée le 1er avril alors que la caisse vend dès le 2 mars : le
+     suivi partait du 2 mars sans le dire, la période observée commençait au 1er avril (029, C214) avec le CA de toute la caisse,
+     mars compris : alerte « période de démarrage inhabituelle » à tort. La caisse fait foi : l'ouverture retenue est la première
+     journée de caisse, écrite sous la date (et sous le début de la période), dans la même question. Ouverture tapée avant la
+     première journée de caisse : gardée. Pendant la frappe, la phrase s'affiche seulement (la date n'est pas changée sous les
+     doigts) ; la date est remplacée en quittant le champ, au passage à l'étape suivante et à la validation. */
+  function noteOuverture(t) {
+    ['rc-open', 'rc-start'].forEach(function (id) { var e = doc.getElementById(id), lab = e && e.parentNode; if (!lab) return; var n = lab.querySelector('small[data-df58-ouverture]');
+      if (!t) { if (n) n.remove(); return; }
+      if (!n) { n = doc.createElement('small'); n.setAttribute('data-df58-ouverture', '1'); n.style.cssText = 'display:block;font-weight:600'; lab.appendChild(n); } n.textContent = t; });
+  }
+  function ouvertureCaisse(appliquer) {
+    var o = doc.getElementById('rc-open'); if (!o) return null;
+    var v = String(o.value || '').trim(), L = journeesCaisse(w.DB), d0 = L.length >= 3 ? String(L[0].date).slice(0, 10) : null;
+    if (!d0 || !/^\d{4}-\d{2}-\d{2}$/.test(v) || v > isoJour(new Date())) return null;
+    if (!(v > d0)) { if (v !== d0) noteOuverture(''); return null; }
+    noteOuverture('Votre caisse montre des ventes dès le ' + jourTexte(d0) + ' : l’ouverture est prise au ' + jourTexte(d0) + '.');
+    if (appliquer === false) return { tapee: v, retenue: d0, applique: false };
+    o.value = d0; o.setAttribute('data-df58-caisse', '1');
+    var st = doc.getElementById('rc-start'), ca = doc.getElementById('rc-ca');
+    if (st && (!st.value || st.value === v || (ca && ca.getAttribute('data-df58-caisse') && st.value > d0))) st.value = d0;
+    return { tapee: v, retenue: d0, applique: true };
+  }
   function ficheRecente() {
     var D = w.DB, p = doc.getElementById('refP'), o = doc.getElementById('rc-open'); if (!D || !p || !o || o.getAttribute('data-df58-recent')) return;
     o.setAttribute('data-df58-recent', '1');
-    var auj = new Date(), iso = function (d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }, today = iso(auj), depuis = iso(new Date(auj.getTime() - 400 * 864e5));
-    var L = (D.histJour || []).filter(function (r) { return r && r.date && !r.demo && /pos|csv|caisse|import/i.test(String(r.source || '')) && num(r.caJ) > 0 && String(r.date).slice(0, 10) >= depuis && String(r.date).slice(0, 10) < today; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    if (o.addEventListener) { o.addEventListener('input', function () { try { ouvertureCaisse(false); } catch (e) {} }); o.addEventListener('blur', function () { try { ouvertureCaisse(); } catch (e) {} }); }
+    var today = isoJour(new Date());
+    var L = journeesCaisse(D);
     var q = {}; try { q = (typeof w.recentStored === 'function' ? w.recentStored() : {}) || {}; } catch (e) {}
+    var donne = function (v) { return !!v && v !== today; };
     var put = function (id, v, garder) { var e = doc.getElementById(id); if (!e || v == null || v === '') return null; if (garder && String(e.value || '').trim() !== '') return null; e.value = String(v); e.setAttribute('data-df58-caisse', '1'); try { e.dispatchEvent(new Event('input', { bubbles: true })); } catch (x) {} return e; };
     var aide = function (id, t) { var e = doc.getElementById(id), sm = e && e.parentNode && e.parentNode.querySelector('small'); if (!e) return; if (!sm) { sm = doc.createElement('small'); e.parentNode.appendChild(sm); } sm.textContent = t; };
     if (L.length >= 3) {
       var d0 = String(L[0].date).slice(0, 10), d1 = String(L[L.length - 1].date).slice(0, 10), ttc = 0, tk = 0, tkOk = true;
       L.forEach(function (r) { ttc += num(r.caJ); if (num(r.tkJ) > 0) tk += num(r.tkJ); else tkOk = false; });
-      if (!q.opened && o.value === today) put('rc-open', d0);
+      /* C325 (T4, V16-047 n° 24) : une fiche déjà enregistrée (DB.recent) avec la date du jour ou des champs vides bloquait la caisse :
+         ouverture au jour même, CA et tickets vides, jours par semaine vides. Seule une valeur vraiment donnée par le patron est gardée. */
+      if (!donne(q.opened) && (o.value === today || !o.value)) put('rc-open', d0);
       var st = doc.getElementById('rc-start'), en = doc.getElementById('rc-end');
-      if (st && !q.start && (st.value === today || st.value === o.value || !st.value)) put('rc-start', d0);
-      if (en && !q.end && (en.value === today || !en.value)) put('rc-end', d1);
+      if (st && !donne(q.start) && (st.value === today || st.value === o.value || !st.value)) put('rc-start', d0);
+      if (en && !donne(q.end) && (en.value === today || !en.value)) put('rc-end', d1);
       if (tkOk && tk > 0) put('rc-tickets', Math.round(tk), true);
       var tva = !vide(D.in && D.in.tva) ? num(D.in.tva) : null;
-      if (tva != null) { put('rc-ca', String(Math.round(ttc / (1 + tva / 100) * 100) / 100).replace('.', ','), true); put('rc-tva', String(tva).replace('.', ','), true); aide('rc-ca', 'Repris de votre caisse : ' + eur(ttc) + ' TTC sur ' + L.length + ' journées, à ' + tva.toLocaleString('fr-FR') + ' % de TVA.'); }
+      if (tva != null) { put('rc-ca', String(Math.round(ttc / (1 + tva / 100) * 100) / 100).replace('.', ','), true); put('rc-tva', String(tva).replace('.', ','), true); aide('rc-ca', 'Repris de votre caisse : ' + eur(ttc) + ' TTC sur ' + L.length + ' journées, à ' + tva.toLocaleString(tagL()) + ' % de TVA.'); }
       else {
         /* C310 (V16-047) : sans TVA connue, le CA hors taxes est estimé à 10 % (dit à l'écran), puis recalculé dès que le patron
            indique sa TVA à l'étape 3 ; une frappe du patron dans le champ le garde tel quel. */
         var cae = put('rc-ca', String(Math.round(ttc / 1.1 * 100) / 100).replace('.', ','), true);
         if (cae) { cae.setAttribute('data-df58-ttc', String(Math.round(ttc * 100) / 100)); aide('rc-ca', 'Repris de votre caisse : ' + eur(ttc) + ' TTC sur ' + L.length + ' journées, converti avec une TVA estimée à 10 % : il sera recalculé avec votre TVA à l’étape suivante.');
           if (cae.addEventListener) cae.addEventListener('input', function (ev) { if (ev.isTrusted) cae.removeAttribute('data-df58-ttc'); });
-          var tv = doc.getElementById('rc-tva'); if (tv && tv.addEventListener) tv.addEventListener('input', function () { var t = nb(tv.value), tt = nb(cae.getAttribute('data-df58-ttc')); if (tt != null && t != null && t >= 0 && t <= 30) { cae.value = String(Math.round(tt / (1 + t / 100) * 100) / 100).replace('.', ','); aide('rc-ca', 'Repris de votre caisse : ' + eur(tt) + ' TTC, converti avec votre TVA de ' + t.toLocaleString('fr-FR') + ' %.'); try { cae.dispatchEvent(new Event('input', { bubbles: true })); } catch (x) {} } }); }
+          var tv = doc.getElementById('rc-tva'); if (tv && tv.addEventListener) tv.addEventListener('input', function () { var t = nb(tv.value), tt = nb(cae.getAttribute('data-df58-ttc')); if (tt != null && t != null && t >= 0 && t <= 30) { cae.value = String(Math.round(tt / (1 + t / 100) * 100) / 100).replace('.', ','); aide('rc-ca', 'Repris de votre caisse : ' + eur(tt) + ' TTC, converti avec votre TVA de ' + t.toLocaleString(tagL()) + ' %.'); try { cae.dispatchEvent(new Event('input', { bubbles: true })); } catch (x) {} } }); }
       }
     }
     /* jours d'ouverture : lus dans la caisse, sinon à renseigner (plus de « 6 » ni de « 12 » d'office) */
     var js = null; try { js = w.VerdictPassageUnique && w.VerdictPassageUnique.joursSemaine ? w.VerdictPassageUnique.joursSemaine() : null; } catch (e) {}
-    var j = doc.getElementById('rc-jsem'); if (j && q.daysWeek == null) { if (js && js.jours) { j.value = String(js.jours); aide('rc-jsem', 'Lus dans vos journées de caisse.'); } else if (j.value === '6') j.value = ''; }
-    var mo = doc.getElementById('rc-mois'); if (mo && q.months == null && mo.value === '12') mo.value = '';
+    var j = doc.getElementById('rc-jsem'); if (j && !(num(q.daysWeek) > 0)) { if (js && js.jours) { j.value = String(js.jours).replace('.', ','); aide('rc-jsem', 'Lus dans vos journées de caisse.'); } else if (j.value === '6') j.value = ''; }
+    var mo = doc.getElementById('rc-mois'); if (mo && !(num(q.months) > 0) && mo.value === '12') mo.value = '';
+    try { ouvertureCaisse(false); } catch (e) {}
   }
   function qrAmort() { var i = doc.getElementById('qr-amort'); return i ? nb(i.value) : null; }
   function lectureAmort() {
@@ -507,15 +567,39 @@
     out.remettre = function () { sauve.forEach(function (p) { Object.keys(p[1]).forEach(function (k) { p[0][k] = p[1][k]; }); }); };
     return out;
   }
+  /* C325 (T1, mineurs) : Plus › Chiffre d'affaires écrivait « 01/26 » sous les barres et « 2026-01 » dans « Chaque mois face à
+     son point mort » : un seul format, celui de la langue (mois écrit en lettres). À faire : « IMPACT CORRECTEMENT NOMMÉ » (jargon)
+     devient « Ce qui est en jeu ». */
+  function moisLangue(per, court) {
+    var y = Number(String(per).slice(0, 4)), m = Number(String(per).slice(5, 7)); if (!(y > 0 && m >= 1 && m <= 12)) return String(per);
+    try { return new Intl.DateTimeFormat(w.LOCALE_TAG || 'fr-FR', court ? { month: 'short', timeZone: 'UTC' } : { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, 15))); }
+    catch (e) { return court ? MOIS[m - 1].slice(0, 4) : MOIS[m - 1] + ' ' + y; }
+  }
+  function historiqueFormats(h) {
+    if (typeof h !== 'string') return h;
+    h = h.replace(/<b>(\d{4})-(\d{2})( · en cours)?<\/b>/g, function (x, y, mo, enc) { return '<b>' + esc(moisLangue(y + '-' + mo, false)) + (enc || '') + '</b>'; });
+    var i = h.indexOf('CA HT par mois'), a = i >= 0 ? h.indexOf('<svg', i) : -1, b = a >= 0 ? h.indexOf('</svg>', a) : -1;
+    if (a >= 0 && b > a) h = h.slice(0, a) + h.slice(a, b).replace(/>(0[1-9]|1[0-2])\/(\d{2})/g, function (x, mo, yy) { return '>' + esc(moisLangue('20' + yy + '-' + mo, true)); }) + h.slice(b);
+    return h;
+  }
+  var IMPACT = ['Ce qui est en jeu', 'What is at stake', 'Lo que está en juego', 'Cosa è in gioco', 'Worum es geht', 'Wat er op het spel staat', 'O que está em jogo'];
+  /* C325 (T4) : « Référence complète validée par le moteur » (Mes chiffres, CHR_COCKPIT_TEXT.engineReady de 029) : sans « moteur ». */
+  var PRETE = ['Référence complète : calcul Verdict vérifié.', 'Complete reference: Verdict calculation checked.', 'Referencia completa: cálculo de Verdict comprobado.', 'Riferimento completo: calcolo Verdict verificato.', 'Vollständige Referenz: Verdict-Berechnung geprüft.', 'Volledige referentie: Verdict-berekening gecontroleerd.', 'Referência completa: cálculo Verdict verificado.'];
+  function libelleImpact() { var T = w.POINT11_TEXT; if (T && T.impactNamed && T.impactNamed[0] !== IMPACT[0]) T.impactNamed = IMPACT.slice();
+    var C = w.CHR_COCKPIT_TEXT; if (C && C.engineReady && C.engineReady[0] !== PRETE[0]) C.engineReady = PRETE.slice(); }
   function amortFiche() { var i = doc.getElementById('rf-amort'); return i ? nb(i.value) : null; }
   function envelopper() {
     var F = w.refFormulaire, A = w.refApercu, V = w.refValider, E = w.refEtape, RF = w.recentFormulaire, QL = w.refLectureRapide, QC = w.qrCalcul, QK = w.qrContinuer, HH = w.verdictHistoryHTML;
-    if (typeof HH === 'function' && !HH.__df58) { var hh = function () { var rest = historiqueCommeArgent(), r; try { r = HH.apply(this, arguments); } finally { try { rest.remettre(); } catch (e) {} } return rest.regle && typeof r === 'string' ? r.replace(/(Chaque mois face à son point mort<\/h3><p class="note">[^<]*<\/p>)/, '$1<p class="note" data-df58-regle="1">' + esc(rest.regle) + '</p>') : r; }; hh.__df58 = true; w.verdictHistoryHTML = hh; }
+    if (typeof HH === 'function' && !HH.__df58) { var hh = function () { var rest = historiqueCommeArgent(), r; try { r = HH.apply(this, arguments); } finally { try { rest.remettre(); } catch (e) {} } return historiqueFormats(rest.regle && typeof r === 'string' ? r.replace(/(Chaque mois face à son point mort<\/h3><p class="note">[^<]*<\/p>)/, '$1<p class="note" data-df58-regle="1">' + esc(rest.regle) + '</p>') : r); }; hh.__df58 = true; w.verdictHistoryHTML = hh; }
     /* C310 (V16-022) : la lecture rapide « Six montants » n'avait pas d'amortissements (résultat 102 991 € au lieu de 93 991 €,
        seuil 480 995 € au lieu de 493 142 €). Ligne facultative ajoutée, comptée dans le résultat et le seuil, reprise à l'étape 3. */
     if (typeof QL === 'function' && !QL.__df58) { var ql = function () { var r = QL.apply(this, arguments); try { lectureAmort(); } catch (e) {} return r; }; ql.__df58 = true; w.refLectureRapide = ql; }
     if (typeof QC === 'function' && !QC.__df58) { var qc = function (r) { var x = QC.apply(this, arguments), am = qrAmort(); try { if (x && am > 0 && r) { var cv = num(r.mat) + num(r.com), fixes = num(r.ms) + num(r.loy) + num(r.cf), taux = r.ca > 0 ? cv / r.ca : 1; x.res = x.res - am; x.marge = r.ca > 0 ? x.res / r.ca * 100 : x.marge; x.seuil = (taux >= 0 && taux < 1) ? (fixes + am) / (1 - taux) : null; } } catch (e) {} return x; }; qc.__df58 = true; w.qrCalcul = qc; }
     if (typeof QK === 'function' && !QK.__df58) { var qk = function () { var am = qrAmort(), r = QK.apply(this, arguments); setTimeout(function () { try { apresLectureRapide(am); } catch (e) {} }, 40); return r; }; qk.__df58 = true; w.qrContinuer = qk; }
+    try { libelleImpact(); } catch (e) {}
+    var RE = w.recentEtape, RA = w.recentApply;
+    if (typeof RE === 'function' && !RE.__df58) { var re = function () { try { ouvertureCaisse(); } catch (e) {} return RE.apply(this, arguments); }; re.__df58 = true; w.recentEtape = re; }
+    if (typeof RA === 'function' && !RA.__df58) { var ra = function () { try { ouvertureCaisse(); } catch (e) {} return RA.apply(this, arguments); }; ra.__df58 = true; w.recentApply = ra; }
     if (typeof RF === 'function' && !RF.__df58) { var rf = function () { var r = RF.apply(this, arguments); try { ficheRecente(); } catch (e) {} return r; }; rf.__df58 = true; w.recentFormulaire = rf; }
     if (typeof F === 'function' && !F.__df58) { var f = function () { var r = F.apply(this, arguments); try { ficheBilan(); } catch (e) {} return r; }; f.__df58 = true; w.refFormulaire = f; }
     if (typeof E === 'function' && !E.__df58) { var g = function () { try { ficheBilan(); } catch (e) {} return E.apply(this, arguments); }; g.__df58 = true; w.refEtape = g; }
@@ -524,12 +608,12 @@
         var am = amortFiche(), box = doc.getElementById('rf-apercu'), L = w.refLire && w.refLire();
         if (box && am > 0 && L && !L.err) { var n = function (x) { return x == null ? 0 : x; }, qt = (L.nour == null && L.boi == null && w.__qrMatTotal > 0) ? w.__qrMatTotal : 0;
           var res = L.ca - (n(L.nour) + n(L.boi) + qt + n(L.emb) + n(L.com)) - (n(L.ms) + n(L.loy) + n(L.cf)) - am, mn = L.ca > 0 ? res / L.ca * 100 : 0;
-          box.innerHTML = box.innerHTML.replace(/(R(?:é|é)sultat avant imp(?:ô|ô)t : <b style="color:)[^"]*(">)[^<]*(<\/b> · marge avant imp(?:ô|ô)t )[^&]*(&nbsp;%)/, function (m, p1, p2, p3, p4) { return p1 + (res >= 0 ? '#22c55e' : '#ef4444') + p2 + eur(res) + p3 + mn.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + p4; })
+          box.innerHTML = box.innerHTML.replace(/(R(?:é|é)sultat avant imp(?:ô|ô)t : <b style="color:)[^"]*(">)[^<]*(<\/b> · marge avant imp(?:ô|ô)t )[^&]*(&nbsp;%)/, function (m, p1, p2, p3, p4) { return p1 + (res >= 0 ? '#22c55e' : '#ef4444') + p2 + eur(res) + p3 + mn.toLocaleString(tagL(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + p4; })
             + '<br>Amortissements <b>' + eur(am) + '/an</b> (comptés dans le résultat, jamais dans vos minimums de trésorerie)'; }
         /* C310 (V16-022) : « Commandes par jour 74,7 (couverts ÷ jours ouverts) » alors que Verdict retient 74,4 (tickets ÷ 313
            journées de caisse) : quand les couverts sont ceux de la caisse, l'aperçu montre la valeur retenue. */
         var Cf = caisseFiche(), cvf = L && !L.err ? num(L.cv) : 0;
-        if (box && Cf && Cf.tickets > 0 && cvf > 0 && Math.abs(cvf - Cf.tickets) <= Cf.tickets * 0.01) box.innerHTML = box.innerHTML.replace(/Commandes par jour <b>[^<]*<\/b> \([^)]*\)/, 'Commandes par jour <b>' + (Math.round(Cf.cmdj * 10) / 10).toLocaleString('fr-FR') + '</b> (tickets de votre caisse ÷ ' + Cf.jours + ' journées)');
+        if (box && Cf && Cf.tickets > 0 && cvf > 0 && Math.abs(cvf - Cf.tickets) <= Cf.tickets * 0.01) box.innerHTML = box.innerHTML.replace(/Commandes par jour <b>[^<]*<\/b> \([^)]*\)/, 'Commandes par jour <b>' + (Math.round(Cf.cmdj * 10) / 10).toLocaleString(tagL()) + '</b> (tickets de votre caisse ÷ ' + Cf.jours + ' journées)');
       } catch (e) {} return r; };
       a.__df58 = true; w.refApercu = a;
     }
@@ -620,7 +704,7 @@
   function questionMontant(Q, rejouer) {
     var jour = ''; try { jour = new Date(Q.cle + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }); } catch (e) {}
     var fois = Q.h > 0 ? Math.round(Q.v / Q.h) : null;
-    ouvrir('<h2>Ce montant est-il juste ?</h2><p>Vous avez saisi <b>' + eur(Q.v) + '</b> pour ' + esc(jour || Q.cle) + '.' + (fois ? ' C’est <b>' + fois.toLocaleString('fr-FR') + ' fois</b> votre journée habituelle (' + eur(Q.h) + ').' : ' C’est un montant très élevé pour une journée.') + '</p><p>Une virgule oubliée ou un zéro de trop ? Rien n’est enregistré tant que vous n’avez pas répondu.</p>' +
+    ouvrir('<h2>Ce montant est-il juste ?</h2><p>Vous avez saisi <b>' + eur(Q.v) + '</b> pour ' + esc(jour || Q.cle) + '.' + (fois ? ' C’est <b>' + fois.toLocaleString(tagL()) + ' fois</b> votre journée habituelle (' + eur(Q.h) + ').' : ' C’est un montant très élevé pour une journée.') + '</p><p>Une virgule oubliée ou un zéro de trop ? Rien n’est enregistré tant que vous n’avez pas répondu.</p>' +
       '<div class="df58-b"><button type="button" class="btn" data-df58-v="corriger">Corriger le montant</button><button type="button" class="btn ghost" data-df58-v="garder">Oui, enregistrer ' + eur(Q.v) + '</button></div>');
     ETAT.ouvert = { vraisemblance: Q, rejouer: rejouer };
   }
@@ -663,7 +747,8 @@
     var D = w.DB, t = D && D.fecImport && D.fecImport.totals; if (!t || !(num(t.payroll) > 0)) return;
     var I = D.in || {}, m = moisEquipe(I), own = num(t.payrollOwner), sal = num(t.payroll) - own;
     var pose = function (id, an, mens, plus) { var el = doc.getElementById(id), lab = el && el.parentNode; if (!lab) return; var o = lab.querySelector('.src-champ');
-      var h = 'Depuis votre document comptable : <b>' + eur(an) + '/an</b> ÷ ' + m + ' = <b>' + eur(mens) + '/mois</b>' + (plus || '');
+      /* C326 (L2, langues) : une seule phrase, sans <b> qui la coupait en morceaux (montant réécrit à moitié en anglais). */
+      var h = esc('Depuis votre document comptable : ' + eur(an) + '/an ÷ ' + m + ' = ' + eur(mens) + '/mois' + (plus || ''));
       /* au repos, rien n'est réécrit : le navigateur rend l'espace insécable en « &nbsp; », la comparaison se fait sur une signature */
       if (o && o.getAttribute && o.getAttribute('data-df58-sig') === h) return; if (!o) { o = doc.createElement('small'); o.className = 'src-champ'; lab.appendChild(o); } o.innerHTML = h; if (o.setAttribute) o.setAttribute('data-df58-sig', h); };
     if (vide(I.salb) || Math.abs(num(I.salb) * m - sal) > Math.max(50, sal * 0.01)) return;/* le patron a changé le champ : l'aide d'origine n'a plus cours */
@@ -671,7 +756,7 @@
     if (own > 0 && !vide(I.dirb) && Math.abs(num(I.dirb) * m - own) <= Math.max(50, own * 0.01)) pose('i-dirb', own, own / m, '');
   }
   try { protegerJournees(); } catch (e) {}
-  function boucle() { try { etiquette(); } catch (e) {} try { aideType(); } catch (e) {} try { aideEquipe(); } catch (e) {} try { envelopper(); } catch (e) {} try { protegerJournees(); if (w.DB) nettoyerApresCaisse(w.DB); } catch (e) {} try { css(); tour(); } catch (e) {} }
+  function boucle() { try { var ro = doc.getElementById('rc-open'); if (ro && !ro.getAttribute('data-df58-recent')) ficheRecente(); } catch (e) {}/* C325 : la fiche est préremplie par n'importe quel chemin d'entrée */ try { etiquette(); } catch (e) {} try { aideType(); } catch (e) {} try { aideEquipe(); } catch (e) {} try { envelopper(); } catch (e) {} try { protegerJournees(); if (w.DB) nettoyerApresCaisse(w.DB); } catch (e) {} try { css(); tour(); } catch (e) {} }
   var it = setInterval(boucle, 1000); if (it && it.unref) it.unref();
-  w.VerdictDocumentsFoi = { tvaEstimee: tvaEstimee, comparaisonFEC: comparaisonFEC, valeurs: valeurs, valeursFEC: valeursFEC, ecarts: ecarts, differences: differences, prendreTout: prendreTout, garderTout: garderTout, noterChangements: noterChangements, caisse: caisse, majVerrou: majVerrou, incertitudeSansDocument: incertitudeSansDocument, differe: differe, tour: boucle };
+  w.VerdictDocumentsFoi = { tvaEstimee: tvaEstimee, ouvertureCaisse: ouvertureCaisse, comparaisonFEC: comparaisonFEC, valeurs: valeurs, valeursFEC: valeursFEC, ecarts: ecarts, differences: differences, prendreTout: prendreTout, garderTout: garderTout, noterChangements: noterChangements, caisse: caisse, majVerrou: majVerrou, incertitudeSansDocument: incertitudeSansDocument, differe: differe, tour: boucle };
 })();

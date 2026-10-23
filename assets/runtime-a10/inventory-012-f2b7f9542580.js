@@ -163,7 +163,9 @@ function SP(){ if(!DB.spaces[DB.space]) DB.spaces[DB.space]={products:[]}; retur
 function spName(k){ return (DB.meta[k]&&DB.meta[k].name)||k; }
 function spEmo(k){ return (DB.meta[k]&&DB.meta[k].emo)||"\ud83d\udce6"; }
 function siteList(){ return (DB.siteList&&DB.siteList.length)?DB.siteList:Object.keys(DB.sites||{}); }
-function siteName(k){ return (DB.sites&&DB.sites[k]&&clean(DB.sites[k].name))||"Mon &eacute;tablissement"; }
+/* C323 (décision 15) : le site d'un modèle de démonstration arrive en capitales avec « (démonstration estimative) » : l'onglet le montre en casse normale. */
+function nomSiteDemo(s){s=String(s||'').replace(/\s*\(d[ée]monstration estimative\)\s*$/i,'').trim();if(s.length>3&&s===s.toUpperCase()&&/[A-ZÀ-Ý]{3}/.test(s)){s=s.toLowerCase().replace(/\b(i{1,3}|iv|v|vi{1,3}|ix|x)\b/g,function(m){return m.toUpperCase();});s=s.charAt(0).toUpperCase()+s.slice(1);}return s;}
+function siteName(k){ var n=DB.sites&&DB.sites[k]&&DB.sites[k].name;if(n&&String(k).indexOf("demo-")===0)n=nomSiteDemo(n);return (n&&clean(n))||"Mon &eacute;tablissement"; }
 function siteEmo(k){ return (DB.sites&&DB.sites[k]&&DB.sites[k].emo)||"\ud83c\udfea"; }
 function spList(sid){ var s=(DB.sites&&DB.sites[sid||DB.site]); return s&&s.zones?s.zones.filter(function(k){return !!DB.spaces[k];}):[]; }
 function siteRows(sid){ var out=[]; spList(sid).forEach(function(k){ (DB.spaces[k].products||[]).forEach(function(p){ out.push({p:p,space:k,site:sid||DB.site}); }); }); return out; }
@@ -273,7 +275,8 @@ function equipeNettoyer(d){if(!d||typeof d!=='object')return d;/* un rôle qui e
 var equipeBrut=(function(){var b=null;return function(x){if(arguments.length)b=x;return b;};})();
 var EQUIPE_MONTANTS=['price','priceDate','unitPrice','purchasePrice','priceHistory','estimatedTotal','deliveryFee','minValue','freeShippingFrom','eur','previousEur','stockFinalHT','previousStockHT','amountHT','amountCents','unitPriceCents','totalHT','prix','pu','cost','costHT','materialCost','valuation','netCents','ttc','ht','facturesInventaire','factureMemoireInv','demandBridge','vdLignesBySite'];
 function equipeSansMontant(x){if(Array.isArray(x))return x.map(equipeSansMontant);if(!x||typeof x!=='object')return x;var o={};Object.keys(x).forEach(function(k){if(EQUIPE_MONTANTS.indexOf(k)<0)o[k]=equipeSansMontant(x[k]);});return o;}
-function equipeNom(v){var k='verdict:equipe:nom:'+(typeof EQUIPE_ETAB!=='undefined'?EQUIPE_ETAB:'');try{if(arguments.length)sessionStorage.setItem(k,String(v||'').slice(0,80));return sessionStorage.getItem(k)||'';}catch(e){return '';}}
+/* C323 (T3 n° 23) : le prénom de l'employé est gardé sur son appareil (et plus seulement pour l'onglet) : ses comptages portent son nom. */
+function equipeNom(v){var k='verdict:equipe:nom:'+(typeof EQUIPE_ETAB!=='undefined'?EQUIPE_ETAB:''),K='verdict:equipe:prenom:v1';try{if(arguments.length){var s=String(v||'').slice(0,80);sessionStorage.setItem(k,s);if(s)localStorage.setItem(K,s);}return sessionStorage.getItem(k)||localStorage.getItem(K)||'';}catch(e){return '';}}
 if(typeof document!=='undefined')document.addEventListener('change',function(e){if(typeof EQUIPE_ETAB!=='undefined'&&EQUIPE_ETAB&&e.target&&e.target.id==='countActor')equipeNom(e.target.value.trim());},true);
 function equipeEnvoi(d){var b=equipeBrut();if(!b||!d)return d;if(staffCan('edit_catalog')){var o=JSON.parse(JSON.stringify(d));if(b.profile!==undefined)o.profile=JSON.parse(JSON.stringify(b.profile));else delete o.profile;return o;}var out=JSON.parse(JSON.stringify(b)),compte={};
   Object.keys(d.spaces||{}).forEach(function(z){((d.spaces[z]||{}).products||[]).forEach(function(p){if(p&&p.id)compte[z+'|'+p.id]=p;});});
@@ -934,6 +937,10 @@ function historiqueAuxPrixActuels(x){
   var tot=0,n=0,lines=x.lines.map(function(l){var v=l&&prix[l.id];if(v&&l.qty!==null&&isFinite(l.qty)){tot+=l.qty*v;n++;return Object.assign({},l,{price:v});}return l;});
   return n?Object.assign({},x,{lines:lines,eur:Math.round(tot*100)/100,__prixActuels:true}):x;
 }
+/* C323 (T3 n° 23) : qui a compté. Le comptage d'un employé arrive sans nom (le serveur retire les noms des comptages d'équipe) :
+   le nom est lu sur les produits comptés à la même heure (± 15 min). */
+function comptageAuteur(x){try{if(x&&x.countedBy)return String(x.countedBy).slice(0,80);var t=Date.parse(x&&x.date||''),par={},best='',n=0;if(!isFinite(t)||typeof siteRows!=='function')return '';
+  (siteRows(DB.site)||[]).forEach(function(r){var p=r&&r.p,by=String(p&&p.countedBy||'').trim(),at=Date.parse(p&&p.countedAt||'');if(by&&isFinite(at)&&Math.abs(at-t)<=15*60000){par[by]=(par[by]||0)+1;if(par[by]>n){n=par[by];best=by;}}});return best;}catch(e){return '';}}
 function historyHtml(){
   var a=(DB.snapshots||[]).filter(function(x){return x.site===DB.site;}).slice(-5).reverse();
   if(!a.length)return '<div class="card"><h3>Historique des comptages</h3><p class="sub" style="margin:0">Enregistrez un comptage termin&eacute; : sa date, sa couverture et sa valeur seront conserv&eacute;es ici.</p></div>';
@@ -942,7 +949,8 @@ function historyHtml(){
     /* C217 W60 : comptage (tout compté ?) et valorisation (prix connus) sont dits séparément ; un ancien comptage « complet » à 0 € sans aucun prix est relu comme « sans prix ». */
     var d=new Date(x.date).toLocaleDateString("fr-FR"), connus=x.lines&&x.lines.length?x.lines.filter(function(l){return l&&l.price>0;}).length:(x.eur>0?(x.counted||0):0), tout=x.total>0&&x.counted===x.total;
     var q=tout?(connus>=x.total?"complet":("comptage complet \u00b7 "+(connus?connus+"/"+x.total+" prix connus":"sans prix"))):("partiel \u00b7 "+(x.counted||0)+"/"+(x.total||0)+" compt\u00e9s");
-    return '<div class="line"><span>'+d+'<span class="sp">'+q+(x.__prixActuels?' \u00b7 aux prix actuels':'')+'</span></span><span class="q">'+(connus?eur(x.eur):"\u2014")+'</span></div>';
+    var auteur=comptageAuteur(x);
+    return '<div class="line"><span>'+d+'<span class="sp">'+q+(x.__prixActuels?' \u00b7 aux prix actuels':'')+(auteur?' \u00b7 compt\u00e9 par '+String(auteur).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}):'')+'</span></span><span class="q">'+(connus?eur(x.eur):"\u2014")+'</span></div>';
   }).join("")+'</div>';
 }
 /* R134 · point 11 — consommation RÉELLE par produit entre deux comptages détaillés (11.3, 11.12–11.17, 11.95).

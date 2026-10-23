@@ -30,9 +30,11 @@
     if(typeof global.esc==="function")return global.esc(String(value==null?"":value));
     return String(value==null?"":value).replace(/[&<>\"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;"}[c];});
   }
-  function money(value){return hasNumber(value)?new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(value)):"—";}
-  function percent(value){return hasNumber(value)?new Intl.NumberFormat("fr-FR",{maximumFractionDigits:1}).format(global.VerdictExact.pctValue(Number(value)/100,1))+" %":"—";}
-  function signed(value,suffix){if(!hasNumber(value))return "—";value=Number(value);return (value>0?"+":value<0?"−":"")+new Intl.NumberFormat("fr-FR",{maximumFractionDigits:1}).format(Math.abs(value))+(suffix||"");}
+  /* C326 : montants et pourcentages au format de la langue choisie (le français ne change pas). */
+  var TAG_LC={en:"en-GB",es:"es-ES",it:"it-IT",de:"de-DE",nl:"nl-NL",pt:"pt-PT"};function tagLc(){var l=String(global.LOCALE||"fr").slice(0,2);return TAG_LC[l]||"fr-FR";}
+  function money(value){return hasNumber(value)?new Intl.NumberFormat(tagLc(),{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(value)):"—";}
+  function percent(value){if(!hasNumber(value))return "—";var tg=tagLc(),v=global.VerdictExact.pctValue(Number(value)/100,1);return tg==="fr-FR"?new Intl.NumberFormat("fr-FR",{maximumFractionDigits:1}).format(v)+" %":new Intl.NumberFormat(tg,{style:"percent",maximumFractionDigits:1}).format(Number(v)/100);}
+  function signed(value,suffix){if(!hasNumber(value))return "—";value=Number(value);return (value>0?"+":value<0?"−":"")+new Intl.NumberFormat(tagLc(),{maximumFractionDigits:1}).format(Math.abs(value))+(suffix||"");}
   function monthLabel(key){return new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric"}).format(parseDate(key+"-01")).replace(/^./,function(x){return x.toUpperCase();});}
   function dayLabel(key){return new Intl.DateTimeFormat("fr-FR",{weekday:"short",day:"numeric"}).format(parseDate(key)).replace(".","");}
   function hash(value){var s=String(value||""),h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16);}
@@ -127,7 +129,7 @@
      poids des jours) sans transformer les mois sans chiffre en journées manquantes. Une saisie à la main ne déplace rien. */
   function importedRow(row){return !!(row&&(row.importedAt||/csv|import|pos|caisse/i.test(String(row.source||"")))&&(hasNumber(row.caJ)||hasNumber(row.ca)));}
   function dayGap(a,b){return Math.round((parseDate(b)-parseDate(a))/864e5);}
-  function trackingStartKey(){var d=data(),configured=String(d.performanceTrackingStartedAt||"").slice(0,10),rows=sourceRows();if(!validDateKey(configured)){if(d._demo||(d.dataProvenance&&d.dataProvenance.nature==="model_estimate")||global.VERDICT_DEMO_SESSION)return rows.length?rows[0].date:todayKey();/* démonstration : tout son historique fictif */var ouv=d.recent&&d.recent.raw&&String(d.recent.raw.opened||"").slice(0,10);return validDateKey(ouv)&&ouv<=todayKey()?ouv:todayKey();}/* C316 : un établissement réel commence à sa création ou à son ouverture déclarée, jamais à la première journée d’une caisse importée */var start=configured;for(var i=rows.length-1;i>=0;i--){var row=rows[i];if(!row||!validDateKey(row.date)||row.date>=start)continue;if(!importedRow(row)||dayGap(row.date,start)>31)break;start=row.date;}return start;}
+  function trackingStartKey(){var d=data(),configured=String(d.performanceTrackingStartedAt||"").slice(0,10),rows=sourceRows();if(!validDateKey(configured)){if(d._demo||(d.dataProvenance&&d.dataProvenance.nature==="model_estimate")||global.VERDICT_DEMO_SESSION)return rows.length?rows[0].date:todayKey();/* démonstration : tout son historique fictif */var ouv=d.recent&&d.recent.raw&&String(d.recent.raw.opened||"").slice(0,10);configured=validDateKey(ouv)&&ouv<=todayKey()?ouv:todayKey();}/* C316 : un établissement réel commence à sa création ou à son ouverture déclarée, jamais à la première journée d’une caisse importée */var start=configured;for(var i=rows.length-1;i>=0;i--){var row=rows[i];if(!row||!validDateKey(row.date)||row.date>=start)continue;if(dayGap(row.date,start)>31)break;if(!importedRow(row))continue;/* C326 : une journée saisie à la main ne coupe pas la caisse continue */start=row.date;}return start;}
   function ensureTrackingStart(){var d=data(),key=trackingStartKey();if(String(d.performanceTrackingStartedAt||"").slice(0,10)!==key)d.performanceTrackingStartedAt=key;return key;}
   function monthRecords(key){
     var rows=sourceRowsForMonth(key),out={},previousCa=0,previousTickets=0;
@@ -355,6 +357,17 @@
   };
   /* C308 : la base du jour (part pondérée du plan, sans avance ni retard) et le minimum demandé ce jour-là. */
   global.verdictPerformanceDayBase=function(day){var R;try{R=global.moteur();}catch(_){return null;}var date=validDateKey(day)?day:currentMonth()+"-"+pad(day);if(!validDateKey(date))return null;var plan=date.slice(0,7)===currentMonth()?currentPlan(R):planFor(R,date.slice(0,7),false);return plan&&hasNumber(plan.targets[date])?Number(plan.targets[date]):null;};
+  /* C326 (décision 16) : comment juger une journée saisie. « couvert » : le minimum du mois était déjà couvert ce matin-là (minimum demandé 0) ;
+     « euros » : minimum demandé sous la moitié de la base (grosse avance), l’écart s’écrit en euros ; sinon « pct ». Phrases en français, traduites par le dictionnaire. */
+  global.verdictJugementJour=function(day,ca){
+    var R;try{R=global.moteur();}catch(_){return null;}var date=validDateKey(day)?day:currentMonth()+"-"+pad(day);
+    if(!validDateKey(date)||date.slice(0,7)!==currentMonth()||!hasNumber(ca))return null;
+    var dem=minimumsDemandes(R)[date],base=Number(global.verdictPerformanceDayBase(date));if(!hasNumber(dem)||!(base>0))return {mode:"pct",dem:hasNumber(dem)?Number(dem):null,base:base>0?base:null};
+    dem=Number(dem);var e=function(v){return new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Math.round(v));},ec=Math.round(Number(ca))-Math.round(dem);
+    if(!(dem>0))return {mode:"couvert",dem:0,base:base,phrase1:"Pas de minimum pour cette journée : le minimum du mois est couvert.",phrase2:"+"+e(ca)+" d’avance en plus"};
+    if(dem<base/2)return {mode:"euros",dem:dem,base:base,phrase1:ec>=0?"Minimum atteint ("+e(dem)+")":"Il manque "+e(-ec)+" sur le minimum demandé ("+e(dem)+")",phrase2:ec>=0?"+"+e(ec)+" d’avance en plus":"Base du jour "+e(base)+", l’avance du mois a réduit le minimum demandé"};
+    return {mode:"pct",dem:dem,base:base};
+  };
   global.verdictMinimumDemande=function(day){var R;try{R=global.moteur();}catch(_){return null;}var date=validDateKey(day)?day:currentMonth()+"-"+pad(day);if(!validDateKey(date)||date.slice(0,7)!==currentMonth())return null;var dem=minimumsDemandes(R);return hasNumber(dem[date])?dem[date]:null;};
 
   /* C205 (V42) : un écart affiché se lit sur les montants affichés (1 786 € − 1 676 € = 110 €, jamais 109 €). */

@@ -44,8 +44,8 @@
   /* C312 (V16-054) : comptage de l'équipe reçu (produits comptés par un autre prénom que celui du patron, dans les 36 h) : qui, quand, combien. */
   function comptageEquipe(db,sid,now){var patron=String(db&&db.profile&&db.profile.prenom||'').trim().toLowerCase(),par={};
     rows(db||{},sid).forEach(function(x){var p=x.p,by=String(p.countedBy||'').trim(),at=Date.parse(p.countedAt||'');if(!by||!isFinite(at)||by.toLowerCase()===patron||now.getTime()-at>36*3600000)return;
-      if(!par[by])par[by]={by:txt(by,80),at:at,n:0};par[by].n++;if(at>par[by].at)par[by].at=at;});
-    var l=Object.keys(par).map(function(k){return par[k];}).sort(function(a,b){return b.at-a.at;});return l.length?{by:l[0].by,at:new Date(l[0].at).toISOString(),products:l[0].n}:null;}
+      if(!par[by])par[by]={by:txt(by,80),at:at,n:0,p:null};par[by].n++;if(at>=par[by].at){par[by].at=at;par[by].p={nom:txt(p.name||'',60),q:p.stock,u:String(p.unit||'')};}});
+    var l=Object.keys(par).map(function(k){return par[k];}).sort(function(a,b){return b.at-a.at;});return l.length?{by:l[0].by,at:new Date(l[0].at).toISOString(),products:l[0].n,produit:l[0].n===1?l[0].p:null}:null;}
   function productMap(db,sid){var out={};rows(db,sid).forEach(function(x){out[x.p.id]={space:x.space,p:x.p};});return out;}
   function profileList(db,sid){var p=db&&db.suppliersBySite&&db.suppliersBySite[sid]||{};return Object.keys(p).map(function(k){return p[k];}).filter(function(x){return x&&x.name;});}
   function nextWindow(profile,now,ordering){
@@ -97,7 +97,9 @@
     now=now instanceof Date?now:new Date(now||Date.now());var open=(snapshot.incidents||[]).filter(function(x){return x.open;});
     /* C312 (V16-054) : « Comptage reçu de Camille · ven. 23/10 14:05 · 12 produits » (promis par « Accès du personnel »), avant les commandes. */
     var tc=snapshot.teamCount;if(tc&&!open.length){var quand=(function(v){try{var O=typeof globalThis!=='undefined'&&globalThis.VerdictOrdering;if(O&&typeof O.formatDateTime==='function')return O.formatDateTime(v);}catch(e){}return String(v).slice(0,16).replace('T',' ');})(tc.at);
-      return {kind:'count',level:'info',title:'Comptage reçu de '+tc.by,detail:quand+' · '+tc.products+' produit'+(tc.products>1?'s':''),route:'inventory',sourceId:'count-'+tc.by+'-'+tc.at.slice(0,16),actorName:tc.by,reportedAt:tc.at};}
+      /* C323 (T3 n° 23) : « Comptage reçu d’Inès · ven. 23/10 · Farine : 3 kg » ; sans prénom donné : « de votre équipe ». */
+      var deN=/^[ée]quipe$/i.test(tc.by)?'de votre équipe':(/^[aeiouyhàâäéèêëîïôöùûüœ]/i.test(tc.by)?'d’':'de ')+tc.by,pr=tc.produit,qn=pr&&pr.q!=null&&pr.q!==''?String(pr.q).replace('.',',')+' '+(pr.u==='piece'||pr.u==='unite'?(Number(pr.q)>1?'pièces':'pièce'):pr.u==='l'?'L':pr.u):'';
+      return {kind:'count',level:'info',title:'Comptage reçu '+deN,detail:quand+' · '+(pr&&qn?pr.nom+' : '+qn:tc.products+' produit'+(tc.products>1?'s':'')),route:'inventory',sourceId:'count-'+tc.by+'-'+tc.at.slice(0,16),actorName:tc.by,reportedAt:tc.at};}
     if(open.length){var x=open[0];return {kind:'incident',level:'critical',title:'Rupture à décider',detail:x.productName+(x.requiredAt?' · nécessaire '+x.requiredAt:''),route:'inventory',sourceId:x.id,actorName:txt(x.actorName,100),reportedAt:txt(x.reportedAt,40)};}
     var prepared=(snapshot.orders||[]).filter(function(x){return x.status==='prepared';}).sort(function(a,b){return dateMs(a.cutoffAt)-dateMs(b.cutoffAt);});
     if(prepared.length){var p=prepared[0],ms=dateMs(p.cutoffAt)-now.getTime();return {kind:'order',level:ms<=3*3600000?'critical':'warning',title:'Commande préparée à valider',detail:p.supplier+(p.cutoffAt?' · limite '+(function(v){try{var O=typeof globalThis!=='undefined'&&globalThis.VerdictOrdering;if(O&&typeof O.formatDateTime==='function')return O.formatDateTime(v);}catch(e){}return String(v).replace('T',' ');})(p.cutoffAt):''),route:'inventory',sourceId:p.id};}

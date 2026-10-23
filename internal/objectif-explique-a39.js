@@ -41,7 +41,7 @@
   function signe(v) { return (v >= 0 ? '+' : '−') + eur(Math.abs(v)); }
   function position(c) {
     if (!c || !c.exact) return '';
-    var base = Number(c.base) || 0, em = ecartMois(c), retard = em.retard, avance = em.avance, total = Number(c.catchup) || base, g = c.input && c.input.glissant, out = '';
+    var base = Number(c.base) || 0, em = ecartMois(c), retard = em.retard, avance = em.avance, total = c.catchup != null && isFinite(c.catchup) ? Number(c.catchup) : base, /* C326 : 0 € demandé (mois couvert) reste 0 */ g = c.input && c.input.glissant, out = '';
     var saisies = c.input && Array.isArray(c.input.days) ? c.input.days.filter(function (d) { return d && d.ca != null; }).length : 1; /* C213 (W08) : sans journée saisie, le mois n'est ni en retard ni « dans les temps » */
     out += retard > 0 ? '<span class="vx39-pos retard">Retard du mois : <b>' + eur(retard) + '</b></span>' : (avance > 0 ? '<span class="vx39-pos avance">Avance du mois : <b>+' + eur(avance) + '</b></span>' : (saisies ? '<span class="vx39-pos">Mois dans les temps</span>' : '<span class="vx39-pos">Aucune journée saisie ce mois-ci</span>'));
     out += '<small>Reste à faire ce mois : <b>' + eur(Math.max(0, Math.round(Number(c.minimum) || 0) - Math.round(Number(c.actual) || 0))) /* C308 (V16-031) : comme l’opération écrite */ + '</b> sur ' + c.openRemaining + ' jour' + (c.openRemaining > 1 ? 's' : '') + ' ouvert' + (c.openRemaining > 1 ? 's' : '') + ', réparti selon le poids de chaque jour : aujourd’hui ' + eur(total) + ' (base ' + eur(base) + ' ' + signe(Math.round(total) - Math.round(base)) + ').</small>';
@@ -58,7 +58,7 @@
     var jour = input.days.filter(function (d) { return d.date === date; })[0]; if (!jour || jour.ca == null) return '';
     var c; try { c = w.VerdictCHR.calculate({ minimum: input.minimum, today: date, days: input.days.map(function (d) { return Object.assign({}, d, { ca: d.date >= date ? null : d.ca }); }) }); } catch (e) { return ''; }
     if (!c || !c.exact || c.next !== date) return '';
-    var base = Number(c.base) || 0, avant = (Number(c.deficit) || 0) - (Number(c.advance) || 0), aFaire = Number(c.catchup) || base, ca = Number(jour.ca) || 0, apres = avant + base - ca;
+    var base = Number(c.base) || 0, avant = (Number(c.deficit) || 0) - (Number(c.advance) || 0), aFaire = c.catchup != null && isFinite(c.catchup) ? Number(c.catchup) : base, /* C326 */ ca = Number(jour.ca) || 0, apres = avant + base - ca;
     function pos(v, quand) { return v > 0.5 ? '<dt>Retard du mois ' + quand + '</dt><dd class="vx39-r">' + eur(v) + '</dd>' : (v < -0.5 ? '<dt>Avance du mois ' + quand + '</dt><dd class="vx39-a">+' + eur(-v) + '</dd>' : '<dt>Mois ' + quand + '</dt><dd>dans les temps</dd>'); }
     return '<div class="vx39-l" data-vx39l="' + date + '">' + pos(avant, 'avant ce jour') + '</div>' +
       '<div class="vx39-l"><dt>Minimum à faire ce jour-là<small>minimum du jour ' + eur(base) + ' ' + signe(Math.round(aFaire) - Math.round(base)) + ' (' + (aFaire < base ? 'part de l’avance du mois' : 'part du retard du mois') + ')</small></dt><dd><b>' + eur(aFaire) + '</b></dd></div>' +
@@ -86,7 +86,7 @@
     var jour = input.days.filter(function (d) { return d.date === date; })[0]; if (!jour) return '';
     var c; try { c = w.VerdictCHR.calculate({ minimum: input.minimum, today: date, days: input.days.map(function (d) { return Object.assign({}, d, { ca: d.date >= date ? null : d.ca }); }) }); } catch (e) { return ''; }
     if (!c || !c.exact || c.next !== date) return '';
-    var base = Number(c.base) || 0, total = Number(c.catchup) || base, budget = Number(input.budget) || Number(input.minimum) || 0, g = input.glissant;
+    var base = Number(c.base) || 0, total = c.catchup != null && isFinite(c.catchup) ? Number(c.catchup) : base, /* C326 : 0 € demandé (mois couvert) reste 0 */ budget = Number(input.budget) || Number(input.minimum) || 0, g = input.glissant;
     var plan = w.DB && w.DB.performancePlans && w.DB.performancePlans[date.slice(0, 7)], src = plan && Array.isArray(plan.weekdayMeans) ? plan.weekdayMeansSource : null;
     var M = plan && Array.isArray(plan.weekdayMeans) ? plan.weekdayMeans : moyennes(date.slice(0, 7) + '-01') /* C213 (W09) : les poids qui ont fixé les bases du mois, lus dans le plan */, connus = M.filter(function (m) { return m != null && m > 0; }), js = jourSem(date), lui = M[js];
     var quand = src === 'lastYear' ? 'Sur les mêmes semaines de l’an dernier (votre caisse ' + (Number(date.slice(0, 4)) - 1) + ')' : src === 'year' ? 'Sur vos 12 derniers mois de caisse' : 'Sur les 10 semaines avant ce mois';

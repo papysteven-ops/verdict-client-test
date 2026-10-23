@@ -255,7 +255,11 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) { dernierAppareil = apparenceAppareil(); suivreAppareil(); render(); } });
   window.addEventListener('pageshow', function () { dernierAppareil = apparenceAppareil(); suivreAppareil(); render(); });
   window.addEventListener('focus', verifierAppareil);
-  setInterval(function () { if (!document.hidden) verifierAppareil(); }, 2000);
+  /* C323 (V16-058, T2 n° 20) : la coque relit aussi l'apparence quand la page est marquée « cachée » mais affichée (aperçu, panneau),
+     au redimensionnement et au premier toucher : le changement du système s'applique entièrement, sans rechargement. */
+  setInterval(verifierAppareil, 1500);
+  window.addEventListener('resize', verifierAppareil);
+  document.addEventListener('pointerdown', verifierAppareil, { capture: true, passive: true });
   ecouter(mobile, render);
   render();
 })();

@@ -25,6 +25,8 @@
     r.style.backgroundColor = dark ? '#08090b' : '#ffffff'; r.style.colorScheme = dark ? 'dark' : 'light';
     /* le garde-contraste efface ses corrections de l'ancien thème et repasse */
     try { if (w.VerdictContraste) w.VerdictContraste.passe(); } catch (e) {}
+    /* C323 : les écrans qui colorent en JavaScript (cadres premium, graphiques) sont prévenus du nouveau thème. */
+    try { w.dispatchEvent(new CustomEvent('verdict:theme', { detail: { dark: dark } })); } catch (e) {}
   }
   if (mq) { if (mq.addEventListener) mq.addEventListener('change', appliquer); else if (mq.addListener) mq.addListener(appliquer); }
   w.addEventListener('storage', function (e) { if (!e.key || e.key === 'verdict-workspace-theme' || e.key === 'verdict-mobile-appearance-v2') appliquer(); });
@@ -32,7 +34,12 @@
   if (p) { try { new w.parent.MutationObserver(appliquer).observe(p, { attributes: true, attributeFilter: ['class'] }); } catch (e) {} }
   /* C312 (V16-058) : comme la coque (C242), l'apparence est aussi relue au retour et toutes les 2 s : l'événement de l'appareil
      n'arrive pas toujours (appli installée, Centre de contrôle, coucher du soleil). Simple lecture : rien n'est écrit tant qu'elle ne change pas. */
-  if (w.addEventListener) w.addEventListener('focus', appliquer); if (doc.addEventListener) doc.addEventListener('visibilitychange', function () { if (!doc.hidden) appliquer(); });
-  var tAuto = typeof setInterval === 'function' ? setInterval(function () { if (!doc.hidden) appliquer(); }, 2000) : 0; if (tAuto && tAuto.unref) tAuto.unref();
+  /* C323 (V16-058, T2 n° 20) : la relecture ne s'arrêtait pas seulement quand la page était vraiment cachée : un aperçu ou un panneau
+     « caché » qui reste affiché (et l'émulation d'apparence, qui n'envoie pas d'événement) gardaient les classes de l'ancien thème
+     alors que le CSS du système avait déjà basculé. Elle tourne donc toujours (simple lecture), et aussi au redimensionnement,
+     au retour sur la page et au premier toucher : même traitement que le rechargement (classes, fond, color-scheme, garde-contraste). */
+  if (w.addEventListener) { w.addEventListener('focus', appliquer); w.addEventListener('resize', appliquer); w.addEventListener('pageshow', appliquer); }
+  if (doc.addEventListener) { doc.addEventListener('visibilitychange', appliquer); doc.addEventListener('pointerdown', appliquer, { capture: true, passive: true }); }
+  var tAuto = typeof setInterval === 'function' ? setInterval(appliquer, 1500) : 0; if (tAuto && tAuto.unref) tAuto.unref();
   w.VerdictThemeAuto = { appliquer: appliquer };
 })();

@@ -26,6 +26,12 @@
   function pct(r) { var v = Math.round(r * 1000) / 10; if (r < 1 && v >= 100) v = 99.9; return v.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
   /* C250 : vert seulement avec une vraie marge (5 % ou plus au-dessus du minimum) ; de 100 à 105 %, le minimum est couvert de justesse. */
   function etat(r) { if (r != null) { var v = Math.round(r * 1000) / 1000; r = r < 1 && v >= 1 ? r : v; } /* C298 (V15-110) : l'état suit le pourcentage affiché (104,98 % s'affiche 105,0 % : « Atteint ») */ return r == null ? 'vide' : r >= 1.05 ? 'vert' : r >= 1 ? 'juste' : r >= 0.95 ? 'jaune' : r >= 0.9 ? 'orange' : 'rouge'; }
+  /* C326 : libellé d'une journée jugée en euros, écrit dans la langue choisie (aucun gabarit « X : Y » trop court) */
+  function libJug(c) {
+    var T = { en: 'en-GB', es: 'es-ES', it: 'it-IT', de: 'de-DE', nl: 'nl-NL', pt: 'pt-PT' }[String(w.LOCALE || 'fr').slice(0, 2)];
+    if (!T) return c.lib + ' · ' + eur(c.valeur);
+    try { return new Date(c.date + 'T12:00:00').toLocaleDateString(T, { weekday: 'short', day: 'numeric', month: 'long' }) + ' · ' + new Intl.NumberFormat(T, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Math.round(c.valeur)); } catch (e) { return c.lib + ' · ' + eur(c.valeur); }
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function moisCle() { try { return w.verdictOperationalClock().key.slice(0, 7); } catch (e) { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); } }
 
@@ -39,16 +45,18 @@
     var V = w.VerdictPerformanceIntegrated, R = w.moteur(), key = moisCle(), m = V.buildMonth(R, key), auj = aujourdhui();
     var cols = (m.days || []).map(function (d) {
       var dt = new Date(d.date + 'T12:00:00'), lib = JOURS[dt.getDay()] + ' ' + d.day + ' ' + MOIS[dt.getMonth()];
-      var base = { lib: lib, date: d.date, axe: String(d.day), jour: d.day, dow: (dt.getDay() + 6) % 7, wd: dt.getDay(), auj: d.date === auj, avenir: d.date > auj };
+      var jg = null, base = { lib: lib, date: d.date, axe: String(d.day), jour: d.day, dow: (dt.getDay() + 6) % 7, wd: dt.getDay(), auj: d.date === auj, avenir: d.date > auj };
       if (d.preTracking) base.type = typeof w.verdictIsOperatingClosed === 'function' && w.verdictIsOperatingClosed(d.date) ? 'repos' : 'avant'; /* C213 (W08) : avant le suivi, un jour fermé reste « Repos », un jour ouvert n'est ni repos ni manqué */
       else if (d.closed) base.type = 'repos';
+      else if (d.ca != null && (jg = typeof w.verdictJugementJour === 'function' ? w.verdictJugementJour(d.date, d.ca) : null) && jg.mode !== 'pct') { /* C326 (décision 16) : écart en euros, ou mois déjà couvert */
+        base.type = 'reel'; base.valeur = d.ca; base.cible = jg.dem; base.jug = jg; base.r = Math.round(d.ca) / Math.round(jg.base); if (Math.round(d.ca) >= Math.round(jg.dem)) base.st = 'vert'; }
       else if (d.ca == null || !(d.target > 0)) { base.type = 'vide'; base.cible = d.target > 0 ? d.target : null; }
       else { base.type = 'reel'; base.valeur = d.ca; base.cible = d.target; base.r = Math.round(d.ca) / Math.round(d.target); } /* C205 (V42) : le taux se lit sur les montants affichés */
       return base;
     });
     var reels = cols.filter(function (c) { return c.type === 'reel'; }), sel = cols.lastIndexOf(reels[reels.length - 1]);
     if (sel < 0) sel = Math.max(0, cols.findIndex(function (c) { return c.auj; }));
-    var ok = reels.filter(function (c) { return c.r >= 1; }).length;
+    var ok = reels.filter(function (c) { return c.jug ? Math.round(c.valeur) >= Math.round(c.cible) : c.r >= 1; }).length;
     var moy = reels.length ? reels.reduce(function (t, c) { return t + c.r; }, 0) / reels.length : null;
     /* Le réflexe CHR : quel jour de la semaine porte la maison. */
     var parJ = {}; reels.forEach(function (c) { (parJ[c.wd] = parJ[c.wd] || []).push(c.r); });
@@ -65,8 +73,8 @@
     INITJ[lng()].split('').forEach(function (j) { h += '<span class="rx-cj" aria-hidden="true">' + j + '</span>'; });
     var prem = m.cols[0] ? m.cols[0].dow : 0; for (var k = 0; k < prem; k++) h += '<span class="rx-c0"></span>';
     m.cols.forEach(function (c, i) {
-      var st = c.type === 'reel' ? etat(c.r) : c.type, v = c.type === 'reel' ? court(c.r) : c.type === 'repos' ? 'Repos' : c.type === 'avant' ? '' : c.avenir ? '' : '—';
-      var al = c.type === 'reel' ? c.lib + ' : ' + pct(c.r) : c.lib + (c.type === 'repos' ? ' : repos' : c.type === 'avant' ? ' : avant le début du suivi' : c.avenir ? ' : à venir' : ' : sans chiffre');
+      var st = c.type === 'reel' ? (c.st || etat(c.r)) : c.type, v = c.type === 'reel' ? (c.jug ? esc(eur(c.valeur)) : court(c.r)) : c.type === 'repos' ? 'Repos' : c.type === 'avant' ? '' : c.avenir ? '' : '—';
+      var al = c.type === 'reel' ? (c.jug ? libJug(c) : c.lib + ' : ' + pct(c.r)) : c.lib + (c.type === 'repos' ? ' : repos' : c.type === 'avant' ? ' : avant le début du suivi' : c.avenir ? ' : à venir' : ' : sans chiffre');
       var jg = ''; /* C222 quater (Steven : « si la barre est inutile, on la supprime : le pourcentage dit déjà tout ») : la couleur dit atteint ou non, le % dit de combien — pas de barre en plus */
       h += '<button type="button" class="rx-j st-' + st + (c.type === 'reel' ? ' niv' : '') + (i === m.sel ? ' sel' : '') + (c.auj ? ' auj' : '') + '" data-i="' + i + '" tabindex="' + (i === m.sel ? 0 : -1) + '" aria-label="' + esc(al) + '" aria-pressed="' + (i === m.sel) + '"><b>' + c.jour + '</b><span>' + (c.type === 'reel' ? v : esc(v)) + '</span>' + jg + '</button>';
     });
@@ -76,7 +84,8 @@
      chiffres que « Conséquence sur le mois » et la carte du jour ; pas de second moteur de prévision. */
   function aDate() {
     var V = w.VerdictPerformanceIntegrated, m = V.buildMonth(w.moteur(), moisCle()), att = 0, enc = 0;
-    (m.days || []).forEach(function (d) { if (!d.closed && d.ca != null && d.target > 0) { att += d.target; enc += d.ca; } });
+    (m.days || []).forEach(function (d) { var b = typeof w.verdictPerformanceDayBase === 'function' ? Number(w.verdictPerformanceDayBase(d.date)) : d.target; /* C326 : la base du jour, pas le minimum demandé (réduit par l'avance) */
+      if (!d.closed && d.ca != null && b > 0) { att += b; enc += d.ca; } });
     return { encaisse: enc, attendu: att };
   }
   /* C157 — Projection annuelle indisponible (ex. Saisonnier mer : historique incomplet) : les mois sont repris du plan
@@ -165,6 +174,7 @@
     /* C245 : jours d'ouverture inconnus (document comptable seul) : aucun minimum du jour inventé ; le mois et l'année restent justes. */
     if (c.type === 'vide' && unite === 'minimum du jour' && typeof w.verdictJoursInconnus === 'function' && w.verdictJoursInconnus()) return { big: 'À confirmer', lab: c.lib + ' · minimum du jour à confirmer : il dépend de vos jours d’ouverture', st: 'vide', mot: '' };
     if (c.type === 'vide') return { big: c.cible ? eur(c.cible) : '—', lab: c.lib + (c.cible ? (c.avenir || c.auj ? ' · ' + (/reste du mois/.test(c.lib) ? '' : unite + ' ') + 'à réaliser' : ' · ' + unite + ', chiffre à saisir') : ' · pas encore de chiffre'), st: 'vide', mot: c.cible ? (c.avenir ? 'À venir' : c.auj && c.encours ? 'En cours' : 'À saisir') : '' }; /* C213 (W17) : l'unité du chapitre, jamais « du jour » sur un mois */
+    if (c.jug) return { big: eur(c.valeur), lab: c.lib + ' · ' + (c.jug.mode === 'couvert' ? c.jug.phrase1 : c.jug.phrase1 + ' · ' + c.jug.phrase2), st: c.st || etat(c.r), mot: c.jug.mode === 'couvert' ? 'Avance' : Math.round(c.valeur) >= Math.round(c.cible) ? 'Atteint' : 'Sous le minimum' }; /* C326 (décision 16) */
     var lab = c.type === 'encours' ? c.lib + ' · ' + eur(c.valeur) + ' encaissés pour ' + eur(c.cible) + ' attendus à cette date'
       : c.lib + ' · ' + (c.type === 'projete' ? eur(c.valeur) + ' projetés' : eur(c.valeur)) + ' pour ' + eur(c.cible) + ' (' + unite + ')';
     /* La couleur n'est jamais seule (WCAG 1.4.1) : un mot dit l'état. */
@@ -266,16 +276,16 @@
     var pasLib = n <= 13 ? 1 : Math.ceil(n / 7);
     m.cols.forEach(function (c, i) {
       var cx = G + pas * (i + 0.5), x = cx - larg / 2, cl = 'col' + (c.type === 'projete' ? ' proj' : '') + (c.type === 'encours' ? ' cours' : '') + (i === m.sel ? ' sel' : '');
-      var lab = c.r != null ? c.lib + ' : ' + pct(c.r) : c.lib + (c.type === 'repos' ? ' : repos' : c.type === 'avant' ? ' : avant le début du suivi' : ' : sans chiffre');
+      var lab = c.r != null ? (c.jug ? libJug(c) : c.lib + ' : ' + pct(c.r)) : c.lib + (c.type === 'repos' ? ' : repos' : c.type === 'avant' ? ' : avant le début du suivi' : ' : sans chiffre');
       s += '<g class="' + cl + '" data-i="' + i + '" tabindex="' + (i === m.sel ? 0 : -1) + '" role="button" aria-label="' + esc(lab) + '">';
       s += '<rect class="hit" x="' + (cx - pas / 2).toFixed(1) + '" y="' + T + '" width="' + pas.toFixed(1) + '" height="' + (B - T + 16) + '" fill="transparent" rx="6"/>';
       if (c.type === 'repos') s += '<circle class="repos" cx="' + cx.toFixed(1) + '" cy="' + (B - 4) + '" r="2.6"><title>Repos</title></circle>';
       else if (c.type === 'avant') s += '';
       else if (c.type === 'vide') s += '<rect class="vide" x="' + x.toFixed(1) + '" y="' + (B - 3) + '" width="' + larg.toFixed(1) + '" height="3" rx="1.5"/>';
       else {
-        var col = COUL[etat(c.r)], yt = y(c.r), hgt = Math.max(2, B - yt);
+        var col = COUL[c.st || etat(c.r)], yt = y(c.r), hgt = Math.max(2, B - yt);
         s += '<rect class="b" x="' + x.toFixed(1) + '" y="' + yt.toFixed(1) + '" width="' + larg.toFixed(1) + '" height="' + hgt.toFixed(1) + '" rx="' + Math.min(6, larg / 2).toFixed(1) + '" fill="' + col + '" stroke="' + col + '" style="--d:' + (anime ? (i * 0.035).toFixed(3) : 0) + 's' + (anime ? '' : ';animation:none') + '"/>';
-        s += '<text class="v" x="' + cx.toFixed(1) + '" y="' + (yt - 5).toFixed(1) + '" text-anchor="middle">' + ent(c.r) + ' %</text>';
+        s += '<text class="v" x="' + cx.toFixed(1) + '" y="' + (yt - 5).toFixed(1) + '" text-anchor="middle">' + (c.jug ? esc(eur(c.valeur)) : ent(c.r) + ' %') + '</text>';
       }
       var proche = i !== m.sel && Math.abs(i - m.sel) < pasLib;
       if (((i % pasLib === 0 || i === n - 1) && !proche) || i === m.sel) s += '<text class="ax" x="' + cx.toFixed(1) + '" y="' + (B + 14) + '" text-anchor="middle">' + esc(c.axe) + '</text>';
@@ -307,8 +317,9 @@
     changer(M.querySelector('.mod-h .kicker'), 'textContent', 'Journée d’exploitation du ' + nom);
     var reel = c.type === 'reel', ca = d.getElementById('jCA'), ve = d.getElementById('jVerdict'), so = d.getElementById('jSous');
     changer(ca, 'textContent', reel ? eur(c.valeur) : c.type === 'repos' ? 'Repos' : '—');
+    if (reel && c.jug) { changer(ve, 'textContent', c.jug.phrase1); changer(so, 'textContent', c.jug.mode === 'couvert' || Math.round(c.valeur) < Math.round(c.cible) ? c.jug.phrase2 : c.jug.phrase2 + ' · Base du jour ' + eur(c.jug.base) + ', l’avance du mois a réduit le minimum demandé.'); var stJ = c.st || etat(c.r); if (M.getAttribute('data-etat') !== stJ) M.setAttribute('data-etat', stJ); return; } /* C326 (décision 16) */
     changer(ve, 'textContent', reel ? (c.valeur >= c.cible ? 'Minimum dépassé de ' + eur(Math.round(c.valeur) - Math.round(c.cible)) : 'Il manque ' + eur(Math.round(c.cible) - Math.round(c.valeur)) + ' pour couvrir le minimum') : c.type === 'repos' ? 'Jour de repos : aucun chiffre attendu' : c.avenir ? 'Journée à venir' : 'Journée pas encore saisie');
-    changer(so, 'textContent', reel ? 'Coût de cette journée : ' + eur(c.cible) + ', soit ' + pct(c.r) + ' du minimum.' : '');
+    changer(so, 'textContent', reel ? 'Minimum de cette journée : ' + eur(c.cible) + ', soit ' + pct(c.r) + ' du minimum.' /* C326 : le minimum du jour, une phrase entière */ : '');
     var st = reel ? detail(c, box.__m.unite).st : 'info'; if (M.getAttribute('data-etat') !== st) M.setAttribute('data-etat', st);
   }
   function choisir(box, m, i, focus) {
