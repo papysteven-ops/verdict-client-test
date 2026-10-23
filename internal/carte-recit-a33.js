@@ -276,3 +276,14 @@
   if (!brancher() && typeof w.setInterval === 'function') { var k = 0, iv = w.setInterval(function () { if (brancher() || ++k > 40) w.clearInterval(iv); }, 250); }
   w.VerdictIndiceCarte = { noter: noter };
 })(window);
+
+/* C307 (B M1 / FINAL-N1) : la TVA d'un plat inconnue (null, vide) n'est jamais 0 %. platTVA() faisait Number(null) = 0, qui passe
+   x >= 0 : le prix TTC était pris pour le HT (Carte, Décisions, Idéale, Indice Carte, Audit ch. 13). Inconnue → TVA de l'établissement. */
+(function (w) {
+  function brancher() {
+    var f = w.platTVA; if (typeof f !== 'function') return false; if (f.__c307) return true;
+    var g = function (p) { if (p && (p.tva == null || String(p.tva).trim() === '')) return f.call(this, {}); return f.apply(this, arguments); };
+    g.__c307 = true; w.platTVA = g; return true;
+  }
+  if (!brancher() && typeof w.setInterval === 'function') { var k = 0, iv = w.setInterval(function () { if (brancher() || ++k > 40) w.clearInterval(iv); }, 250); }
+})(window);

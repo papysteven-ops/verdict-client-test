@@ -116,6 +116,9 @@
   function vegetarien(p) { var L = lignes(p); return L.length > 0 && !L.some(function (l) { return VIANDE.test(String(l[0])); }); }
   function analyse() {
     var GPR = prixDecisions(); /* C182 : prix conseillés de Décisions et Simuler */
+    /* C307 (FINAL-N3) : quand le plan de prix de Décisions est fiable, il est la seule règle de prix de l'Idéale (même s'il ne propose
+       aucune hausse) ; sinon, une hausse de l'Idéale est dite hors plan : Simuler et l'Audit ne la comptent pas. */
+    var PLANF = false; try { PLANF = !!(w.VerdictGainRealiste && w.VerdictGainRealiste.carteFiable()); } catch (e) {}
     var D = DB(); if (!D || typeof w.platCalc !== 'function') return null;
     var P = profil(), m = moisCourant();
     var plats = D.plats.filter(function (p) { return !p.cpArchived; }).map(function (p) {
@@ -149,12 +152,12 @@
           x.action = (x.classe === 'etoile' ? 'Garder en tête de catégorie, et passer' : 'Passer') + ' de ' + eur2(x.ttc) + ' à ' + eur2(pr.apres) + ' (+' + Math.round(hp * 100) + ' %) : sa marge est sous votre objectif (même prix que Décisions et Simuler)';
         }
         else if (x.classe === 'etoile') { x.action = 'Garder et placer en tête de la catégorie'; }
-        else if (x.classe === 'cheval' && Object.keys(GPR).length > 0) { x.action = 'Garder le prix : sa marge atteint votre objectif ; mettez plutôt en avant les plats qui rapportent plus'; }
+        else if (x.classe === 'cheval' && (Object.keys(GPR).length > 0 || PLANF)) { x.action = x.sousObj ? 'Garder le prix, comme Décisions et Simuler : sa marge sous votre objectif se remonte par le coût (portion, achats)' : 'Garder le prix : sa marge atteint votre objectif ; mettez plutôt en avant les plats qui rapportent plus'; }
         else if (x.classe === 'cheval') {
           var hausse = Math.min(0.08, Math.max(0.03, (mMoy - x.marge) / Math.max(1, x.ht)));
           var nouveau = Math.floor(x.ttc * (1 + hausse) * 10) / 10; if (nouveau <= x.ttc) nouveau = Math.round((x.ttc + 0.1) * 10) / 10; var h = nouveau / x.ttc - 1, nhT = x.ht * (1 + h); /* arrondi au dixième vers le bas : jamais plus de 8 % */
           x.prix = nouveau; x.gain = x.vol * (1 - 0.5 * h) * (x.marge + (nhT - x.ht)) - x.vol * x.marge;
-          x.action = 'Passer de ' + eur2(x.ttc) + ' à ' + eur2(nouveau) + ' (+' + Math.round(h * 100) + ' %), ou réduire légèrement la portion';
+          x.action = 'Passer de ' + eur2(x.ttc) + ' à ' + eur2(nouveau) + ' (+' + Math.round(h * 100) + ' %), ou réduire légèrement la portion (hors plan : Simuler et l’Audit ne comptent pas cette hausse)';
         } else if (x.classe === 'enigme') { x.gainPrix = pr ? Number(pr.contribMois) || 0 : 0; if (pr) x.prix = pr.apres; x.gain = 0.10 * x.vol * (x.marge - mMoy) + x.gainPrix; x.action = 'Mettre en avant : suggestion du serveur, haut de catégorie, nom et description plus parlants' + (pr ? ' ; et passer de ' + eur2(x.ttc) + ' à ' + eur2(pr.apres) + ' (marge sous votre objectif, même prix que Décisions et Simuler)' : ''); }
         else {
           var autres = L.filter(function (y) { return y !== x; }), mAutres = autres.length ? autres.reduce(function (t, y) { return t + y.marge * y.vol; }, 0) / Math.max(1, autres.reduce(function (t, y) { return t + y.vol; }, 0)) : 0;
@@ -300,7 +303,10 @@
     return 'Le reste (' + signe((R.gainMois - R.gainPrix) * part) + ' par mois) vient de ' + (q.length ? q.join(' et de ') : 'l’argent libéré du stock') + ' : Simuler et l’Audit ne le comptent pas.';
   }
   function lienSimuler(R, part) {
-    var g = R.gc; if (!(R.gainPrix > 0.5) || !g || !g.fiable) return '';
+    var g = R.gc;
+    /* C307 (FINAL-N3) : sans hausse de prix, le gain de l'Idéale est dit hors plan, comme le reste d'un gain avec prix (Kebab). */
+    if (!(R.gainPrix > 0.5) && R.gainMois > 0.5) return '<p class="ci-m" data-ci-lien style="margin-top:10px">Aucune hausse de prix, comme dans Décisions et Simuler. ' + resteTxt(R, part).replace(/^Le reste \(/, 'Ce gain (') + '</p>';
+    if (!(R.gainPrix > 0.5) || !g || !g.fiable) return '';
     return '<p class="ci-m" data-ci-lien style="margin-top:10px">Dont <b>' + signe(R.gainPrix * part) + ' par mois</b> par les nouveaux prix de ' + R.prixPlats + (R.prixPlats > 1 ? ' plats sous leur objectif' : ' plat sous son objectif') +
       (R.prixTous ? ' : le chiffre du curseur « Prix de la carte » de Simuler' : ', calculés comme dans Simuler') + '. ' +
       (g.retenu ? 'Ces prix sont compris dans votre plan Simuler.' : g.texte ? g.texte /* C301 (V15-042) : la même phrase que le récit */ : 'Votre plan Simuler (' + signe(g.plan) + ' par an) ne les ajoute pas.') +

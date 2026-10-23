@@ -243,15 +243,40 @@ function duplicate(srcId,nom,ville,network,opts){
   return id;
 }
 /* C301 (V15-065) — porte unique vers le serveur de comptes (recette L4, C303). */
-function compteServeur(){try{return root.VERDICT_ACCOUNT_AUTH_READY===true&&!!root.VERDICT_COMPTE&&typeof root.fetch==='function'&&String(root.location&&root.location.protocol||'').indexOf('http')===0;}catch(e){return false;}}
-function postServeur(url,body){var h={'Content-Type':'application/json'},c=root.VERDICT_ACCOUNT_STATE&&root.VERDICT_ACCOUNT_STATE.csrf;if(c)h['X-CSRF-Token']=c;
-  return root.fetch(url,{method:'POST',credentials:'same-origin',headers:h,body:JSON.stringify(body)}).then(function(r){return r.json().catch(function(){return {};}).then(function(j){return {status:r.status,j:j||{}};});});}
+/* C306 (T1 N1, T2 F1, A-C34) : dans la coque, le compte et son état peuvent venir du cadre parent. */
+function lireHaut(k){try{if(root[k]!==undefined&&root[k]!==null&&root[k]!==false)return root[k];var p=root.parent;if(p&&p!==root)return p[k];}catch(e){}return root[k];}
+function compteServeur(){try{var s=root.VERDICT_ACCOUNT_STATE;return (lireHaut('VERDICT_ACCOUNT_AUTH_READY')===true&&!!lireHaut('VERDICT_COMPTE')||!!(s&&s.auth===true&&s.compte))&&typeof root.fetch==='function'&&String(root.location&&root.location.protocol||'').indexOf('http')===0;}catch(e){return false;}}
+/* C306 : le jeton de session (CSRF) est lu au serveur avant tout envoi. Un compte à formule fixe (Pilotage, Pro) construit son
+   état depuis la coque, sans jeton : la porte le demande (/api/account « me »), le range dans l'état du compte, et le redemande
+   une fois si le serveur le refuse. Le chargement le range aussi, pour les autres envois (espace, flux). */
+var JETON='';
+function etatCompte(){try{return root.VERDICT_ACCOUNT_STATE||null;}catch(e){return null;}}
+function jetonCompte(){try{var c=lireHaut('VERDICT_COMPTE');return c&&c.connecte!==false&&c.csrf?String(c.csrf):'';}catch(e){return '';}}
+function jetonConnu(){var s=etatCompte(),c=(s&&s.csrf)||JETON||jetonCompte();if(c&&s&&!s.csrf){try{s.csrf=c;}catch(e){}}return c||'';}
+function panne(code){var e=new Error(code);e.c306=code;return e;}
+function demanderJeton(){return root.fetch(root.VERDICT_ACCOUNT_API||'/api/account',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{"action":"me"}'})
+  .then(function(r){return r.json().catch(function(){return {};});}).then(function(j){if(!j||j.authenticated!==true)throw panne('session');if(!j.csrf)throw panne('jeton');
+    JETON=String(j.csrf);var s=etatCompte();if(s){try{s.csrf=JETON;}catch(e){}}return JETON;});}
+function postServeur(url,body,redemande){var c=redemande?'':jetonConnu();
+  return (c?Promise.resolve(c):demanderJeton()).then(function(jt){
+    return root.fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':jt},body:JSON.stringify(body)}).then(function(r){return r.json().catch(function(){return {};}).then(function(j){return {status:r.status,j:j||{}};});});
+  }).then(function(o){if(o.status===403&&o.j.error==='csrf_invalid'&&!redemande){JETON='';var s=etatCompte();if(s){try{s.csrf='';}catch(e){}}return postServeur(url,body,true);}return o;});}
+/* C306 : jamais d'échec muet — la vraie cause, dans une fenêtre (et une bulle si la fenêtre manque). */
+function causeEchec(o){var j=(o&&o.j)||{},e=String(j.error||j.code||'');
+  if((o&&o.c306)==='session'||o&&o.status===401||e==='authentication_required')return 'Votre session n’est plus ouverte dans cet onglet : reconnectez-vous depuis la page Compte, puis recommencez. Rien n’a été créé.';
+  if((o&&o.c306)==='jeton'||e==='csrf_invalid')return 'Le serveur n’a pas reconnu la session de cet onglet (jeton de sécurité refusé deux fois). Rechargez la page, puis recommencez. Rien n’a été créé.';
+  if(e==='mfa_required')return 'Votre compte demande la vérification en deux étapes : confirmez-la dans la page Compte, puis revenez créer l’établissement. Rien n’a été créé.';
+  if(e==='forbidden')return 'Seul le propriétaire du compte peut ajouter un établissement. Rien n’a été créé.';
+  if(e==='invalid_establishment')return 'Donnez un nom à l’établissement, puis recommencez. Rien n’a été créé.';
+  return 'Le serveur n’a pas confirmé l’établissement'+(o&&o.status?' (réponse '+o.status+(e?' · '+e:'')+')':'')+' : rien n’a été créé. Réessayez dans un instant.';}
+function echec(t){var ok=false;try{if(typeof root.ask==='function'){root.ask('Établissement non créé',t,'Compris',function(){});ok=true;}}catch(e){}dire(t);return ok;}
 function centimes(v){return (Number(v||0)/100).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2})+' € HT';}
 function prixQuote(q){var m=q&&q.montantNouveau||{},per=q&&/an/.test(String(q.periode||''))?' par an':' par mois';
   return centimes(m.premier)+per+(q&&q.fondateur&&m.ensuite!=null&&m.ensuite!==m.premier?' la première année (prix fondateur), puis '+centimes(m.ensuite)+per:'');}
 function dire(t){try{if(typeof root.toast==='function')root.toast(t);}catch(e){}}
 function declarer(nom,suite){
-  if(!compteServeur()){suite();return;}
+  /* C306 (L4) : sans compte connecté, création sur cet appareil seulement, et c'est dit */
+  if(!compteServeur()){suite();if(!lireHaut('VERDICT_COMPTE'))dire('Établissement créé sur cet appareil seulement : aucun compte connecté, il n’est pas déclaré au serveur.');return;}
   var id=typeof root.etabId==='function'?root.etabId():('e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}
   function creerLocal(q){var e0=root.etabId,une=function(){root.etabId=e0;return id;};if(typeof e0==='function')root.etabId=une;try{suite();}finally{if(root.etabId===une)root.etabId=e0;}
     if(q&&q.inclus)dire(q.raison==='essai'?'Établissement inclus pendant l’essai.':'Établissement inclus dans votre abonnement.');}
@@ -260,12 +285,12 @@ function declarer(nom,suite){
       if(r.status===200&&r.j.ok!==false){creerLocal(r.j.quote||q);return;}
       if(r.status===402&&r.j.quote){demander(r.j.quote);return;}
       if(r.status===409){root.ask('Abonnement à mettre à jour','Votre abonnement est géré dans la page Compte : ajoutez-y cet établissement, puis revenez le créer ici. Rien n’a été créé.','Ouvrir mon abonnement',function(){root.location.href='../../account.html?view=abo';});return;}
-      dire('Le serveur n’a pas confirmé l’établissement : rien n’a été créé. Réessayez dans un instant.');
-    }).catch(function(){dire('Le serveur de comptes ne répond pas : rien n’a été créé. Réessayez dans un instant.');});}
+      echec(causeEchec(r));
+    }).catch(function(x){echec(x&&x.c306?causeEchec(x):'Le serveur de comptes ne répond pas : rien n’a été créé. Réessayez dans un instant.');});}
   function demander(q){if(q.inclus){envoyer(q,null);return;}
     root.ask('Confirmer le supplément ?','« '+String(nom||'Nouvel établissement')+' » s’ajoute à votre abonnement : '+prixQuote(q)+'. Rien n’est facturé sans cette confirmation.','Confirmer et créer',function(){envoyer(q,q.montantNouveau&&q.montantNouveau.premier);});}
-  postServeur('/api/account',{action:'establishment_quote'}).then(function(r){if(r.status===200&&r.j&&typeof r.j==='object')demander(r.j);else dire('Le serveur n’a pas pu chiffrer l’établissement : rien n’a été créé.');})
-    .catch(function(){dire('Le serveur de comptes ne répond pas : rien n’a été créé. Réessayez dans un instant.');});
+  postServeur('/api/account',{action:'establishment_quote'}).then(function(r){if(r.status===200&&r.j&&typeof r.j==='object'&&r.j.ok!==false)demander(r.j);else echec(r.status===401?causeEchec(r):'Le serveur n’a pas pu chiffrer l’établissement'+(r.status?' (réponse '+r.status+')':'')+' : rien n’a été créé.');})
+    .catch(function(x){echec(x&&x.c306?causeEchec(x):'Le serveur de comptes ne répond pas : rien n’a été créé. Réessayez dans un instant.');});
 }
 function createSame(){
   var t=T(),src=(doc.getElementById('ne12-src')||{}).value,net=(doc.getElementById('ne12-net')||{}).value,nom=((doc.getElementById('ne12-nom')||{}).value||'').trim(),ville=((doc.getElementById('ne12-ville')||{}).value||'').trim(),quartier=((doc.getElementById('ne12-quartier')||{}).value||'').trim();
@@ -377,6 +402,18 @@ root.addEventListener('message',function(ev){var d=ev&&ev.data;if(!d||!d.context
 /* C301 (V15-065) : « Créer l’établissement réel » (029) passe par la même porte ; jamais pour un modèle */
 (function(){var ce=root.createEtab;if(typeof ce!=='function'||ce.__c301)return;var g=function(modele){if(modele)return ce.apply(this,arguments);var s=this,a=arguments,n=((doc.getElementById('ne-nom')||{}).value||'').trim();declarer(n,function(){ce.apply(s,a);});};g.__c301=true;g.__c301orig=ce;root.createEtab=g;})();
 root.VerdictDeclarerEtab=declarer;
+/* C306 : au chargement et à chaque relecture du compte, un compte connecté reçoit son jeton (les envois à l'espace et aux flux
+   ne reviennent plus en 403 csrf_invalid). Le jeton que la configuration du serveur donne (VERDICT_COMPTE.csrf, L4) passe en premier. */
+(function(){var vu=null;function remplir(){try{var s=etatCompte();if(!s||s.auth!==true||s.csrf||!compteServeur())return;if(JETON||jetonCompte()){s.csrf=JETON||jetonCompte();return;}if(vu===s)return;vu=s;demanderJeton().catch(function(){vu=null;});}catch(e){}}
+  function brancher(){var f=root.verdictAccountRefresh;if(typeof f!=='function'||f.__c306)return !!f;var g=function(){var p=f.apply(this,arguments);try{if(p&&typeof p.then==='function')p.then(function(){remplir();});else remplir();}catch(e){}return p;};g.__c306=true;root.verdictAccountRefresh=g;return true;}
+  brancher();remplir();var n=0;if(typeof root.setInterval==='function'){var t=root.setInterval(function(){brancher();remplir();if(++n>=30)root.clearInterval(t);},1000);}})();
+/* C306 (B F3) : le rappel « Protégez votre historique » s'ouvre en haut, à l'endroit du « + » de la barre : un appui donné juste
+   avant son apparition ne télécharge plus une sauvegarde. Le rappel attend la fin du geste en cours et ignore ses boutons
+   pendant ses 800 premières millisecondes. */
+(function(){var geste=0;if(!doc||!doc.addEventListener)return;doc.addEventListener('pointerdown',function(){geste=Date.now();},true);
+  doc.addEventListener('click',function(e){var t=e.target,m=t&&t.closest&&t.closest('#mBackupReminder');if(!m)return;if(t.closest('button')&&Date.now()-Number(m.getAttribute('data-c306')||0)<800){e.preventDefault();e.stopImmediatePropagation();}},true);
+  function brancher(){var f=root.verdictMaybeRemindBackup;if(typeof f!=='function'||f.__c306)return !!f;var g=function(){if(Date.now()-geste<1500){root.setTimeout(root.verdictMaybeRemindBackup,4000);return;}var r=f.apply(this,arguments);try{var m=doc.getElementById('mBackupReminder');if(m&&!m.getAttribute('data-c306'))m.setAttribute('data-c306',String(Date.now()));}catch(e){}return r;};g.__c306=true;root.verdictMaybeRemindBackup=g;return true;}
+  if(!brancher()&&typeof root.setInterval==='function'){var k=0,t=root.setInterval(function(){if(brancher()||++k>20)root.clearInterval(t);},500);}})();
 root.VerdictNomCompte=nomDuCompte;root.verdictNewEtabChooser=openChooser;root.verdictNewEtabModel=openModel;root.verdictNewEtabSame=openSame;root.verdictNewEtabFresh=openFresh;root.verdictNewEtabClose=closeSheet;
 root.verdictNewEtabCreateSame=createSame;root.verdictNewEtabCreateBlank=createBlank;root.verdictEtabDuplicate=duplicate;root.verdictDupFec=goFec;root.verdictDupEntry=goEntry;root.verdictDupRef=function(){try{if(typeof root.openRef==='function'){root.openRef();return;}}catch(e){}goFec();};
 root.VerdictEtabPortfolio={conceptKeys:CONCEPT_KEYS.slice(),duplicate:duplicate,duplicateRequestsKey:DUP_KEY,placeOf:placeOf};

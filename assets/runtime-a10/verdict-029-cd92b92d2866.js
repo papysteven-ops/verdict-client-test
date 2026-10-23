@@ -851,7 +851,7 @@ function freshDB(model){
       var livre=!!x[5], part=livre?(x[9]==null?(key==='DarkKitchen'?100:30):x[9]):0;
       return {id:"p"+i,nom:x[0],cat:x[1],ttc:x[2],vol:x[3],
         rec:x[4].map(function(l){ return [l[0],l[1]]; }),preps:[],pf:livre, pfttc:x[6]||null,
-        pfshare:part,pq:(x[7]||[false,false,false,false,false]).slice(),tva:x[8]==null?null:x[8]};
+        pfshare:part,pq:(x[7]||[false,false,false,false,false]).slice(),tva:x[8]!=null?x[8]:/* C307 : un plat de modèle sans TVA reçoit celle du modèle, 20 % pour l'alcool */(/sangria|(verre|pichet|bouteille|carafe) de vin|bi[eè]res?\b|spiritueux|champagne/i.test(String(x[0]||''))?20:(M&&M.in&&M.in.tva!=null&&isFinite(Number(M.in.tva))?Number(M.in.tva):10))};
     });
     /* V9.4 — un modèle fictif livré ne demande pas au client de confirmer ce
        que Verdict a lui-même écrit.
@@ -1632,7 +1632,7 @@ function verdictCompteCourant(){try{var c=window.VERDICT_COMPTE;if(c===undefined
 function verdictCompteFixe(){var c=verdictCompteCourant();if(!c||c.essai)return null;if(c.formule==='pilotage'||c.formule==='pro')return c.formule;if(c.formule==='inventaire'&&window.VERDICT_PAIEMENT_ACTIF===true)return 'inventaire';return null;}
 function verdictEtatDepuisCompte(c,f){var s=verdictAccountDefaultState('available');s.loaded=true;s.auth=true;s.tier=f==='pro'||f==='pilotage'?f:(c.essai?'pro':'verdict');s.access_state=c.etat||'';s.email=c.email||'';
   s.trial=!!c.essai;s.paid=c.etat==='paid';s.trial_days_left=Number(c.joursRestants)||0;s.trial_ends_at=Number(c.essaiFin)||0;s.current_period_end=Number(c.echeance)||0;s.cancel_at_period_end=c.resiliationPrevue===true;
-  s.has_subscription=!!c.abonnement;s.subscription_period=c.periode||'';s.active_establishments=Math.max(1,Number(c.etablissements)||1);s.establishment_limit=100;s.founder_price_lock=!!c.fondateur;s.compte=true;return s;}
+  s.has_subscription=!!c.abonnement;s.subscription_period=c.periode||'';s.active_establishments=Math.max(1,Number(c.etablissements)||1);s.establishment_limit=100;s.founder_price_lock=!!c.fondateur;s.compte=true;s.csrf=String(c.csrf||'');/* C306 : le jeton de session du compte */return s;}
 /* C226 (X17) : au chargement, l'ancienne vue de l'Accueil (« Objectif de CA TTC … pas encore intégrés ») ne se montre plus
    avant la lecture premium : l'Accueil reste blanc le temps qu'elle arrive (5 s au plus, puis l'ancienne vue reste le secours). */
 (function(){try{var h=document.documentElement;h.classList.add('vd-pil-attente');var fin=function(){h.classList.remove('vd-pil-attente');};
