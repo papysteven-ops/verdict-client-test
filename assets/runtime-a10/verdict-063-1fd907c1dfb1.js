@@ -59,7 +59,13 @@
   var nom=dt;try{nom=new Intl.DateTimeFormat(L(),{weekday:'long',day:'numeric',month:'long'}).format(new Date(dt+'T12:00:00'));}catch(e){}
   return {date:dt,cible:c.cible,reel:c.type==='reel'?c.valeur:null,nom:nom};}catch(e){return null;}}
  function attach(){try{if(root.VIEW!=='pil')return;var fr=root.document.querySelector('#v-pil iframe.p41-ecran')||root.document.querySelector('iframe.p41-ecran'),doc=fr&&fr.contentDocument;if(!doc||!doc.body)return;
-  var M=doc.getElementById('modSaisie');if(!M||!M.parentNode)return;var o=compute(choixDe(doc));if(!o)return;
+  var M=doc.getElementById('modSaisie');if(!M||!M.parentNode)return;
+  /* C333 (décision 19) : signature des données AVANT le calcul ; rien pour un écran non affiché */
+  if(root.document.hidden||!fr.offsetParent||!M.offsetParent)return;
+  var D=root.DB||{},H=D.histJour||[],lj=H.length?H[H.length-1]:null,ck='';try{ck=root.verdictOperationalClock().key;}catch(e){}
+  var pre=[L(),root.VERDICT_DB_REV||0,root.VERDICT_VIEW_REVISION||0,ck,H.length,lj?lj.date+':'+lj.caJ:'',doc.__vx46jour||'',root.VERDICT_DEMO_SESSION?1:0,D.modele||'',(root.STORE&&root.STORE.actif)||'',D.etab||''].join('|');
+  if(doc.__rjPre===pre&&doc.getElementById('modReperesJour'))return;
+  var o=compute(choixDe(doc));if(!o)return;doc.__rjPre=pre;
   var sig=[L(),o.key,o.min,o.obj,o.fc,o.n,o.reel,o.src].join('|'),el=doc.getElementById('modReperesJour');if(el&&el.getAttribute('data-rj-sig')===sig)return;
   var r=html(o);if(!el){el=doc.createElement('article');el.className='mod';el.id='modReperesJour';var off=doc.getElementById('vdOffCard'),after=(off&&off.parentNode===M.parentNode)?off:M;after.parentNode.insertBefore(el,after.nextSibling);}
   el.setAttribute('data-etat',r.etat);el.setAttribute('data-rj-sig',sig);el.innerHTML=r.h;}catch(e){}}

@@ -101,7 +101,7 @@
     '@media (orientation:landscape) and (max-height:500px) and (min-width:600px),(min-width:860px) and (max-width:1099px){html.vd-plan-pastille .app-shell-header{grid-template-columns:auto minmax(0,18vw) minmax(0,1fr) auto auto!important;grid-template-areas:"brand context tabs plan actions"!important}html.vd-plan-pastille .app-shell-brand>span{display:none}html.vd-plan-pastille .app-shell-header .module-tabs button{min-width:0!important}.app-shell-header>#vdPlanBadge{grid-area:plan;grid-row:auto;grid-column:auto}html.vd-plan-pastille .app-shell-header>.shell-actions{grid-area:actions;grid-row:auto;grid-column:auto}.app-shell-header>#vdPlanBadge .vpb-l{display:none}.app-shell-header>#vdPlanBadge::after{content:attr(data-court)}}' +
     '@media (min-width:1100px){.app-shell-header>#vdPlanBadge{order:2;align-self:stretch;white-space:normal;text-align:center;line-height:1.25;padding:8px 12px}}' +
     'html.vd-workspace-dark #vdPlanBadge,html[data-theme="dark"] #vdPlanBadge,.dark #vdPlanBadge{color:#fde68a}' +
-    '#vdOffre{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center;background:rgba(2,8,23,.78);opacity:1;transition:opacity .16s}#vdOffre.ferme{opacity:0;pointer-events:none}' +
+    '#vdOffre{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center;background:rgba(2,8,23,.45);opacity:1;transition:opacity .16s}#vdOffre.ferme{opacity:0;pointer-events:none}' +
     '#vdOffre .vo-card{position:relative;width:min(100%,560px);max-height:calc(100vh - 24px);overflow:auto;padding:28px 22px calc(22px + env(safe-area-inset-bottom));border-radius:30px 30px 0 0;background:#0a0a0a;color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;box-shadow:0 -30px 80px rgba(0,0,0,.5);isolation:isolate}' +
     '#vdOffre .vo-card:before{content:"";position:absolute;inset:-40%;z-index:-1;background:radial-gradient(circle at 80% 10%,rgba(227,179,65,.32),transparent 45%),radial-gradient(circle at 10% 90%,rgba(34,197,94,.22),transparent 50%)}' +
     '#vdOffre .vo-k{font:800 11.5px/1 -apple-system,system-ui;letter-spacing:.16em;text-transform:uppercase;color:#e3b341}#vdOffre h1{margin:10px 0 8px;font:900 clamp(26px,6.5vw,36px)/1.05 -apple-system,system-ui;letter-spacing:-.03em;color:#fff}' +
@@ -126,6 +126,7 @@
     '<li><span class="ic">📦</span><div><b>Inventaire · 0 €</b><small>Compter, valoriser, commander, avec les prix de vos factures. Gratuit, sans limite de durée.</small></div></li></ul>' +
     '<div class="vo-prix"><div><em>Pilotage</em><b>69 € HT</b><small>par mois · ou 690 € HT par an</small></div><div><em>Pro</em><b>129 € HT</b><small>par mois · ou 1 290 € HT par an</small></div></div>' +
     '<p class="vo-note">Fondateurs, 50 places : Pro à 69 € HT par mois ou 690 € HT la première année, puis 99 € HT par mois ou 990 € HT par an tant que l’abonnement reste actif. Établissement en plus : +39 € HT par mois en Pilotage, +69 € HT en Pro.</p>';
+  doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermer(); });
   function fermer() { var o = doc.querySelector('#vdOffre:not(.ferme)'); if (!o) return; o.classList.add('ferme'); setTimeout(function () { if (o.parentNode) o.parentNode.removeChild(o); }, 200); }
   function ouvrirOffre(mode) {
     var E = etat(), P = lire() || {}, reste = !parCompte() && P.fin && P.fin > Date.now() ? Math.ceil((P.fin - Date.now()) / JOUR) : 0;
@@ -160,6 +161,11 @@
     /* C212 (W05) : l'offre est entière dès la première image peinte après le clic : plus d'attente d'image ni de fondu
        à l'ouverture (le fil principal de la coquille est chargé ; T3 mesurait 3 s). Seule la fermeture s'estompe. */
     o.classList.add('on');
+    /* C368 (décision 37) : l'offre se ferme aussi en glissant vers le bas (depuis le haut de la carte) et avec Échap (plus bas). */
+    var y0 = null, dy = 0, carte = o.querySelector('.vo-card');
+    o.addEventListener('touchstart', function (e) { y0 = carte && carte.scrollTop <= 0 ? e.touches[0].clientY : null; dy = 0; }, { passive: true });
+    o.addEventListener('touchmove', function (e) { if (y0 === null) return; dy = Math.max(0, e.touches[0].clientY - y0); carte.style.transform = dy ? 'translateY(' + dy + 'px)' : ''; }, { passive: true });
+    o.addEventListener('touchend', function () { if (y0 === null) return; var fin = dy > 90; y0 = null; carte.style.transform = ''; if (fin) fermer(); });
     o.addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-vo],.vo-x'); if (!b) { if (ev.target === o) fermer(); return; }
       var a = b.getAttribute('data-vo');

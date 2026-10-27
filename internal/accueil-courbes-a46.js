@@ -23,7 +23,11 @@
   function eur(v) { return Math.round(Number(v) || 0).toLocaleString('fr-FR') + ' €'; }
   /* C204 : un chiffre sous son minimum ne s'arrondit jamais à 100 % (99,5 % s'écrit 99 %, pas 100 %). */
   function ent(r) { var v = Math.round(r * 100); return r < 1 && v >= 100 ? 99 : v; }
-  function pct(r) { var v = Math.round(r * 1000) / 10; if (r < 1 && v >= 100) v = 99.9; return v.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
+  /* C327 : pourcentages au format de la langue choisie (Intl) ; en français, la forme d’avant. */
+  var TAGL = { en: 'en-GB', es: 'es-ES', it: 'it-IT', de: 'de-DE', nl: 'nl-NL', pt: 'pt-PT' };
+  function pcN(n, d) { var T = TAGL[lng()]; if (!T) return (d ? n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }) : String(n)) + ' %'; try { return new Intl.NumberFormat(T, { style: 'percent', minimumFractionDigits: d, maximumFractionDigits: d }).format(n / 100); } catch (e) { return n + ' %'; } }
+  function sepPc() { var T = TAGL[lng()]; if (!T) return ' '; try { return new Intl.NumberFormat(T, { style: 'percent' }).format(1).replace(/[0-9.,%]/g, ''); } catch (e) { return ' '; } }
+  function pct(r) { var v = Math.round(r * 1000) / 10; if (r < 1 && v >= 100) v = 99.9; return pcN(v, 1); }
   /* C250 : vert seulement avec une vraie marge (5 % ou plus au-dessus du minimum) ; de 100 à 105 %, le minimum est couvert de justesse. */
   function etat(r) { if (r != null) { var v = Math.round(r * 1000) / 1000; r = r < 1 && v >= 1 ? r : v; } /* C298 (V15-110) : l'état suit le pourcentage affiché (104,98 % s'affiche 105,0 % : « Atteint ») */ return r == null ? 'vide' : r >= 1.05 ? 'vert' : r >= 1 ? 'juste' : r >= 0.95 ? 'jaune' : r >= 0.9 ? 'orange' : 'rouge'; }
   /* C326 : libellé d'une journée jugée en euros, écrit dans la langue choisie (aucun gabarit « X : Y » trop court) */
@@ -67,9 +71,10 @@
       unite: 'minimum du jour'
     };
   }
-  function court(r) { return ent(r) + '<small>\u202f%</small>'; }
+  function court(r) { return ent(r) + '<small>' + (TAGL[lng()] ? sepPc() : '\u202f') + '%</small>'; }
   function calendrier(m) {
-    var h = '<div class="rx-cal" role="group" aria-label="' + esc(m.kicker) + '">';
+    var q = ''; try { q = w.VerdictJours && typeof w.VerdictJours.carteQuestion === 'function' ? w.VerdictJours.carteQuestion() : ''; } catch (e) { q = ''; } /* C374 (décision 38) : la question du jour de repos, tant qu'il n'est pas réglé */
+    var h = q + '<div class="rx-cal" role="group" aria-label="' + esc(m.kicker) + '">';
     INITJ[lng()].split('').forEach(function (j) { h += '<span class="rx-cj" aria-hidden="true">' + j + '</span>'; });
     var prem = m.cols[0] ? m.cols[0].dow : 0; for (var k = 0; k < prem; k++) h += '<span class="rx-c0"></span>';
     m.cols.forEach(function (c, i) {
@@ -83,6 +88,7 @@
   /* Mois en cours : encaissé face à l'attendu à cette date (somme des objectifs des journées renseignées) — les mêmes
      chiffres que « Conséquence sur le mois » et la carte du jour ; pas de second moteur de prévision. */
   function aDate() {
+    var MA = typeof w.verdictMoisADate === 'function' ? w.verdictMoisADate(moisCle()) : null; if (MA) return { encaisse: MA.encaisse, attendu: MA.attendu }; /* C327 : une seule lecture pour toute l’appli */
     var V = w.VerdictPerformanceIntegrated, m = V.buildMonth(w.moteur(), moisCle()), att = 0, enc = 0;
     (m.days || []).forEach(function (d) { var b = typeof w.verdictPerformanceDayBase === 'function' ? Number(w.verdictPerformanceDayBase(d.date)) : d.target; /* C326 : la base du jour, pas le minimum demandé (réduit par l'avance) */
       if (!d.closed && d.ca != null && b > 0) { att += b; enc += d.ca; } });
@@ -270,9 +276,9 @@
     var haut = Math.max(1.2, Math.min(2, Math.max.apply(null, rs.concat([1])) * 1.06)), bas = Math.min(0.6, Math.max(0, Math.min.apply(null, rs.concat([1])) - 0.08));
     var y = function (r) { return B - (Math.max(bas, Math.min(haut, r)) - bas) / (haut - bas) * (B - T); };
     var pas = (W - G - D) / n, larg = Math.max(3, Math.min(34, pas * 0.62)), s = '';
-    [0.8, 1.2, 1.4, 1.6, 1.8, 2].forEach(function (g) { if (g > bas && g <= haut + 1e-9) s += '<line class="g" x1="' + G + '" x2="' + (W - D) + '" y1="' + y(g).toFixed(1) + '" y2="' + y(g).toFixed(1) + '"/><text class="ax" x="' + (G - 6) + '" y="' + (y(g) + 3).toFixed(1) + '" text-anchor="end">' + Math.round(g * 100) + ' %</text>'; });
+    [0.8, 1.2, 1.4, 1.6, 1.8, 2].forEach(function (g) { if (g > bas && g <= haut + 1e-9) s += '<line class="g" x1="' + G + '" x2="' + (W - D) + '" y1="' + y(g).toFixed(1) + '" y2="' + y(g).toFixed(1) + '"/><text class="ax" x="' + (G - 6) + '" y="' + (y(g) + 3).toFixed(1) + '" text-anchor="end">' + Math.round(g * 100) + sepPc() + '%</text>'; });
     var yo = y(1);
-    s += '<line class="obj" x1="' + G + '" x2="' + (W - D) + '" y1="' + yo.toFixed(1) + '" y2="' + yo.toFixed(1) + '"/><text class="obj" x="' + (G - 6) + '" y="' + (yo + 3).toFixed(1) + '" text-anchor="end">100 %</text>';
+    s += '<line class="obj" x1="' + G + '" x2="' + (W - D) + '" y1="' + yo.toFixed(1) + '" y2="' + yo.toFixed(1) + '"/><text class="obj" x="' + (G - 6) + '" y="' + (yo + 3).toFixed(1) + '" text-anchor="end">100' + sepPc() + '%</text>';
     var pasLib = n <= 13 ? 1 : Math.ceil(n / 7);
     m.cols.forEach(function (c, i) {
       var cx = G + pas * (i + 0.5), x = cx - larg / 2, cl = 'col' + (c.type === 'projete' ? ' proj' : '') + (c.type === 'encours' ? ' cours' : '') + (i === m.sel ? ' sel' : '');
@@ -285,7 +291,7 @@
       else {
         var col = COUL[c.st || etat(c.r)], yt = y(c.r), hgt = Math.max(2, B - yt);
         s += '<rect class="b" x="' + x.toFixed(1) + '" y="' + yt.toFixed(1) + '" width="' + larg.toFixed(1) + '" height="' + hgt.toFixed(1) + '" rx="' + Math.min(6, larg / 2).toFixed(1) + '" fill="' + col + '" stroke="' + col + '" style="--d:' + (anime ? (i * 0.035).toFixed(3) : 0) + 's' + (anime ? '' : ';animation:none') + '"/>';
-        s += '<text class="v" x="' + cx.toFixed(1) + '" y="' + (yt - 5).toFixed(1) + '" text-anchor="middle">' + (c.jug ? esc(eur(c.valeur)) : ent(c.r) + ' %') + '</text>';
+        s += '<text class="v" x="' + cx.toFixed(1) + '" y="' + (yt - 5).toFixed(1) + '" text-anchor="middle">' + (c.jug ? esc(eur(c.valeur)) : ent(c.r) + sepPc() + '%') + '</text>';
       }
       var proche = i !== m.sel && Math.abs(i - m.sel) < pasLib;
       if (((i % pasLib === 0 || i === n - 1) && !proche) || i === m.sel) s += '<text class="ax" x="' + cx.toFixed(1) + '" y="' + (B + 14) + '" text-anchor="middle">' + esc(c.axe) + '</text>';
@@ -357,7 +363,13 @@
       box.addEventListener('pointerdown', function (e) { if (!e.target.closest || !e.target.closest('svg')) return; appui = true; suivre(e); });
       box.addEventListener('pointermove', function (e) { if (appui) suivre(e); });
       ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { box.addEventListener(n, function () { appui = false; }); });
-      box.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.rx-j'); if (b) choisir(box, box.__m, Number(b.getAttribute('data-i')), false); });
+      box.addEventListener('click', function (e) {
+        var q = e.target.closest && e.target.closest('[data-q-jour],[data-q-valider],[data-q-sept]'), qc = q && q.closest('.vx374q'); /* C374 : réponse à « Quel jour êtes-vous fermé ? » */
+        if (q && qc) { if (q.hasAttribute('data-q-jour')) { q.setAttribute('aria-pressed', String(q.getAttribute('aria-pressed') !== 'true')); var v = qc.querySelector('[data-q-valider]'), un = !!qc.querySelector('[data-q-jour][aria-pressed="true"]'); if (v && v.disabled === un) v.disabled = !un; }
+          else if (!q.disabled && w.VerdictJours && typeof w.VerdictJours.reposReponse === 'function' && w.VerdictJours.reposReponse(q.hasAttribute('data-q-sept') ? [] : [].map.call(qc.querySelectorAll('[data-q-jour][aria-pressed="true"]'), function (x) { return Number(x.getAttribute('data-q-jour')); }))) { var st = qc.ownerDocument.getElementById('vx374q-css'); if (qc.parentNode) qc.parentNode.removeChild(qc); if (st && st.parentNode) st.parentNode.removeChild(st); }
+          return; }
+        var b = e.target.closest && e.target.closest('.rx-j'); if (!b) return; var i = Number(b.getAttribute('data-i')); choisir(box, box.__m, i, false);
+        var c = box.__m && box.__m.cols[i]; if (c && c.date && typeof w.verdictOuvrirJours === 'function') try { w.verdictOuvrirJours({ date: c.date, depuis: 'vos-journees' }); } catch (x) {} }); /* C364 (décision 36) : on règle le jour là où on le voit */
       box.addEventListener('keydown', function (e) {
         var g = e.target.closest && e.target.closest('g.col,.rx-j'); if (!g) return; var i = Number(g.getAttribute('data-i')), n = box.__m.cols.length;
         var pas = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: g.tagName === 'BUTTON' ? 7 : 0, ArrowUp: g.tagName === 'BUTTON' ? -7 : 0 }[e.key];
@@ -367,14 +379,44 @@
     if (box.__sel != null && box.__sel < m.cols.length) m.sel = box.__sel;
     box.__sig = sig; box.__m = m; dessiner(box, m, premier); if (m.detailMois) majDetailMois(box, m);
   }
+  /* C333 (décision 19) : la minuterie ne fait que vérifier. Signature des données calculée avant tout calcul (< 2 ms) ; un chapitre n'est
+     recalculé que s'il est affiché et que les données ont changé. */
+  var NUM = 0;
+  function idDe(o) { if (!o) return 0; try { if (!o.__vx46id) Object.defineProperty(o, '__vx46id', { value: ++NUM, enumerable: false }); return o.__vx46id; } catch (e) { return -1; } }
+  function sigDonnees(d) {
+    var D = w.DB || {}, H = D.histJour || [], h = H.length;
+    for (var i = 0; i < H.length; i++) { var r = H[i] || {}, s = r.date ? String(r.date) : ''; h = (h * 31 + Math.round((Number(r.caJ) || 0) * 100) + (s ? s.charCodeAt(s.length - 1) * 7 + s.charCodeAt(6) * 3 : 0) + (r.est ? 11 : 0)) % 2147483647; }
+    var k = ''; try { k = w.verdictOperationalClock().key; } catch (e) {}
+    return [lng(), k, w.VERDICT_DB_REV || 0, w.VERDICT_VIEW_REVISION || 0, idDe(D), idDe(d), h, w.VERDICT_DEMO_SESSION ? 1 : 0, (D.fermesSource ? 's' : '') + (Array.isArray(D.fermes) ? D.fermes.join(',') : '')/* C374 : le repos réglé change « Vos journées » */].join('|');
+  }
   function tour() {
     var f = doc.querySelector('iframe.p41-ecran'), d = null; try { d = f && f.contentDocument; } catch (e) {}
     if (!d || !d.getElementById('vx40-jour')) return;
-    var R = null; try { R = w.moteur(); } catch (e) {} if (!R || !R.ready || !w.VerdictPerformanceIntegrated || !w.VerdictAnnualProjection) return;
+    if (doc.hidden || !f.offsetParent) return; /* C333 : rien pour un écran non affiché */
+    if (!d.__vx46clic) { d.__vx46clic = true; d.addEventListener('click', function () { setTimeout(tour, 0); }, true); } /* changer de chapitre : tout de suite */
     if (!d.getElementById('rx-css')) { var s = d.createElement('style'); s.id = 'rx-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
-    [['jour', jours], ['mois', moisAnnee], ['annee', annees]].forEach(function (p) { try { poser(d, p[0], p[1]()); } catch (e) {} });
-    try { appliquerJour(d); } catch (e) {} /* C183 : le jour choisi reste affiché si la page se redessine */
+    var sd = sigDonnees(d), R = null;
+    [['jour', jours], ['mois', moisAnnee], ['annee', annees]].forEach(function (p) {
+      var ch = d.getElementById('vx40-' + p[0]); if (!ch || !ch.offsetParent) return; /* chapitre non affiché : rien */
+      var box = ch.querySelector('.vx40-p > section.rx'); if (box && box.__sigDonnees === sd) return;
+      if (R === null) { try { R = w.moteur(); } catch (e) { R = false; } }
+      if (!R || !R.ready || !w.VerdictPerformanceIntegrated || !w.VerdictAnnualProjection) return;
+      try { poser(d, p[0], p[1]()); var b = ch.querySelector('.vx40-p > section.rx'); if (b) b.__sigDonnees = sd; } catch (e) {}
+    });
+    try { appliquerJour(d); } catch (e) {} /* C183 : le jour choisi reste affiché si la page se redessine (écritures seulement si le texte change) */
   }
+  /* C350 (T2) : « ← Revenir aux priorités » ne reste pas collé : une autre vue, un autre établissement ou modèle le retire. */
+  (function () {
+    var dbVu = null;
+    function poser() {
+      var g = w.go; if (typeof g !== 'function' || g.__c350) return;
+      var f = function () { var n = doc.getElementById('prioBack'), allume = !!(n && n.classList.contains('on')), vue = w.VIEW, db = dbVu || w.DB, r = g.apply(this, arguments);
+        if (allume && (w.VIEW !== vue || w.DB !== db)) { var m = doc.getElementById('prioBack'); if (m && m.classList.contains('on')) m.classList.remove('on'); }
+        dbVu = w.DB; return r; }; /* l’établissement change avant go() : on compare à celui du go() précédent */
+      f.__c350 = true; w.go = f;
+    }
+    poser(); w.addEventListener('load', function () { setTimeout(poser, 0); });
+  })();
   setInterval(tour, 2000);
   w.addEventListener('load', function () { setTimeout(tour, 1500); });
   w.VerdictAccueilRythme = { tour: tour, jours: jours, mois: moisAnnee, annees: annees };

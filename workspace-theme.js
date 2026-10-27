@@ -22,7 +22,8 @@
   button.type = 'button';
   var actions = document.querySelector('.shell-actions');
   if (!actions) return;
-  actions.insertBefore(button, actions.firstChild);
+  /* C343 (décisions 25 et 26 de Steven) : l'en-tête ne garde que le logo, l'établissement et la cloche. Le soleil n'y est plus
+     posé : l'apparence se choisit dans Paramètres › Apparence (Automatique, Clair, Sombre), par VerdictTheme (fin du fichier). */
   var system = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
   var mobile = window.matchMedia && window.matchMedia('(max-width: 767px)');
   var frameObservers = new WeakMap();
@@ -38,10 +39,13 @@
      l'iPhone. Désormais : dès que l'apparence de l'appareil change (au coucher du soleil, ou réglée à la main), elle reprend
      la main — même si l'appli était fermée à ce moment-là ; et choisir au bouton l'apparence de l'appareil = revenir en auto. */
   var sysKey = 'verdict-appareil-apparence-vue';
+  var choixKey = 'verdict-apparence-choix-c343';
   function apparenceAppareil() { return system && system.matches ? 'dark' : 'light'; }
   function suivreAppareil() {
     try {
       var now = apparenceAppareil(), vu = localStorage.getItem(sysKey);
+      /* C343 : un choix fait dans Paramètres › Apparence (Clair ou Sombre) tient, même quand l'appareil change d'apparence. */
+      if (localStorage.getItem(choixKey) === '1' && /^(light|dark)$/.test(localStorage.getItem(mobileKey) || '')) { if (vu !== now) localStorage.setItem(sysKey, now); return; }
       /* vu absent = première ouverture de cette version : l'ancien choix « pour toujours » est effacé une fois, l'appli repart en auto. */
       if (vu !== now) { localStorage.removeItem(mobileKey); localStorage.removeItem(desktopKey); }
       if (vu !== now) localStorage.setItem(sysKey, now);
@@ -164,7 +168,7 @@
         it.els=all;it.i=0;}
       var out=[];
       while(it.i<it.els.length){var e=it.els[it.i++];if(e.isConnected){try{vdlDecide(doc,win,e,vh,out);}catch(x){}}
-        if((it.i&7)===0&&win.performance.now()-t0>6){vdlApply(out);doc.__vdlMs=Math.max(doc.__vdlMs||0,win.performance.now()-t0);vdlSchedule(doc);return;}}
+        if((it.i&1)===0&&win.performance.now()-t0>4){/* C333 : budget 4 ms, vérifié tous les 2 éléments (pointes de 20 ms) */vdlApply(out);doc.__vdlMs=Math.max(doc.__vdlMs||0,win.performance.now()-t0);vdlSchedule(doc);return;}}
       vdlApply(out);
       Q.shift();
     }
@@ -182,6 +186,19 @@
     doc.__vdlGo=function(){vdlQueue(doc,null,true);};
     doc.__vdlGo();
   }
+  /* C342 (Steven, iPhone : « trou noir » au défilement rapide, « ça ne fait pas premium ») : décision 24, tout le contenu est peint
+     dès qu'il entre à l'écran. Les bandeaux collants (en-tête de la coque, haut de Pilotage, barre des établissements) floutaient ce
+     qui passait dessous : à chaque image du défilement, tout le contenu derrière était refloué, et sur iPhone les nouvelles zones
+     restaient de la couleur du fond (noir) tant que la peinture n'avait pas suivi. Plus de flou sur ce qui défile : un fond presque
+     opaque de la même teinte (en clair, ces bandeaux sont déjà opaques : rien ne change à l'œil). */
+  function peinture(doc) {
+    try { if (!doc || doc.getElementById('vd-peinture-c342')) return; var s = doc.createElement('style'); s.id = 'vd-peinture-c342';
+      var H = 'html:not(#vd-c342) body ';
+      s.textContent = [H + '.app-shell-header', H + '.stickytop', H + '.stickytop .top', H + '#etabBar'].join(',') + '{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}' +
+        'html.vd-workspace-dark:not(#vd-c342) body .app-shell-header,html.vd-workspace-dark:not(#vd-c342) body .stickytop{background-color:rgba(10,11,14,.97)!important}' +
+        'html.vd-workspace-dark:not(#vd-c342) body #etabBar{background-color:rgba(8,9,11,.97)!important}';
+      (doc.head || doc.documentElement).appendChild(s); } catch (e) {}
+  }
   function applyToFrame(frame, dark) {
     try {
       var doc = frame.contentDocument;
@@ -191,6 +208,7 @@
       doc.documentElement.style.colorScheme=dark?'dark':'light';
       doc.documentElement.style.backgroundColor=dark?'#08090b':'#fff';
       doc.querySelectorAll('iframe').forEach(function (inner) { applyToFrame(inner, dark); });
+      peinture(doc);
       try { vdlWatch(doc); if (doc.__vdlGo) doc.__vdlGo(); } catch (e) {}
       if (!frameObservers.has(doc)) {
         var observer = new MutationObserver(function () {
@@ -219,6 +237,7 @@
     button.title = label;
     button.setAttribute('aria-pressed', String(mode !== 'auto'));
     document.querySelectorAll('iframe').forEach(function (frame) { applyToFrame(frame, dark); });
+    peinture(document);
     try { vdlWatch(document); if (document.__vdlGo) document.__vdlGo(); } catch (e) {}
   }
   button.addEventListener('click', function () {
@@ -261,5 +280,17 @@
   window.addEventListener('resize', verifierAppareil);
   document.addEventListener('pointerdown', verifierAppareil, { capture: true, passive: true });
   ecouter(mobile, render);
+  /* C343 : Paramètres › Apparence. « auto » = l'apparence de l'appareil (comme sans aucun choix) ; « clair » ou « sombre » = les
+     deux clés lues partout (coque, cadres, script de démarrage) et la marque d'un choix fait ici, que l'appareil ne défait plus. */
+  window.VerdictTheme = {
+    etat: function () { var p = preference(); return p === 'dark' ? 'sombre' : p === 'light' ? 'clair' : 'auto'; },
+    choisir: function (v) {
+      try {
+        if (v === 'clair' || v === 'sombre') { var x = v === 'sombre' ? 'dark' : 'light'; localStorage.setItem(mobileKey, x); localStorage.setItem(desktopKey, x); localStorage.setItem(choixKey, '1'); }
+        else { localStorage.removeItem(mobileKey); localStorage.removeItem(desktopKey); localStorage.removeItem(choixKey); }
+      } catch (e) {}
+      render();
+    }
+  };
   render();
 })();

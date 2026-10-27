@@ -133,6 +133,42 @@ for(var l in X)TXT[l]=m(TXT.fr,X[l]);})();
   for(var l in A){var t=TXT[l];if(!t)continue;t.repCell=A[l].repCell;t.rep={caNet:A[l].repRow,caNetM:A[l].repRow,ms:A[l].repRow,pm:A[l].repRow};}
   var F=TXT.fr;F.prime='Matière + équipe';F.chipPrime='Matière + équipe';F.overallSub=F.overallSub.replace('prime cost','matière + équipe');
   var s={},k;for(k in F.sub)s[k]=F.sub[k];s.prime='nourriture + boissons + équipe : le couple à surveiller';s.mat='part du CA partie en matière : nourriture + boissons';F.sub=s;})();
+/* C356 (T4, simplicité) : une note, un statut, partout pareil. Un dossier en démarrage (période en cours, en-tête « — ») n'a pas de note
+   annuelle : il est dit « Démarrage · pas encore de note annuelle » et classé à part, hors du podium. Son CA annuel est reconstitué :
+   c'est écrit à côté du chiffre, avec le réel de caisse (ou observé). Plus de « Meilleur performeur » (contredit par « aucun vainqueur »).
+   Sous chaque nom, une ligne « À faire » : la lecture de Plus › Établissements (etabComparison, 029) face au premier, rien d'autre. */
+(function(){var A={
+  fr:{podium:'Vos établissements, du plus serein au plus fragile',startup:'Démarrage · pas encore de note annuelle',startupHead:'À part : en démarrage, hors du classement',rebuilt:'12 mois reconstitués',cashReal:'réel de caisse : {v} TTC sur {n} journées, du {a} au {b}',obsReal:'réel observé : {v} HT du {a} au {b}',todo:'À faire',todoSep:' : ',todoLine:'l’écart le plus important avec {ref} est {m} : {d}',refLine:'Référence des autres : l’écart de chacun est mesuré par rapport à lui.'},
+  en:{podium:'Your businesses, from the most serene to the most fragile',startup:'Starting out · no annual score yet',startupHead:'Apart: starting out, outside the ranking',rebuilt:'12 months reconstructed',cashReal:'actual till: {v} incl. VAT over {n} days, from {a} to {b}',obsReal:'actual observed: {v} excl. VAT from {a} to {b}',todo:'To do',todoSep:': ',todoLine:'the largest gap with {ref} is {m}: {d}',refLine:'Reference for the others: each gap is measured against it.'},
+  es:{podium:'Sus establecimientos, del más sereno al más frágil',startup:'Inicio · aún sin nota anual',startupHead:'Aparte: en inicio, fuera de la clasificación',rebuilt:'12 meses reconstruidos',cashReal:'real de caja: {v} con IVA en {n} jornadas, del {a} al {b}',obsReal:'real observado: {v} sin IVA del {a} al {b}',todo:'Por hacer',todoSep:': ',todoLine:'la mayor diferencia con {ref} es {m}: {d}',refLine:'Referencia de los demás: la diferencia de cada uno se mide respecto a él.'},
+  it:{podium:'Le sue attività, dalla più serena alla più fragile',startup:'Avvio · ancora nessun voto annuale',startupHead:'A parte: in avvio, fuori classifica',rebuilt:'12 mesi ricostruiti',cashReal:'reale di cassa: {v} IVA inclusa su {n} giornate, dal {a} al {b}',obsReal:'reale osservato: {v} IVA esclusa dal {a} al {b}',todo:'Da fare',todoSep:': ',todoLine:'lo scarto maggiore rispetto a {ref} è {m}: {d}',refLine:'Riferimento per le altre: lo scarto di ciascuna si misura rispetto a essa.'},
+  de:{podium:'Ihre Betriebe, vom gelassensten zum fragilsten',startup:'Start · noch keine Jahresnote',startupHead:'Gesondert: im Start, außerhalb der Rangliste',rebuilt:'12 Monate hochgerechnet',cashReal:'Kasse real: {v} brutto an {n} Tagen, vom {a} bis {b}',obsReal:'real beobachtet: {v} netto vom {a} bis {b}',todo:'Zu tun',todoSep:': ',todoLine:'der größte Abstand zu {ref} ist {m}: {d}',refLine:'Referenz für die anderen: Jeder Abstand wird an ihm gemessen.'},
+  nl:{podium:'Uw zaken, van de rustigste tot de kwetsbaarste',startup:'Opstart · nog geen jaarscore',startupHead:'Apart: in opstart, buiten de rangschikking',rebuilt:'12 maanden gereconstrueerd',cashReal:'werkelijk uit de kassa: {v} incl. btw over {n} dagen, van {a} tot {b}',obsReal:'werkelijk waargenomen: {v} excl. btw van {a} tot {b}',todo:'Te doen',todoSep:': ',todoLine:'het grootste verschil met {ref} is {m}: {d}',refLine:'Referentie voor de andere: elk verschil wordt ermee vergeleken.'},
+  pt:{podium:'Os seus estabelecimentos, do mais sereno ao mais frágil',startup:'Arranque · ainda sem nota anual',startupHead:'À parte: em arranque, fora da classificação',rebuilt:'12 meses reconstituídos',cashReal:'real de caixa: {v} com IVA em {n} dias, de {a} a {b}',obsReal:'real observado: {v} sem IVA de {a} a {b}',todo:'A fazer',todoSep:': ',todoLine:'a maior diferença face a {ref} é {m}: {d}',refLine:'Referência dos outros: a diferença de cada um mede-se face a ele.'}};
+  for(var l in A){var t=TXT[l];if(!t)continue;for(var k in A[l])t[k]=A[l][k];}})();
+/* le réel d'un dossier en démarrage : la caisse de la période observée (journées saisies ou importées, jamais estimées), sinon le CA
+   HT de la fiche « J'ai ouvert récemment » (DB.recent.raw, 029) */
+function reelDemarrage(d){try{var rr=(d&&d.recent&&d.recent.raw)||{},a=String(rr.start||'').slice(0,10),b=String(rr.end||'').slice(0,10);
+  var jj=(d.histJour||[]).filter(function(j){return j&&j.date&&j.est!==true&&j.caJ!=null&&isFinite(Number(j.caJ))&&(!a||j.date>=a)&&(!b||j.date<=b);}).sort(function(p,q){return p.date<q.date?-1:p.date>q.date?1:0;});
+  return {a:a,b:b,ht:num(rr.ca),ttc:jj.length?jj.reduce(function(t,j){return t+Number(j.caJ);},0):null,n:jj.length,da:jj.length?jj[0].date:'',db:jj.length?jj[jj.length-1].date:''};}catch(e){return null;}}
+function fDay(iso){try{return new Intl.DateTimeFormat((root.LOCALE_TAG||'fr-FR'),{day:'numeric',month:'long',timeZone:'UTC'}).format(new Date(String(iso).slice(0,10)+'T12:00:00Z'));}catch(e){return String(iso||'');}}
+function caLine(s,T){var mc=LEVEL.caNet(s.k.marge,s);
+  return '<p class="cmp12-line">'+esc(fEur(s.k.ca))+' '+esc(T.ofSales)+(s.startup?' <small class="cmp12-rebuilt">('+esc(T.rebuilt)+')</small>':'')+' → <b>'+esc(fEur(s.k.res))+' '+esc(T.netWord)+'</b> = <b style="color:'+(mc!=null?palette()[mc]:'inherit')+'">'+esc(fPct(s.k.marge))+'</b> '+esc(T.ofCa)+'</p>'+realLine(s,T);}
+function realLine(s,T){var r=s.real;if(!s.startup||!r)return '';var t='';
+  if(r.ttc!=null&&r.n>0)t=T.cashReal.replace('{v}',fEur(r.ttc)).replace('{n}',fNum(r.n,0)).replace('{a}',fDay(r.da)).replace('{b}',fDay(r.db));
+  else if(r.ht!=null&&r.a&&r.b)t=T.obsReal.replace('{v}',fEur(r.ht)).replace('{a}',fDay(r.a)).replace('{b}',fDay(r.b));
+  return t?'<p class="cmp12-real">'+esc(t)+'</p>':'';}
+/* la lecture de Plus › Établissements (029, etabComparison) : mêmes conditions (deux lectures finales, même nature, même exercice),
+   même écart principal (le poste de coût qui sépare le plus), même libellé et même écart en points ; sinon, rien. */
+function todoFor(a,b,refName,T){
+  if(!a||!b||!a.ready||!b.ready||!a.nature||!b.nature)return '';
+  var ns=a.nature.key===b.nature.key,ps=ns&&(a.nature.key!=='closed'||a.nature.period===b.nature.period),dated=a.nature.key!=='undated'&&b.nature.key!=='undated';
+  if(!ns||!ps||!dated)return '';
+  var rows=(a.metrics||[]).map(function(m){var bm=(b.metrics||[]).filter(function(z){return z.key===m.key;})[0]||{value:0};return {label:m.label,kind:m.kind,delta:bm.value-m.value};})
+    .filter(function(x){return x.kind==='driver'&&isFinite(x.delta);}).sort(function(x,y){return Math.abs(y.delta)-Math.abs(x.delta);});
+  var p=rows[0];if(!p||Math.abs(p.delta)<0.05)return '';
+  var d=typeof root.etabCmpDelta==='function'?root.etabCmpDelta(p.delta):(p.delta>0?'+':'')+fNum(p.delta,1)+' pt';
+  return T.todoLine.replace('{ref}',refName).replace('{m}',String(p.label||'').toLowerCase()).replace('{d}',d);}
 function repCell(key,s,T){var R=s&&s.rep;if(!R||!T.repCell)return '';var m,b;if(key==='caNet'||key==='caNetM'){m=R.rn[1];b=R.rn[2];}else if(key==='ms'){m=R.ms[1];b=R.ms[0];}else if(key==='pm'){m=R.pm[1];b=R.pm[0];}else return '';
   return '<em>'+esc(T.repCell.replace('{f}',R.fmt||R.nom||'').replace('{m}',fNum(m,1)).replace('{b}',fNum(b,1)))+'</em>';}
 function L(){var l=String(root.LOCALE||doc.documentElement.lang||'fr').slice(0,2);return TXT[l]||TXT.fr;}
@@ -154,11 +190,13 @@ function snapshot(id){
   var nature=typeof root.etabNature==='function'?root.etabNature(d):{key:'',label:'',period:''};
   var truth=null;try{truth=R&&R.ready&&typeof root.verdictScoreTruth==='function'?root.verdictScoreTruth(R,d):null;}catch(e){}
   var mois=num(x.mois)||12;
-  return {id:id,rep:rep,name:String(identity.name||'—'),kind:String(identity.kind||''),nature:nature,calculated:calc,
+  /* C356 : la règle de l'en-tête (estModeRecent, 029 : période en cours non close → « — ») : pas de note annuelle, classé à part */
+  var startup=!!(nature&&nature.key==='recent'),real=startup?reelDemarrage(d):null;
+  return {id:id,rep:rep,name:String(identity.name||'—'),kind:String(identity.kind||''),nature:nature,calculated:calc,startup:startup,real:real,
     conclusive:!!(calc&&R.scoreFinalAllowed===true&&nature.key==='closed'),scoreFinal:!!(truth&&truth.final),
-    zone:calc&&typeof root.zone==='function'?root.zone(R.score):null,
+    zone:calc&&!startup&&typeof root.zone==='function'?root.zone(R.score):null,
     missing:(R&&R.manquants||[]).length,
-    k:{score:calc?Math.round(R.score):null,res:calc?num(x.res):null,resM:calc?num(x.resM):null,ca:calc?ca:null,caM:calc?ca/mois:null,ticket:calc&&num(x.panierHT)>0?num(x.panierHT):null,cmd:calc&&num(x.cmdj)>0?num(x.cmdj):null,
+    k:{score:calc&&!startup?Math.round(R.score):null,res:calc?num(x.res):null,resM:calc?num(x.resM):null,ca:calc?ca:null,caM:calc?ca/mois:null,ticket:calc&&num(x.panierHT)>0?num(x.panierHT):null,cmd:calc&&num(x.cmdj)>0?num(x.cmdj):null,
        mat:mat,ms:ms,prime:(mat!=null&&ms!=null)?mat+ms:null,marge:calc?num(v.rn):null,pm:calc?num(v.pm):null}};
 }
 /* Couleurs Verdict® : la palette de zone() de l'application (critique, fragile, correcte, saine) ; repli sur les mêmes teintes. */
@@ -169,7 +207,7 @@ function lvlLow(v,a,b,c){return v>c?0:v>b?1:v>a?2:3;}    /* plus bas = mieux : s
 var LEVEL={score:function(v){try{var z=typeof root.zone==='function'&&root.zone(v),i=z?['crit','frag','corr','saine'].indexOf(z.c):-1;if(i>=0)return i;}catch(e){}return v<31?0:v<60?1:v<75?2:3;},caNet:function(v,s){var r=s&&s.rep;return r?(v<0?0:v<r.rn[1]?1:v<r.rn[2]?2:3):lvlHigh(v,0,2,4.5);},caNetM:function(v,s){return LEVEL.caNet(v,s);},ms:function(v,s){var r=s&&s.rep;return r?lvlLow(v,r.ms[0],r.ms[1],r.ms[2]):lvlLow(v,33,38,42);},pm:function(v,s){var r=s&&s.rep;return r?lvlLow(v,r.pm[0],r.pm[1],r.pm[2]):lvlLow(v,80,90,100);}};
 var ROWS=[
   {key:'score',fmt:function(n){return n==null?L().na:fNum(n,0)+'/100';},better:'high',bar:function(n){return n;},max:100},
-  {key:'caNet',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.ca)+' '+L().ofSales+' \u2192 '+fEur(s.k.res)+' '+L().netWord;},note:function(v,s){return '= '+fPct(v)+' '+L().ofCa;},better:'high',hint:'better_net',bar:function(n){return Math.max(0,n);},max:30,unit:'pt'},
+  {key:'caNet',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.ca)+' '+L().ofSales+(s&&s.startup?' ('+L().rebuilt+')':'')+' \u2192 '+fEur(s.k.res)+' '+L().netWord;},note:function(v,s){return '= '+fPct(v)+' '+L().ofCa;},better:'high',hint:'better_net',bar:function(n){return Math.max(0,n);},max:30,unit:'pt'},
   {key:'caNetM',get:function(s){return s.k.marge;},fmt:function(v,s){return fEur(s.k.caM)+' '+L().ofSales+' \u2192 '+fEur(s.k.resM)+' '+L().netWord;},note:function(v,s){return '= '+fPct(v)+' '+L().ofCa;},better:'high',hint:'better_net',noDelta:true},
   {key:'ticket',fmt:fEur2,better:'neutral'},
   {key:'cmd',fmt:function(n){return fNum(n,1);},better:'high'},
@@ -265,6 +303,11 @@ function ensureStyle(){
 '.cmp12-card footer{display:flex;justify-content:space-between;gap:8px;margin-top:2px}.cmp12-eye,.cmp12-open{padding:7px 11px;border-radius:10px;border:1px solid rgba(128,128,128,.3);background:transparent;color:inherit;font:600 12px inherit;cursor:pointer}.cmp12-open{border-color:#2563eb;color:#2563eb}'+
 '.cmp12-pods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px}.cmp12-pod{border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;border-radius:10px}.cmp12-pod:hover{background:rgba(34,197,94,.08)}'+
 '@media(max-width:640px){.cmp12-cards{grid-template-columns:1fr}.cmp12-pods{grid-template-columns:1fr}.cmp12-podium{padding:9px 10px}.cmp12-podium p{display:none}.cmp12-pod{padding:3px 0;font-size:13px}.cmp12-pod.first b{font-size:14.5px}.cmp12-medal{font-size:15px}}'+
+/* C356 : démarrage à part, CA reconstitué, ligne « À faire » */
+'.cmp12-apart{grid-column:1/-1;margin:6px 2px 0;font:800 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;opacity:.7}'+
+'.cmp12-startup .cmp12-tag{display:inline-block;padding:5px 10px;border-radius:999px;border:1px solid rgba(96,165,250,.5);background:rgba(96,165,250,.1);color:#2563eb;font:700 12px/1.2 inherit}'+
+'.cmp12-rebuilt{font-size:11px;opacity:.75;font-weight:600}.cmp12-real{margin:-4px 0 0;font-size:12px;line-height:1.4;opacity:.8}'+
+'.cmp12-todo{margin:0;padding:8px 10px;border-radius:10px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.35);font-size:12.5px;line-height:1.45}.cmp12-todo.ref{background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.3)}'+
 '@media(prefers-reduced-motion:reduce){.cmp12-card{animation:none}}'+
 '@keyframes cmp12In{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}'+
   '@media(prefers-reduced-motion:reduce){.cmp12-col{animation:none}.cmp12-bar i{transition:none}}'+
@@ -286,21 +329,26 @@ function cardHtml(s,RK,T,i){
   var reasons=ROWS.filter(function(r){return bestIndex(r,DATA.snaps)===DATA.snaps.indexOf(s)&&T.why&&T.why[r.key];}).map(function(r){return T.why[r.key];}).filter(function(x,i,a){return a.indexOf(x)===i;});
   var chip=function(key,label){var r=ROWS.filter(function(x){return x.key===key;})[0],v=r?(r.get?r.get(s):s.k[key]):null;if(v==null)return '';var l=LEVEL[key]?LEVEL[key](v,s):null,c=l==null?'inherit':palette()[l];return '<span class="cmp12-chip'+(l===0?' crit':'')+'" style="--c:'+c+'"><i>'+esc(label)+'</i><b>'+esc(key==='caNet'?fPct(v):r.fmt(v,s))+'</b></span>';};
   var picked=UI.sel.indexOf(s.id)>=0,hiddenBar=barHidden(s.id);
-  return '<article class="cmp12-card'+(lv===0?' crit':'')+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+Math.min(i,12)+'">'+
-    '<header><span class="cmp12-rk">'+(o.rank!=null?esc(T.ord(o.rank,o.n)):'—')+'</span><div class="cmp12-id"><b>'+esc(s.name)+'</b>'+(placeOfId(s.id)?'<span class="cmp12-place">\ud83d\udccd '+esc(placeOfId(s.id))+'</span>':'')+'<span>'+esc([s.kind,s.nature.label].filter(Boolean).join(' · '))+(hiddenBar?' · '+esc(T.barHiddenTag):'')+'</span></div>'+
-    '<label class="cmp12-pick" title="'+esc(T.pickTitle)+'"><input type="checkbox"'+(picked?' checked':'')+' onchange="verdictCompareToggle(\''+esc(s.id)+'\')"><span>'+esc(T.pick)+'</span></label></header>'+
+  var chips='<div class="cmp12-chips">'+chip('mat',T.chipMat)+chip('ms',T.chipMs)+chip('prime',T.chipPrime)+chip('pm',T.chipPm)+'</div>';
+  /* C356 : la ligne « À faire » (lecture de Plus › Établissements face au premier), ou « référence des autres » pour le premier */
+  var todo=s.todo?'<p class="cmp12-todo"><b>'+esc(T.todo)+esc(T.todoSep)+'</b>'+esc(s.todo)+'</p>':s.isRef?'<p class="cmp12-todo ref">'+esc(T.refLine)+'</p>':'';
+  return '<article class="cmp12-card'+(lv===0?' crit':'')+(s.startup?' startup':'')+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+Math.min(i,12)+'">'+
+    '<header><span class="cmp12-rk">'+(o.rank!=null&&!s.startup?esc(T.ord(o.rank,o.n)):'—')+'</span><div class="cmp12-id"><b>'+esc(s.name)+'</b>'+(placeOfId(s.id)?'<span class="cmp12-place">📍 '+esc(placeOfId(s.id))+'</span>':'')+'<span>'+esc([s.kind,s.nature.label].filter(Boolean).join(' · '))+(hiddenBar?' · '+esc(T.barHiddenTag):'')+'</span></div>'+
+    /* C356 : la case « Comparer » ne sert qu'au-delà de 4 établissements (jusqu'à 4, tous sont côte à côte) */
+    (DATA.snaps.length>4?'<label class="cmp12-pick" title="'+esc(T.pickTitle)+'"><input type="checkbox"'+(picked?' checked':'')+' onchange="verdictCompareToggle(\''+esc(s.id)+'\')"><span>'+esc(T.pick)+'</span></label>':'')+'</header>'+
+    /* C356 : un dossier en démarrage n'a pas de note annuelle : la même pastille partout, son CA reconstitué dit comme tel, le réel à côté */
+    (s.startup?'<div class="cmp12-startup"><span class="cmp12-tag">'+esc(T.startup)+'</span></div>'+caLine(s,T)+chips:
     /* C218 (W72) : un établissement complet n'est jamais « non calculable » ; tant qu'il est le seul calculé, il garde son
        indice et ses chiffres, et le classement attend un deuxième dossier. */
-    (ix==null&&s.calculated&&s.k.score!=null?'<div class="cmp12-score"><b style="color:'+palette()[LEVEL.score(s.k.score)]+'">'+s.k.score+'<small>/100</small></b><span class="cmp12-lvl" style="color:'+palette()[LEVEL.score(s.k.score)]+'">'+esc(T.scoreOwn||'')+' · '+esc(T.levels[LEVEL.score(s.k.score)])+'</span><div class="cmp12-bar"><i data-w="'+s.k.score+'" style="background:'+palette()[LEVEL.score(s.k.score)]+'"></i></div></div>'+
-      '<p class="cmp12-line">'+esc(fEur(s.k.ca))+' '+esc(T.ofSales)+' → <b>'+esc(fEur(s.k.res))+' '+esc(T.netWord)+'</b> = <b style="color:'+(LEVEL.caNet(s.k.marge,s)!=null?palette()[LEVEL.caNet(s.k.marge,s)]:'inherit')+'">'+esc(fPct(s.k.marge))+'</b> '+esc(T.ofCa)+'</p>'+
-      '<div class="cmp12-chips">'+chip('mat',T.chipMat)+chip('ms',T.chipMs)+chip('prime',T.chipPrime)+chip('pm',T.chipPm)+'</div>'+
+    ix==null&&s.calculated&&s.k.score!=null?'<div class="cmp12-score"><b style="color:'+palette()[LEVEL.score(s.k.score)]+'">'+s.k.score+'<small>/100</small></b><span class="cmp12-lvl" style="color:'+palette()[LEVEL.score(s.k.score)]+'">'+esc(T.scoreOwn||'')+' · '+esc(T.levels[LEVEL.score(s.k.score)])+'</span><div class="cmp12-bar"><i data-w="'+s.k.score+'" style="background:'+palette()[LEVEL.score(s.k.score)]+'"></i></div></div>'+
+      caLine(s,T)+chips+
       '<p class="cmp12-na">'+esc(T.alone||'')+'</p>':
     ix==null?'<div class="cmp12-na">'+esc(T.notCalc)+' · '+esc(T.incomplete)+'</div>':
       (sc!=null?'<div class="cmp12-score"><b style="color:'+col+'">'+sc+'<small>/100</small></b><span class="cmp12-lvl" style="color:'+col+'">'+esc(T.scoreOwn||'')+'</span><div class="cmp12-bar"><i data-w="'+sc+'" style="background:'+col+'"></i></div></div>':'')+
-      '<p class="cmp12-line">'+esc(fEur(s.k.ca))+' '+esc(T.ofSales)+' → <b>'+esc(fEur(s.k.res))+' '+esc(T.netWord)+'</b> = <b style="color:'+(LEVEL.caNet(s.k.marge,s)!=null?palette()[LEVEL.caNet(s.k.marge,s)]:'inherit')+'">'+esc(fPct(s.k.marge))+'</b> '+esc(T.ofCa)+'</p>'+
-      '<div class="cmp12-chips">'+chip('mat',T.chipMat)+chip('ms',T.chipMs)+chip('prime',T.chipPrime)+chip('pm',T.chipPm)+'</div>'+
+      caLine(s,T)+chips+todo+
       (reasons.length?'<p class="cmp12-why">★ '+esc(reasons.slice(0,3).join(' · '))+'</p>':''))+
-    '<footer><button type="button" class="cmp12-eye" onclick="verdictCompareBar(\''+esc(s.id)+'\')">'+(hiddenBar?'👁 '+esc(T.barShow):'◌ '+esc(T.barHide))+'</button>'+
+    /* C356 : « Masquer de l'accueil » ne s'offre plus (l'Accueil ne montre pas les établissements) ; un dossier déjà masqué peut y revenir */
+    '<footer>'+(hiddenBar?'<button type="button" class="cmp12-eye" onclick="verdictCompareBar(\''+esc(s.id)+'\')">👁 '+esc(T.barShow)+'</button>':'<span></span>')+
     '<button type="button" class="cmp12-open" onclick="verdictCompareGo(\''+esc(s.id)+'\')">'+esc(T.openEtab)+' →</button></footer></article>';
 }
 var DATA={snaps:[],RK:{}};
@@ -313,9 +361,13 @@ function filtered(){
 }
 function rankHtml(T){
   var list=filtered(),n=function(f){var keep=UI.filter;UI.filter=f;var c=filtered().length;UI.filter=keep;return c;};
-  var h='<div class="cmp12-filters">'+[['all',T.fAll],['real',T.fReal],['model',T.fModel],['crit',T.fCrit]].map(function(x){return '<button type="button" class="'+(UI.filter===x[0]?'on':'')+'" onclick="verdictCompareFilter(\''+x[0]+'\')">'+esc(x[1])+' <i>'+n(x[0])+'</i></button>';}).join('')+
-    (DATA.snaps.length>6?'<input type="search" class="cmp12-search" placeholder="'+esc(T.search)+'" value="'+esc(UI.query)+'" oninput="verdictCompareSearch(this.value)">':'')+'</div>';
-  h+=list.length?'<div class="cmp12-cards">'+list.map(function(s,i){return cardHtml(s,DATA.RK,T,i);}).join('')+'</div>':'<div class="cmp12-state">'+esc(T.noMatch)+'</div>';
+  /* C356 : un filtre ne s'affiche que s'il trie quelque chose (ni vide, ni égal à « Tous ») ; un seul reste → pas de barre */
+  var tot=n('all'),F=[['all',T.fAll],['real',T.fReal],['model',T.fModel],['crit',T.fCrit]].filter(function(x){var c=n(x[0]);return x[0]==='all'||UI.filter===x[0]||(c>0&&c<tot);});
+  var h=F.length>1||DATA.snaps.length>6?'<div class="cmp12-filters">'+(F.length>1?F.map(function(x){return '<button type="button" class="'+(UI.filter===x[0]?'on':'')+'" onclick="verdictCompareFilter(\''+x[0]+'\')">'+esc(x[1])+' <i>'+n(x[0])+'</i></button>';}).join(''):'')+
+    (DATA.snaps.length>6?'<input type="search" class="cmp12-search" placeholder="'+esc(T.search)+'" value="'+esc(UI.query)+'" oninput="verdictCompareSearch(this.value)">':'')+'</div>':'';
+  /* C356 : les dossiers en démarrage viennent à part, sous leur titre, après les établissements classés */
+  var apart=false;
+  h+=list.length?'<div class="cmp12-cards">'+list.map(function(s,i){var t='';if(s.startup&&!apart){apart=true;t='<p class="cmp12-apart">'+esc(T.startupHead)+'</p>';}return t+cardHtml(s,DATA.RK,T,i);}).join('')+'</div>':'<div class="cmp12-state">'+esc(T.noMatch)+'</div>';
   return h;
 }
 function tableHtml(T){
@@ -323,15 +375,15 @@ function tableHtml(T){
   if(snaps.length<2)return '<div class="cmp12-state">'+esc(T.pickHint)+'</div>';
   h+='<div class="cmp12-wrap"><div class="cmp12-grid" style="--n:'+snaps.length+'">';
   h+='<div class="cmp12-head cmp12-lab"><small>'+esc(T.ind)+'</small></div>';
-  snaps.forEach(function(s,i){var rkInfo=RK[s.id];h+='<div class="cmp12-head cmp12-col'+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+i+'">'+(rkInfo.rank!=null?'<i class="cmp12-rank">'+esc(T.ord(rkInfo.rank,rkInfo.n))+'</i>':'')+'<b style="color:'+(s.zone?s.zone.h:'inherit')+'">'+esc(s.name)+'</b>'+(placeOfId(s.id)?'<span class="cmp12-place">\ud83d\udccd '+esc(placeOfId(s.id))+'</span>':'')+'<span>'+esc([s.kind,s.nature.label,s.nature.period].filter(Boolean).join(' · '))+'</span>'+(s.calculated?'':'<span>'+esc(T.incomplete)+'</span>')+'</div>';});
+  snaps.forEach(function(s,i){var rkInfo=RK[s.id];h+='<div class="cmp12-head cmp12-col'+(s.id===root.STORE.actif?' actif':'')+'" style="--i:'+i+'">'+(rkInfo.rank!=null&&!s.startup?'<i class="cmp12-rank">'+esc(T.ord(rkInfo.rank,rkInfo.n))+'</i>':s.startup?'<i class="cmp12-rank">'+esc(T.startup)+'</i>':'')+'<b style="color:'+(s.zone?s.zone.h:'inherit')+'">'+esc(s.name)+'</b>'+(placeOfId(s.id)?'<span class="cmp12-place">\ud83d\udccd '+esc(placeOfId(s.id))+'</span>':'')+'<span>'+esc([s.kind,s.nature.label,s.nature.period].filter(Boolean).join(' · '))+'</span>'+(s.calculated?'':'<span>'+esc(T.incomplete)+'</span>')+'</div>';});
   h+='<div class="cmp12-lab">'+esc(T.overall)+'<small>'+esc(T.overallSub)+'</small></div>';
-  snaps.forEach(function(s,i){var o=RK[s.id];if(o.index==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(s.calculated?T.alone||T.notCalc:T.notCalc)+'</div>';return;}h+='<div class="cmp12-val cmp12-col" style="--i:'+i+'"><span>'+esc(T.ord(o.rank,o.n))+'</span></div>';});
+  snaps.forEach(function(s,i){var o=RK[s.id];/* C356 : un dossier en démarrage est classé à part ; un dossier non classé n'a jamais « null sur n » */if(s.startup||o.rank==null&&o.index!=null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(s.startup?T.startup:T.notCalc)+'</div>';return;}if(o.index==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(s.calculated?T.alone||T.notCalc:T.notCalc)+'</div>';return;}h+='<div class="cmp12-val cmp12-col" style="--i:'+i+'"><span>'+esc(T.ord(o.rank,o.n))+'</span></div>';});
   ROWS.forEach(function(r){
     var vals=snaps.map(function(s){return r.get?r.get(s):s.k[r.key];}),med=median(vals),best=bestIndex(r,snaps);
     h+='<div class="cmp12-lab">'+esc(T[r.key])+(T.sub&&T.sub[r.key]?'<small>'+esc(T.sub[r.key])+'</small>':'')+(T.rep&&T.rep[r.key]?'<small>'+esc(T.rep[r.key])+'</small>':'')+'<small>'+esc(r.hint?T[r.hint]:(r.better==='low'?T.better_low:r.better==='high'?T.better_high:T.neutral))+(med!=null&&!r.noDelta?' · '+esc(T.median)+' '+esc(r.get?fPct(med):r.fmt(med)):'')+'</small></div>';
     snaps.forEach(function(s,i){
       var v=r.get?r.get(s):s.k[r.key];
-      if(v==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+esc(s.calculated&&T.unknown?T.unknown:T.na)+'</div>';return;}
+      if(v==null){h+='<div class="cmp12-val na cmp12-col" style="--i:'+i+'">'+(r.key==='score'&&s.startup?esc(T.startup):esc(s.calculated&&T.unknown?T.unknown:T.na))+'</div>';return;}
       var delta=(med!=null&&r.key!=='score'&&!r.noDelta)?v-med:null,dTxt='';
       if(delta!=null&&Math.abs(delta)>0.0001){var amount=r.key==='ticket'?fEur2(Math.abs(delta)):r.key==='cmd'?fNum(Math.abs(delta),1):fPct(Math.abs(delta)).replace(' %',' pt');var good=r.better==='neutral'?null:(r.better==='high'?delta>0:delta<0);dTxt=amount+' '+(delta>0?T.above:T.below)+(good==null?'':' · '+(good?T.good:T.bad));}
       var lvl=LEVEL[r.key]?LEVEL[r.key](v,s):null,col=lvl==null?null:palette()[lvl];
@@ -361,9 +413,16 @@ function open(){
     snaps.forEach(function(s){RK[s.id].rank=null;RK[s.id].n=L.length;});
     if(L.length<2)return;L.forEach(function(s,i){if(i===0||s.k.score!==L[i-1].k.score)rk=i+1;RK[s.id].rank=rk;});})();
   snaps.sort(function(a,b){var ra=RK[a.id].rank,rb=RK[b.id].rank;if(ra==null&&rb==null)return 0;if(ra==null)return 1;if(rb==null)return -1;return ra-rb;});
+  /* C356 : sous chaque établissement classé, la lecture de Plus › Établissements (etabSnapshot, etabComparison de 029) face au premier :
+     le poste qui sépare le plus, son écart en points ; rien quand les deux lectures ne sont pas comparables (même règle que là-bas). */
+  (function(){var cl=snaps.filter(function(s){return RK[s.id].rank!=null;}).sort(function(a,b){return RK[a.id].rank-RK[b.id].rank;});
+    snaps.forEach(function(s){s.todo='';s.isRef=false;});if(cl.length<2||typeof root.etabSnapshot!=='function')return;
+    var ref=cl[0],A=null;try{A=root.etabSnapshot(ref.id);}catch(e){A=null;}if(!A)return;
+    cl.slice(1).forEach(function(s){var B=null;try{B=root.etabSnapshot(s.id);}catch(e){B=null;}s.todo=todoFor(A,B,ref.name,T);if(s.todo)ref.isRef=true;});})();
   DATA={snaps:snaps,RK:RK};
   UI.sel=UI.sel.filter(function(id){return ids.indexOf(id)>=0;});
-  if(!UI.sel.length)UI.sel=snaps.filter(function(s){return RK[s.id].rank!=null;}).slice(0,3).map(function(s){return s.id;});
+  /* C356 : sans case à cocher (jusqu'à 4 établissements), le côte à côte prend tous les établissements classés */
+  if(!UI.sel.length||snaps.length<=4)UI.sel=snaps.filter(function(s){return RK[s.id].rank!=null;}).slice(0,4).map(function(s){return s.id;});
   if(snaps.length<=4)UI.view=UI.view||'rank';
   var hiddenCount=0;try{if(typeof root.etabAllList==='function')hiddenCount=root.etabAllList().length-ids.length;}catch(e){}
   var h='<div class="sheet"><div class="grab"></div><div class="cmp12-k">'+esc(T.kicker)+'</div><h3>'+esc(T.title)+'</h3>';
@@ -371,7 +430,7 @@ function open(){
   else{
     var allConclusive=snaps.every(function(s){return s.conclusive;});
     var podium=snaps.filter(function(s){return RK[s.id].rank!=null;}).slice(0,3);
-    if(podium.length){h+='<div class="cmp12-podium"><div class="cmp12-k">'+esc(T.podium)+' · '+snaps.length+' '+esc(T.etabs)+'</div><div class="cmp12-pods">'+podium.map(function(s,i){var ix=s.k.score,lv=ix==null?null:LEVEL.score(ix),col=lv==null?'inherit':palette()[lv];return '<button type="button" class="cmp12-pod'+(i===0?' first':'')+'" onclick="verdictCompareGo(\''+esc(s.id)+'\')"><span class="cmp12-medal">'+(i===0?'🥇':i===1?'🥈':'🥉')+'</span><b>'+esc(s.name)+'</b>'+(ix!=null?'<span style="color:'+col+'">'+esc(T.scoreOwn||'')+' '+ix+'</span>':'')+'</button>';}).join('')+'</div><p>'+esc(T.overallSub)+'</p></div>';}
+    if(podium.length){h+='<div class="cmp12-podium"><div class="cmp12-k">'+esc(T.podium)+'</div><div class="cmp12-pods">'+podium.map(function(s,i){var ix=s.k.score,lv=ix==null?null:LEVEL.score(ix),col=lv==null?'inherit':palette()[lv];return '<button type="button" class="cmp12-pod'+(i===0?' first':'')+'" onclick="verdictCompareGo(\''+esc(s.id)+'\')"><span class="cmp12-medal">'+(i===0?'🥇':i===1?'🥈':'🥉')+'</span><b>'+esc(s.name)+'</b>'+(ix!=null?'<span style="color:'+col+'">'+esc(T.scoreOwn||'')+' '+ix+'</span>':'')+'</button>';}).join('')+'</div><p>'+esc(T.overallSub)+'</p></div>';}
     h+='<div class="cmp12-body">'+bodyHtml()+'</div>';
     h+='<div class="cmp12-state'+(allConclusive?' ok':'')+'">'+esc(allConclusive?T.conclusive:T.indicative)+'</div>';
     var persoState=typeof root.verdictPersoPortfolioState==='function'?root.verdictPersoPortfolioState():null;

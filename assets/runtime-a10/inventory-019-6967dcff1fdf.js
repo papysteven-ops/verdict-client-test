@@ -128,7 +128,10 @@
       });
     }catch(e){cancelDockMotion();}
   }
-  function setDockHidden(next,withReveal){
+  /* C371 b (chef : « des touchers ignorés ») : la barre ne change pas d'état tant qu'un doigt est posé ; le changement attendu est appliqué
+     350 ms après le lever du doigt. Avant, elle se repliait puis se redéployait pendant le toucher, et iPhone abandonnait le clic. */
+  var vdDockAttente=null;
+  function setDockHidden(next,withReveal){if(interacting&&!!next!==dockHidden){vdDockAttente=[next,withReveal];return;}
     /* Un appui tactile/souris laisse parfois le focus sur l'onglet.
        Seul le focus clavier visible doit empêcher le repli au défilement. */
     var keyboardFocus=false;
@@ -262,7 +265,7 @@
   function isHelperEvent(event){return !!(button&&event&&event.target&&(event.target===button||button.contains(event.target)));}
   function helperFocused(){var active=doc.activeElement;return !!(button&&active&&(active===button||button.contains(active)));}
   function begin(event){if(isHelperEvent(event))return;if(event&&event.pointerId!=null)pointers[event.pointerId]=true;interacting=true;rememberAnchor(event);hide();global.clearTimeout(restoreTimer);restoreTimer=0;}
-  function end(event){if(isHelperEvent(event))return;if(event&&event.pointerId!=null)delete pointers[event.pointerId];interacting=pointerEvents?Object.keys(pointers).length>0:!!(event&&event.touches&&event.touches.length);if(interacting)return;if(!zoomed())dismissed=false;if(hadZoom&&!zoomed()){global.clearTimeout(restoreTimer);restoreTimer=global.setTimeout(autoReframe,520);}schedule();}
+  function end(event){if(isHelperEvent(event))return;if(event&&event.pointerId!=null)delete pointers[event.pointerId];interacting=pointerEvents?Object.keys(pointers).length>0:!!(event&&event.touches&&event.touches.length);if(interacting)return;if(vdDockAttente){var vdA=vdDockAttente;vdDockAttente=null;global.setTimeout(function(){if(!interacting)setDockHidden(vdA[0],vdA[1]);else vdDockAttente=vdA;},350);}if(!zoomed())dismissed=false;if(hadZoom&&!zoomed()){global.clearTimeout(restoreTimer);restoreTimer=global.setTimeout(autoReframe,520);}schedule();}
   function autoReframe(){
     restoreTimer=0;if(zoomed()||interacting)return;if(unsafe())return;
     var target=activeTarget(),rect=target.getBoundingClientRect?target.getBoundingClientRect():null,box=visualBox(),viewLeft=box.left+box.safe.left,viewTop=box.top+box.safe.top,viewRight=box.right-box.safe.right,viewBottom=box.bottom-box.safe.bottom,viewWidth=Math.max(0,viewRight-viewLeft),viewHeight=Math.max(0,viewBottom-viewTop);
@@ -295,7 +298,10 @@
   doc.addEventListener('click',function(event){if(!isHelperEvent(event))reevaluateAfterClick();},true);
   doc.addEventListener('focusin',function(event){setDockHidden(false,dockHidden);if(isHelperEvent(event)){global.clearTimeout(reevaluateTimer);reevaluateTimer=0;return;}rememberAnchor(event);if(refreshOverlayState()||editing())hide();else reevaluate();});doc.addEventListener('focusout',function(){global.setTimeout(function(){if(!helperFocused())reevaluate();},80);});
   doc.addEventListener('visibilitychange',function(){if(doc.hidden){pointers={};interacting=false;setDockHidden(false,false);hide();}else{resetDockScroll(true,false);reevaluate();}});
-  global.addEventListener('pagehide',function(){pointers={};interacting=false;setDockHidden(false,false);hide();},{passive:true});global.addEventListener('blur',function(){pointers={};interacting=false;setDockHidden(false,false);hide();},{passive:true});global.addEventListener('focus',function(){resetDockScroll(true,false);reevaluate();},{passive:true});global.addEventListener('pageshow',function(){resetDockScroll(true,false);global.setTimeout(reevaluate,250);},{passive:true});
+  global.addEventListener('pagehide',function(){pointers={};interacting=false;setDockHidden(false,false);hide();},{passive:true});global.addEventListener('blur',function(){pointers={};interacting=false;setDockHidden(false,false);hide();},{passive:true});/* C371 : dans la coque, le premier toucher dans l'Inventaire (après un toucher dans la coque) donne le focus au cadre ; la barre se
+     redéployait aussitôt, et iPhone, voyant le contenu changer pendant le toucher, ne déclenchait pas le clic (« il faut toucher deux fois »).
+     Le redéploiement attend la fin du toucher. */
+  var vdFocusT=0;global.addEventListener('focus',function(){global.clearTimeout(vdFocusT);vdFocusT=global.setTimeout(function(){resetDockScroll(true,false);reevaluate();},450);},{passive:true});global.addEventListener('pageshow',function(){resetDockScroll(true,false);global.setTimeout(reevaluate,250);},{passive:true});
   global.addEventListener('orientationchange',function(){setDockHidden(false,false);hide();global.setTimeout(reevaluate,500);},{passive:true});global.addEventListener('resize',queueViewportChanged,{passive:true});global.addEventListener('scroll',queueDockScroll,{passive:true});
   global.addEventListener('message',receiveSafeBottom);
   var dockMotionPreference=global.matchMedia&&global.matchMedia('(prefers-reduced-motion: reduce)');

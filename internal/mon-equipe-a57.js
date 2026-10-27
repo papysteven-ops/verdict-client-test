@@ -26,7 +26,12 @@
     { k: 'commis', lib: 'Commis de cuisine', z: 'cuisine' }, { k: 'plonge', lib: 'Plongeur', z: 'cuisine' },
     { k: 'resp', lib: 'Responsable de salle', z: 'salle' }, { k: 'rang', lib: 'Chef de rang', z: 'salle' },
     { k: 'serveur', lib: 'Serveur', z: 'salle' }, { k: 'barman', lib: 'Barman', z: 'salle' },
-    { k: 'runner', lib: 'Commis de salle', z: 'salle' }, { k: 'autre', lib: 'Autre poste', z: 'autre' }
+    { k: 'runner', lib: 'Commis de salle', z: 'salle' },
+    /* C355 (décision 30) : postes du comptoir, du fournil, de la boutique et de l'expédition (livraison) */
+    { k: 'equipier', lib: 'Équipier de comptoir', z: 'comptoir' }, { k: 'barista', lib: 'Barista', z: 'comptoir' },
+    { k: 'boulanger', lib: 'Boulanger', z: 'production' }, { k: 'patissier', lib: 'Pâtissier', z: 'production' },
+    { k: 'vendeur', lib: 'Vendeur', z: 'vente' }, { k: 'prep', lib: 'Préparateur de commandes', z: 'expedition' },
+    { k: 'autre', lib: 'Autre poste', z: 'autre' }
   ];
   var CONTRATS = ['CDI', 'CDD', 'Saisonnier', 'Apprenti', 'Extra'];
   /* Ventes HT par temps plein (médianes, rapport du 20/10) et grands coûts sains, par type d'établissement. */
@@ -46,23 +51,72 @@
   function smicMois(h) { h = Math.max(1, num(h)); return SMIC_H * (Math.min(h, 35) + Math.max(0, h - 35) * 1.1) * 52 / 12; }
   /* Coût employeur : brut × multiplicateur selon brut / SMIC (réduction générale 2026, rapport du 20/10, § 3.3). */
   function multiplicateur(brut, h) { var r = num(brut) / smicMois(h); return r <= 1.05 ? 1.08 : r <= 1.2 ? 1.15 : r <= 1.4 ? 1.25 : r <= 1.7 ? 1.33 : r <= 2.2 ? 1.40 : 1.45; }
-  function coutMois(p) { return num(p.brut) * multiplicateur(p.brut, p.h); }
+  function coutMois(p) { if (p && p.demo && p.coutDemo != null) return num(p.coutDemo); /* C355 : part exacte de la masse du modèle */ return num(p.brut) * multiplicateur(p.brut, p.h); }
+  /* C355 : brut d'un coût mensuel chargé, sans boucle : le palier de cotisations qui retombe sur lui-même. */
+  function brutDepuisCout(c, h) {
+    var M = [1.08, 1.15, 1.25, 1.33, 1.40, 1.45];
+    for (var i = 0; i < M.length; i++) { var b = c / M[i], m = multiplicateur(b, h); if (m === M[i]) return b; if (m < M[i]) return c / M[i - 1 < 0 ? 0 : i - 1]; }
+    /* entre deux paliers, le coût n'a pas de brut exact : on garde le palier du dessous (brut au-dessus, jamais sous le SMIC) */
+    return c / M[M.length - 1];
+  }
   function tauxHeure(p) { var h = num(p.h) * 52 / 12; return h > 0 ? coutMois(p) / h : 0; }
 
-  /* Démonstration : une brasserie de 6 salariés, calée sur les chiffres saisis (brut total et coût chargé total). */
-  var DEMO = [['Karim', 'chef', 'CDI', 39, 3300], ['Lucie', 'cuisinier', 'CDI', 39, 2450], ['Théo', 'commis', 'CDI', 35, 1950],
-    ['Inès', 'resp', 'CDI', 39, 2700], ['Hugo', 'serveur', 'CDI', 39, 2200], ['Sarah', 'serveur', 'CDI', 30, 1700]];
+  /* C355 (décision 30) : l'équipe de démonstration suit le métier du modèle. Une équipe-type par format, autant de temps
+     pleins (39 h) que le modèle en déclare (saln), salaires répartis directement depuis sa masse (salb, cotisations salt) par
+     poids de poste × heures, chacun au moins au SMIC de ses heures : la somme des postes est exactement la masse du moteur.
+     Sans salarié (salb = 0) : aucune équipe fictive. Une équipe saisie par le patron (DB.staff) n'est jamais touchée.
+     Avant : la même brasserie de 6 salariés (salle et serveurs compris) recalée pour tous, sous le SMIC dès que la masse
+     était petite (Dark kitchen 888 € pour un commis, Food truck 162 €). */
+  var GABARITS = {
+    salle: [['chef', 1.45], ['serveur', 1], ['cuisinier', 1.15], ['resp', 1.25], ['commis', 0.92], ['serveur', 1], ['plonge', 0.9], ['second', 1.3], ['rang', 1.05], ['runner', 0.9], ['cuisinier', 1.15], ['serveur', 1]],
+    gastro: [['chef', 1.6], ['second', 1.35], ['rang', 1.1], ['cuisinier', 1.15], ['resp', 1.3], ['commis', 0.92], ['serveur', 1], ['plonge', 0.9], ['patissier', 1.15], ['rang', 1.1], ['cuisinier', 1.15], ['commis', 0.92], ['serveur', 1], ['runner', 0.9]],
+    bar: [['barman', 1.05], ['serveur', 1], ['cuisinier', 1.15], ['serveur', 1], ['commis', 0.92], ['resp', 1.25], ['barman', 1.05], ['plonge', 0.9]],
+    pizzeria: [['pizzaiolo', 1.15], ['serveur', 1], ['commis', 0.92], ['pizzaiolo', 1.15], ['serveur', 1], ['plonge', 0.9], ['resp', 1.25]],
+    comptoir: [['cuisinier', 1.1], ['equipier', 0.95], ['commis', 0.92], ['equipier', 0.95], ['cuisinier', 1.1], ['equipier', 0.95]],
+    cafe: [['barista', 1], ['equipier', 0.95], ['barista', 1], ['commis', 0.92], ['equipier', 0.95]],
+    boulangerie: [['boulanger', 1.15], ['vendeur', 0.95], ['patissier', 1.1], ['vendeur', 0.95], ['boulanger', 1.15], ['commis', 0.92], ['vendeur', 0.95]],
+    traiteur: [['chef', 1.4], ['cuisinier', 1.15], ['commis', 0.92], ['prep', 0.95], ['cuisinier', 1.15], ['commis', 0.92]],
+    livraison: [['chef', 1.35], ['cuisinier', 1.1], ['prep', 0.95], ['commis', 0.92], ['cuisinier', 1.1], ['prep', 0.95]],
+    camion: [['cuisinier', 1.1], ['equipier', 0.95]]
+  };
+  var GABARIT_FORMAT = { 'Dark kitchen': 'livraison', 'Food truck': 'camion', 'Coffee shop': 'cafe', 'Boulangerie': 'boulangerie', 'Traiteur': 'traiteur',
+    'Pizzeria': 'pizzeria', 'Kebab': 'comptoir', 'Restaurant à burgers': 'comptoir', 'Bar / café': 'bar', 'Bar à tapas': 'bar',
+    'Restaurant gastronomique': 'gastro', 'Table gastronomique d’exception': 'gastro' };
+  var PRENOMS = ['Karim', 'Lucie', 'Théo', 'Inès', 'Hugo', 'Sarah', 'Nadia', 'Yanis', 'Léa', 'Malik', 'Chloé', 'Rayan', 'Emma', 'Sami', 'Julie', 'Omar', 'Camille', 'Bilal', 'Manon', 'Adam', 'Zoé', 'Nathan', 'Lina', 'Hamza', 'Jade', 'Enzo', 'Clara', 'Ilyes'];
+  /* Part des ventes livrées : 100 % pour une dark kitchen, sinon la part plateforme moyenne des plats (pfshare en %). */
+  function partLivraison(D) {
+    if (D && D.etabType === 'Dark kitchen') return 1;
+    var P = (D && Array.isArray(D.plats)) ? D.plats : []; if (!P.length) return 0;
+    return P.reduce(function (t, p) { return t + (p && p.pf ? Math.min(100, Math.max(0, num(p.pfshare))) / 100 : 0); }, 0) / P.length;
+  }
   function estDemo(D) { return !!(D && (D._demo || D.demo || (D.dataProvenance && D.dataProvenance.nature === 'model_estimate'))); }
+  function gabarit(D) { if (partLivraison(D) >= 0.8) return 'livraison'; return GABARIT_FORMAT[D && D.etabType] || 'salle'; }
   function equipeDemo(D) {
-    var cible = num(D.in && D.in.salb) * (1 + num(D.in && D.in.salt) / 100);
-    var L = DEMO.map(function (x, i) { return { id: 'demo' + i, nom: x[0] + ' (fictif)', poste: x[1], contrat: x[2], h: x[3], brut: x[4], demo: true }; });
-    if (cible > 0) { for (var it = 0; it < 20; it++) { var c = L.reduce(function (t, p) { return t + coutMois(p); }, 0), f = cible / c; if (Math.abs(f - 1) < 0.0005) break; L.forEach(function (p) { p.brut = p.brut * f; }); } }
-    L.forEach(function (p) { p.brut = Math.round(p.brut); });
+    var I = (D && D.in) || {}, salb = num(I.salb), salt = num(I.salt), n = num(I.saln);
+    if (!(salb > 0)) return [];
+    if (!(n > 0)) n = 1;
+    var G = GABARITS[gabarit(D)], L = [], plein = Math.floor(n + 1e-9), reste = n - plein;
+    function pers(i, h) { var g = i < G.length ? G[i] : G[1 + (i - 1) % (G.length - 1 || 1)] || G[0]; return { id: 'demo' + i, nom: PRENOMS[i % PRENOMS.length] + ' (fictif)', poste: g[0], contrat: 'CDI', h: h, _w: g[1], demo: true }; }
+    for (var i = 0; i < plein; i++) L.push(pers(i, 39));
+    if (reste > 0.01) L.push(pers(plein, Math.round(reste * 39 * 10) / 10));
+    var charge = salt > 0; /* salt > 0 : salb est un brut ; salt = 0 : salb est déjà le coût chargé */
+    var poids = L.map(function (p) { return p._w * p.h; }), tp = poids.reduce(function (a, b) { return a + b; }, 0);
+    var plancher = L.map(function (p) { return smicMois(p.h) * (charge ? 1 : 1.08); }), tf = plancher.reduce(function (a, b) { return a + b; }, 0);
+    var sous = tf > salb + 0.005;
+    L.forEach(function (p, j) {
+      var v = sous ? salb * poids[j] / tp : plancher[j] + (salb - tf) * poids[j] / tp;
+      if (charge) { p.brut = v; p.coutDemo = v * (1 + salt / 100); } else { p.coutDemo = v; p.brut = brutDepuisCout(v, p.h); }
+      p.brut = Math.round(p.brut * 100) / 100; delete p._w;
+    });
+    /* La masse du modèle ne paie pas le SMIC de ses temps pleins : on ne maquille rien, l'écran le dit. */
+    L.sousSmic = sous ? { masse: salb, charge: charge, n: n, parTempsPlein: salb / n, smic: smicMois(39) * (charge ? 1 : 1.08) } : null;
     return L;
   }
   function equipe(D) { return D && Array.isArray(D.staff) && D.staff.length ? D.staff : (estDemo(D) ? equipeDemo(D) : []); }
   function ouverture(D) { var o = num(D && D.equipeOuverture); if (o > 0) return o; var j = num(D && D.in && D.in.jsem) || 6; return estDemo(D) ? j * 15 : null; }
 
+  var LIEUX = [['cuisine', 'la cuisine'], ['production', 'le fournil'], ['comptoir', 'le comptoir'], ['salle', 'la salle'], ['vente', 'la boutique'], ['expedition', 'l’expédition des commandes']];
+  function lieux(z) { var L = LIEUX.filter(function (x) { return z[x[0]]; }).map(function (x) { return x[1]; }); if (z.cuisine && z.salle && L.length === 2) return 'cuisine et salle'; return L.length ? L.slice(0, -1).join(', ') + (L.length > 1 ? ' et ' : '') + L[L.length - 1] : 'l’établissement'; }
   /* L'analyse : coûts, temps pleins, minimum pour tenir l'ouverture, ventes par temps plein, verdict en mots. */
   function analyser(D, R, fmt, rep) {
     var L = equipe(D), d = (R && R.d) || {}, ca = num(d.ca), A = { liste: [], fmt: fmt, rep: rep, ca: ca };
@@ -75,6 +129,8 @@
     A.etpTout = A.etp + A.dirN; A.caEtp = A.etpTout > 0 ? ca / A.etpTout : null; A.caEtpRep = CA_ETP[fmt] || 105000;
     A.ouv = ouverture(D);
     var zones = {}; A.liste.forEach(function (x) { if (x.poste.z !== 'autre') zones[x.poste.z] = 1; });
+    /* C355 : les lieux du métier (« cuisine et salle » seulement s'il y a une salle) et ce que compte le moteur */
+    A.lieux = lieux(zones); A.sousSmic = L.sousSmic || null; A.salMoteur = num(d.sal); A.seul = !L.length && !(num(I.salb) > 0) && (A.dirN > 0 || estDemo(D));
     A.postesMin = Math.max(2, Object.keys(zones).length);
     A.etpMin = A.ouv ? A.ouv * 52 * A.postesMin / PRESENCE : null;
     /* Verdict */
@@ -95,18 +151,25 @@
      l'ouverture. Face à l'équipe actuelle : renfort en haute saison, congés et récupérations en basse saison. */
   var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   function saisons(D, A) {
-    var M = ((D && D.monthlyHistory) || []).filter(function (m) { return m && m.closed !== false && num(m.caHT) > 0 && num(m.openDays) > 0; }).slice(-12);
-    if (M.length < 12 || !(A.etpTout > 0)) return null;
-    var L = M.map(function (m) { var i = Number(String(m.period).slice(5, 7)) - 1, b = num(m.caHT) * 12 / A.caEtpRep; return { i: i, ca: num(m.caHT), besoin: Math.max(A.etpMin || 0, b) }; }).sort(function (a, b) { return a.i - b.i; });
-    var haut = L.filter(function (x) { return x.besoin > A.etpTout * 1.08; }), bas = L.filter(function (x) { return x.besoin < A.etpTout * 0.85; });
-    return { mois: L, haut: haut, bas: bas, max: Math.max.apply(null, L.map(function (x) { return x.besoin; }).concat([A.etpTout])) };
+    /* C333 : « 12 derniers mois » = 12 mois CIVILS jusqu'au dernier mois clos ; un mois fermé compte pour 0 (jamais un mois d'une autre année à sa place). */
+    var H = ((D && D.monthlyHistory) || []).filter(function (m) { return m && m.closed !== false && /^\d{4}-\d{2}/.test(String(m.period)); });
+    var ouverts = H.filter(function (m) { return num(m.caHT) > 0 && num(m.openDays) > 0; });
+    if (!ouverts.length || !(A.etpTout > 0)) return null;
+    var fin = ouverts.map(function (m) { return String(m.period).slice(0, 7); }).sort().pop(), y = +fin.slice(0, 4), mo = +fin.slice(5, 7), cles = [];
+    for (var k = 11; k >= 0; k--) { var mm = mo - k, yy = y; while (mm < 1) { mm += 12; yy--; } cles.push(yy + '-' + (mm < 10 ? '0' : '') + mm); }
+    if (H.map(function (m) { return String(m.period).slice(0, 7); }).sort()[0] > cles[0]) return null; /* moins de 12 mois civils d'historique */
+    var par = {}; ouverts.forEach(function (m) { par[String(m.period).slice(0, 7)] = m; });
+    var L = cles.map(function (c) { var m = par[c], i = Number(c.slice(5, 7)) - 1; if (!m) return { i: i, ca: 0, besoin: 0, ferme: true }; var b = num(m.caHT) * 12 / A.caEtpRep; return { i: i, ca: num(m.caHT), besoin: Math.max(A.etpMin || 0, b) }; }).sort(function (a, b) { return a.i - b.i; });
+    var ouv = L.filter(function (x) { return !x.ferme; });
+    var haut = ouv.filter(function (x) { return x.besoin > A.etpTout * 1.08; }), bas = ouv.filter(function (x) { return x.besoin < A.etpTout * 0.85; });
+    return { mois: L, haut: haut, bas: bas, ca12: L.reduce(function (s, x) { return s + x.ca; }, 0), max: Math.max.apply(null, ouv.map(function (x) { return x.besoin; }).concat([A.etpTout])) };
   }
   function nomsMois(L) { var n = L.map(function (x) { return MOIS[x.i]; }); return n.length > 2 ? n.slice(0, -1).join(', ') + ' et ' + n[n.length - 1] : n.join(' et '); }
   function saisonsHTML(Sz, A) {
     if (!Sz) return '';
-    var mn = Math.min.apply(null, Sz.mois.map(function (x) { return x.besoin; }).concat([A.etpTout])), base = mn * 0.6, haut = function (v) { return Math.round((v - base) / (Sz.max - base) * 100); };
+    var mn = Math.min.apply(null, Sz.mois.filter(function (x) { return !x.ferme; }).map(function (x) { return x.besoin; }).concat([A.etpTout])), base = mn * 0.6, /* C333 : un mois fermé n'entre pas dans l'échelle */ haut = function (v) { return Math.round((v - base) / (Sz.max - base) * 100); };
     var h = '<p class="me57-k" style="margin-top:16px">Votre équipe au fil de l’année</p><div class="me57-sz" role="img" aria-label="Temps pleins utiles chaque mois, face à votre équipe actuelle">';
-    Sz.mois.forEach(function (x) { var c = x.besoin > A.etpTout * 1.08 ? '#ef4444' : x.besoin < A.etpTout * 0.85 ? '#60a5fa' : '#22c55e';
+    Sz.mois.forEach(function (x) { if (x.ferme) { h += '<div><i style="height:0"></i><span>' + MOIS[x.i].slice(0, 1).toUpperCase() + '</span></div>'; return; } /* C333 : mois fermé, barre vide */ var c = x.besoin > A.etpTout * 1.08 ? '#ef4444' : x.besoin < A.etpTout * 0.85 ? '#60a5fa' : '#22c55e';
       h += '<div><i style="height:' + haut(x.besoin) + '%;background:' + c + '"></i><span>' + MOIS[x.i].slice(0, 1).toUpperCase() + '</span></div>'; });
     h += '<em style="bottom:' + (18 + haut(A.etpTout)) + 'px"></em></div><p class="me57-szl">Barre = temps pleins utiles d’après vos ventes de ce mois-là ; trait = votre équipe actuelle (' + un(A.etpTout, 1) + ', vous compris). <b style="color:#ef4444">Rouge</b> : renfort utile · <b style="color:#22c55e">vert</b> : équipe juste · <b style="color:#60a5fa">bleu</b> : congés possibles.</p>';
     var t = [];
@@ -145,7 +208,7 @@
     S.apres = { coutMin: A.cout + A.dirCout - S.maxAn / 12, coutMax: A.cout + A.dirCout - S.minAn / 12, etp: A.etpTout - x.etp, resMin: num(d.res) + S.minAn, resMax: num(d.res) + S.maxAn };
     S.dTab = S.minAn < 0;
     if (ca > 0) { S.apres.partMin = (S.apres.coutMin) * 12 / ca; S.apres.partMax = (S.apres.coutMax) * 12 / ca; }
-    S.sousMin = A.etpMin != null && S.apres.etp < A.etpMin;
+    S.sousMin = A.etpMin != null && S.apres.etp < A.etpMin; S.lieux = A.lieux;
     return S;
   }
 
@@ -155,13 +218,13 @@
     var rep = A.rep, p = Math.round(A.partTout * 100), t = '', s = [];
     if (A.k === 'ok') t = 'Votre équipe est à sa taille : ' + p + ' € pour 100 € vendus (conseillé : ' + rep + ' € au plus).';
     else if (A.k === 'juste') { t = 'Équipe trop juste : risque de fatigue et de départs.';
-      s.push('Pour tenir cuisine et salle ' + un(A.ouv) + ' h par semaine, il faut au moins ' + un(A.etpMin, 1) + ' temps pleins ; vous en avez ' + un(A.etpTout, 1) + ' (vous compris). Les heures supplémentaires et la fatigue finissent par coûter plus cher qu’un renfort : un départ se remplace difficilement en pleine saison.'); }
+      s.push('Pour tenir ' + A.lieux + ' ' + un(A.ouv) + ' h par semaine, il faut au moins ' + un(A.etpMin, 1) + ' temps pleins ; vous en avez ' + un(A.etpTout, 1) + ' (vous compris). Les heures supplémentaires et la fatigue finissent par coûter plus cher qu’un renfort : un départ se remplace difficilement en pleine saison.'); }
     else if (A.k === 'pas-trop') { t = 'Pas trop de monde : l’équipe coûte cher, mais elle n’est pas trop nombreuse.';
-      s.push('Pour tenir cuisine et salle ' + un(A.ouv) + ' h par semaine, il faut au moins ' + un(A.etpMin, 1) + ' temps pleins ; vous en avez ' + un(A.etpTout, 1) + ' (vous compris).'); }
+      s.push('Pour tenir ' + A.lieux + ' ' + un(A.ouv) + ' h par semaine, il faut au moins ' + un(A.etpMin, 1) + ' temps pleins ; vous en avez ' + un(A.etpTout, 1) + ' (vous compris).'); }
     else if (A.k === 'trop') { t = 'Un peu trop de monde pour vos ventes actuelles.';
       s.push(eur(A.caEtp) + ' de ventes par temps plein, pour ' + eur(A.caEtpRep) + ' habituellement dans votre type d’établissement : environ ' + un(A.surplus, 1) + ' temps plein de plus que ce que vos ventes font tourner.'); }
     else { t = 'Le nombre de personnes va, c’est l’organisation des heures qui coûte.';
-      if (A.etpMin) s.push('Pour tenir cuisine et salle ' + un(A.ouv) + ' h par semaine, il faut au moins ' + un(A.etpMin, 1) + ' temps pleins ; vous en avez ' + un(A.etpTout, 1) + ' (vous compris) : pas de poste en trop.');
+      if (A.etpMin) s.push('Pour tenir ' + A.lieux + ' ' + un(A.ouv) + ' h par semaine, il faut au moins ' + un(A.etpMin, 1) + ' temps pleins ; vous en avez ' + un(A.etpTout, 1) + ' (vous compris) : pas de poste en trop.');
       s.push(eur(A.caEtp) + ' de ventes par temps plein, ' + (A.caEtp < A.caEtpRep * 0.95 ? 'un peu en dessous' : 'dans la moyenne') + ' de votre type d’établissement (' + eur(A.caEtpRep) + ').'); }
     if (A.k !== 'ok' && A.k !== 'vide' && A.k !== 'juste') {
       s.push('L’équipe coûte ' + p + ' € pour 100 € vendus (conseillé : ' + rep + ' € au plus).');
@@ -191,7 +254,7 @@
     if (S.minAn < 0) t.push('Économie : jusqu’à ' + eur(S.maxAn) + ' par an si ses ' + un(num(x.p.h)) + ' h par semaine n’étaient pas utiles. Mais s’il faut les faire quand même, ça coûterait ' + eur(-S.minAn) + ' de plus par an' + (S.collegues.length ? ', car ses collègues sont mieux payés et leurs heures supplémentaires sont majorées' : '') + (S.extras ? (S.collegues.length ? ', avec ' : ' : ') + un(S.extrasH, 1) + ' h par semaine en extras' : '') + '.');
     else t.push('Économie : entre ' + eur(S.minAn) + ' et ' + eur(S.maxAn) + ' par an. Le haut, si ses ' + un(num(x.p.h)) + ' h par semaine n’étaient pas utiles ; le bas, s’il faut les faire quand même' + (S.collegues.length ? comment : '') + (S.extras ? (S.collegues.length ? ', et ' : ' : ') + un(S.extrasH, 1) + ' h par semaine en extras' : '') + '.');
     if (S.collegues.length) t.push('Ses collègues passeraient à : ' + S.collegues.map(function (c) { return esc(String(c.nom).split(' ')[0]) + ' ' + un(c.avant) + ' → ' + un(c.apres, 1) + ' h'; }).join(', ') + ' par semaine.');
-    if (S.sousMin) t.push('Attention : sans ce poste, il ne reste plus assez de monde pour tenir cuisine et salle à vos heures d’ouverture.');
+    if (S.sousMin) t.push('Attention : sans ce poste, il ne reste plus assez de monde pour tenir ' + esc(S.lieux || 'cuisine et salle') + ' à vos heures d’ouverture.');
     t.push('Aucune vente en plus n’est comptée. Le plus sûr : ne pas remplacer un départ volontaire. Un licenciement ou une rupture a un coût de séparation, non compté ici (à voir avec votre comptable). Verdict ne décide jamais à votre place.');
     return h + t.map(function (y) { return '<p>' + y + '</p>'; }).join('') + '</div>';
   }
@@ -206,9 +269,12 @@
   }
   function carteHTML(A, G, sh, etat) {
     var h = '<p class="me57-k">Mon équipe, salarié par salarié' + (A.liste.some(function (x) { return x.p.demo; }) ? ' · démonstration' : '') + '</p>';
+    if (A.k === 'vide' && A.seul) return h + '<p class="titre">Pas de salarié : vous travaillez seul</p><p class="sous">Coût de l’équipe (vous compris) : <b>' + eur(A.salMoteur) + ' par an</b>, le même chiffre que dans Structure' + (A.dirN > 0 ? ' (votre rémunération, cotisations comprises : ' + eur(A.dirCout) + ' par mois)' : '') + '. Si vous embauchez, ajoutez le salarié : Verdict calcule son coût réel et vous dit si l’équipe est à la bonne taille.</p>' +
+      (etat.form ? formHTML(etat.formP) : '<div class="actions"><button type="button" class="btn" data-me57-add="1">+ Ajouter un salarié</button></div>');
     if (A.k === 'vide') return h + '<p class="titre">Ajoutez vos salariés pour savoir si votre équipe est à la bonne taille</p><p class="sous">Poste, heures et salaire brut suffisent : Verdict calcule le coût réel pour vous (cotisations après la réduction générale) et vous dit, sans jargon, si vous avez trop de monde ou si c’est l’organisation des heures qui coûte.</p>' +
       (etat.form ? formHTML(etat.formP) : '<div class="actions"><button type="button" class="btn" data-me57-add="1">+ Ajouter un salarié</button></div>');
     h += verdictHTML(A, sh);
+    if (A.sousSmic) h += '<p class="me57-w">Démonstration : la masse salariale de ce modèle (' + eur(A.sousSmic.masse) + (A.sousSmic.charge ? ' brut' : ' chargé') + ' par mois pour ' + un(A.sousSmic.n, 1) + ' temps plein' + (A.sousSmic.n > 1 ? 's' : '') + ', soit ' + eur(A.sousSmic.parTempsPlein) + ' chacun) ne paie pas le SMIC d’un temps plein de 39 h (' + eur(A.sousSmic.smic) + '). Les salaires ci-dessous en sont la part exacte, sans arrangement.</p>';
     h += '<div class="me57-liste">' + A.liste.map(function (x) { return ligneHTML(x, etat.sans === String(x.p.id)) + (etat.sans === String(x.p.id) ? sansHTML(sansLui(A, x.p.id, etat.R)) : '') + (etat.form && etat.formP && String(etat.formP.id) === String(x.p.id) ? formHTML(etat.formP) : ''); }).join('');
     if (A.dirN > 0) h += '<div class="me57-l me57-dir"><div class="me57-n"><b>Vous</b><span>Dirigeant · ' + un(A.dirN, 1) + ' temps plein</span></div><div class="me57-c"><b>' + eur(A.dirCout) + '</b><span>par mois, cotisations comprises</span></div><div class="me57-a"></div></div>';
     h += '<div class="me57-l me57-tot"><div class="me57-n"><b>Total</b><span>' + A.liste.length + ' salarié' + (A.liste.length > 1 ? 's' : '') + ' · ' + un(A.etp, 1) + ' temps plein' + (A.etp > 1 ? 's' : '') + ' · ' + un(A.h) + ' h/sem.</span></div><div class="me57-c"><b>' + eur(A.cout + A.dirCout) + '</b><span>par mois, vous compris</span></div><div class="me57-a"></div></div></div>';
@@ -281,5 +347,5 @@
   });
   function tour() { try { var vue = doc.getElementById('v-sal'); if (vue && (vue.classList.contains('on') || vue.classList.contains('active') || vue.offsetParent)) dessiner(false); } catch (e) {} }
   var it = setInterval(tour, 1000); if (it && it.unref) it.unref();
-  w.VerdictMonEquipe = { analyser: analyser, saisons: saisons, sansLui: sansLui, grandsCouts: grandsCouts, multiplicateur: multiplicateur, smicMois: smicMois, coutMois: coutMois, equipeDemo: equipeDemo, tour: tour, POSTES: POSTES };
+  w.VerdictMonEquipe = { analyser: analyser, saisons: saisons, sansLui: sansLui, grandsCouts: grandsCouts, multiplicateur: multiplicateur, smicMois: smicMois, coutMois: coutMois, equipeDemo: equipeDemo, tour: tour, POSTES: POSTES, partLivraison: partLivraison, gabarit: gabarit, brutDepuisCout: brutDepuisCout };
 })();

@@ -81,7 +81,7 @@
     var seg = D.postes.map(function (x, i) { return '<i style="--w:' + Math.max(0, x.v).toFixed(2) + '%;--c:' + x.c + ';--i:' + i + '">' + dedans(x.l, x.v) + '</i>'; }).join('') +
       (D.rn > 0 ? '<i class="rc-res" style="--w:' + D.rn.toFixed(2) + '%;--c:#22c55e;--i:' + D.postes.length + '">' + dedans('Reste avant impôt', D.rn) + '</i>' : '');
     var leg = D.postes.map(function (x) { return '<li><i style="background:' + x.c + '"></i>' + esc(x.l) + '<b>' + (Math.round(x.v * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>'; }).join('') +
-      '<li><i style="background:' + (D.rn > 0 ? '#22c55e' : '#ef4444') + '"></i>' + (D.rn >= 0 ? 'Reste avant impôt' : 'Il manque') + '<b>' + (D.rn >= 0 ? '' : '−') + Math.abs(Math.round(D.rn * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>';
+      '<li' + (D.rn < 0 ? ' class="rc-neg"' : '') + '><i style="background:' + (D.rn > 0 ? '#22c55e' : '#ef4444') + '"></i>' + (D.rn >= 0 ? 'Reste avant impôt' : 'Il manque') + '<b>' + (D.rn >= 0 ? '' : '−') + Math.abs(Math.round(D.rn * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>';
     /* V51 (21/10) : les montants sont HT (« encaissés » laissait croire à du TTC) ; « le premier poste est l’équipe », avec l'article. */
     var ART = { 'matière': 'la matière', 'équipe': 'l’équipe', 'plateformes': 'les plateformes', 'emballages': 'les emballages', 'structure': 'la structure', 'amortissements': 'les amortissements', 'loyer et autres charges': 'le loyer et les autres charges' };
     var premier = D.postes.length ? D.postes.slice().sort(function (a, b) { return b.v - a.v; })[0].l.toLowerCase() : '';
@@ -146,6 +146,8 @@
       t.push('<section class="rc-card rc-c5" data-rc="5"><span class="rc-k">5 · Comment remonter</span><h2>Votre résultat, levier par levier</h2>' +
         '<ol class="rc-wf">' + barres + '</ol>' +
         '<p class="rc-big"><b data-rc-count="' + Math.round(D.cible) + '" data-rc-eur>0 €</b><small>de résultat possible sur un an · ' + eur((D.cible - D.res) / 12) + ' de plus par mois</small></p>' +
+        /* C357 (T1, avec L2 et L7) : l'image 4 montre l'écart matière ; quand le plan ne retient aucun levier matière, l'image 5 le dit aussi */
+        (D.fuite && !D.leviers.some(function (x) { return x && (x.id === 'fc' || x.id === 'boi'); }) ? '<p class="rc-p" data-rc-noncompte>Non compté : l’écart matière (≈ ' + eur(Math.round(D.fuite.eur)) + ' par an), à expliquer avant d’en faire un gain.</p>' : '') +
         '<span class="rc-suite">Votre prochain pas ↓</span></section>');
     }
     /* 6 · Le prochain pas */
@@ -166,9 +168,13 @@
        l'animation est suspendue (cadre ou onglet caché) avant sa dernière image. */
     setTimeout(function () { aff(fin); }, duree + 150);
   }
+  /* C342/C345 (décision 27) : une image déjà à l'écran au moment du rendu garde ses montants (écrits dès le départ, C301) : jamais
+     42 692 € puis 0 puis 42 692 € ; les compteurs qui jouent à l'arrivée d'une image sont déclarés (data-vd-compteur) */
+  var RENDU_RC = 0;
   function jouer(card) {
     if (card.classList.contains('rc-on')) return;
     card.classList.add('rc-on');
+    if (performance.now() - RENDU_RC < 600) return;
     [].forEach.call(card.querySelectorAll('[data-rc-count]'), function (el, i) { setTimeout(function () { compter(el); }, REDUIT ? 0 : 180 + i * 120); });
   }
   /* C98 — Grand écran (Steven : « pas un copier-coller du mobile, meilleure expérience sur grand ») : barre de chapitres
@@ -235,7 +241,8 @@
     box.innerHTML = '<header class="rc-head"><span>Audit Verdict · ' + esc(D.nom) + '</span><h1>Votre audit en ' + nImg + ' image' + (nImg > 1 ? 's' : '') + '</h1><p><span class="rc-m">Faites défiler : chaque image se joue quand elle arrive.</span><span class="rc-l">' + motN.charAt(0).toUpperCase() + motN.slice(1) + ', une idée chacune, toutes calculées avec vos chiffres.</span></p></header>' +
       '<div class="rc-navwrap"><div class="rc-nav" role="navigation" aria-label="Chapitres de l’audit">' + puces + '</div></div>' + corps;
     /* C301 (V15-080) : chaque montant est écrit dès le départ (l'animation repart de 0 à l'écran seulement) */
-    [].forEach.call(box.querySelectorAll('[data-rc-count]'), function (x) { var v = Number(x.getAttribute('data-rc-count')); if (isFinite(v) && x.hasAttribute('data-rc-eur')) x.textContent = eur(v); });
+    [].forEach.call(box.querySelectorAll('[data-rc-count]'), function (x) { var v = Number(x.getAttribute('data-rc-count')); x.setAttribute('data-vd-compteur', '1'); if (isFinite(v)) x.textContent = x.hasAttribute('data-rc-eur') ? eur(v) : String(Math.round(v)); });
+    RENDU_RC = performance.now();
     var wrap = body.querySelector('.au-wrap') || body;
     if (box.parentNode !== wrap || wrap.firstChild !== box) wrap.insertBefore(box, wrap.firstChild);
     [].forEach.call(box.querySelectorAll('[data-rc-go]'), function (b) {
@@ -252,7 +259,7 @@
     if (!('IntersectionObserver' in w) || REDUIT) { [].forEach.call(cartes, jouer); return; }
     /* C103 : la première image se joue dès qu'elle est un peu visible (à l'ouverture de l'Audit, elle n'est visible
        qu'à 40-47 % sous la barre du bas : au seuil de 45 % elle restait parfois vide). */
-    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting && (e.intersectionRatio >= 0.45 || (e.target === cartes[0] && e.intersectionRatio >= 0.15))) { jouer(e.target); io.unobserve(e.target); } }); }, { threshold: [0.15, 0.45], rootMargin: '0px 0px -8% 0px' });
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { jouer(e.target); io.unobserve(e.target); } }); }, { threshold: 0, rootMargin: '0px 0px 100% 0px' } /* C350 (décision 27) : jouée un écran avant d'arriver, jamais vide à l'écran */);
     [].forEach.call(cartes, function (c) { io.observe(c); });
   }
 
@@ -277,8 +284,8 @@
     '#vdRecit .rc-suite{margin-top:6px;padding-top:8px;font:700 13px/1 -apple-system,system-ui;color:rgba(255,255,255,.62);animation:rcBouge 1.8s ease-in-out infinite}' +
     '@keyframes rcBouge{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}' +
     /* entrées */
-    '#vdRecit .rc-card>*{opacity:0;transform:translateY(16px);transition:opacity .55s ' + E + ',transform .55s ' + E + '}' +
-    '#vdRecit .rc-card.rc-on>*{opacity:1;transform:none}#vdRecit .rc-card.rc-on>*:nth-child(2){transition-delay:.07s}#vdRecit .rc-card.rc-on>*:nth-child(3){transition-delay:.14s}#vdRecit .rc-card.rc-on>*:nth-child(4){transition-delay:.21s}#vdRecit .rc-card.rc-on>*:nth-child(5){transition-delay:.28s}#vdRecit .rc-card.rc-on>*:nth-child(n+6){transition-delay:.35s}' +
+    '/* décision 27 bis */#vdRecit .rc-card>*{opacity:.6;transform:translateY(6px);transition:opacity .2s ' + E + ',transform .2s ' + E + '}' +
+    '#vdRecit .rc-card.rc-on>*{opacity:1;transform:none}#vdRecit .rc-card.rc-on>*:nth-child(2){transition-delay:.01s}#vdRecit .rc-card.rc-on>*:nth-child(3){transition-delay:.02s}#vdRecit .rc-card.rc-on>*:nth-child(4){transition-delay:.03s}#vdRecit .rc-card.rc-on>*:nth-child(5){transition-delay:.04s}#vdRecit .rc-card.rc-on>*:nth-child(n+6){transition-delay:.05s}' +
     /* 1 · anneau */
     '#vdRecit .rc-dial{position:relative;width:180px;height:180px;margin:4px auto 0}#vdRecit .rc-ring{width:100%;height:100%;transform:rotate(-90deg)}' +
     '#vdRecit .rc-ring-bg{fill:none;stroke:rgba(255,255,255,.12);stroke-width:14}#vdRecit .rc-ring-arc{fill:none;stroke-width:14;stroke-linecap:round;stroke-dashoffset:var(--rc-len);transition:stroke-dashoffset 1.2s ' + E + ' .2s;filter:drop-shadow(0 0 10px currentColor)}' +
@@ -290,7 +297,7 @@
     '#vdRecit .rc-stack i{display:block;height:100%;flex:0 0 var(--w);background:var(--c)}#vdRecit .rc-stack i+i{box-shadow:inset 2px 0 0 rgba(0,0,0,.18)}' +
     '#vdRecit .rc-on .rc-stack{clip-path:inset(0 0 0 0 round 12px)}#vdRecit .rc-stack .rc-res{background:linear-gradient(90deg,#16a34a,#4ade80)}' +
     '#vdRecit .rc-leg{list-style:none;margin:0;padding:0;display:grid;gap:0}#vdRecit .rc-leg li{display:flex;align-items:center;gap:10px;min-height:38px;font-size:15px;color:rgba(248,250,252,.85);border-bottom:1px solid rgba(255,255,255,.08)}' +
-    '#vdRecit .rc-leg li:last-child{border-bottom:0;color:#fff;font-weight:700}#vdRecit .rc-leg li:last-child b{color:#4ade80;font-size:17px}' +
+    '#vdRecit .rc-leg li:last-child{border-bottom:0;color:#fff;font-weight:700}#vdRecit .rc-leg li:last-child b{color:#4ade80;font-size:17px}#vdRecit .rc-leg li.rc-neg:last-child b{color:#f87171}' +
     '#vdRecit .rc-leg li i{width:12px;height:12px;border-radius:4px;flex:0 0 12px}#vdRecit .rc-leg li b{margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums;color:#fff}' +
     /* 3 · jauge */
     '#vdRecit .rc-track{position:relative;height:18px;border-radius:9px;background:rgba(255,255,255,.1);margin:22px 0 10px}' +
@@ -300,13 +307,13 @@
     '#vdRecit .rc-gauge-l{display:flex;justify-content:space-between;font-size:13.5px;color:rgba(248,250,252,.8)}' +
     /* 4 · fuites */
     '#vdRecit .rc-leaks{list-style:none;margin:0;padding:0;display:grid;gap:10px}' +
-    '#vdRecit .rc-leaks li{display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);transform:translateX(-12px);opacity:0;transition:transform .6s ' + E + ',opacity .6s ' + E + ';transition-delay:calc(var(--i)*.16s + .25s)}' +
+    '#vdRecit .rc-leaks li{display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);transform:translateX(-6px);opacity:.6;transition:transform .2s ' + E + ',opacity .2s ' + E + ';transition-delay:min(calc(var(--i)*.02s),.05s)}' +
     '#vdRecit .rc-on .rc-leaks li{transform:none;opacity:1}#vdRecit .rc-n{flex:0 0 30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(239,68,68,.22);color:#fca5a5;font-weight:900}' +
     '#vdRecit .rc-leaks li div{flex:1;min-width:0}#vdRecit .rc-leaks li div b{display:block;color:#fff;font-size:16px;overflow-wrap:anywhere;-webkit-hyphens:auto;hyphens:auto}#vdRecit .rc-leaks li div small{color:rgba(248,250,252,.7);font-size:13px}' +
     '#vdRecit .rc-leaks strong{text-align:right;color:#fde68a;font:900 20px/1.1 -apple-system,system-ui;font-variant-numeric:tabular-nums;white-space:nowrap}#vdRecit .rc-leaks strong em{font-style:normal}#vdRecit .rc-fuite .rc-n{background:rgba(249,115,22,.28);color:#fdba74}#vdRecit .rc-leaks .rc-fuite strong{color:#fdba74}#vdRecit .rc-leaks strong small{display:block;font-size:11.5px;color:rgba(253,230,138,.75)}' +
     /* 5 · cascade */
     '#vdRecit .rc-wf{list-style:none;margin:0 0 26px;padding:0;display:grid;gap:14px}' +
-    '#vdRecit .rc-wf-row{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:4px 10px;opacity:0;transform:translateY(10px);transition:opacity .35s ' + E + ',transform .35s ' + E + ';transition-delay:calc(var(--i)*.16s + .1s)}' +
+    '#vdRecit .rc-wf-row{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:4px 10px;opacity:.6;transform:translateY(4px);transition:opacity .2s ' + E + ',transform .2s ' + E + ';transition-delay:min(calc(var(--i)*.02s),.05s)}' +
     '#vdRecit .rc-wf-l{font-size:14px;line-height:1.25;color:rgba(248,250,252,.82);min-width:0;overflow-wrap:anywhere}#vdRecit .rc-wf-v{font:800 15px/1.1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#f8fafc}' +
     '#vdRecit .rc-wf-row.gain .rc-wf-v{color:#6ee7b7}#vdRecit .rc-wf-row.cible .rc-wf-v{color:#fde68a;font-size:17px}' +
     '#vdRecit .rc-wf-track{grid-column:1/-1;position:relative;height:14px;border-radius:7px;background:rgba(255,255,255,.07)}' +
@@ -401,6 +408,9 @@
   })(40);
   var attente = 0;
   function planifier() { clearTimeout(attente); attente = setTimeout(monter, 60); }
-  try { var a = doc.getElementById('v-audit'); if (a) new MutationObserver(function (l) { for (var i = 0; i < l.length; i++) { var t = l[i].target; if (t && t.closest && t.closest('#vdRecit')) continue; return planifier(); } }).observe(a, { childList: true, subtree: true }); } catch (e) {}
+  try { var a = doc.getElementById('v-audit'); if (a) new MutationObserver(function (l) { for (var i = 0; i < l.length; i++) { var t = l[i].target; if (t && t.closest && t.closest('#vdRecit')) continue;
+    /* C342 (décision 27) : l'Audit vient d'être dessiné sans son récit (banc L6 : #vdRecit absent ≈ 650 ms, la minuterie de 60 ms glissait
+       sous la charge) : le récit est posé ici même, avant le dessin de l'image ; les mises à jour suivantes restent groupées (60 ms). */
+    if (!doc.getElementById('vdRecit')) { clearTimeout(attente); try { monter(); } catch (e) {} if (doc.getElementById('vdRecit')) return; } return planifier(); } }).observe(a, { childList: true, subtree: true }); } catch (e) {}
   if (w.VIEW === 'audit') planifier(); /* C103 : rien au lancement quand l'Audit est caché */
 })();

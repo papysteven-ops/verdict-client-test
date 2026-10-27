@@ -15,7 +15,7 @@
     /* C164 (Steven, 19/10 : « une cohérence de lecture ») : d'abord « Vos journées », à côté le détail de la journée
        (Journée d'exploitation, déplié), ensuite seulement les alertes et décisions (limite, décision, rupture, repères),
        en pleine largeur (b = bas). */
-    { k: 'jour', t: 'Jour', ouvert: true, p: ['modSaisie'], s: ['modJour'], b: ['modReperesJour', 'modServJ', 'modRupture', 'modLimites', 'modAction', '~calendrier'] }, /* C221 : le calendrier d’exploitation (ouvert, fermé, à vérifier) vit avec les journées, replié en bas */ /* C170 (Steven, 19/10 : « je veux ça en dernier, en bas ») : repères, ventes et heures par service, rupture, puis limite de consommation et décision prioritaire tout en bas */ /* C165 : repères d'aujourd'hui dépliés, puis limite, décision, rupture */
+    { k: 'jour', t: 'Jour', ouvert: true, p: ['modSaisie'], s: ['modJour'], b: ['modReperesJour', 'modServJ', 'modRupture', 'modLimites', '~calendrier'] /* C359 : modAction remonte sous la saisie */ }, /* C221 : le calendrier d’exploitation (ouvert, fermé, à vérifier) vit avec les journées, replié en bas */ /* C170 (Steven, 19/10 : « je veux ça en dernier, en bas ») : repères, ventes et heures par service, rupture, puis limite de consommation et décision prioritaire tout en bas */ /* C165 : repères d'aujourd'hui dépliés, puis limite, décision, rupture */
     { k: 'mois', t: 'Mois', ouvert: true, large: true /* C136 : calendrier et mois ont leur propre mise en page en deux colonnes : pleine largeur, l’un sous l’autre */, p: [] /* C221 (Steven, 21/10 : « pourquoi on me parle de journées dans Mois ? doublon du journalier ») : plus de calendrier des jours ici ; le mois touché s’affiche sous « Vos mois » */, s: ['modMois', '~vdOffCard', '~modManqueCarte'], b: ['modServM', 'modEquipeM'] }, /* C172 : puis comparer les mois et anticiper l’équipe */
     { k: 'annee', t: 'Année', p: ['modAnnee'], s: [], b: ['modServA'] },
     { k: 'argent', t: 'Argent', p: ['modArgent'], s: ['~modTreso', '~modCash13'] }
@@ -113,7 +113,7 @@
     var d; try { d = f.contentDocument; } catch (e) { return; }
     if (!d || !d.body) return;
     var main = d.querySelector('main.cadre') || d.querySelector('main'); if (!main || !d.getElementById('modSaisie')) return;
-    if (!d.getElementById('vx40-css')) { var s = d.createElement('style'); s.id = 'vx40-css'; s.textContent = CSS + '.vx40-nonfinale{margin:4px 0 12px;padding:8px 12px;border-radius:12px;border:1px solid rgba(234,179,8,.45);background:rgba(234,179,8,.10);font-size:14px;line-height:1.45}' /* C308 (V16-038) */; (d.head || d.documentElement).appendChild(s); }
+    if (!d.getElementById('vx40-css')) { var s = d.createElement('style'); s.id = 'vx40-css'; s.textContent = CSS + '.vx40-nonfinale{margin:2px 0 10px;padding:0 0 0 10px;border-left:3px solid rgba(234,179,8,.75);font-size:13px;line-height:1.35}' /* C308 (V16-038) ; C362 (T1) : une ligne, sans encadré */; (d.head || d.documentElement).appendChild(s); }
     if (!main.classList.contains('vx40-large')) main.classList.add('vx40-large'); /* C167 : jamais réécrite si déjà posée (sinon un changement toutes les 1,5 s) */
     var ident = main.querySelector(':scope>.identite');
     /* C160 — Noms d'établissement longs (« Cuisine de livraison (dark kitchen) (démonstration estimative) » : 5 lignes sur
@@ -122,7 +122,7 @@
     /* C308 (V16-038) : lecture non finale dite sur l’Accueil comme dans Structure, l’Audit et Mes chiffres. */
     try {
       var DBn = w.DB || {}, demoN = DBn._demo || (DBn.dataProvenance && DBn.dataProvenance.nature === 'model_estimate'), vr = demoN ? null : DBn.docVerrou;
-      var tn = vr === 'saisie-contre-document' ? 'Lecture non finale : vous gardez votre saisie plutôt que vos documents. Vos minimums suivent cette saisie ; Mes chiffres montre ce qui diffère.' : vr === 'incertitude-sans-document' ? 'Lecture non finale : vous avez confirmé des chiffres inhabituels sans document. Importez votre document comptable pour une lecture finale.' : '';
+      var tn = vr === 'saisie-contre-document' ? 'Lecture provisoire : vos chiffres tapés passent avant vos documents (Mes chiffres montre l’écart).' : vr === 'incertitude-sans-document' ? 'Lecture provisoire : chiffres inhabituels sans document ; importez votre document comptable pour finir.' : '';
       var pn = d.querySelector('.vx40-nonfinale');
       if (!tn) { if (pn) pn.remove(); }
       else if (!pn || pn.getAttribute('data-sig') !== vr) {
@@ -146,16 +146,12 @@
     /* C163 — Ordre unique : titre → (saisie en tête si la journée est à renseigner) → chapitres. Avant, ces deux placements
        se défaisaient l'un l'autre en boucle (toutes les 80 ms) dès que la saisie passait en tête : l'appli se figeait et ne
        répondait plus aux clics (Steven, 19/10 : « je clique sur Mois, ça bouge pas »). */
-    var prio = aRenseigner(d), hold = d.getElementById('vx40-prio');
+    var prio = true /* C359 (décision 33) : le minimum du jour et la saisie restent toujours en tête */, hold = d.getElementById('vx40-prio');
     if (prio && !hold) { hold = d.createElement('div'); hold.id = 'vx40-prio'; }
-    var avant = prio ? hold : null;
-    if (ident) {
-      if (avant) { if (ident.nextElementSibling !== avant) ident.after(avant); if (avant.nextElementSibling !== nav) avant.after(nav); }
-      else if (ident.nextElementSibling !== nav) ident.after(nav);
-    } else {
-      if (avant) { if (main.firstElementChild !== avant) main.prepend(avant); if (avant.nextElementSibling !== nav) avant.after(nav); }
-      else if (main.firstElementChild !== nav) main.prepend(nav);
-    }
+    /* C359 (décision 33) : titre → minimum du jour et saisie → décision prioritaire → chapitres (chaque place vérifiée, jamais réécrite). */
+    var avant = prio ? hold : null, act = d.getElementById('modAction'), suite = [ident, avant, act, nav].filter(Boolean);
+    if (!ident && main.firstElementChild !== suite[0]) main.prepend(suite[0]);
+    for (var si = 1; si < suite.length; si++) if (suite[si - 1].nextElementSibling !== suite[si]) suite[si - 1].after(suite[si]);
     /* C155 (Steven, 18/10 : « la saisie doit être en priorité, en haut : c'est la première chose à faire en ouvrant
        Verdict ; là on scrolle, on scrolle ») : tant que la journée est « À renseigner », la carte de saisie passe tout en
        haut, juste sous le titre, avant les chapitres. Une fois la journée enregistrée, elle retourne dans « Jour ». */
@@ -206,6 +202,22 @@
       });
       ch.classList.toggle('vx40-2', !c.large && colS.children.length > 0);
     });
+    /* C359 (décision 33) : le chapitre Jour se replie sous un seul « Voir le détail » (fermé d’office). */
+    var chJ = d.getElementById('vx40-jour');
+    if (chJ) {
+      if (!d.getElementById('vx59-css')) { var s59 = d.createElement('style'); s59.id = 'vx59-css'; s59.textContent = '#vx40-jour:not(.vx59-ouvert)>.vx40-col{display:none!important}.vx59-voir{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;margin:0 0 12px;padding:12px 16px;border:1px solid var(--line,rgba(148,163,184,.2));border-radius:var(--r-mod,16px);background:var(--card,transparent);color:var(--txt,inherit);font:inherit;font-size:15.5px;font-weight:700;cursor:pointer;text-align:left}.vx59-voir i{font-style:normal;font-size:20px;opacity:.6;transition:transform .2s}#vx40-jour.vx59-ouvert>.vx59-voir i{transform:rotate(180deg)}#vx40-mois #modMois>.tuiles,#vx40-mois #modMois>#proj{display:none!important}'; /* E : Mois, chaque chiffre une fois */ (d.head || d.documentElement).appendChild(s59); }
+      var bt59 = chJ.querySelector(':scope>.vx59-voir');
+      if (!bt59) {
+        bt59 = d.createElement('button'); bt59.type = 'button'; bt59.className = 'vx59-voir'; bt59.setAttribute('aria-expanded', 'false'); bt59.setAttribute('aria-controls', 'vx40-jour');
+        bt59.innerHTML = '<span>Voir le détail</span><i aria-hidden="true">⌄</i>';
+        d.__vx59ouvrir = function (o) { var ouvert = o === undefined ? !chJ.classList.contains('vx59-ouvert') : !!o; if (chJ.classList.contains('vx59-ouvert') !== ouvert) chJ.classList.toggle('vx59-ouvert', ouvert); bt59.setAttribute('aria-expanded', String(ouvert)); var vp = doc.getElementById('v-pil'); if (vp && vp.classList.contains('vx59-replie') === ouvert) vp.classList.toggle('vx59-replie', !ouvert); var sp = bt59.querySelector('span'), tx = ouvert ? 'Masquer le détail' : 'Voir le détail'; if (sp.textContent !== tx) sp.textContent = tx; };
+        bt59.addEventListener('click', function () { d.__vx59ouvrir(); });
+        chJ.prepend(bt59);
+      } else if (chJ.firstElementChild !== bt59) chJ.prepend(bt59);
+      /* B2 : « Mes contrôles et actions » et l’export (#vc-main, sous le cadre) suivent le même détail. */
+      if (!doc.getElementById('vx59-css-app')) { var a59 = doc.createElement('style'); a59.id = 'vx59-css-app'; a59.textContent = 'html #v-pil.vx59-replie>#vc-main,html.p40-app #v-pil.on.p41-on.vx59-replie>#vc-main{display:none!important}'; /* plus précis que la règle qui l’affiche dans l’Accueil premium */ (doc.head || doc.documentElement).appendChild(a59); }
+      var vp59 = doc.getElementById('v-pil'), rep59 = !chJ.classList.contains('vx59-ouvert'); if (vp59 && vp59.classList.contains('vx59-replie') !== rep59) vp59.classList.toggle('vx59-replie', rep59);
+    }
     if (!prio && hold && !hold.children.length) hold.remove();
     /* Un tiroir dont le module a disparu (re-rendu) est retiré ; un doublon éventuel aussi. */
     var vus = {};
@@ -215,7 +227,7 @@
     [].forEach.call(main.querySelectorAll(':scope>h2'), function (h) { if (h.style.display !== 'none') h.style.display = 'none'; });
     /* Tout autre bloc ajouté plus tard dans main rejoint le complément du jour, plutôt que de flotter sous les chapitres. */
     [].forEach.call(main.children, function (e) {
-      if (e === ident || e === nav || e.id === 'vx40-prio' || e.classList.contains('vx40-ch') || e.tagName === 'H2' || e.tagName === 'SCRIPT' || e.tagName === 'STYLE') return;
+      if (e === ident || e === nav || e.id === 'vx40-prio' || e.id === 'modAction' /* C359 : sa place est en tête */ || e.classList.contains('vx40-ch') || e.tagName === 'H2' || e.tagName === 'SCRIPT' || e.tagName === 'STYLE') return;
       if (e.getBoundingClientRect().height < 1 && !e.id) return;
       (d.querySelector('#vx40-jour .vx40-b') || d.querySelector('#vx40-jour .vx40-s')).appendChild(e);
     });
@@ -226,6 +238,7 @@
       if (siv) EP.scrollIntoView = function () {
         try {
           var ch = this.closest && this.closest('.vx40-ch'); if (ch && ch.hidden) montrer(d, ch.getAttribute('data-k'), false);
+          var dj = this.closest && this.closest('#vx40-jour>.vx40-col'); if (dj && d.__vx59ouvrir && !dj.parentNode.classList.contains('vx59-ouvert')) d.__vx59ouvrir(true); /* C359 : le détail s’ouvre d’abord */
           var t = this.closest && this.closest('.vx40-t'); if (t && !t.open && t !== this) t.open = true;
         } catch (e) {}
         return siv.apply(this, arguments);

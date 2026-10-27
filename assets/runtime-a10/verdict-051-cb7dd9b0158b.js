@@ -63,7 +63,7 @@
   function joursInconnus(){try{return typeof global.verdictJoursInconnus==="function"&&global.verdictJoursInconnus()&&!(global.fermesSem()||[]).length;}catch(e){return false;}}
   function calVierge(){var d=global.DB||{},sc=d.servicesConfig,n=sc&&sc.semaine?Object.keys(sc.semaine).length:0,fe=[];try{fe=global.fermesSem()||[];}catch(e){}return !n&&!fe.length&&!d.jsemSource;}
   function L(){var l=(typeof global.LOCALE==="string"?global.LOCALE:"fr");return T[l]||T.fr;}
-  function tpl(s,v){return String(s).replace(/\{(\w+)\}/g,function(m,k){return v[k]!=null?v[k]:m;});}
+  function tpl(s,v){return String(s).replace(/\{(\w+)\}/g,function(m,k){var x=v[k];if(x==null)return m;/* C331 (T3) : « 5,9 jours », jamais « 5.9 » : un nombre décimal au format de la langue */var n=typeof x==="number"?x:(/^-?\d+\.\d+$/.test(String(x))?Number(x):null);if(n!=null&&isFinite(n)&&Math.round(n)!==n){try{return n.toLocaleString(global.LOCALE_TAG||"fr-FR",{maximumFractionDigits:1});}catch(e){}}return x;});}
   function fr(n){n=Math.round(Number(n)||0);var s=String(Math.abs(n)),o="";while(s.length>3){o="\u202f"+s.slice(-3)+o;s=s.slice(0,-3);}return (n<0?"\u2212":"")+s+o;}
   function eur(n){return fr(n)+"\u00a0€";}
   function DBx(){return global.DB||null;}
@@ -98,7 +98,7 @@
   function verrouillerJsem(){var f=doc.getElementById("i-jsem");if(!f)return;var ouverts=7-(function(){try{return (global.fermesSem()||[]).length;}catch(e){return 0;}})();
     if(!f.readOnly)f.readOnly=true;if(f.getAttribute("aria-readonly")!=="true")f.setAttribute("aria-readonly","true");if(f.style.opacity!=="0.6")f.style.opacity=".6";var inc=joursInconnus(),vj=inc?"":String(Number(DBx().in&&DBx().in.jsem)||ouverts);if(f.value!==vj)f.value=vj;if(inc&&f.placeholder!=="à renseigner")f.placeholder="à renseigner";
     /* C195 : le libellé dit d'où vient le chiffre (caisse ou Mes services) et suit sa valeur ; écrit seulement s'il change */
-    var src=DBx().jsemSource,rp=DBx().joursSource,txt=inc?L().inconnu:rp&&rp.source==="patron"&&Number(rp.jours)===Number(vj)&&!(global.fermesSem()||[]).length?tpl(L().repondu,{j:vj}):src&&src.source==="caisse"&&Number(src.jours)===Number(vj)?tpl(L().repStruct,{j:vj}):calVierge()?tpl(L().defaut,{j:vj}):tpl(L().deduit,{j:ouverts});
+    var src=DBx().jsemSource,rp=DBx().joursSource,txt=inc?L().inconnu:rp&&rp.source==="patron"&&Number(rp.jours)===Number(vj)&&!(global.fermesSem()||[]).length?tpl(L().repondu,{j:vj}):src&&src.source==="caisse"&&Number(src.jours)===Number(vj)?tpl(L().repStruct,{j:vj}):calVierge()?tpl(L().defaut,{j:vj}):Number(vj)===ouverts?tpl(L().deduit,{j:ouverts}):"";/* C364 : nombre différent du calendrier : le bouton « Aligner » dit les deux, le libellé ne prétend rien */
     var lab=f.closest("label");if(lab){var sm=lab.querySelector(".svc-deduit");if(!sm){sm=doc.createElement("small");sm.className="svc-deduit";lab.appendChild(sm);}if(sm.textContent!==txt)sm.textContent=txt;}}
   /* ---------- C195 : le jour de repos lu dans les journées de caisse (VerdictPassageUnique.etatRepos) ----------
      Proposé en un clic quand le calendrier ne le dit pas ; un choix du patron n'est jamais écrasé : il est dit, et gardé s'il le veut. */
@@ -125,7 +125,7 @@
     for(var w=0;w<7;w++){var row=el.querySelector('.svc-row[data-w="'+w+'"]'),b=row&&row.querySelector('.svc-ferme'),on=fe.indexOf(w)>=0;if(b){if(b.getAttribute("aria-pressed")!==String(on))b.setAttribute("aria-pressed",String(on));if(row.getAttribute("data-ferme")!==(on?"1":"0"))row.setAttribute("data-ferme",on?"1":"0");}} /* C190 : n'écrire que ce qui change (0 changement au repos) */
     var ouverts=7-fe.length,jsem=DBx().in&&Number(DBx().in.jsem),ba=el.querySelector(".svc-aligner"),R=reposCaisse();majCaisse(el,t,R);
     /* C195 : quand la caisse propose le jour de repos, « aligner » (qui effacerait ce qu'elle dit) laisse place à sa proposition */
-    if(isFinite(jsem)&&jsem!==ouverts&&!(R&&!R.egal&&!R.garde)&&!calVierge()){if(!ba){ba=doc.createElement("button");ba.type="button";ba.className="btn sec svc-aligner";el.appendChild(ba);ba.addEventListener("click",function(){alignerStructure(true);ba.remove();});}var tx=tpl(t.aligner,{j:jsem,c:ouverts});if(ba.textContent!==tx)ba.textContent=tx;}
+    if(false/* C364 (décision 36) : une seule donnée, pas de bouton pour réconcilier deux chiffres (a15 aligne in.jsem sur le repos) */&&isFinite(jsem)&&jsem!==ouverts&&!(R&&!R.egal&&!R.garde)&&!calVierge()){if(!ba){ba=doc.createElement("button");ba.type="button";ba.className="btn sec svc-aligner";el.appendChild(ba);ba.addEventListener("click",function(){alignerStructure(true);ba.remove();});}var tx=tpl(t.aligner,{j:jsem,c:ouverts});if(ba.textContent!==tx)ba.textContent=tx;}
     else if(ba)ba.remove();}
   function carteReglage(){var v=doc.getElementById("v-in");if(!v||v.offsetParent===null)return;var ex=doc.getElementById("svc-card");if(ex){majCarte(ex);return;}
     var ancre=v.querySelector(".card");if(!ancre)return;var t=L(),c=config();if(!c)return;
@@ -136,7 +136,7 @@
     h+='<div class="svc-row" data-w="all"><b>'+t.tous+'</b><span></span>'+IDS.map(function(id){return '<button type="button" class="svc-t" data-w="all" data-id="'+id+'" aria-pressed="'+tousOn(id)+'"></button>';}).join("")+'</div>';
     for(var w=0;w<7;w++){var s=servicesDu(w),fe=fermes().indexOf(w)>=0;h+='<div class="svc-row" data-w="'+w+'" data-ferme="'+(fe?1:0)+'"><b>'+t.jours[w]+'</b><button type="button" class="svc-t svc-ferme" data-w="'+w+'" data-id="ferme" aria-pressed="'+fe+'" aria-label="'+t.ferme+'"></button>'+IDS.map(function(id){return '<button type="button" class="svc-t" data-w="'+w+'" data-id="'+id+'" aria-pressed="'+(s.indexOf(id)>=0)+'"></button>';}).join("")+'</div>';}
     var ouverts=7-fermes().length,jsem=DBx().in&&Number(DBx().in.jsem),R=reposCaisse();
-    h+='</div><p class="note">'+t.noteFerme+'</p><p class="note svc-unseul">'+t.unSeul+'</p><div class="svc-caisse" hidden></div>'+(isFinite(jsem)&&jsem!==ouverts&&!(R&&!R.egal&&!R.garde)&&!calVierge()?'<button type="button" class="btn sec svc-aligner">'+tpl(t.aligner,{j:jsem,c:ouverts})+'</button>':'');
+    h+='</div><p class="note">'+t.noteFerme+'</p><p class="note svc-unseul">'+t.unSeul+'</p><div class="svc-caisse" hidden></div>'+(false/* C364 */&&isFinite(jsem)&&jsem!==ouverts&&!(R&&!R.egal&&!R.garde)&&!calVierge()?'<button type="button" class="btn sec svc-aligner">'+tpl(t.aligner,{j:jsem,c:ouverts})+'</button>':'');
     h+=finsHtml(t);el.innerHTML=h;ancre.parentNode.insertBefore(el,ancre.nextSibling);lierFins(el);majCaisse(el,t,R);
     var ba=el.querySelector(".svc-aligner");if(ba)ba.addEventListener("click",function(){alignerStructure(true);ba.remove();});
     verrouillerJsem();

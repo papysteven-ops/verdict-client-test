@@ -517,6 +517,16 @@ html.vd-workspace-light .inv-guide-progress i{background:#dfe5e9!important}
 html.vd-workspace-light .inv-guide-progress i.on{background:#60a5fa!important}
 html.vd-workspace-light .inv-guide-marker{background:#eef5ff!important;color:#15375f!important;border-color:#b7d3f7!important}
 html.vd-workspace-light .inv-guide-marker *{color:inherit!important}</style>
+<style id="c361-inventaire-vide">
+/* C361 (T3) : Inventaire vide = un seul geste visible, « + Ajouter mon premier produit ». Les outils (partage, transferts,
+   activité, recherche, comptage) n'apparaissent qu'avec des produits. html.inv-vide est posée par c361Vide(). */
+#c361Premier{display:none}
+html.inv-vide #c361Premier{display:flex;align-items:center;justify-content:center;width:100%;min-height:58px;font-size:17px;font-weight:800;margin:2px 0 16px}
+html.inv-vide #pinv,html.inv-vide #v-count>h1,html.inv-vide #v-count>.sub,html.inv-vide #q,html.inv-vide .ord-count-owner,html.inv-vide .count-session,html.inv-vide #countList,html.inv-vide #staffManageProducts,html.inv-vide .lvl,html.inv-vide #siteSeg [data-stock-transfer-entry],html.inv-vide #shared-r32:has(#shared-connect){display:none!important}
+#pOrderingExtra>summary{cursor:pointer;font-weight:800;font-size:13px;color:inherit}
+#pOrderingExtra>summary span{font-weight:500;color:var(--mut);font-size:12px}
+#pOrderingExtra[open]>summary{margin-bottom:8px}
+</style>
 </head>
 <body style="background:#08090b">
 
@@ -589,6 +599,7 @@ html.vd-workspace-light .inv-guide-marker *{color:inherit!important}</style>
 <!-- PRODUITS -->
 <section class="view" id="v-prod">
   <h1>Plus Inventaire</h1>
+  <button class="btn vd-param-c343" id="invParamC343" type="button" hidden onclick="try{top.VerdictParametres.ouvrir()}catch(e){}">&#9881;&#65039; Param&egrave;tres</button>
   <p class="sub">Produits, fournisseurs, seuils de comptage, sauvegarde et acc&egrave;s Inventaire.</p>
   <button class="btn" id="staffCatalogAdd" onclick="openProd()">+ Ajouter un produit</button>
   <div class="catalog-search">
@@ -615,11 +626,14 @@ html.vd-workspace-light .inv-guide-marker *{color:inherit!important}</style>
 <!-- COMPTER -->
 <section class="view on" id="v-count">
   <div id="greetWrap"></div>
+  <button class="btn c361-premier" id="c361Premier" type="button" onclick="openProd()">+ Ajouter mon premier produit</button>
   <h1>Compter</h1>
   <p class="sub">Combien il vous en reste. C&rsquo;est tout.</p>
   <input class="search" id="q" type="search" aria-label="Chercher un produit" placeholder="Chercher un produit&hellip;" oninput="drawCount()">
   <div class="ord-count-owner"><label>Inventaire réalisé par<input id="countActor" maxlength="80" placeholder="Nom du responsable" data-guard-ignore="comptage-nom" onchange="DB.profile=DB.profile||{};DB.profile.prenom=this.value.trim();save()"></label><p>Touchez un produit et indiquez la quantité restante. Une case vide reste à compter. Saisissez 0 uniquement si le stock est nul.</p></div><div class="count-session"><span id="countProgress" role="status"></span><button type="button" class="btn" id="finishCountButton" onclick="finishCount()">Terminer le comptage</button></div><div id="countList"></div>
   <button class="btn ghost" id="staffManageProducts" style="margin-top:14px" onclick="go('prod')">Voir ou g&eacute;rer mes produits</button>
+  <!-- C343 c (L1) : employé sans accès à Plus (lien de comptage, ou sans droits sur les produits) : Paramètres, langue et apparence seulement -->
+  <button class="btn ghost vd-param-c343" id="countParamC343" type="button" hidden style="margin-top:10px;font-size:14px;opacity:.85" onclick="try{top.VerdictParametres.ouvrir()}catch(e){}">&#9881;&#65039; Param&egrave;tres &middot; langue et apparence</button>
 
 </section>
 
@@ -736,10 +750,10 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
 </style>
 <script data-mono="./shared-inventory-r32.js" src="../../assets/runtime-a10/inventory-010-aec23afa60af.js"></script>
 <script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/inventory-011-ca5dcfd7d962.js"></script>
-<script src="../../assets/runtime-a10/inventory-012-f2b7f9542580.js"></script>
+<script src="../../assets/runtime-a10/inventory-012-6209e66eee55.js"></script>
 <script data-mono="./supplier-ordering-v1.js" src="../../assets/runtime-a10/inventory-013-4a1fa3453d17.js"></script>
-<script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-2d4709696144.js"></script>
-<script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-236122e8e39f.js"></script>
+<script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-e65dced7bbd7.js"></script>
+<script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-079daa80a183.js"></script>
 <script data-mono="./supplier-emergency-v1.js" src="../../assets/runtime-a10/inventory-016-556ea9c7bae3.js"></script>
 
 <div id="vdSheet" class="modal" role="dialog" aria-modal="true" aria-labelledby="vdTitle" style="position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:none;align-items:flex-end">
@@ -768,8 +782,8 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
 </aside>
 <script src="../../assets/runtime-a10/inventory-017-937ebfbd0773.js"></script>
 <!-- p40-mono: différé assets/vera/vera-life-5.2.0.js -->
-<script data-mono="./inventory-guided-demo-v1.js" src="../../assets/runtime-a10/inventory-018-5699911533ab.js"></script>
-<script data-mono="./premium-viewport-v1.js" src="../../assets/runtime-a10/inventory-019-813a40955b00.js"></script>
+<script data-mono="./inventory-guided-demo-v1.js" src="../../assets/runtime-a10/inventory-018-f3275999b7c2.js"></script>
+<script data-mono="./premium-viewport-v1.js" src="../../assets/runtime-a10/inventory-019-6967dcff1fdf.js"></script>
 <script data-mono="../../interaction-polish-v26.js" src="../../assets/runtime-a10/inventory-020-7d9e3a9c6fe2.js"></script>
 <script data-module="inventory" data-mono="../../unified-module-bridge-v1.js">
 (function(){
@@ -1612,7 +1626,7 @@ html.p40.p40-inv.vd-workspace-light .kpi .v{color:#173d76!important}
 html.p40.p40-inv.vd-workspace-light .v451-inv-state{background:#eef5fc!important;border-color:#b9d5ed!important;color:#17212b!important}
 </style>
 <script id="p40-js" data-mono="../../premium-r40.js" src="../../assets/runtime-a10/inventory-025-354ea4676514.js"></script>
-<script id="pinv-js" data-mono="../../premium-inv-r74.js" src="../../assets/runtime-a10/inventory-026-6c8828681362.js"></script>
+<script id="pinv-js" data-mono="../../premium-inv-r74.js" src="../../assets/runtime-a10/inventory-026-c7b02a1589b5.js"></script>
 <style  data-mono="../../control-ecarts-v1.css">
 .vc{margin:22px 0;color:var(--text,#edf0f3);font-size:16px;line-height:1.5}.vc h3{font-size:24px;margin:5px 0 12px}.vc p{color:var(--muted,#adb5bf)}.vc-eyebrow{font-size:13px;font-weight:800;letter-spacing:.08em}.vc-panel{border:1px solid #394048;border-radius:24px;background:linear-gradient(135deg,#1c252a,#101418 72%);padding:20px;margin:16px 0;overflow:hidden}.vc-panel summary{cursor:pointer;font-weight:750;font-size:18px;min-height:44px;align-content:center}.vc form{margin-top:16px}.vc label{display:block;margin:12px 0}.vc label>span{display:block;font-size:14px;margin-bottom:6px;color:#c3cbd2}.vc input:not([type=checkbox]){display:block;width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #485360;border-radius:12px;background:#090d10;color:#fff;font-size:16px;min-height:46px}.vc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.vc-grid strong{display:block;font-size:24px;margin-top:6px}.vc fieldset{border:1px solid #42494f;border-radius:16px;min-width:0;margin:14px 0}.vc button{border:1px solid #55745f;border-radius:14px;background:linear-gradient(135deg,#233c31,#17251f);color:#edf8f0;padding:13px 17px;font-size:16px;font-weight:700;min-height:46px;cursor:pointer;white-space:normal}.vc button:hover{border-color:#36ca77;box-shadow:0 0 18px #22c55e20}.vc button:focus-visible,.vc input:focus-visible{outline:3px solid #99b9ed;outline-offset:3px}.vc-confirm{display:flex!important;gap:12px;align-items:flex-start;font-size:14px}.vc-confirm input{margin-top:5px;min-width:20px;height:20px}.vc-result{border-left:4px solid #eab308;background:#eab30809;border-radius:16px;padding:16px;margin:16px 0}.vc-result>strong{display:block;font-size:30px;margin-top:12px}.vc-badge{display:inline-block;font-size:14px;border:1px solid #67737f;border-radius:18px;padding:5px 10px;color:#cad2da}.vc-badge[data-tone=green]{color:#3ade84;border-color:#268a51;background:#22c55e15}.vc-badge[data-tone=yellow]{color:#f6d858;border-color:#ab8526;background:#eab30815}.vc-priorities button{display:block;width:100%;text-align:left;margin:12px 0;border-left:4px solid #ef4444}.vc-priorities strong,.vc-priorities span{display:block}.vc [data-vc-error]{color:#ff9c91}.vc details[open]{animation:vc-reveal .22s ease-out}@keyframes vc-reveal{from{opacity:.6;transform:translateY(5px)}to{opacity:1;transform:none}}@media(max-width:380px){.vc-grid{grid-template-columns:1fr}.vc-panel{padding:16px}.vc h3{font-size:22px}}@media(prefers-reduced-motion:reduce){.vc details[open]{animation:none}}
 html.p40-app #v-pil.on.p41-on > #vc-main{display:block!important;order:2;scroll-margin-top:150px}#vc-entry{margin:8px 0 14px}#vc-entry button{width:100%}.vc-panel form{scroll-margin-top:150px}
@@ -1640,6 +1654,7 @@ html.p40-app #v-pil.on.p41-on > #vc-main{display:block!important;order:2;scroll-
 <script src="../../internal/retour-verdict-a61.js"></script>
 <script src="../../internal/theme-auto-c209.js"></script>
 <script src="../../internal/factures-inventaire-c217.js"></script>
+<script src="../../internal/fenetres-c366.js"></script>
 <script defer src="../../internal/langues-complements.js"></script>
 </body>
 </html>

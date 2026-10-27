@@ -177,6 +177,11 @@
     var f = doc.querySelector('iframe.p41-ecran'), d = null; try { d = f && f.contentDocument; } catch (e) {}
     var col = d && (d.querySelector('#vx40-mois .vx40-b') || d.querySelector('#vx40-mois .vx40-s')); if (!col) return;
     if (!d.getElementById('em54-css')) { var s = d.createElement('style'); s.id = 'em54-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
+    if (!d.__em54clic) { d.__em54clic = true; d.addEventListener('click', function () { setTimeout(tour, 0); }, true); } /* C333 : ouvrir un chapitre, tout de suite */
+    var chap = d.getElementById('vx40-mois'); if (chap && !chap.offsetParent) return; /* C333 (décision 19) : chapitre non affiché, rien */
+    var D = w.DB || {}, H = D.histJour || [], l = H.length ? H[H.length - 1] : null, k = ''; try { k = w.verdictOperationalClock().key; } catch (e) {}
+    var sg = [String(w.LOCALE || 'fr'), w.VERDICT_DB_REV || 0, w.VERDICT_VIEW_REVISION || 0, k, H.length, l ? l.date + ':' + l.caJ : '', w.VERDICT_DEMO_SESSION ? 1 : 0, D.modele || '', D.etab || '', (w.STORE && w.STORE.actif) || ''].join('|');
+    if (d.__em54sig === sg) return; d.__em54sig = sg; /* C333 : signature avant le calcul */
     var A = null; try { A = etat(); } catch (e) {}
     var vieux = d.getElementById('modEquipeM');
     var dejaDit = A && !A.vide && moisDejaDit(A);

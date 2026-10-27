@@ -106,7 +106,7 @@
   /* ---------- Lecture dans l'appli ---------- */
   function eur(x) { return x == null ? '—' : Math.round(x).toLocaleString('fr-FR') + '\u00a0€'; }
   function pc(x) { return x == null ? '—' : Math.round(x * 100) + '\u00a0%'; }
-  function hh(x) { return Math.round(x).toLocaleString('fr-FR') + '\u00a0h'; }
+  function hh(x) { var T = { en: 'en-GB', es: 'es-ES', it: 'it-IT', de: 'de-DE', nl: 'nl-NL', pt: 'pt-PT' }[String(w.LOCALE || 'fr').slice(0, 2)]; return Math.round(x).toLocaleString(T || 'fr-FR') + '\u00a0h'; } /* C327 : format de la langue */
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function repere() {
     try { var t = typeof w.fmtActif === 'function' ? w.fmtActif() : null, F = t && w.FORMATS && w.FORMATS[t] && w.FAMILLES && w.FAMILLES[w.FORMATS[t].f]; F = F || (w.FAMILLES && w.FAMILLES.trad); if (F && F.ms && F.ms[1] > 0) return F.ms[1] / 100; } catch (e) {}
@@ -123,6 +123,9 @@
   function etat(periode, choisi) { var C = contexte(); if (!C) return null; return analyser(C.D.services, periode, C.auj, C.tva, C.rep, secoursMois(C.D, C.tva), choisi); }
   /* Jour choisi dans « Vos journées » (accueil-courbes-a46.js, C183) : AAAA-MM-JJ, ou null pour le dernier jour saisi. */
   function jourChoisi(d) { return (d && d.__vx46jour) || null; }
+  /* C333 (décision 19) : signature des données, < 1 ms, calculée avant tout calcul. */
+  function sigDonnees(d, periode) { var D = w.DB || {}, H = D.histJour || [], l = H.length ? H[H.length - 1] : null, k = ''; try { k = w.verdictOperationalClock().key; } catch (e) {}
+    return [periode, String(w.LOCALE || 'fr'), w.VERDICT_DB_REV || 0, w.VERDICT_VIEW_REVISION || 0, k, H.length, l ? l.date + ':' + l.caJ : '', periode === 'jour' ? (jourChoisi(d) || '') : '', w.VERDICT_DEMO_SESSION ? 1 : 0, D.modele || '', D.etab || '', (w.STORE && w.STORE.actif) || ''].join('|'); }
   function libelle(R) {
     if (R.periode === 'jour') { var p = R.cle.split('-'); return JOURS[jourSemaine(R.cle)] + ' ' + (+p[2]) + ' ' + MOIS[+p[1] - 1]; }
     if (R.periode === 'mois') { var q = R.cle.split('-'); return MOIS[+q[1] - 1] + ' ' + q[0]; }
@@ -155,8 +158,10 @@
   function lienHTML(R) {
     var t = tropTotal(R); if (t == null || t < 0.5 || !(R.total.part > R.repere + 0.005)) return '';
     var c = Math.round(R.total.cout), tr = Math.round(t), quand = R.periode === 'jour' ? 'Ce jour-là' : R.periode === 'mois' ? 'Ce mois-ci' : 'Sur l’année';
-    return '<p class="sh52-lien">' + esc(quand + ', l’équipe a coûté ' + eur(c) + ' pour ' + eur(R.total.ht) + ' de ventes : ' + s100(R.total.part) + '. Au conseillé (' + conseil(R) + ' pour 100\u00a0€), elle aurait coûté ' + eur(c - tr) + ' : ' + eur(tr) + ' de trop.') + '</p>';
+    return '<p class="sh52-lien">' + phrases(quand + ', l’équipe a coûté ' + eur(c) + ' pour ' + eur(R.total.ht) + ' de ventes : ' + s100(R.total.part) + '. Au conseillé (' + conseil(R) + ' pour 100\u00a0€), elle aurait coûté ' + eur(c - tr) + ' : ' + eur(tr) + ' de trop.') + '</p>';
   }
+  /* C327 : une phrase par élément, pour que chaque phrase se traduise entière. */
+  function phrases(t) { return String(t || '').split(/(?<=[.!?]) (?=\S)/).map(function (s) { return '<span>' + esc(s) + '</span>'; }).join(' '); }
   function tropTotal(R) { return R.total && R.total.cout != null && R.total.ht > 0 ? R.total.cout - R.repere * R.total.ht : null; }
   function phrase(R) {
     if (!R || R.vide) return '';
@@ -192,7 +197,7 @@
     var jour = R.periode === 'jour', aHab = jour && R.services.some(function (x) { return x.habituel != null; });
     var h = '<p class="kicker">Ventes et heures par service · ' + esc(libelle(R)) + (w.DB && (w.DB.demo || (w.DB.services || []).some(function (s) { return s && s.demo; })) ? ' · démonstration' : '') + '</p>' +
       '<p class="titre">' + esc(R.lourd && tropTotal(R) >= 0.5 && R.total.part > R.repere + 0.005 /* C292 : seulement s'il y a vraiment un dépassement */ ? 'L’équipe a coûté ' + eur(tropTotal(R)) + ' de trop' + (R.periode === 'jour' ? ' ce jour-là' : R.periode === 'mois' ? ' ce mois-ci' : ' sur l’année') : R.lourd ? cap(le(R.lourd.nom)) + ' coûte trop d’équipe' : R.total.part != null && R.total.part > R.repere + 0.005 ? 'L’équipe coûte ' + s100(R.total.part) + ', sur tous les services' : 'Équipe dans le conseillé, service par service') + '</p>' +
-      jaugeHTML(R.total.part, R.repere) + lienHTML(R) + '<p class="sous">' + esc(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>Ventes</th><th>Équipe</th><th>Écart au conseillé</th></tr></thead><tbody>';
+      jaugeHTML(R.total.part, R.repere) + lienHTML(R) + '<p class="sous">' + phrases(phrase(R)) + '</p><table><thead><tr><th>Service</th><th>Ventes</th><th>Équipe</th><th>Écart au conseillé</th></tr></thead><tbody>';
     var plusieurs = R.services.length > 1;
     /* C205 (V17) : un service sous le conseillé montre son économie (« −299 € », en vert) au lieu de « OK », et la colonne
        se recompte : la somme des services arrondis égale la ligne Total (écart d'arrondi au plus grand reste). */
@@ -213,7 +218,7 @@
         '<td><span class="sh52-p sh52-' + (trop == null ? 'info' : ok ? 'vert' : couleur(x.part, R.repere) === 'vert' ? 'jaune' : couleur(x.part, R.repere)) + '">' + (trop == null ? '—' : trop < 0 ? eur(-trop) + ' en dessous' : trop === 0 ? 'au conseillé' : '+' + eur(trop) + ' de trop') + '</span>' +
         (x.part != null ? '<small class="sh52-s">' + Math.round(x.part * 100) + '\u00a0€ pour 100\u00a0€</small>' : '') + '</td></tr>';
     });
-    h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + esc((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Conseillé pour votre type d’établissement : ' + conseil(R) + ' d’équipe (salaires + cotisations) pour 100 € vendus. « de trop » = ce que l’équipe a coûté au-delà du conseillé ; « en dessous » = ce qu’elle a coûté en moins. Ventes sans la TVA.') + '</p>' +
+    h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + phrases((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Conseillé pour votre type d’établissement : ' + conseil(R) + ' d’équipe (salaires + cotisations) pour 100 € vendus. « de trop » = ce que l’équipe a coûté au-delà du conseillé ; « en dessous » = ce qu’elle a coûté en moins. Ventes sans la TVA.') + '</p>' +
       '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-equipe="1">Voir mon équipe, salarié par salarié</button><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
     return h;
   }
@@ -231,6 +236,8 @@
   function poser(d, periode) {
     var col = d.querySelector('#vx40-' + periode + ' .vx40-b') || d.querySelector('#vx40-' + periode + ' .vx40-s'); if (!col) return;
     if (!d.getElementById('sh52-css')) { var s = d.createElement('style'); s.id = 'sh52-css'; s.textContent = CSS; (d.head || d.documentElement).appendChild(s); }
+    var chap = d.getElementById('vx40-' + periode); if (chap && !chap.offsetParent) return; /* C333 : chapitre non affiché, rien */
+    var sg = sigDonnees(d, periode); if (d['__sh52sig' + periode] === sg) return; d['__sh52sig' + periode] = sg; /* C333 : signature avant le calcul */
     var R = etat(periode, periode === 'jour' ? jourChoisi(d) : null), id = CARTES[periode], vieux = d.getElementById(id);
     /* Sans aucune donnée : la carte d'invitation n'apparaît que dans Jour (pas trois fois la même). */
     if (R && R.vide && periode !== 'jour') { if (vieux) vieux.remove(); return; }
@@ -252,6 +259,7 @@
     brancher();
     var f = doc.querySelector('iframe.p41-ecran'), d = null; try { d = f && f.contentDocument; } catch (e) {}
     if (!d || !d.getElementById('vx40-jour')) return;
+    if (!d.__sh52clic) { d.__sh52clic = true; d.addEventListener('click', function () { setTimeout(tour, 0); }, true); } /* C333 : ouvrir un chapitre, tout de suite */
     ['jour', 'mois', 'annee'].forEach(function (p) { try { poser(d, p); } catch (e) {} });
   }
   var t = setInterval(tour, 3000); if (t && t.unref) t.unref(); setTimeout(tour, 1500);

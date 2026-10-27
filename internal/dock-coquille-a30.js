@@ -51,8 +51,13 @@
     cdoc.documentElement.classList.add('vd-dock-coquille');
     if (!cdoc.getElementById('vd-dock-coquille')) {
       var s = cdoc.createElement('style'); s.id = 'vd-dock-coquille';
-      s.textContent = 'html.vd-dock-coquille body nav[data-vd-coquille][data-vd-coquille]{opacity:0!important;pointer-events:auto!important;transform:none!important;transition:none!important;animation:none!important}' +
-        'html.vd-dock-coquille body nav[data-vd-coquille][data-vd-coquille]>button{opacity:0!important}';
+      /* C342 (Steven, iPhone : « deux barres l'une sur l'autre, pas net ») : à l'état replié, la règle de dock-a19
+         (html.premium-fixed-dock.premium-dock-hidden … nav { opacity:1 !important }) avait la même force que celle-ci et, déclarée
+         plus loin, l'emportait : la barre d'origine du cadre réapparaissait derrière celle de la coque (fond, ombre, flou, « ‹ »).
+         Le sélecteur est renforcé ; fond, ombre et flou sont aussi coupés (rien à peindre pour une barre qui ne se voit pas). */
+      var B = 'html.vd-dock-coquille.vd-dock-coquille.vd-dock-coquille body nav[data-vd-coquille][data-vd-coquille][data-vd-coquille]';
+      s.textContent = B + '{opacity:0!important;pointer-events:auto!important;transform:none!important;transition:none!important;animation:none!important;background:transparent!important;box-shadow:none!important;border-color:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}' +
+        B + '>*,' + B + '::before,' + B + '::after{opacity:0!important}';
       (cdoc.head || cdoc.documentElement).appendChild(s);
     }
   }
@@ -84,7 +89,9 @@
         try { if (fb && fb.isConnected) fb.click(); else if (cadre && cadre.contentWindow && typeof cadre.contentWindow.go === 'function') cadre.contentWindow.go(v); } catch (err) {}
         /* 3. si la page défilait encore sur son élan, l'appli n'arrive pas à la remettre en haut (iOS garde la main
               sur l'inertie quelques instants) : on tient le haut jusqu'à l'arrêt, sauf si la personne touche l'écran */
-        if (cw && avant > 0) tenirHaut(cw);
+        /* C371 b : on tient la position que l'appli vient de choisir (l'Inventaire cale la vue sous son en-tête, à 337 px) et non 0 :
+           le maintien à 0 annulait ce calage et la vue Commande sautait d'≈ 300 pt, sous le doigt, juste après l'ouverture. */
+        if (cw && avant > 0) { var cible = 0; try { cible = cw.scrollY || 0; } catch (err) {} tenirHaut(cw, cible); }
         setTimeout(verifier, 120); setTimeout(verifier, 700);
       }, gelDefil ? 70 : 0); });
     });
@@ -92,14 +99,15 @@
     return dock;
   }
 
-  function tenirHaut(cw) {
+  function tenirHaut(cw, cible) {
+    cible = cible || 0;
     var t0 = Date.now(), stable = 0, fini = false, d = cw.document;
     function lacher() { fini = true; try { d.removeEventListener('touchstart', lacher, true); d.removeEventListener('wheel', lacher, true); } catch (e) {} }
     try { d.addEventListener('touchstart', lacher, { capture: true, passive: true }); d.addEventListener('wheel', lacher, { capture: true, passive: true }); } catch (e) {}
     (function tick() {
       if (fini) return;
       var y = 0; try { y = cw.scrollY || (d.scrollingElement && d.scrollingElement.scrollTop) || 0; } catch (e) { return lacher(); }
-      if (y > 0) { stable = 0; try { cw.scrollTo(0, 0); } catch (e) {} } else stable++;
+      if (Math.abs(y - cible) > 2) { stable = 0; try { cw.scrollTo(0, cible); } catch (e) {} } else stable++;
       if (stable >= 12 || Date.now() - t0 > 3000) return lacher();
       cw.requestAnimationFrame(tick);
     })();
@@ -134,7 +142,8 @@
     if (gabarit() !== dernierGabarit) { reconstruire(); return; }
     [].forEach.call(dock.children, function (x) {
       var fb = boutons[x.getAttribute('data-v')], on = !!(fb && (fb.classList.contains('on') || fb.getAttribute('aria-current') === 'page'));
-      x.classList.toggle('on', on); if (on) x.setAttribute('aria-current', 'page'); else x.removeAttribute('aria-current');
+      /* C333 : rien n'est réécrit si l'état est le même (avant : aria-current reposé à chaque passe, un changement du DOM toutes les 400 ms) */
+      if (x.classList.contains('on') !== on) x.classList.toggle('on', on); if (on) { if (x.getAttribute('aria-current') !== 'page') x.setAttribute('aria-current', 'page'); } else if (x.hasAttribute('aria-current')) x.removeAttribute('aria-current');
       /* badge de l'Inventaire */
       var fbdg = fb && fb.querySelector('#bdg'), bdg = x.querySelector('.bdg'); if (fbdg && bdg && bdg.textContent !== fbdg.textContent) bdg.textContent = fbdg.textContent;
     });
@@ -208,8 +217,10 @@
     detacher(); cadre = f; cdoc = d; cnav = n;
     reconstruire();
     try {
-      obsNav = new MutationObserver(function () { verifier(); }); obsNav.observe(cnav, { attributes: true, attributeFilter: ['class', 'style', 'hidden', 'aria-current', 'data-cp-back'], childList: true, subtree: true, characterData: true });
-      obsHtml = new MutationObserver(function () { verifier(); }); obsHtml.observe(cdoc.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
+      /* C333 : plusieurs changements de la barre dans la même image → une seule vérification (elle relit la mise en page) */
+      var vImg = 0, verifierImage = function () { if (vImg) return; var f = function () { vImg = 0; verifier(); }; vImg = w.requestAnimationFrame ? w.requestAnimationFrame(f) : setTimeout(f, 16); };
+      obsNav = new MutationObserver(verifierImage); obsNav.observe(cnav, { attributes: true, attributeFilter: ['class', 'style', 'hidden', 'aria-current', 'data-cp-back'], childList: true, subtree: true, characterData: true });
+      obsHtml = new MutationObserver(verifierImage); obsHtml.observe(cdoc.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
     } catch (e) {}
     d.defaultView.addEventListener('resize', function () { geom = ''; verifier(); }, { passive: true });
     verifier();

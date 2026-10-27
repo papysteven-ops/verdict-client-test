@@ -186,7 +186,10 @@
 
   /* ---------- « Mes appareils » : le bouton de l'en-tête (comme l'icône appareils de Spotify) ---------- */
   function icone(t) { return t === 'telephone' ? '📱' : t === 'tablette' ? '📲' : '💻'; }
+  /* C343 (décisions 25, 26, 29) : « Mes appareils » n'est plus dans l'en-tête ; Paramètres › Compte l'ouvre (VerdictAppareils), seulement
+     si le compte est en ligne. Un bouton posé par une version précédente est retiré. */
   function bouton() {
+    var vieux = doc.getElementById('vx41-btn'); if (vieux) vieux.remove(); return null;
     var b = doc.getElementById('vx41-btn');
     if (!b) {
       var cloche = doc.getElementById('notification-button'); if (!cloche || !cloche.parentNode) return null;
@@ -234,5 +237,6 @@
   }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', function () { setTimeout(demarrer, 1200); }); else setTimeout(demarrer, 1200);
 
+  w.VerdictAppareils = { ouvrir: function () { if (!actif()) return false; ouvrirFeuille(); return true; }, etat: function () { return { actif: actif(), nombre: appareils.length }; } };
   w.VerdictContinuite = { position: position, appliquer: appliquer, libelle: libelle, appareil: appareil, actif: actif, envoyer: envoyer, appareils: function () { return appareils.slice(); }, publier: publier };
 })();

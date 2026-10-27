@@ -17,12 +17,15 @@
   /* ── 1. File « après l'ouverture » ───────────────────────────────────────── */
   function enIntro() { return !!(w.__vdAnimIntro || doc.getElementById('splash')); }
   var file = [];
+  /* C333 : la file se vide une tâche par image (l'Accueil s'affiche d'abord, puis chaque travail a son tour), et un travail marqué
+     « d'après l'ouverture » peut être sauté s'il ne changerait rien (voir drawPil plus bas). */
+  function prochaineImage(f) { if (typeof w.requestAnimationFrame === 'function' && !doc.hidden) w.requestAnimationFrame(function () { setTimeout(f, 0); }); else setTimeout(f, 16); }
   function vider() {
     var q = file.splice(0);
-    (function suite() { var f = q.shift(); if (!f) return; try { f(); } catch (e) {} setTimeout(suite, 0); })();
+    (function suite() { var f = q.shift(); if (!f) return; w.__vdFileApresIntro = true; try { f(); } catch (e) {} finally { w.__vdFileApresIntro = false; } prochaineImage(suite); })();
   }
   w.verdictApresIntro = function (f) { if (typeof f !== 'function') return; if (!enIntro()) { f(); return; } file.push(f); };
-  w.addEventListener('verdict:intro-complete', function () { w.__vdAnimIntro = false; setTimeout(vider, 0); });
+  w.addEventListener('verdict:intro-complete', function () { w.__vdAnimIntro = false; prochaineImage(vider); });
   /* Filet : si l'écran d'ouverture disparaît sans son événement, la file est vidée quand même. */
   var filet = setInterval(function () { if (!enIntro()) { clearInterval(filet); vider(); } }, 500);
   setTimeout(function () { clearInterval(filet); vider(); }, 15000);
@@ -62,12 +65,15 @@
   function revision() { var d = cleDonnees(); return (d === null ? String(Date.now()) : d) + '|' + (w.VIEW || '') + '|' + ((w.DB && w.DB.histJour && w.DB.histJour.length) || 0); }
   if (typeof w.drawPil === 'function') {
     var dp = w.drawPil, derniere = null, enAttente = false;
+    /* C333 : après l'ouverture, un Accueil déjà dessiné pour le même état des données n'est pas redessiné par la file (1,5 à 2,6 s
+       mesurées dans WebKit pour un redessin identique demandé par verdict-041). */
+    var dessine = null;
     w.drawPil = function () {
       if (enIntro()) { var r = revision(); if (r === derniere) { enAttente = true; return; } derniere = r; }
-      else derniere = null;
-      return dp.apply(this, arguments);
+      else { derniere = null; if (w.__vdFileApresIntro && dessine !== null && revision() === dessine && doc.getElementById('pilHead')) return; }
+      try { return dp.apply(this, arguments); } finally { try { dessine = revision(); } catch (e) { dessine = null; } }
     };
     w.drawPil.__vdMem = true;
-    w.addEventListener('verdict:intro-complete', function () { derniere = null; if (enAttente) { enAttente = false; setTimeout(function () { try { if (w.VIEW === 'pil') w.drawPil(); } catch (e) {} }, 0); } });
+    w.addEventListener('verdict:intro-complete', function () { derniere = null; if (enAttente) { enAttente = false; prochaineImage(function () { w.__vdFileApresIntro = true; try { if (w.VIEW === 'pil') w.drawPil(); } catch (e) {} finally { w.__vdFileApresIntro = false; } }); } });
   }
 })();

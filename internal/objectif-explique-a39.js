@@ -170,6 +170,7 @@
     if (joursInconnus()) { lp.className = 'vx53-o'; lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>à confirmer</b>';
       var ex0 = lp.nextElementSibling; if (!ex0 || !ex0.classList.contains('vx53-e')) { ex0 = lp.ownerDocument.createElement('p'); ex0.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex0); }
       ex0.innerHTML = 'Il dépend de vos jours d’ouverture : répondez à « Combien de jours ouvrez-vous par semaine ? », en haut de l’Accueil.' + (c && c.input && Number(c.input.minimum) > 0 ? ' ' + resteMois(c.input.minimum, S.cle || (c && c.next) || (function () { try { return String(w.verdictOperationalClock().key); } catch (e) { return ''; } })()) : ''); return; }
+    var cNow = c; /* C357 : le mois avec la journée d'aujourd'hui, avant la relecture du matin (C298) */
     var cleS = S.cle || cleSaisie(S, true); /* C298 (V15-070, 084) : la journée de la carte (passée, ou aujourd'hui déjà saisi) se lit avec l'avance du mois et les jours restants de ce jour-là */
     if (cleS && c && c.input && Array.isArray(c.input.days) && c.next !== cleS && w.VerdictCHR) { try { var c0 = w.VerdictCHR.calculate({ minimum: c.input.minimum, today: cleS, days: c.input.days.map(function (x) { return Object.assign({}, x, { ca: x.date >= cleS ? null : x.ca }); }) }); if (c0 && c0.exact && c0.next === cleS) c = c0; } catch (e) {} }
     var date = cleS || (c && c.next), jourDate = cleS || (function () { try { return String(w.verdictOperationalClock().key).slice(0, 10); } catch (e) { return date; } })(), jour = jourDate ? JOURS[jourSem(jourDate)] : 'jour', extra = Math.round(t) - Math.round(base); /* C240 : le jour de la carte (après la saisie, c.next est déjà demain) */
@@ -184,6 +185,11 @@
     else if (retard > 0) e = charges + ' Le mois a ' + eur(retard) + ' de retard, partagé entre les jours ouverts restants.';
     else if (avance > 0) e = charges + ' Le mois a ' + eur(avance) + ' d’avance.';
     else e = charges + (c && c.input && Array.isArray(c.input.days) && !c.input.days.some(function (d) { return d && d.ca != null; }) ? ' Aucune journée n’est encore saisie ce mois-ci.' : ' Le mois est dans les temps.'); /* C213 (W08) */
+    /* C357 (T1, avec L2) : aujourd'hui déjà saisi — le minimum reste celui du matin (C298), mais l'avance du mois est aussi dite telle
+       qu'elle est maintenant, la même que l'onglet Mois (3 061 € le matin, 3 100 € avec la journée de 2 350 €, Brasserie Collet le 23/10). */
+    var aujK = (function () { try { return String(w.verdictOperationalClock().key).slice(0, 10); } catch (e0) { return ''; } })();
+    if (!S.cle && cleS && cleS === aujK && cNow && cNow !== c && cNow.exact) { var emN = ecartMois(cNow); e = e.replace(' Le mois a ', ' Ce matin, le mois avait ');
+      e += emN.avance > 0 ? ' Avec cette journée, le mois a maintenant <b>' + eur(emN.avance) + '</b> d’avance.' : emN.retard > 0 ? ' Avec cette journée, le mois a maintenant <b>' + eur(emN.retard) + '</b> de retard.' : ' Avec cette journée, le mois est dans les temps.'; }
     lp.className = 'vx53-o'; /* C165 : « minimum », comme les repères (« objectif » est réservé à l'objectif de résultat) */ lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>' + eur(t) + '</b>';
     var ex = lp.nextElementSibling; if (!ex || !ex.classList.contains('vx53-e')) { ex = lp.ownerDocument.createElement('p'); ex.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex); }
     ex.innerHTML = e;
@@ -269,9 +275,11 @@
   var suivis = new WeakSet();
   function tour() {
     try { libelleSeuil(); mentionTTC(doc.getElementById('v-data')); deuxCouts(); } catch (e) {}
+    var ck = ''; try { ck = w.verdictOperationalClock().key; } catch (e) {}
+    var rev = [w.VERDICT_DB_REV || 0, w.VERDICT_VIEW_REVISION || 0, String(w.LOCALE || 'fr'), ck].join('|'); /* C333 (décision 19) */
     [].forEach.call(doc.querySelectorAll('iframe.p41-ecran'), function (f) {
-      enrichir(f);
       var d; try { d = f.contentDocument; } catch (e) { d = null; }
+      if (!d || d.__vx39rev !== rev || !suivis.has(d)) { enrichir(f); if (d) d.__vx39rev = rev; } /* sinon l’observateur suffit */
       if (d && d.body && !suivis.has(d)) {
         suivis.add(d); var att = null;
         new MutationObserver(function () { if (att) return; att = setTimeout(function () { att = null; enrichir(f); }, 60); }).observe(d.body, { childList: true, subtree: true });

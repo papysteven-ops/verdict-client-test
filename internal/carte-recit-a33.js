@@ -59,6 +59,10 @@
     try { if (typeof w.VerdictManqueCarte === 'function') manque = w.VerdictManqueCarte(); } catch (e) {}
     gain = gainCarte();
     var obj = 75; try { var o = Number(w.DB && w.DB.reg && w.DB.reg.objp); if (o > 0) obj = o; } catch (e) {}
+    /* C352 (b) : un seul objectif affiché, celui de la liste de la Carte : l'objectif de chaque plat pondéré par ses ventes (sur place et
+       plateforme, décision 28) ; l'objectif sur place seul ne vaut que sans ventes */
+    try { var tw = 0, ow = 0; (w.DB.plats || []).forEach(function (p) { if (!p || p.cpArchived) return; var v = Number(p.vol); if (!(v > 0)) return; var k = w.platCalc(p); if (!k || !k.complete) return;
+      var pw = v * Number(k.htPond || k.ht), ob = Number(k.objPond); if (pw > 0 && isFinite(ob)) { tw += pw; ow += pw * ob; } }); if (tw > 0) obj = Math.round(ow / tw * 10) / 10; } catch (e) {}
     var marge = num(st.margePond), theo = num(st.theoR), autres = Math.max(0, 100 - theo - marge);
     /* une seule « couverture des fiches » : celle de l'Audit et du plan de prix (plats à fiche complète ÷ plats actifs) */
     var couv = apc && isFinite(Number(apc.couverture)) ? Number(apc.couverture) : (st.actifs ? Math.round(num(st.fiables) / st.actifs * 100) : 0);

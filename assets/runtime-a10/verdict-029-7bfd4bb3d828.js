@@ -325,10 +325,10 @@ var MODELES={
  "Italien":{/*C301-italien*/n:"🍝 Italien",e:"ITALIEN (cas d'exploitation)",in:{"panier":28.0,"tva":10.0,"cmdj":58.0,"jsem":6.0,"mois":12.0,"moisch":12.0,"obj":45000.0,"dirb":2500.0,"dirt":45.0,"salb":6400.0,"salt":42.0,"nour":117000.0,"boi":68287.0,"emb":4000.0,"autv":0,"com":0,"dirn":1,"saln":3,"f1":4000.0,"f2":0,"f3":1300.0,"f4":0,"f5":220.0,"f6":380.0,"f7":0,"f8":0,"f9":0,"f10":1600.0},reg:{"sauces":8.0,"pertes":3.0,"pack":0.5,"tvac":10.0,"compf":30,"objp":75.0,"objpf":65.0},ing:[["Bœuf haché (bolognaise)","KG",9.9,5.0],["Jarret de veau (osso buco)","KG",18.0,10.0],["Pomme de terre","KG",1.1,15.0],["Frites surgelées","KG",2.0,0],["Œuf de poule","UNITE",0.25,0],["Saumon","KG",17.0,5.0],["Daurade","KG",15.0,10.0],["Escalope de veau","KG",18.0,15.0],["Roquette","KG",6.0,20.0],["Tomate","KG",2.5,10.0],["Pain ciabatta","UNITE",0.4,0],["Mozzarella","KG",6.5,0],["Parmesan","KG",18.0,0],["Pain ciabatta","UNITE",0.4,0],["Jambon de Parme","KG",25.0,5.0],["Huile d'olive","KG",8.0,0],["Crème liquide","L",3.99,0],["Pancetta","KG",14.0,5.0],["Oignon","KG",1.1,15.0],["Chocolat noir","KG",9.0,0],["Sucre","KG",1.1,0],["Mascarpone","L",6.0,0],["Anchois/câpres","KG",12.0,5.0],["Parmesan","KG",18.0,0],["Pâtes fraîches","KG",6.5,0],["Pâtes sèches","KG",2.2,0],["Tomate pelée","KG",2.4,0],["Basilic frais","KG",25.0,10.0],["Burrata","KG",16.0,0],["Filet de bœuf","KG",38.0,8.0],["Riz arborio","KG",4.2,0],["Champignons","KG",6.0,10.0],["Carotte","KG",1.2,15.0],["Chapelure","KG",3.5,0],["Farine","KG",1.0,0],["Beurre","KG",9.0,0],["Biscuits cuillère","KG",9.0,0],["Café","L",8.0,0],["Coulis de fruits rouges","KG",9.0,0]],plats:[["Bruschetta tomate-basilic","Entrées",9.0,90.0,[["Pain ciabatta",1.0],["Tomate",120.0],["Huile d'olive",10.0],["Basilic frais",4.0]],false,null,[true,false,false,false,false],10],["Burrata des Pouilles","Entrées",12.0,140.0,[["Burrata",125.0],["Tomate",100.0],["Roquette",20.0],["Huile d'olive",10.0],["Pain ciabatta",0.5]],false,null,[false,false,false,false,true],10],["Carpaccio de bœuf","Entrées",15.0,110.0,[["Filet de bœuf",110.0],["Roquette",20.0],["Parmesan",20.0],["Huile d'olive",10.0],["Anchois/câpres",5.0]],false,null,[true,true,false,true,false],10],["Tagliatelle bolognaise","Pâtes",16.0,220.0,[["Pâtes fraîches",150.0],["Bœuf haché (bolognaise)",120.0],["Tomate pelée",100.0],["Oignon",20.0],["Parmesan",15.0]],false,null,[false,false,false,false,true],10],["Spaghetti carbonara","Pâtes",15.0,260.0,[["Pâtes sèches",120.0],["Pancetta",80.0],["Œuf de poule",2.0],["Parmesan",25.0]],false,null,[false,true,false,true,true],10],["Lasagnes maison","Pâtes",14.0,85.0,[["Pâtes fraîches",100.0],["Bœuf haché (bolognaise)",110.0],["Tomate pelée",100.0],["Mozzarella",40.0],["Parmesan",15.0],["Crème liquide",50.0]],false,null,[false,true,false,false,true],10],["Penne arrabbiata","Pâtes",13.0,120.0,[["Pâtes sèches",120.0],["Tomate pelée",150.0],["Huile d'olive",10.0],["Parmesan",10.0]],false,null,[false,false,false,false,true],10],["Risotto aux champignons","Plats",17.0,95.0,[["Riz arborio",90.0],["Champignons",120.0],["Parmesan",25.0],["Crème liquide",30.0],["Oignon",20.0],["Beurre",15.0]],false,null,[true,true,true,false,true],10],["Osso buco milanaise","Plats",22.0,130.0,[["Jarret de veau (osso buco)",350.0],["Tomate pelée",80.0],["Oignon",40.0],["Carotte",40.0],["Riz arborio",70.0],["Parmesan",10.0]],false,null,[false,false,true,false,true],10],["Escalope milanaise","Plats",18.0,100.0,[["Escalope de veau",160.0],["Œuf de poule",1.0],["Chapelure",30.0],["Farine",15.0],["Pâtes sèches",100.0],["Tomate pelée",80.0]],false,null,[true,true,true,true,false],10],["Tiramisu maison","Desserts",8.0,130.0,[["Mascarpone",80.0],["Biscuits cuillère",40.0],["Café",50.0],["Œuf de poule",1.0],["Sucre",20.0]],false,null,[false,true,false,true,false],10],["Panna cotta","Desserts",7.0,115.0,[["Crème liquide",120.0],["Sucre",15.0],["Coulis de fruits rouges",30.0]],false,null,[false,true,false,false,true],10]]},
  "Asiatique":{n:"🍜 Asiatique",e:"ASIATIQUE (cas d'exploitation)",in:{"panier":22.0,"tva":10.0,"cmdj":67.0,"jsem":6.0,"mois":12.0,"moisch":12.0,"obj":23000.0,"dirb":2500.0,"dirt":45.0,"salb":4400.0,"salt":42.0,"nour":89818.0,"boi":66769.0,"emb":11639.0,"autv":0,"com":50131.0,"dirn":1,"saln":2,"f1":3000.0,"f2":0,"f3":500.0,"f4":0,"f5":180.0,"f6":250.0,"f7":0,"f8":0,"f9":0,"f10":100.0},reg:{"sauces":8.0,"pertes":3.0,"pack":0.5,"tvac":10.0,"compf":30,"objp":75.0,"objpf":65.0},ing:[["Bœuf émincé","KG",12.0,5.0],["Bœuf (wok)","KG",13.0,10.0],["Riz sushi","KG",3.5,15.0],["Nouilles","KG",2.5,0],["Œuf de poule","UNITE",0.25,0],["Saumon (sushi)","KG",17.0,5.0],["Thon (sushi)","KG",20.0,10.0],["Poulet (wok)","KG",7.5,15.0],["Chou chinois","KG",2.0,20.0],["Tomate","KG",2.5,10.0],["Bao","UNITE",0.5,0],["Tofu","KG",5.0,0],["Gingembre mariné","KG",8.0,0],["Feuille de riz","UNITE",0.3,0],["Crevettes","KG",16.0,5.0],["Huile de sésame","KG",10.0,0],["Lait de coco","L",3.0,0],["Porc char siu","KG",9.0,5.0],["Oignon","KG",1.1,15.0],["Pâte de sésame","KG",10.0,0],["Sucre","KG",1.1,0],["Mochi base","L",4.0,0],["Algues nori","KG",15.0,5.0],["Parmesan","KG",18.0,0]],plats:[["Soupe miso + edamame","Entrée",6.0,90.0,[["Œuf de poule",1.4],["Chou chinois",21.0]],false,null,[true,false,false,false,false]],["California rolls x6","Plat",9.0,140.0,[["Feuille de riz",1.4],["Crevettes",73.5],["Gingembre mariné",45.5],["Huile de sésame",10.5]],false,null,[false,false,false,false,true]],["Gyoza x6","Plat",8.0,110.0,[["Chou chinois",84.0],["Poulet (wok)",115.5],["Parmesan",21.0],["Algues nori",7.0]],false,null,[true,true,false,true,false]],["Bœuf sauté au wok","Plat",14.0,220.0,[["Bœuf (wok)",161.0],["Nouilles",140.0]],false,null,[false,false,false,false,true]],["Poulet teriyaki","Plat",13.0,260.0,[["Bœuf émincé",126.0],["Bao",0.7],["Tofu",28.0],["Chou chinois",14.0],["Tomate",21.0],["Nouilles",126.0]],false,null,[false,true,false,true,true]],["Sushi mix x12","Plat",18.0,95.0,[["Saumon (sushi)",133.0],["Riz sushi",126.0],["Lait de coco",21.0]],false,null,[true,true,true,false,true]],["Pad thaï","Plat",13.0,130.0,[["Thon (sushi)",140.0],["Nouilles",140.0]],false,null,[false,false,true,false,true]],["Chirashi saumon","Plat",16.0,100.0,[["Bœuf (wok)",147.0],["Nouilles",126.0],["Oignon",14.0],["Œuf de poule",0.7]],false,null,[true,true,true,true,false]],["Nems x6 + nouilles","Plat",11.0,85.0,[["Porc char siu",63.0],["Œuf de poule",2.1],["Lait de coco",49.0],["Chou chinois",42.0]],false,null,[false,true,false,false,true]],["Ramen complet","Plat",12.0,120.0,[["Porc char siu",73.5],["Lait de coco",63.0],["Gingembre mariné",31.5],["Œuf de poule",0.7]],false,null,[false,false,false,false,true]],["Mochi glacé x3","Dessert",6.0,130.0,[["Mochi base",84.0],["Œuf de poule",0.7],["Sucre",14.0]],false,null,[false,true,false,true,false]],["Perles de coco","Dessert",5.0,115.0,[["Pâte de sésame",42.0],["Huile de sésame",28.0],["Œuf de poule",1.4],["Sucre",28.0]],false,null,[false,true,false,false,true]]]},
  "BarTapas":{n:"🍷 Bar à tapas",e:"BAR TAPAS (cas d'exploitation)",in:{"panier":24.0,"tva":10.0,"cmdj":56.0,"jsem":6.0,"mois":12.0,"moisch":12.0,"obj":45000.0,"dirb":2500.0,"dirt":45.0,"salb":4600.0,"salt":42.0,"nour":71917.0,"boi":76548.0,"emb":4000.0,"autv":0,"com":0,"dirn":1,"saln":2,"f1":3500.0,"f2":0,"f3":1300.0,"f4":0,"f5":220.0,"f6":380.0,"f7":0,"f8":0,"f9":0,"f10":1600.0},reg:{"sauces":8.0,"pertes":3.0,"pack":0.5,"tvac":10.0,"compf":30,"objp":75.0,"objpf":65.0},ing:[["Viande hachée (albóndigas)","KG",9.9,5.0],["Poulpe","KG",18.0,10.0],["Pomme de terre","KG",1.1,15.0],["Frites surgelées","KG",2.0,0],["Œuf de poule","UNITE",0.25,0],["Gambas","KG",16.0,5.0],["Calamars","KG",12.0,10.0],["Poulet (brochette)","KG",6.5,15.0],["Salade verte","KG",3.5,20.0],["Tomate","KG",2.5,10.0],["Pain rustique","UNITE",0.3,0],["Manchego","KG",16.0,0],["Manchego râpé","KG",16.0,0],["Pain de mie","UNITE",0.15,0],["Jambon ibérique","KG",18.0,5.0],["Huile d'olive","KG",8.0,0],["Crème liquide","L",3.99,0],["Chorizo","KG",14.0,5.0],["Oignon","KG",1.1,15.0],["Chocolat noir","KG",9.0,0],["Sucre","KG",1.1,0],["Crema catalana base","L",3.0,0],["Anchois marinés","KG",12.0,5.0],["Parmesan","KG",18.0,0]],plats:[["Tortilla española","Entrée",8.0,90.0,[["Œuf de poule",1.1],["Salade verte",16.5]],false,null,[true,false,false,false,false]],["Croquetas de jamón","Plat",7.0,140.0,[["Pain de mie",1.1],["Jambon ibérique",57.8],["Manchego râpé",35.8],["Huile d'olive",8.2]],false,null,[false,false,false,false,true]],["Patatas bravas","Plat",7.0,110.0,[["Salade verte",66.0],["Poulet (brochette)",90.8],["Parmesan",16.5],["Anchois marinés",5.5]],false,null,[true,true,false,true,false]],["Gambas al ajillo","Plat",12.0,220.0,[["Poulpe",126.5],["Frites surgelées",110.0]],false,null,[false,false,false,false,true]],["Calamars a la romana","Plat",11.0,260.0,[["Viande hachée (albóndigas)",99.0],["Pain rustique",0.6],["Manchego",22.0],["Salade verte",11.0],["Tomate",16.5],["Frites surgelées",99.0]],false,null,[false,true,false,true,true]],["Brochette de poulet","Plat",10.0,95.0,[["Gambas",104.5],["Pomme de terre",99.0],["Crème liquide",16.5]],false,null,[true,true,true,false,true]],["Poulpe à la galicienne","Plat",14.0,130.0,[["Calamars",110.0],["Frites surgelées",110.0]],false,null,[false,false,true,false,true]],["Planche ibérique","Plat",16.0,100.0,[["Poulpe",115.5],["Frites surgelées",99.0],["Oignon",11.0],["Œuf de poule",0.6]],false,null,[true,true,true,true,false]],["Pan con tomate","Plat",6.0,85.0,[["Chorizo",49.5],["Œuf de poule",1.7],["Crème liquide",38.5],["Salade verte",33.0]],false,null,[false,true,false,false,true]],["Albóndigas sauce tomate","Plat",10.0,120.0,[["Chorizo",57.8],["Crème liquide",49.5],["Manchego râpé",24.8],["Œuf de poule",0.6]],false,null,[false,false,false,false,true]],["Crema catalana","Dessert",6.5,130.0,[["Crema catalana base",66.0],["Œuf de poule",0.6],["Sucre",11.0]],false,null,[false,true,false,true,false]],["Sangria (pichet)","Dessert",18.0,115.0,[["Chocolat noir",33.0],["Huile d'olive",22.0],["Œuf de poule",1.1],["Sucre",22.0]],false,null,[false,true,false,false,true]]]},
- "CoffeeShop":{n:"☕ Coffee shop",e:"COFFEE SHOP (cas d'exploitation)",in:{"panier":6.5,"tva":10.0,"cmdj":150.0,"jsem":6.0,"mois":12.0,"moisch":12.0,"obj":26000.0,"dirb":2000.0,"dirt":45.0,"salb":3400.0,"salt":42.0,"nour":31400.0,"boi":46000.0,"emb":6500.0,"autv":0,"com":500.0,"dirn":1,"saln":2,"f1":2300.0,"f2":0,"f3":750.0,"f4":0,"f5":170.0,"f6":250.0,"f7":0,"f8":0,"f9":0,"f10":1200.0},reg:{"sauces":2.0,"pertes":5.0,"pack":0.3,"tvac":10.0,"compf":30,"objp":78.0,"objpf":65.0}/* C250 (Steven, 22/10 : « ce n’est pas du tout un coffee shop ») : repères du format boissons — matière 28 % (café, lait : boissons 46 000 €, viennoiseries et snacks 31 400 €), équipe ≈ 34 % (gérant + 2 salariés), marge avant impôt ≈ 8 % ; carte : peu de condiments, pertes de viennoiserie 5 %, gobelet 0,30 €, boissons à forte contribution (78 %). Avant : équipe ≈ 50 %, réglages de la Brasserie, marge 0,7 %. */,ing:[["Poulet fermier","KG",9.5,15.0],["Riz basmati","KG",2.8,5.0],["Quinoa","KG",6.5,5.0],["Avocat","UNITE",1.2,20.0],["Tomate cerise","KG",4.2,20.0],["Carotte","KG",1.8,20.0],["Pousses d'épinard","KG",12.0,20.0],["Œuf de poule","UNITE",0.25,15.0],["Fromage feta","KG",12.5,15.0],["Saumon fumé","KG",28.0,15.0],["Patate douce","KG",2.2,20.0],["Graines de chia","KG",14.0,5.0],["Lait de coco","L",4.5,0],["Miel","KG",11.0,5.0],["Banane bio","KG",2.5,15.0],["Café en grains","KG",24.0,0],["Lait demi-écrémé","L",1.05,0],["Farine T55","KG",0.85,2.0],["Beurre","KG",7.8,2.0],["Sucre","KG",1.1,0],["Chocolat noir","KG",9.5,0],["Pain de mie","UNITE",0.35,5.0],["Pain bagel","UNITE",0.55,5.0]],plats:[["Espresso","Boisson",2.2,1300.0,[["Café en grains",9.0]],false,null,[false,false,false,false,false]],["Cappuccino","Boisson",3.8,1500.0,[["Café en grains",9.0],["Lait demi-écrémé",150.0]],false,null,[false,false,false,false,false]],["Café latte","Boisson",4.2,1100.0,[["Café en grains",9.0],["Lait demi-écrémé",220.0]],false,null,[false,false,false,false,false]],["Café filtre","Boisson",2.8,650.0,[["Café en grains",14.0]],false,null,[false,false,false,false,false]],["Chocolat chaud","Boisson",4.2,380.0,[["Lait demi-écrémé",250.0],["Chocolat noir",25.0]],false,null,[false,false,false,false,false]],["Croissant beurre","Dessert",1.6,950.0,[["Farine T55",45.0],["Beurre",25.0]],false,null,[false,false,false,false,false]],["Cookie chocolat","Dessert",2.8,720.0,[["Farine T55",40.0],["Beurre",20.0],["Sucre",25.0],["Chocolat noir",30.0]],false,null,[false,false,false,false,false]],["Banana bread","Dessert",3.8,360.0,[["Farine T55",35.0],["Banane bio",40.0],["Beurre",15.0],["Sucre",20.0],["Œuf de poule",0.5]],false,null,[false,false,false,false,false]],["Avocado toast","Snack",8.5,300.0,[["Pain de mie",2.0],["Avocat",1.0],["Œuf de poule",1.0]],false,null,[false,false,false,false,false]],["Bagel saumon","Snack",8.9,240.0,[["Pain bagel",1.0],["Saumon fumé",40.0]],false,null,[false,false,false,false,false]]]},
+ "CoffeeShop":{n:"☕ Coffee shop",e:"COFFEE SHOP (cas d'exploitation)",in:{"panier":6.5,"tva":10.0,"cmdj":150.0,"jsem":6.0,"mois":12.0,"moisch":12.0,"obj":26000.0,"dirb":2000.0,"dirt":45.0,"salb":3400.0,"salt":42.0,"nour":31400.0,"boi":46000.0,"emb":6500.0,"autv":0,"com":500.0,"dirn":1,"saln":1.6,"f1":2300.0,"f2":0,"f3":750.0,"f4":0,"f5":170.0,"f6":250.0,"f7":0,"f8":0,"f9":0,"f10":1200.0},reg:{"sauces":2.0,"pertes":5.0,"pack":0.3,"tvac":10.0,"compf":30,"objp":78.0,"objpf":65.0}/* C250 (Steven, 22/10 : « ce n’est pas du tout un coffee shop ») : repères du format boissons — matière 28 % (café, lait : boissons 46 000 €, viennoiseries et snacks 31 400 €), équipe ≈ 34 % (gérant + 2 salariés), marge avant impôt ≈ 8 % ; carte : peu de condiments, pertes de viennoiserie 5 %, gobelet 0,30 €, boissons à forte contribution (78 %). Avant : équipe ≈ 50 %, réglages de la Brasserie, marge 0,7 %. */,ing:[["Poulet fermier","KG",9.5,15.0],["Riz basmati","KG",2.8,5.0],["Quinoa","KG",6.5,5.0],["Avocat","UNITE",1.2,20.0],["Tomate cerise","KG",4.2,20.0],["Carotte","KG",1.8,20.0],["Pousses d'épinard","KG",12.0,20.0],["Œuf de poule","UNITE",0.25,15.0],["Fromage feta","KG",12.5,15.0],["Saumon fumé","KG",28.0,15.0],["Patate douce","KG",2.2,20.0],["Graines de chia","KG",14.0,5.0],["Lait de coco","L",4.5,0],["Miel","KG",11.0,5.0],["Banane bio","KG",2.5,15.0],["Café en grains","KG",24.0,0],["Lait demi-écrémé","L",1.05,0],["Farine T55","KG",0.85,2.0],["Beurre","KG",7.8,2.0],["Sucre","KG",1.1,0],["Chocolat noir","KG",9.5,0],["Pain de mie","UNITE",0.35,5.0],["Pain bagel","UNITE",0.55,5.0]],plats:[["Espresso","Boisson",2.2,1300.0,[["Café en grains",9.0]],false,null,[false,false,false,false,false]],["Cappuccino","Boisson",3.8,1500.0,[["Café en grains",9.0],["Lait demi-écrémé",150.0]],false,null,[false,false,false,false,false]],["Café latte","Boisson",4.2,1100.0,[["Café en grains",9.0],["Lait demi-écrémé",220.0]],false,null,[false,false,false,false,false]],["Café filtre","Boisson",2.8,650.0,[["Café en grains",14.0]],false,null,[false,false,false,false,false]],["Chocolat chaud","Boisson",4.2,380.0,[["Lait demi-écrémé",250.0],["Chocolat noir",25.0]],false,null,[false,false,false,false,false]],["Croissant beurre","Dessert",1.6,950.0,[["Farine T55",45.0],["Beurre",25.0]],false,null,[false,false,false,false,false]],["Cookie chocolat","Dessert",2.8,720.0,[["Farine T55",40.0],["Beurre",20.0],["Sucre",25.0],["Chocolat noir",30.0]],false,null,[false,false,false,false,false]],["Banana bread","Dessert",3.8,360.0,[["Farine T55",35.0],["Banane bio",40.0],["Beurre",15.0],["Sucre",20.0],["Œuf de poule",0.5]],false,null,[false,false,false,false,false]],["Avocado toast","Snack",8.5,300.0,[["Pain de mie",2.0],["Avocat",1.0],["Œuf de poule",1.0]],false,null,[false,false,false,false,false]],["Bagel saumon","Snack",8.9,240.0,[["Pain bagel",1.0],["Saumon fumé",40.0]],false,null,[false,false,false,false,false]]]},
  "Boulangerie":{n:"🥖 Boulangerie",e:"BOULANGERIE (cas d'exploitation)",in:{"panier":7.0,"tva":5.5,"cmdj":200.0,"jsem":6.0,"mois":12.0,"moisch":12.0,"obj":24800.0,"dirb":3000.0,"dirt":45.0,"salb":7134.0,"salt":42.0,"nour":140500.0,"boi":20700.0,"emb":8275.0,"autv":0,"com":0,"dirn":1,"saln":3,"f1":2200.0,"f2":0,"f3":1500.0,"f4":0,"f5":280.0,"f6":400.0,"f7":0,"f8":0,"f9":0,"f10":800.0},reg:{"sauces":6.0,"pertes":5.0,"pack":0.1,"tvac":5.5,"compf":30,"objp":75.0,"objpf":65.0},ing:[["Farine T65","KG",0.85,2.0],["Beurre","KG",8.0,0],["Levure","KG",3.0,0],["Sel","KG",0.6,0],["Sucre","KG",1.1,0],["Œuf","UNITE",0.25,0],["Chocolat barres","KG",9.0,0],["Lait","L",1.1,0],["Crème","L",3.99,0],["Pommes","KG",2.5,15.0],["Fruits rouges","KG",8.0,5.0],["Jambon","KG",10.0,5.0],["Blanc de poulet","KG",7.5,10.0],["Emmental","KG",9.0,0],["Salade verte","KG",3.5,20.0],["Tomate","KG",2.5,10.0],["Café grains","KG",18.0,0],["Jus/soda","UNITE",0.5,0],["Lardons","KG",8.0,5.0],["Pâte brisée","KG",3.0,0]],plats:[["Baguette tradition","Entrée",1.3,1800.0,[["Farine T65",250.0],["Levure",5.0],["Sel",5.0]],false,null,[false,false,false,false,false]],["Pain de campagne","Entrée",3.5,400.0,[["Farine T65",500.0],["Levure",10.0],["Sel",8.0]],false,null,[false,false,false,false,false]],["Croissant","Entrée",1.3,900.0,[["Farine T65",50.0],["Beurre",30.0],["Sucre",8.0],["Levure",3.0]],false,null,[false,false,false,false,false]],["Pain au chocolat","Entrée",1.4,800.0,[["Farine T65",50.0],["Beurre",28.0],["Chocolat barres",15.0],["Levure",3.0]],false,null,[false,false,false,false,false]],["Chausson aux pommes","Dessert",1.6,350.0,[["Pâte brisée",60.0],["Beurre",20.0],["Pommes",60.0],["Sucre",10.0]],false,null,[false,false,false,false,false]],["Éclair chocolat","Dessert",3.8,250.0,[["Farine T65",40.0],["Œuf",2.0],["Lait",80.0],["Chocolat barres",25.0],["Crème",30.0],["Sucre",15.0]],false,null,[false,false,false,false,false]],["Tarte aux fruits","Dessert",4.2,200.0,[["Pâte brisée",70.0],["Crème",40.0],["Fruits rouges",80.0],["Sucre",15.0]],false,null,[false,false,false,false,false]],["Sandwich jambon-beurre","Plat",4.5,400.0,[["Farine T65",150.0],["Beurre",15.0],["Jambon",50.0],["Levure",4.0]],false,null,[false,false,false,false,false]],["Sandwich poulet crudités","Plat",5.8,300.0,[["Farine T65",150.0],["Blanc de poulet",70.0],["Salade verte",20.0],["Tomate",20.0],["Levure",4.0]],false,null,[false,false,false,false,false]],["Quiche lorraine","Plat",4.8,280.0,[["Pâte brisée",80.0],["Œuf",2.0],["Crème",60.0],["Lardons",40.0],["Emmental",30.0]],false,null,[false,false,false,false,false]],["Café","Dessert",1.5,600.0,[["Café grains",7.0]],false,null,[false,false,false,false,false]],["Boisson fraîche","Dessert",2.2,350.0,[["Jus/soda",1.0]],false,null,[false,false,false,false,false]]]},
  "FoodTruck":{n:"🚚 Food truck",e:"FOOD TRUCK (cas d'exploitation)",in:{"panier":11.0,"tva":10.0,"cmdj":90.0,"jsem":5.0,"mois":12.0,"moisch":12.0,"obj":23400.0,"dirb":2500.0,"dirt":45.0,"salb":1563.0,"salt":42.0,"nour":88852.0,"boi":18700.0,"emb":9350.0,"autv":0,"com":0,"dirn":1,"saln":1,"f1":600.0,"f2":0,"f3":400.0,"f4":0,"f5":250.0,"f6":250.0,"f7":0,"f8":0,"f9":0,"f10":850.0},reg:{"sauces":8.0,"pertes":4.0,"pack":0.35,"tvac":10.0,"compf":30,"objp":75.0,"objpf":65.0},ing:[["Steak haché 15 %","KG",11.0,5.0],["Pain burger","UNITE",0.4,0],["Cheddar tranche","KG",9.0,0],["Salade verte","KG",3.5,20.0],["Tomate","KG",2.5,10.0],["Oignon","KG",1.1,15.0],["Bacon","KG",12.0,5.0],["Escalope de poulet","KG",7.5,10.0],["Tortilla","UNITE",0.4,0],["Frites surgelées","KG",2.0,0],["Nuggets","KG",6.0,0],["Soda","UNITE",0.4,0],["Brownie","UNITE",0.8,0],["Sauce maison","KG",4.0,0]],plats:[["Burger Classic","Plat",9.0,320.0,[["Steak haché 15 %",130.0],["Pain burger",1.0],["Cheddar tranche",20.0],["Salade verte",15.0],["Tomate",20.0],["Oignon",10.0],["Sauce maison",15.0]],false,null,[true,false,false,true,true]],["Burger Bacon","Plat",11.0,220.0,[["Steak haché 15 %",130.0],["Pain burger",1.0],["Cheddar tranche",20.0],["Bacon",25.0],["Oignon",15.0],["Sauce maison",15.0]],false,null,[true,false,false,true,true]],["Double Burger","Plat",13.0,120.0,[["Steak haché 15 %",260.0],["Pain burger",1.0],["Cheddar tranche",40.0],["Oignon",15.0],["Sauce maison",20.0]],false,null,[true,true,false,true,true]],["Tacos Poulet","Plat",9.5,180.0,[["Escalope de poulet",120.0],["Tortilla",2.0],["Cheddar tranche",15.0],["Frites surgelées",40.0],["Oignon",10.0],["Sauce maison",20.0]],false,null,[true,false,false,true,false]],["Tacos Bœuf","Plat",10.0,150.0,[["Steak haché 15 %",120.0],["Tortilla",2.0],["Cheddar tranche",15.0],["Frites surgelées",40.0],["Sauce maison",20.0]],false,null,[true,false,false,true,false]],["Frites maison","Entrée",4.0,280.0,[["Frites surgelées",180.0]],false,null,[false,false,false,false,false]],["Frites cheddar bacon","Entrée",6.0,160.0,[["Frites surgelées",180.0],["Cheddar tranche",25.0],["Bacon",20.0]],false,null,[false,false,false,false,false]],["Nuggets x6","Entrée",5.5,110.0,[["Nuggets",120.0]],false,null,[false,false,false,false,false]],["Soda 33cl","Dessert",2.5,380.0,[["Soda",1.0]],false,null,[false,false,false,false,false]],["Brownie","Dessert",3.5,130.0,[["Brownie",1.0]],false,null,[false,false,false,false,false]]]},
- "Traiteur":{n:"🍱 Traiteur",e:"TRAITEUR (cas d'exploitation)",in:{"panier":44.0,"tva":10.0,"cmdj":42.0,"jsem":4.0,"mois":12.0,"moisch":12.0,"obj":24400.0,"dirb":3000.0,"dirt":45.0,"salb":4109.0,"salt":42.0,"nour":100666.0,"boi":42494.0,"emb":6983.0,"autv":0,"com":0,"dirn":1,"saln":2,"f1":1800.0,"f2":0,"f3":700.0,"f4":0,"f5":400.0,"f6":350.0,"f7":0,"f8":0,"f9":0,"f10":800.0},reg:{"sauces":7.0,"pertes":6.0,"pack":0.4,"tvac":10.0,"compf":30,"objp":75.0,"objpf":65.0},ing:[["Pâte feuilletée","KG",5.0,0],["Saumon fumé","KG",28.0,5.0],["Foie gras","KG",55.0,8.0],["Charcuterie assortie","KG",18.0,5.0],["Fromages affinés","KG",22.0,5.0],["Volaille","KG",12.0,15.0],["Pavé de saumon","KG",17.0,5.0],["Crevettes","KG",16.0,10.0],["Magret fumé","KG",24.0,5.0],["Légumes","KG",3.0,15.0],["Crème","L",3.99,0],["Chocolat","KG",12.0,0],["Fruits","KG",5.0,10.0],["Œuf","UNITE",0.25,0],["Beurre","KG",8.0,0],["Pain toast","KG",3.0,0],["Vin","L",6.0,0],["Jus/soft","UNITE",0.5,0],["Riz/féculents","KG",3.0,0]],plats:[["Pièce cocktail salée","Entrée",1.8,1200.0,[["Pâte feuilletée",15.0],["Saumon fumé",10.0],["Crème",5.0]],false,null,[true,false,true,true,false]],["Pièce cocktail sucrée","Dessert",1.6,900.0,[["Pâte feuilletée",12.0],["Chocolat",8.0],["Crème",8.0],["Fruits",5.0]],false,null,[true,false,true,true,false]],["Verrine apéritive","Entrée",2.5,600.0,[["Crevettes",22.0],["Légumes",20.0],["Crème",15.0]],false,null,[true,false,true,true,false]],["Plateau charcuterie (pers.)","Entrée",8.0,120.0,[["Charcuterie assortie",110.0],["Pain toast",30.0]],false,null,[true,false,true,true,false]],["Plateau fromages (pers.)","Entrée",7.0,120.0,[["Fromages affinés",95.0],["Pain toast",30.0],["Fruits",20.0]],false,null,[true,false,true,true,false]],["Plat chaud volaille","Plat",14.0,200.0,[["Volaille",200.0],["Légumes",130.0],["Crème",40.0],["Riz/féculents",80.0]],false,null,[true,false,true,true,false]],["Plat chaud poisson","Plat",16.0,150.0,[["Pavé de saumon",170.0],["Légumes",120.0],["Beurre",20.0],["Riz/féculents",80.0]],false,null,[true,false,true,true,false]],["Buffet froid (pers.)","Plat",22.0,180.0,[["Saumon fumé",40.0],["Charcuterie assortie",60.0],["Fromages affinés",50.0],["Crevettes",40.0],["Légumes",90.0],["Pain toast",40.0]],false,null,[true,false,true,true,false]],["Pièce montée (pers.)","Dessert",6.0,140.0,[["Pâte feuilletée",45.0],["Chocolat",35.0],["Crème",45.0],["Œuf",1.0],["Fruits",15.0]],false,null,[true,false,true,true,false]],["Plateau desserts (pers.)","Dessert",7.0,130.0,[["Chocolat",35.0],["Fruits",70.0],["Crème",55.0],["Pâte feuilletée",35.0]],false,null,[true,false,true,true,false]],["Forfait boisson (pers.)","Dessert",5.0,300.0,[["Vin",200.0],["Jus/soft",1.0]],false,null,[true,false,true,true,false]],["Menu complet événement","Plat",45.0,220.0,[["Foie gras",50.0],["Volaille",200.0],["Saumon fumé",90.0],["Fromages affinés",60.0],["Chocolat",50.0],["Crevettes",40.0],["Crème",60.0],["Pâte feuilletée",50.0]],false,null,[true,false,true,true,false]]]},
+ "Traiteur":{n:"🍱 Traiteur",e:"TRAITEUR (cas d'exploitation)",in:{"panier":44.0,"tva":10.0,"cmdj":42.0,"jsem":4.0,"mois":12.0,"moisch":12.0,"obj":24400.0,"dirb":3000.0,"dirt":45.0,"salb":4109.0,"salt":42.0,"nour":100666.0,"boi":42494.0,"emb":6983.0,"autv":0,"com":0,"dirn":1,"saln":1.9,"f1":1800.0,"f2":0,"f3":700.0,"f4":0,"f5":400.0,"f6":350.0,"f7":0,"f8":0,"f9":0,"f10":800.0},reg:{"sauces":7.0,"pertes":6.0,"pack":0.4,"tvac":10.0,"compf":30,"objp":75.0,"objpf":65.0},ing:[["Pâte feuilletée","KG",5.0,0],["Saumon fumé","KG",28.0,5.0],["Foie gras","KG",55.0,8.0],["Charcuterie assortie","KG",18.0,5.0],["Fromages affinés","KG",22.0,5.0],["Volaille","KG",12.0,15.0],["Pavé de saumon","KG",17.0,5.0],["Crevettes","KG",16.0,10.0],["Magret fumé","KG",24.0,5.0],["Légumes","KG",3.0,15.0],["Crème","L",3.99,0],["Chocolat","KG",12.0,0],["Fruits","KG",5.0,10.0],["Œuf","UNITE",0.25,0],["Beurre","KG",8.0,0],["Pain toast","KG",3.0,0],["Vin","L",6.0,0],["Jus/soft","UNITE",0.5,0],["Riz/féculents","KG",3.0,0]],plats:[["Pièce cocktail salée","Entrée",1.8,1200.0,[["Pâte feuilletée",15.0],["Saumon fumé",10.0],["Crème",5.0]],false,null,[true,false,true,true,false]],["Pièce cocktail sucrée","Dessert",1.6,900.0,[["Pâte feuilletée",12.0],["Chocolat",8.0],["Crème",8.0],["Fruits",5.0]],false,null,[true,false,true,true,false]],["Verrine apéritive","Entrée",2.5,600.0,[["Crevettes",22.0],["Légumes",20.0],["Crème",15.0]],false,null,[true,false,true,true,false]],["Plateau charcuterie (pers.)","Entrée",8.0,120.0,[["Charcuterie assortie",110.0],["Pain toast",30.0]],false,null,[true,false,true,true,false]],["Plateau fromages (pers.)","Entrée",7.0,120.0,[["Fromages affinés",95.0],["Pain toast",30.0],["Fruits",20.0]],false,null,[true,false,true,true,false]],["Plat chaud volaille","Plat",14.0,200.0,[["Volaille",200.0],["Légumes",130.0],["Crème",40.0],["Riz/féculents",80.0]],false,null,[true,false,true,true,false]],["Plat chaud poisson","Plat",16.0,150.0,[["Pavé de saumon",170.0],["Légumes",120.0],["Beurre",20.0],["Riz/féculents",80.0]],false,null,[true,false,true,true,false]],["Buffet froid (pers.)","Plat",22.0,180.0,[["Saumon fumé",40.0],["Charcuterie assortie",60.0],["Fromages affinés",50.0],["Crevettes",40.0],["Légumes",90.0],["Pain toast",40.0]],false,null,[true,false,true,true,false]],["Pièce montée (pers.)","Dessert",6.0,140.0,[["Pâte feuilletée",45.0],["Chocolat",35.0],["Crème",45.0],["Œuf",1.0],["Fruits",15.0]],false,null,[true,false,true,true,false]],["Plateau desserts (pers.)","Dessert",7.0,130.0,[["Chocolat",35.0],["Fruits",70.0],["Crème",55.0],["Pâte feuilletée",35.0]],false,null,[true,false,true,true,false]],["Forfait boisson (pers.)","Dessert",5.0,300.0,[["Vin",200.0],["Jus/soft",1.0]],false,null,[true,false,true,true,false]],["Menu complet événement","Plat",45.0,220.0,[["Foie gras",50.0],["Volaille",200.0],["Saumon fumé",90.0],["Fromages affinés",60.0],["Chocolat",50.0],["Crevettes",40.0],["Crème",60.0],["Pâte feuilletée",50.0]],false,null,[true,false,true,true,false]]]},
  "Gastro":{n:"⭐ Gastronomique",e:"GASTRONOMIQUE (cas d'exploitation)",in:{"panier":85.0,"tva":10.0,"cmdj":36.0,"jsem":5.0,"mois":12.0,"moisch":12.0,"obj":36000.0,"dirb":3500.0,"dirt":45.0,"salb":13386.0,"salt":42.0,"nour":216815.0,"boi":48000.0,"emb":3500.0,"autv":0,"com":0,"dirn":1,"saln":6,"f1":5200.0,"f2":0,"f3":1700.0,"f4":0,"f5":280.0,"f6":480.0,"f7":0,"f8":0,"f9":0,"f10":2000.0},reg:{"sauces":8.0,"pertes":3.0,"pack":0.3,"tvac":10.0,"compf":30,"objp":75.0,"objpf":65.0},ing:[["Œuf de poule","UNITE",0.25,0],["Petits pois frais","KG",6.0,30.0],["Poitrine fumée","KG",12.0,5.0],["Foie gras cru","KG",55.0,8.0],["Figues","KG",8.0,10.0],["Pain de campagne","UNITE",0.5,0],["Noix de Saint-Jacques","KG",38.0,10.0],["Panais","KG",2.5,20.0],["Potimarron","KG",2.8,25.0],["Noisettes","KG",14.0,0],["Huile de noisette","L",22.0,0],["Bœuf à tartare","KG",24.0,5.0],["Filet de bœuf","KG",44.0,10.0],["Ris de veau","KG",32.0,15.0],["Homard","KG",30.0,40.0],["Bar de ligne","KG",34.0,45.0],["Fenouil","KG",3.0,20.0],["Pigeon","UNITE",9.0,20.0],["Chou vert","KG",1.8,20.0],["Riz arborio","KG",4.5,0],["Truffe noire","KG",600.0,5.0],["Parmesan","KG",18.0,0],["Volaille fermière","KG",12.0,15.0],["Morilles séchées","KG",180.0,0],["Beurre","KG",8.0,0],["Crème liquide","L",3.99,0],["Échalote","KG",3.0,15.0],["Vin blanc cuisine","L",6.0,0],["Fond de veau","L",12.0,0],["Pommes","KG",2.5,15.0],["Chocolat grand cru","KG",18.0,0],["Sucre","KG",1.1,0],["Farine","KG",1.1,0],["Grand Marnier","L",28.0,0],["Fromages affinés","KG",22.0,5.0],["Pâte feuilletée","KG",5.0,0],["Glace vanille","L",7.0,0]],plats:[["Œuf parfait, crème de petits pois, lard","Entrée",19.0,50.0,[["Œuf de poule",2.0],["Petits pois frais",90.0],["Poitrine fumée",30.0],["Crème liquide",20.0]],false,null,[true,false,false,true,false]],["Foie gras mi-cuit, chutney de figues","Entrée",28.0,40.0,[["Foie gras cru",80.0],["Figues",40.0],["Pain de campagne",1.0]],false,null,[false,false,true,true,false]],["Saint-Jacques snackées, purée de panais","Entrée",26.0,38.0,[["Noix de Saint-Jacques",90.0],["Panais",120.0],["Beurre",15.0]],false,null,[true,false,true,true,true]],["Velouté de potimarron, huile de noisette","Entrée",18.0,35.0,[["Potimarron",200.0],["Crème liquide",30.0],["Noisettes",15.0],["Huile de noisette",5.0]],false,null,[false,false,false,false,false]],["Tartare de bœuf au couteau","Entrée",22.0,42.0,[["Bœuf à tartare",140.0],["Échalote",15.0],["Œuf de poule",1.0]],false,null,[true,false,true,true,false]],["Ris de veau braisé, jus corsé","Plat",42.0,35.0,[["Ris de veau",250.0],["Échalote",20.0],["Fond de veau",40.0],["Beurre",20.0]],false,null,[true,true,true,true,true]],["Filet de bœuf, sauce Périgueux","Plat",48.0,40.0,[["Filet de bœuf",180.0],["Truffe noire",5.0],["Fond de veau",40.0],["Beurre",15.0]],false,null,[true,true,false,true,true]],["Homard rôti, beurre blanc","Plat",64.0,28.0,[["Homard",450.0],["Beurre",40.0],["Échalote",20.0],["Vin blanc cuisine",30.0]],false,null,[true,true,true,true,true]],["Bar de ligne, fenouil confit","Plat",44.0,32.0,[["Bar de ligne",220.0],["Fenouil",150.0],["Beurre",20.0],["Huile de noisette",5.0]],false,null,[true,true,true,true,true]],["Pigeon rôti, chou farci","Plat",46.0,26.0,[["Pigeon",1.0],["Chou vert",120.0],["Poitrine fumée",30.0],["Fond de veau",30.0]],false,null,[true,true,true,true,true]],["Risotto à la truffe noire","Plat",38.0,34.0,[["Riz arborio",80.0],["Truffe noire",8.0],["Parmesan",30.0],["Beurre",20.0],["Vin blanc cuisine",20.0]],false,null,[true,true,false,true,false]],["Volaille fermière, morilles","Plat",39.0,38.0,[["Volaille fermière",220.0],["Morilles séchées",18.0],["Crème liquide",40.0],["Échalote",15.0]],false,null,[true,true,true,false,true]],["Soufflé au Grand Marnier","Dessert",16.0,45.0,[["Œuf de poule",3.0],["Sucre",40.0],["Grand Marnier",20.0],["Beurre",15.0],["Farine",15.0]],false,null,[true,false,true,true,true]],["Tarte fine aux pommes, glace vanille","Dessert",14.0,48.0,[["Pommes",150.0],["Pâte feuilletée",60.0],["Beurre",15.0],["Sucre",20.0],["Glace vanille",50.0]],false,null,[false,false,false,true,false]],["Sphère chocolat grand cru","Dessert",18.0,40.0,[["Chocolat grand cru",70.0],["Crème liquide",50.0],["Sucre",20.0],["Œuf de poule",1.0]],false,null,[false,false,false,true,false]],["Assiette de fromages affinés","Dessert",17.0,30.0,[["Fromages affinés",180.0],["Pain de campagne",1.0]],false,null,[false,false,true,false,false]],["Menu Déjeuner (3 services)","Plat",55.0,180.0,[["Noix de Saint-Jacques",80.0],["Volaille fermière",220.0],["Filet de bœuf",80.0],["Pommes",100.0],["Chocolat grand cru",35.0],["Crème liquide",50.0],["Beurre",30.0],["Fond de veau",40.0]],false,null,[true,true,true,true,true]],["Menu Dégustation (6 services)","Plat",95.0,40.0,[["Foie gras cru",50.0],["Noix de Saint-Jacques",70.0],["Filet de bœuf",100.0],["Truffe noire",5.0],["Homard",140.0],["Chocolat grand cru",45.0],["Beurre",35.0]],false,null,[true,true,true,true,true]]]},
  "Palace":{n:"\ud83c\udf7d\ufe0f Table gastronomique d'exception",e:"TABLE GASTRONOMIQUE (cas d'exploitation)",in:{"panier":240.0,"tva":10.0,"cmdj":36.0,"jsem":5.0,"mois":12.0,"moisch":12.0,"obj":36000.0,"dirb":6000.0,"dirt":45.0,"salb":54000.0,"salt":42.0,"nour":797000.0,"boi":48000.0,"emb":3500.0,"autv":0,"com":0,"dirn":1,"saln":26,"f1":15000.0,"f2":0,"f3":1700.0,"f4":0,"f5":280.0,"f6":480.0,"f7":0,"f8":0,"f9":0,"f10":2000.0},reg:{"sauces":8.0,"pertes":3.0,"pack":0.3,"tvac":10.0,"compf":30,"objp":75.0,"objpf":65.0},ing:[["Œuf de poule","UNITE",0.25,0],["Petits pois frais","KG",6.0,30.0],["Poitrine fumée","KG",12.0,5.0],["Foie gras cru","KG",55.0,8.0],["Figues","KG",8.0,10.0],["Pain de campagne","UNITE",0.5,0],["Noix de Saint-Jacques","KG",38.0,10.0],["Panais","KG",2.5,20.0],["Potimarron","KG",2.8,25.0],["Noisettes","KG",14.0,0],["Huile de noisette","L",22.0,0],["Bœuf à tartare","KG",24.0,5.0],["Filet de bœuf","KG",44.0,10.0],["Ris de veau","KG",32.0,15.0],["Homard","KG",30.0,40.0],["Bar de ligne","KG",34.0,45.0],["Fenouil","KG",3.0,20.0],["Pigeon","UNITE",9.0,20.0],["Chou vert","KG",1.8,20.0],["Riz arborio","KG",4.5,0],["Truffe noire","KG",600.0,5.0],["Parmesan","KG",18.0,0],["Volaille fermière","KG",12.0,15.0],["Morilles séchées","KG",180.0,0],["Beurre","KG",8.0,0],["Crème liquide","L",3.99,0],["Échalote","KG",3.0,15.0],["Vin blanc cuisine","L",6.0,0],["Fond de veau","L",12.0,0],["Pommes","KG",2.5,15.0],["Chocolat grand cru","KG",18.0,0],["Sucre","KG",1.1,0],["Farine","KG",1.1,0],["Grand Marnier","L",28.0,0],["Fromages affinés","KG",22.0,5.0],["Pâte feuilletée","KG",5.0,0],["Glace vanille","L",7.0,0]],plats:[["Œuf parfait, crème de petits pois, lard","Entrée",26.6,50.0,[["Œuf de poule",2.0],["Petits pois frais",90.0],["Poitrine fumée",30.0],["Crème liquide",20.0]],false,null,[true,false,false,true,false]],["Foie gras mi-cuit, chutney de figues","Entrée",39.2,40.0,[["Foie gras cru",80.0],["Figues",40.0],["Pain de campagne",1.0]],false,null,[false,false,true,true,false]],["Saint-Jacques snackées, purée de panais","Entrée",36.4,38.0,[["Noix de Saint-Jacques",90.0],["Panais",120.0],["Beurre",15.0]],false,null,[true,false,true,true,true]],["Velouté de potimarron, huile de noisette","Entrée",25.2,35.0,[["Potimarron",200.0],["Crème liquide",30.0],["Noisettes",15.0],["Huile de noisette",5.0]],false,null,[false,false,false,false,false]],["Tartare de bœuf au couteau","Entrée",30.8,42.0,[["Bœuf à tartare",140.0],["Échalote",15.0],["Œuf de poule",1.0]],false,null,[true,false,true,true,false]],["Ris de veau braisé, jus corsé","Plat",58.8,35.0,[["Ris de veau",250.0],["Échalote",20.0],["Fond de veau",40.0],["Beurre",20.0]],false,null,[true,true,true,true,true]],["Filet de bœuf, sauce Périgueux","Plat",67.2,40.0,[["Filet de bœuf",180.0],["Truffe noire",5.0],["Fond de veau",40.0],["Beurre",15.0]],false,null,[true,true,false,true,true]],["Homard rôti, beurre blanc","Plat",89.6,28.0,[["Homard",450.0],["Beurre",40.0],["Échalote",20.0],["Vin blanc cuisine",30.0]],false,null,[true,true,true,true,true]],["Bar de ligne, fenouil confit","Plat",61.6,32.0,[["Bar de ligne",220.0],["Fenouil",150.0],["Beurre",20.0],["Huile de noisette",5.0]],false,null,[true,true,true,true,true]],["Pigeon rôti, chou farci","Plat",64.4,26.0,[["Pigeon",1.0],["Chou vert",120.0],["Poitrine fumée",30.0],["Fond de veau",30.0]],false,null,[true,true,true,true,true]],["Risotto à la truffe noire","Plat",53.2,34.0,[["Riz arborio",80.0],["Truffe noire",8.0],["Parmesan",30.0],["Beurre",20.0],["Vin blanc cuisine",20.0]],false,null,[true,true,false,true,false]],["Volaille fermière, morilles","Plat",54.6,38.0,[["Volaille fermière",220.0],["Morilles séchées",18.0],["Crème liquide",40.0],["Échalote",15.0]],false,null,[true,true,true,false,true]],["Soufflé au Grand Marnier","Dessert",22.4,45.0,[["Œuf de poule",3.0],["Sucre",40.0],["Grand Marnier",20.0],["Beurre",15.0],["Farine",15.0]],false,null,[true,false,true,true,true]],["Tarte fine aux pommes, glace vanille","Dessert",19.6,48.0,[["Pommes",150.0],["Pâte feuilletée",60.0],["Beurre",15.0],["Sucre",20.0],["Glace vanille",50.0]],false,null,[false,false,false,true,false]],["Sphère chocolat grand cru","Dessert",25.2,40.0,[["Chocolat grand cru",70.0],["Crème liquide",50.0],["Sucre",20.0],["Œuf de poule",1.0]],false,null,[false,false,false,true,false]],["Assiette de fromages affinés","Dessert",23.8,30.0,[["Fromages affinés",180.0],["Pain de campagne",1.0]],false,null,[false,false,true,false,false]],["Menu Déjeuner (3 services)","Plat",77.0,180.0,[["Noix de Saint-Jacques",80.0],["Volaille fermière",220.0],["Filet de bœuf",80.0],["Pommes",100.0],["Chocolat grand cru",35.0],["Crème liquide",50.0],["Beurre",30.0],["Fond de veau",40.0]],false,null,[true,true,true,true,true]],["Menu Dégustation (6 services)","Plat",133.0,40.0,[["Foie gras cru",50.0],["Noix de Saint-Jacques",70.0],["Filet de bœuf",100.0],["Truffe noire",5.0],["Homard",140.0],["Chocolat grand cru",45.0],["Beurre",35.0]],false,null,[true,true,true,true,true]]]},
  "DarkKitchen":{n:"📦 Dark kitchen",e:"DARK KITCHEN (cas d'exploitation)",in:{"panier":25.0,"tva":10.0,"cmdj":35.2,"jsem":7.0,"mois":12.0,"moisch":12.0,"obj":23000.0,"dirb":2800.0,"dirt":45.0,"salb":898.0,"salt":42.0,"nour":90000.0,"boi":9000.0,"emb":9000.0,"autv":0,"com":108000.0,"dirn":1,"saln":1,"f1":1880.0,"f2":0,"f3":500.0,"f4":0,"f5":180.0,"f6":250.0,"f7":0,"f8":0,"f9":0,"f10":100.0},reg:{"sauces":8.0,"pertes":4.0,"pack":0.8,"tvac":10.0,"compf":30.0,"objp":75.0,"objpf":65.0},ing:[["Steak haché 15 %","KG",11.0,5.0],["Pain burger","UNITE",0.4,0],["Cheddar tranche","KG",9.0,0],["Salade verte","KG",3.5,20.0],["Tomate","KG",2.5,10.0],["Oignon","KG",1.1,15.0],["Escalope de poulet","KG",7.5,10.0],["Tenders surgelés","KG",7.0,0],["Pavé de saumon","KG",17.0,5.0],["Riz sushi","KG",3.5,0],["Avocat","KG",6.0,25.0],["Edamame","KG",5.0,0],["Légumes bowl","KG",3.0,15.0],["Tortilla wrap","UNITE",0.4,0],["Frites surgelées","KG",2.0,0],["Bacon","KG",12.0,5.0],["Cookie","UNITE",0.7,0],["Soda","UNITE",0.4,0],["Sauce maison","KG",4.0,0]],plats:[["Burger Signature","Plat",13.0,280.0,[["Steak haché 15 %",150.0],["Pain burger",1.0],["Cheddar tranche",25.0],["Salade verte",15.0],["Tomate",20.0],["Oignon",10.0],["Bacon",20.0],["Sauce maison",20.0]],true,15.0,[true,false,false,true,false]],["Burger Double","Plat",16.0,150.0,[["Steak haché 15 %",280.0],["Pain burger",1.0],["Cheddar tranche",45.0],["Oignon",15.0],["Sauce maison",25.0]],true,18.0,[true,false,false,true,false]],["Burger Chicken","Plat",13.0,200.0,[["Escalope de poulet",140.0],["Pain burger",1.0],["Cheddar tranche",20.0],["Salade verte",15.0],["Sauce maison",20.0]],true,15.0,[true,false,false,true,false]],["Bowl Poké Saumon","Plat",14.0,180.0,[["Pavé de saumon",120.0],["Riz sushi",150.0],["Avocat",50.0],["Edamame",40.0],["Sauce maison",15.0]],true,16.0,[true,false,false,true,false]],["Bowl Veggie","Plat",12.0,120.0,[["Riz sushi",150.0],["Avocat",60.0],["Légumes bowl",120.0],["Edamame",40.0],["Sauce maison",20.0]],true,14.0,[true,false,false,true,false]],["Tenders x5","Entrée",9.0,160.0,[["Tenders surgelés",150.0],["Sauce maison",30.0]],true,11.0,[true,false,false,true,false]],["Frites Loaded","Entrée",7.0,200.0,[["Frites surgelées",180.0],["Cheddar tranche",30.0],["Bacon",20.0]],true,8.0,[true,false,false,true,false]],["Wrap Poulet","Plat",11.0,140.0,[["Escalope de poulet",120.0],["Tortilla wrap",1.0],["Salade verte",20.0],["Tomate",15.0],["Sauce maison",20.0]],true,13.0,[true,false,false,true,false]],["Cookie","Dessert",4.0,180.0,[["Cookie",1.0]],true,5.0,[true,false,false,true,false]],["Soda 33cl","Dessert",3.0,320.0,[["Soda",1.0]],true,3.5,[true,false,false,true,false]]]},
@@ -350,7 +350,7 @@ if(window.VERDICT_MODELES_PROFONDS&&window.VERDICT_MODELES_PROFONDS.models){
    éprouver des structures économiques différentes. */
 /* R301: documented fictional food-truck scenario, never a real operator's accounts. */
 (function(){var m=MODELES.FoodTruck;if(!m)return;m.n="🚚 Food truck · burgers itinérants";m.e="FOOD TRUCK — démonstration fictive";
- Object.assign(m.in,{panier:14,cmdj:55,jsem:5,mois:11,moisch:12,dirb:2300,dirt:45,salb:950,salt:42,dirn:1,saln:1,nour:43000,boi:5000,emb:4500,autv:2200,com:0,f1:350,f2:200,f3:500,f4:60,f5:200,f6:180,f7:90,f8:80,f9:220,f10:150,amort:7000,obj:18000});
+ Object.assign(m.in,{panier:14,cmdj:55,jsem:5,mois:11,moisch:12,dirb:2300,dirt:45,salb:950,salt:42,dirn:1,saln:0.4,nour:43000,boi:5000,emb:4500,autv:2200,com:0,f1:350,f2:200,f3:500,f4:60,f5:200,f6:180,f7:90,f8:80,f9:220,f10:150,amort:7000,obj:18000});
  m.research={date:"2026-10-09",nature:"fictional-scenario",sources:["https://entreprendre.service-public.gouv.fr/vosdroits/F36831","https://lacuisinedememe.fr/carte/","https://www.nomadeburger.fr/menu"],assumptions:"55 tickets/jour, 14 € TTC, 5 jours/semaine, 11 mois : hypothèses, pas moyennes nationales. Camion acheté 49 000 € HT amorti sur 7 ans (7 000 €/an), pas de loyer de camion ajouté. Dirigeant assimilé salarié + renfort à temps partiel ; cotisations indicatives. Emplacements 200 €/mois, laboratoire/garage 350 €, énergie et déplacements 500 €, assurance 200 €, entretien 220 €. Capital des emprunts exclu des charges."};
  m.plats.forEach(function(p){p[3]=Math.round(p[3]*.65);if(p[1]==="Plat")p[2]=Math.round((p[2]+2)*100)/100;});
 })();
@@ -364,7 +364,9 @@ var VERDICT_CALIBRAGE_2025={source:'Observatoire UMIH / OEC 2025 (56.10A, 56.10C
 (function(){Object.keys(VERDICT_CALIBRAGE_2025.f10).forEach(function(k){if(MODELES[k]&&MODELES[k].in)MODELES[k].in.f10=VERDICT_CALIBRAGE_2025.f10[k];});})();
 /* C299 (décision 3) : l'équipe coûte son salaire mensuel × ses mois travaillés. Les modèles ouverts moins de 12 mois (Food truck,
    saisonnier) gardent le même coût d'équipe annuel : leur salaire mensuel devient celui des mois travaillés. */
-(function(){try{Object.keys(MODELES).forEach(function(k){var i=MODELES[k]&&MODELES[k].in,n=Number(i&&i.mois);if(!(n>0&&n<12)||i._salMoisTravailles)return;['dirb','salb'].forEach(function(f){if(Number(i[f])>0)i[f]=Math.round(Number(i[f])*12/n*100)/100;});i._salMoisTravailles=true;});}catch(e){}})();
+/* C363 (chef, suite de C334) : depuis C334, une équipe ouverte 11 mois ou plus est payée 12 mois (congés payés) ; ses mensuels (annuel ÷ 12) restent donc
+   tels quels. Seuls les modèles ouverts 10 mois ou moins (saisonnier, payé sur ses mois travaillés) sont recalés : la masse annuelle fait foi. */
+(function(){try{Object.keys(MODELES).forEach(function(k){var i=MODELES[k]&&MODELES[k].in,n=Number(i&&i.mois);if(!(n>0&&n<11)||i._salMoisTravailles)return;['dirb','salb'].forEach(function(f){if(Number(i[f])>0)i[f]=Math.round(Number(i[f])*12/n*100)/100;});i._salMoisTravailles=true;});}catch(e){}})();
 var MODELE_ORDER=["Brasserie","Traditionnel","Boulangerie","Pizzeria","Burger","FoodTruck","BarRestaurant","Kebab","Asiatique","Italien","Traiteur","CoffeeShop","Gastro","SaisonnierMer","DarkKitchen","Palace"];
 var MODELE_PRIORITY_WEIGHT={Brasserie:5,Traditionnel:5,Boulangerie:5,Pizzeria:5,Burger:5,
   BarRestaurant:4,Kebab:4,Asiatique:4,Italien:4,Traiteur:3,CoffeeShop:3,Gastro:3,
@@ -566,15 +568,17 @@ function ensemencerBrasseriePresentation(d){
     d.in.cmdj=annualTickets/(d.in.jsem*4.33*d.in.mois);
   }
   if(annualMatter>0){d.in.nour=Math.round(annualMatter*kitchenShare*100)/100;d.in.boi=Math.round((annualMatter-d.in.nour)*100)/100;}
-  var platformGrossShare=annualCaTTC>0?Math.min(1,targetPlatformCommission/.25/annualCaTTC):0;
-  d.in.com=targetPlatformCommission;
+  var _DLb=verdictDemoLivraison(d,annualCaTTC),platformRate=_DLb?_DLb.taux:.25;/* C339 (décision 32) : relevés et commission tirés de la livraison du modèle */
+  if(_DLb)targetPlatformCommission=_DLb.com;
+  var platformGrossShare=_DLb?_DLb.part:(annualCaTTC>0?Math.min(1,targetPlatformCommission/.25/annualCaTTC):0);
+  d.in.com=_DLb?null:targetPlatformCommission;
   /* Sept ETP explicites : un dirigeant et six salariés. La charge annuelle
      reste celle du modèle comptable, désormais rapprochée des heures. */
   d.in.dirb=3000;d.in.dirn=1;d.in.dirt=45;d.in.saln=6;d.in.salt=42;
   d.in.salb=Math.max(0,(targetHumanLoaded-d.in.dirb*(1+d.in.dirt/100)*12)/(12*(1+d.in.salt/100)));
   d.in.obj=targetPreTaxObjective;d.tauxH=targetHumanLoaded/(7*1708);
   var fixedAnnual=0;for(var fi=1;fi<=10;fi++)fixedAnnual+=(Number(d.in['f'+fi])||0)*12;
-  var calibratedResult=annualCaHT-annualMatter-(Number(d.in.emb)||0)-(Number(d.in.autv)||0)-d.in.com-targetHumanLoaded-fixedAnnual;
+  var calibratedResult=annualCaHT-annualMatter-(Number(d.in.emb)||0)-(Number(d.in.autv)||0)-targetPlatformCommission-targetHumanLoaded-fixedAnnual;
   d.laborProfile={nature:'fictional-calibrated',directorFTE:1,employeeFTE:6,totalFTE:7,effectiveHoursPerFTE:1708,effectiveHoursAnnual:7*1708,
     loadedAnnual:targetHumanLoaded,loadedHourlyRate:d.tauxH,source:'Insee 2025',limitation:'Les heures de service ne couvrent pas seules administration, réception, formation et autres temps hors service.'};
   d.referenceMeta={period:String(d.exerciseYear),sourceKind:'verdict-presentation-fictional-calibrated',confidence:'illustrative-calibrated',
@@ -655,7 +659,7 @@ function ensemencerBrasseriePresentation(d){
   /* Caisse, TPE et plateformes : les 24 périodes sont rapprochées ; une
      ancienne période contient une petite vigilance visible et isolée. */
   d.reconciliations=[];d.platformImports=[];d.salesChannelItems=[];
-  d.monthlyHistory.forEach(function(x,i){var total=Math.round(x.caTTC*100)/100,gross=Math.round(total*platformGrossShare*100)/100,refund=Math.round(gross*.01*100)/100,commission=Math.round(gross*.25*100)/100,fees=Math.round(gross*.015*100)/100;
+  d.monthlyHistory.forEach(function(x,i){var total=Math.round(x.caTTC*100)/100,gross=Math.round(total*platformGrossShare*100)/100,refund=Math.round(gross*.01*100)/100,commission=Math.round(gross*platformRate*100)/100,fees=Math.round(gross*.015*100)/100;
     var card=Math.round(total*.68*100)/100,cash=Math.round(total*.14*100)/100,meal=Math.round(total*.12*100)/100,other=Math.round((total-card-cash-meal)*100)/100;
     d.reconciliations.push({period:x.period,posTotal:total,posCard:card,cash:cash,meal:meal,other:other,tpe:Math.round((card+(i===1?340:0))*100)/100,tpeSamePeriod:'yes',tpeAdjust:0,
       onSite:Math.round(total*Math.max(0,.88-platformGrossShare)*100)/100,takeaway:Math.round(total*.12*100)/100,direct:0,channelScopeComplete:x.closed?'yes':'no',platforms:[{id:'demo-'+x.period,provider:'uber',store:'Brasserie fictive',gross:gross,refunds:refund,commission:commission,fees:fees,adjust:0,payout:Math.round((gross-refund-commission-fees)*100)/100,inPos:'yes',source:'demo-csv',orders:Math.round(x.tickets*platformGrossShare),items:Math.round(x.tickets*platformGrossShare*1.4),settled:x.closed?'yes':'no'}],demo:true,fictional:true,closed:x.closed,observedThrough:x.observedThrough,source:'presentation'});
@@ -720,7 +724,8 @@ function verdictCompleteDemo(d){
   var round=function(v){return Math.round(v*100)/100;},pad=function(v){return String(v).padStart(2,'0');};
   var annual=Number(I.panier)*Number(I.cmdj)*Number(I.jsem)*4.33*Number(I.mois),vat=(Number(I.tva)||0)/100,htAnnual=annual/(1+vat);
   if(!(annual>0))return d;
-  var matter=(Number(I.nour)||0)+(Number(I.boi)||0),matterRate=matter/htAnnual,variable=(Number(I.emb)||0)+(Number(I.autv)||0)+(Number(I.com)||0),fixed=0;
+  var _DL=verdictDemoLivraison(d,annual),comAn=_DL?_DL.com:(Number(I.com)||0);/* C339 (décision 32) */
+  var matter=(Number(I.nour)||0)+(Number(I.boi)||0),matterRate=matter/htAnnual,variable=(Number(I.emb)||0)+(Number(I.autv)||0)+comAn,fixed=0;
   for(var f=1;f<=10;f++)fixed+=(Number(I['f'+f])||0)*12;
   var wages=((Number(I.dirb)||0)*(1+(Number(I.dirt)||0)/100)+(Number(I.salb)||0)*(1+(Number(I.salt)||0)/100));
   var hourly=Number(d.tauxH)||24;d.tauxH=hourly;
@@ -764,7 +769,7 @@ function verdictCompleteDemo(d){
     d.demoFinance[x.period]={fictional:true,loss:loss,gap:gap,stockChange:round(finish-stock),tvaDeductible:ded,empruntCapital:loan,immobilisations:investment,prelevements:drawings,amortissements:Number(I.amort)/12};stock=finish;
     var ingredients=d.ing||[],weight=ingredients.reduce(function(s,p){return s+Math.max(.1,Number(p.prix)||0);},0),allocated=0;
     ingredients.forEach(function(p,j){var value=j===ingredients.length-1?round(purchase-allocated):round(purchase*Math.max(.1,Number(p.prix)||0)/weight);allocated=round(allocated+value);var price=Math.max(.1,Number(p.prix)||1);d.achats.push({d:x.observedThrough,four:'Fournisseur démo '+(j%4+1),art:p.nom,qte:value/price,pu:price,unite:p.type==='UNITE'?'piece':p.type==='L'?'l':'kg',esp:'cuisine',source:'demo-estimate',demo:true,fictional:true});});
-    if(!reconciled[x.period]){var card=round(x.caTTC*.7),cash=round(x.caTTC*.18);d.reconciliations.push({period:x.period,posTotal:x.caTTC,posCard:card,cash:cash,meal:round(x.caTTC-card-cash),other:0,tpe:card,tpeSamePeriod:'yes',tpeAdjust:0,onSite:round(x.caTTC-Math.min(x.caTTC,x.caHT*(Number(I.com)||0)/htAnnual/.25)),takeaway:0,direct:0,platforms:(Number(I.com)||0)>0?[{id:'demo-'+x.period,provider:'uber',store:d.etab,gross:round(Math.min(x.caTTC,x.caHT*Number(I.com)/htAnnual/.25)),refunds:0,commission:round(x.caHT*Number(I.com)/htAnnual),fees:0,adjust:0,payout:round(Math.min(x.caTTC,x.caHT*Number(I.com)/htAnnual/.25)-x.caHT*Number(I.com)/htAnnual),inPos:'yes',source:'demo',orders:Math.round(x.tickets*.3),items:Math.round(x.tickets*.4),settled:x.closed?'yes':'no'}]:[],channelScopeComplete:'yes',closed:x.closed,demo:true,fictional:true});}
+    if(!reconciled[x.period]){var card=round(x.caTTC*.7),cash=round(x.caTTC*.18),_gR=_DL?x.caTTC*_DL.part:Math.min(x.caTTC,x.caHT*(Number(I.com)||0)/htAnnual/.25),_cR=_DL?_gR*_DL.taux:x.caHT*(Number(I.com)||0)/htAnnual;/* C339 : relevés tirés de la livraison du modèle */d.reconciliations.push({period:x.period,posTotal:x.caTTC,posCard:card,cash:cash,meal:round(x.caTTC-card-cash),other:0,tpe:card,tpeSamePeriod:'yes',tpeAdjust:0,onSite:round(x.caTTC-_gR),takeaway:0,direct:0,platforms:_cR>0?[{id:'demo-'+x.period,provider:'uber',store:d.etab,gross:round(_gR),refunds:0,commission:round(_cR),fees:0,adjust:0,payout:round(_gR-_cR),inPos:'yes',source:'demo',orders:Math.round(x.tickets*.3),items:Math.round(x.tickets*.4),settled:x.closed?'yes':'no'}]:[],channelScopeComplete:'yes',closed:x.closed,demo:true,fictional:true});}
     by[x.period].forEach(function(r,j){d.caisseAjust.push({date:r.date,remises:round(r.caJ*(j%7===0?.018:.006)),offerts:round(r.caJ*.004),annulations:round(r.caJ*(j%9===0?.009:.002)),demo:true,fictional:true});});
   });
   d.suivi=MOIS_N.map(function(n,m){var x=d.monthlyHistory.filter(function(x){return x.period===year+'-'+pad(m+1);})[0];return x?{m:n,period:x.period,ca:x.caHT,ach:x.purchases,sd:x.stockStart,sf:x.stockEnd}:{m:n,ca:null,ach:null,sd:null,sf:null};});
@@ -785,7 +790,7 @@ function verdictDemoParity(d){
   var year=Number(d.exerciseYear),vat=1+Number(I.tva||0)/100,annual=Number(I.panier)*Number(I.cmdj)*Number(I.jsem)*4.33*Number(I.mois)/vat;
   var wage=(Number(I.dirb)||0)*(1+Number(I.dirt||0)/100)+(Number(I.salb)||0)*(1+Number(I.salt||0)/100),fixed=0;
   for(var j=1;j<=10;j++)fixed+=Number(I['f'+j])||0;
-  var variable=(Number(I.emb)||0)+(Number(I.autv)||0)+(Number(I.com)||0),amort=Number(I.amort)||0;
+  var _DLp=verdictDemoLivraison(d,annual*vat),variable=(Number(I.emb)||0)+(Number(I.autv)||0)+(_DLp?_DLp.com:(Number(I.com)||0)),amort=Number(I.amort)||0;/* C339 */
   months.forEach(function(x){
     var cv=x.consumption+variable*x.caHT/annual,rate=x.caHT>0?1-cv/x.caHT:0;
     x.fixedCosts=round(fixed+wage);x.amortization=round(amort/12);x.resultBeforeTax=round(x.caHT-cv-x.fixedCosts-x.amortization);
@@ -853,6 +858,7 @@ function freshDB(model){
         rec:x[4].map(function(l){ return [l[0],l[1]]; }),preps:[],pf:livre, pfttc:x[6]||null,
         pfshare:part,pq:(x[7]||[false,false,false,false,false]).slice(),tva:x[8]!=null?x[8]:/* C307 : un plat de modèle sans TVA reçoit celle du modèle, 20 % pour l'alcool */(/sangria|(verre|pichet|bouteille|carafe) de vin|bi[eè]res?\b|spiritueux|champagne/i.test(String(x[0]||''))?20:(M&&M.in&&M.in.tva!=null&&isFinite(Number(M.in.tva))?Number(M.in.tva):10))};
     });
+    if(M.livraison){d.livraison=JSON.parse(JSON.stringify(M.livraison));d.in.com=null;}/* C339 (décision 32) : la livraison du modèle est la seule source de sa commission */
     /* V9.4 — un modèle fictif livré ne demande pas au client de confirmer ce
        que Verdict a lui-même écrit.
        La pré-confirmation porte l'empreinte de SES chiffres : si le client les
@@ -1640,8 +1646,9 @@ function verdictEtatDepuisCompte(c,f){var s=verdictAccountDefaultState('availabl
    calculables au bout de 5 s, l'ancienne vue est l'écran et rien n'est masqué plus longtemps. */
 (function(){try{var h=document.documentElement;h.classList.add('vd-pil-attente');var t0=Date.now();var fin=function(){clearInterval(t);h.classList.remove('vd-pil-attente');};
   var posee=function(){var p=document.getElementById('v-pil');if(!p||!p.classList.contains('p41-on'))return false;var fr=p.querySelector('iframe.p41-ecran');try{return !!(fr&&fr.contentWindow&&fr.contentWindow.VD&&fr.contentDocument&&fr.contentDocument.body&&fr.contentDocument.body.firstElementChild);}catch(e){return true;}};
+  var vu5=false;/* C333 : les chiffres ne sont vérifiés qu'une fois, à 5 s, jamais toutes les 150 ms */
   var t=setInterval(function(){if(posee())return fin();var dt=Date.now()-t0;if(dt>=20000)return fin();
-    if(dt>=5000){var m=null;try{m=moteur();}catch(e){}if(!m||!m.ready)fin();}},150);}catch(e){}})();
+    if(dt>=5000&&!vu5){vu5=true;var m=null;try{m=moteur();}catch(e){}if(!m||!m.ready)fin();}},150);}catch(e){}})();
 /* C239 (Y09) : en ouvrant À faire, l'ancien écran (« ACTION N°1 », fond sombre) ne se montre plus le temps que la lecture
    premium se pose : il reste masqué 1,5 s au plus, puis redevient le secours. Sans chiffres calculables, il est l'écran : rien n'est masqué. */
 function verdictAttenteP41(){var h=document.documentElement,p=document.getElementById('v-priorities');if(!p||p.querySelector(':scope > .p41-cadre'))return;
@@ -2866,8 +2873,13 @@ function verdictSaveSignature(){
     return value;
   });}catch(e){return "";}
 }
+var VERDICT_SAVE_DIFFERE=false,VERDICT_SAVE_DEMANDE=false;
+/* C333 (décision 19) : pendant un changement d'établissement, les enregistrements demandés (switchEtab, readInputs, plans de 041) sont
+   regroupés en un seul, lancé juste après ; une tâche à part le lance quoi qu'il arrive, aucune donnée n'attend. */
+function verdictSaveFlush(){if(!VERDICT_SAVE_DIFFERE)return;VERDICT_SAVE_DIFFERE=false;if(VERDICT_SAVE_DEMANDE){VERDICT_SAVE_DEMANDE=false;save('etab-switch');}}
 function save(reason){
- verdictInvalidateViews();try{if(window.VerdictSeasonalCacheInvalidate)window.VerdictSeasonalCacheInvalidate();}catch(e){}
+ try{VERDICT_DB_REV++;verdictMoteurOublier();}catch(_r){}/* C333 : une nouvelle révision des données */ verdictInvalidateViews();try{if(window.VerdictSeasonalCacheInvalidate)window.VerdictSeasonalCacheInvalidate();}catch(e){}
+ if(VERDICT_SAVE_DIFFERE){VERDICT_SAVE_DEMANDE=true;return {status:'deferred',committed:false};}/* C333 : seule l'écriture attend */
  if(!SAVE||VERDICT_DEMO_SESSION||VERDICT_DEMO_RESTORE_ACTIVE)return {status:'temporary',committed:false};
  var signature=verdictSaveSignature();if(signature&&signature===VERDICT_LAST_BUSINESS_SIGNATURE){try{drawDataSafety();}catch(e){}return {status:'same',committed:true};}
  var why=reason||'automatic',sm=verdictSafetyMeta(),expected=Number(sm.localRev)||0,previousAt=sm.updatedAt,saveKey=SKEY,saveStore=STORE;
@@ -3478,11 +3490,14 @@ function switchEtab(id){
      début de la page. Restaurer quelques pixels de l'ancien dossier cachait
      le nouveau titre sous le bloc collant sur Safari iOS. */
   if(ctx.v==='pil')ctx.y=0;
-  VERDICT_INVENTORY_USER_CHANGED=true;setActif(id);/* R176 · point 29 — les opérations en cours d’un établissement ne passent jamais à un autre */try{window.__factureEnCours=null;window.__factureResultat=null;}catch(_e){}try{DAILY_CSV_LOT=null;}catch(_e){}try{CSV_LOT=null;}catch(_e){}try{PERF_IMPORT_LOT=null;}catch(_e){}try{POINT5_IMPORT_LOT=null;}catch(_e){} save();
+  VERDICT_INVENTORY_USER_CHANGED=true;setActif(id);/* R176 · point 29 — les opérations en cours d’un établissement ne passent jamais à un autre */try{window.__factureEnCours=null;window.__factureResultat=null;}catch(_e){}try{DAILY_CSV_LOT=null;}catch(_e){}try{CSV_LOT=null;}catch(_e){}try{PERF_IMPORT_LOT=null;}catch(_e){}try{POINT5_IMPORT_LOT=null;}catch(_e){} VERDICT_SAVE_DIFFERE=true;VERDICT_SAVE_DEMANDE=true;setTimeout(verdictSaveFlush,0);/* C333 : un seul enregistrement, juste après le changement */
   if(typeof estModeRecent==='function'&&estModeRecent()&&typeof recentRestrictedView==='function'&&recentRestrictedView(ctx.v)){
     ctx.v='data';ctx.y=0;VIEW='data';
   }
-  fillInputs(); readInputs(); drawEtabs(); refreshAll();
+  fillInputs(); readInputs(); drawEtabs();
+  /* C333 (décision 19, mesuré : 650 ms par dessin de l'Accueil, fait deux fois) : sur l'Accueil, go() juste après le dessine (et pose la
+     lecture premium) ; refreshAll() ne le dessine donc pas une première fois pour rien. */
+  if(ctx.v==='pil'){var _dp=window.drawPil;window.drawPil=function(){};try{refreshAll();}finally{window.drawPil=_dp;}}else refreshAll();
   /* go() est volontaire : certains écrans (Audit, Stock, Planning…) ne sont
      pas redessinés par refreshAll(). On les recalcule donc avec le nouvel
      établissement, puis on restaure le chapitre/la position du client. */
@@ -3738,7 +3753,7 @@ function verdictLegacyInvalidDerivA10(over){
   d._dirnRaw=g("dirn"); d._salnRaw=g("saln");
   d.dirn=Math.max(0,d._dirnRaw); d.saln=Math.max(0,d._salnRaw);
   d.salM=d.dirb*(1+d.dirt/100)+d.salb*(1+d.salt/100);
-  d.sal=d.salM*(Number(d.mois)>0?Number(d.mois):12);/* C299 (décision 3) : × mois travaillés */
+  var _mo334=Number(d.mois)>0?Number(d.mois):12,_ms334=Number(q.moissal);d.moisSal=_ms334>0?_ms334:(_mo334>=11?12:_mo334);d.sal=d.salM*d.moisSal;/* C334 (décision 20 révisée), même règle que le moteur exact *//* C299 (décision 3) : × mois travaillés */
   d.fixM=0; for(var i=1;i<=10;i++){ d["f"+i]=g("f"+i); d.fixM+=d["f"+i]; }
   d.af=d.fixM*12;
   d.cf=d.sal+d.af; d.cfM=d.moisch>0?d.cf/d.moisch:0;
@@ -3750,14 +3765,73 @@ function verdictLegacyInvalidDerivA10(over){
   d._saisiesIgnorees=_saisiesIgnorees;d._saisiesParDefaut=_saisiesParDefaut;
   return d;
 }
+/* C339 (décisions 22 et 23, audit VERIF des plateformes) : la livraison, une seule source par établissement — DB.livraison, écrite par
+   documents-foi (C341, L5) : { part (% des ventes TTC livrées), plateformes [{ id, nom, taux (% du prix TTC), part }], emballage (€ par commande
+   livrée), platsParCommande, commission (montant HT du document comptable) }. Lue par le moteur (deriv), la Carte (L7), Simuler, l'Audit et le
+   Test de résistance. Commission moyenne = Σ taux × part des plateformes (arrondie au centième, comme Mes chiffres). */
+/* C359 D (décision 33, pour L2 « Ma commande ») : la commande moyenne, divisée par le nombre de commandes de l'année du moteur (d.cmdAn).
+   montantTTC (prix payé, TTC) = montantHT + tva ; tout le reste est HT : commission (moyenne sur toutes les commandes), promotions et
+   remboursements de livraison, matière, emballage, autres variables, part des fixes (équipe, charges fixes, amortissements) ; reste = résultat ÷ commandes.
+   Identité exacte : montantHT − commission − promotions − matière − emballage − autres − fixes = reste. commissionLivree = montantTTC × taux de la
+   livraison (ce que la plateforme prend sur une commande livrée) ; plateforme = son nom (null sans livraison, ex. Food truck). */
+function verdictCommandeType(R){
+  try{R=R||moteur();}catch(e){return null;}if(!R||!R.ready||!R.d)return null;var d=R.d,n=Number(d.cmdAn);if(!(n>0))return null;
+  var r=function(x){return Math.round((Number(x)||0)/n*100)/100;},L=null;try{L=verdictLivraison(DB);}catch(e){L=null;}
+  var P=L&&L.plateformes||[],nom=P.length===1?(P[0].nom||'la plateforme'):P.length>1?'les plateformes':(d.com>0?'les plateformes':null);
+  var ht=r(d.ca),ttc=Math.round(d.ca*(1+Number(d.tva||0))/n*100)/100,taux=Number(d.livTaux)>0?Number(d.livTaux):null;
+  return {base:'TTC',montantTTC:ttc,montantHT:ht,tva:Math.round((ttc-ht)*100)/100,commission:r(d.com),promotions:r((d.livPromo||0)+(d.livRemb||0)),
+    matiere:r(d.mat),emballage:r(d.emb),autres:r(d.autv),fixes:r((d.cf||0)+(d.amort||0)),reste:r(d.res),
+    commissionLivree:taux?Math.round(ttc*taux)/100:null,taux:taux,plateforme:nom,partLivree:d.caLivHT>0&&d.ca>0?Math.round(d.caLivHT/d.ca*1000)/10:null,commandes:n};
+}
+/* C373 (T2, chef) : le levier « Commissions plateformes » de Simuler (a24, cartes courtes c360, ancien levier) agit là où la commission naît.
+   Commission calculée par la livraison (C339) → le taux de DB.livraison change (over.livtaux) ; montant d'un document ou saisi → ce montant change.
+   Auparavant a24 partait de DB.in.com, vide avec la livraison : le moteur recalculait la même commission (+0 €). pct : variation en % (−10 = −10 %). */
+function verdictCommissionLevier(over,pct){over=over||{};pct=Number(pct)||0;if(!pct)return over;var R=null,L=null;try{R=moteur();}catch(e){}try{L=verdictLivraison(DB);}catch(e){}
+  if(R&&R.d&&R.d.comSource==='livraison'&&L&&L.taux>0&&!(Number(over.com)>0)){var t=over.livtaux!=null&&over.livtaux!==''?Number(over.livtaux):L.taux;over.livtaux=Math.max(0,Math.round(t*(1+pct/100)*10000)/10000);return over;}
+  var b=Number(over.com)>0?Number(over.com):verdictComAn(R);if(b>0)over.com=Math.max(0,b*(1+pct/100));return over;}
+/* C339 : la commission annuelle du moteur (document, saisie ou livraison), pour le levier « Commissions plateformes ». */
+function verdictComAn(R){try{R=R||moteur();var c=R&&R.d?Number(R.d.com):NaN;return c>0?c:(Number(DB&&DB.in&&DB.in.com)||0);}catch(e){return Number(DB&&DB.in&&DB.in.com)||0;}}
+function verdictLivraison(D){
+  D=D||(typeof DB!=='undefined'?DB:null);var L=D&&D.livraison;if(!L||typeof L!=='object')return null;
+  var n=function(x){if(x===null||x===undefined||x==='')return null;var v=Number(x);return isFinite(v)?v:null;};
+  var P=(L.plateformes||[]).filter(function(p){return p&&n(p.taux)>0;}),taux=null;
+  if(P.length===1)taux=n(P[0].taux);else if(P.length>1){var w=0,t=0;P.forEach(function(p){if(n(p.part)>0){w+=n(p.part);t+=n(p.taux)*n(p.part);}});taux=w>0?Math.round(t/w*100)/100:null;}
+  var part=n(L.part),emb=n(L.emballage),ppc=n(L.platsParCommande),com=n(L.commission);
+  /* C339 (décision 32) : promotions financées et remboursements, coûts variables HT de la livraison ({ montant } € par an ou { pct } % des ventes
+     livrées) ; jamais quand ils sont déjà dans les documents (FEC : rabais, remises, avoirs ; relevés nets) : dejaCompte, ou source « fec ». */
+  var pr=function(o){var deja=!!(o&&typeof o==='object'&&(o.dejaCompte||L.source==='fec'));if(!o||typeof o!=='object'||deja)return {pct:null,eur:null,deja:deja};var p=n(o.pct),e=n(o.montant);return {pct:p>0&&p<=100?p:null,eur:p>0?null:(e>0?e:null),deja:false};};
+  return {part:part>0&&part<=100?part:null,taux:taux>0&&taux<=100?taux:null,emballage:emb>=0?emb:null,platsParCommande:ppc>=1?ppc:null,commission:com>0?com:null,plateformes:P,source:L.source||null,
+    promotions:pr(L.promotions),remboursements:pr(L.remboursements),tauxParDefaut:!!L.tauxParDefaut};
+}
+/* C339 (décision 32) : en démonstration, une seule source — la livraison du modèle donne sa commission (part × taux × ventes TTC), ses relevés
+   fictifs et son historique ; sans livraison, le modèle garde sa commission saisie. */
+function verdictDemoLivraison(d,caTTC){var L=null;try{L=verdictLivraison(d);}catch(e){L=null;}if(!L||!(L.part>0)||!(L.taux>0))return null;return {part:L.part/100,taux:L.taux/100,com:caTTC>0?caTTC*L.part/100*L.taux/100:0};}
+/* C351 bis (chef) : un poids dans le chiffre d'affaires s'écrit « 26 € sur 100 € vendus HT », jamais un taux nu. */
+function verdictComPoids(x,court){var v=Number(x)||0;return fr(v,1)+(court?' \u20ac / 100 \u20ac HT':' \u20ac sur 100 \u20ac vendus HT');}
+/* C363 (chef, suite de C334) : un dossier copié d'un modèle recalé par C299 (marque _salMoisTravailles) et ouvert 11 mois ou plus garde ses mensuels
+   × 12 ÷ mois ; depuis C334 il est payé 12 mois : on revient au mensuel d'origine (annuel ÷ 12), une seule fois. La masse annuelle ne change pas. */
+function verdictSalMoisRepare(D){try{var i=D&&D.in,n=Number(i&&i.mois);if(!i||i._salMoisTravailles!==true||!(n>=11&&n<12))return false;['dirb','salb'].forEach(function(f){if(Number(i[f])>0)i[f]=Math.round(Number(i[f])*n/12*100)/100;});delete i._salMoisTravailles;return true;}catch(e){return false;}}
+/* C372 (chef ; erreur de calcul confirmée par L5) : dès que les jours de repos sont connus (DB.fermes, posé par le patron, la caisse ou l'éditeur
+   « Vos journées »), le nombre de jours ouverts par semaine est 7 − jours de repos, partout dans le moteur : cas de repli (× 4,33 × mois), base de
+   Simuler « jours par semaine », heures de l'équipe d'ouverture. in.jsem ne sert plus qu'à défaut. Dossier fermé lundi et dimanche, 10 mois, repli :
+   avec 6 (faux), CA reconstruit 472 352 € et Indice 92 ; avec 5, 393 627 € et 46. */
+function verdictJsemRepos(D){D=D||(typeof DB!=='undefined'?DB:null);if(!D||!Array.isArray(D.fermes))return null;var n=D.fermes.filter(function(x){return x!==null&&x!==''&&isFinite(Number(x));}).length;
+  if(!n&&!D.fermesSource)return null;return Math.max(1,7-Math.min(6,n));}
 function deriv(over){
-  var q=DB.in, ignored=[], defaults=[], values={}, keys=['tva','panier','jsem','mois','cmdj','moisch','obj','nour','boi','emb','autv','com','dirb','dirt','salb','salt','dirn','saln','amort'];
+  try{verdictSalMoisRepare(DB);}catch(_e){}
+  var q=DB.in, ignored=[], defaults=[], values={}, keys=['tva','panier','jsem','mois','cmdj','moisch','moissal'/* C334 : mois de salaires déclarés, sans valeur par défaut */,'obj','nour','boi','emb','autv','com','dirb','dirt','salb','salt','dirn','saln','amort'];
   for(var i=1;i<=10;i++)keys.push('f'+i);
+  var _JR=null;try{_JR=verdictJsemRepos(DB);}catch(e){_JR=null;}/* C372 */
   keys.forEach(function(k){var fallback=k==='jsem'?6:(k==='mois'||k==='moisch'?12:0), v=over&&Object.prototype.hasOwnProperty.call(over,k)?over[k]:q[k], L=verdictLireSaisie(v);
     if(L.etat==='illisible')ignored.push({k:k,brut:String(v).slice(0,30),defaut:fallback});
     else if(L.etat==='absente'&&fallback)defaults.push({k:k,defaut:fallback});
     values[k]=L.v==null?fallback:L.v;
   });
+  if(_JR!=null&&!(over&&Object.prototype.hasOwnProperty.call(over,'jsem')))values.jsem=_JR;/* C372 : 7 − jours de repos, jamais in.jsem quand le repos est connu */
+  /* C339 : la source « livraison » entre dans le moteur exact (part, taux du TTC, emballage par commande, commissions du document) */
+  var _LV=null;try{_LV=verdictLivraison(DB);}catch(e){_LV=null;}
+  [['livpart','part'],['livtaux','taux'],['livemb','emballage'],['livcom','commission']].forEach(function(x){var v=over&&Object.prototype.hasOwnProperty.call(over,x[0])?over[x[0]]:(_LV?_LV[x[1]]:null);if(v!=null&&v!=='')values[x[0]]=v;});
+  if(_LV){var _pm={livpromopct:_LV.promotions.pct,livpromo:_LV.promotions.eur,livrembpct:_LV.remboursements.pct,livremb:_LV.remboursements.eur};Object.keys(_pm).forEach(function(k){var v=over&&Object.prototype.hasOwnProperty.call(over,k)?over[k]:_pm[k];if(v!=null&&v!=='')values[k]=v;});}/* C339 (décision 32) */
   var source=DB.refSource||{},ref=DB.ref||{},declared=verdictDirectAnnualSource(DB)?(source.ca!=null?source.ca:ref.ca):null;
   var revenueOverride=!!over&&!over._docAttente&&['panier','tva','cmdj','jsem','mois'].some(function(k){return Object.prototype.hasOwnProperty.call(over,k);});/* C309 (V16-008) : le CA déclaré du document reste tel quel pendant la question unique */
   try{
@@ -3769,6 +3843,9 @@ function deriv(over){
     var _CS=_JK&&_JK.base&&_JK.base.joursSource==='caisse'&&Number(_JK.base.ttc)>0&&_JK.base.panier>0?_JK.base:null,_has=function(k){return !!over&&Object.prototype.hasOwnProperty.call(over,k);},qb=q;
     var _acc=DB.docAccords||{},_gP=_CS&&_acc.panier==null,_gC=_CS&&_acc.cmdj==null;/* C309 (avec L5) : « Garder ma saisie » pour le panier ou les commandes l'emporte ; le CA de la caisse reste */
     if(_CS){if(!_has('panier')&&_gP)values.panier=_CS.panier;if(!_has('cmdj')&&_gC)values.cmdj=_CS.cmdj;qb=Object.assign({},q,_gP?{panier:_CS.panier}:{},_gC?{cmdj:_CS.cmdj}:{});}
+    /* C335 (L5, décision 21 : « un client qui gonfle son panier fausse tout ») : sans caisse, tant que la question sur le panier attend, le moteur
+       prend le panier calculé par documents-foi (ventes par article, sinon carte) ; « Garder ma saisie » (docAccords.panier) l'emporte. */
+    var _PC=!_CS&&DB.panierCalcule&&DB.panierCalcule.attente===true&&Number(DB.panierCalcule.valeur)>0&&_acc.panier==null?Number(DB.panierCalcule.valeur):null;if(_PC&&!_has('panier')){values.panier=_PC;qb=Object.assign({},qb,{panier:_PC});}
     var base=revenueOverride?VerdictFinance.derived(qb,_JK?_JK.base:undefined):null;
     var d=VerdictFinance.derived(values,Object.assign({declaredCA:declared,cashTTC:_CS&&!(declared>0)?_CS.ttc:null,cashTVA:_CS?_CS.tva:null,revenueOverride:revenueOverride,baseReconstructed:base?VerdictFinance.fromExact(base.exact.caReconstructed):null},_JK?_JK.ctx:{}));
     d._saisiesIgnorees=ignored;d._saisiesParDefaut=defaults;
@@ -3779,7 +3856,7 @@ function deriv(over){
     if(!(over&&(Object.prototype.hasOwnProperty.call(over,'jsem')||Object.prototype.hasOwnProperty.call(over,'cmdj')))){try{var _JC=verdictJoursCaisse(DB,d);if(_JC){d.jAn=_JC.jours;d.jMois=Math.round(_JC.jours/Math.max(1,Number(d.mois)||12));if(_JC.tickets>0){d.cmdAn=_JC.tickets;d.cvu=d.cvT/d.cmdAn;d.mcCmd=d.mc/d.cmdAn;}d.joursSource='caisse';d.joursCaisse=_JC;if(d.hNote>0)d.hNote=_JC.jours*8;if(d.hKpi>0)d.hKpi=_JC.jours*8;}}catch(e){}}
     /* C299 (V15-039) : la productivité se mesure sur les heures d'ouverture réelles (Mon équipe › Heures d'ouverture par semaine) ;
        sans elles, les 8 h par jour restent une base supposée, affichée comme indicative et hors Indice. */
-    try{var _ouv=Number(DB&&DB.equipeOuverture);if(d.jAn>0&&_ouv>0){var _js=Number(d.jSem)>0?Number(d.jSem):(Number(DB.in&&DB.in.jsem)||6);d.hNote=_ouv/_js*d.jAn;d.hKpi=d.hNote;d.heuresSource='saisie';}else d.heuresSource=d.hNote>0?'supposees':null;}catch(e){}
+    try{var _ouv=Number(DB&&DB.equipeOuverture);if(d.jAn>0&&_ouv>0){var _js=Number(d.jSem)>0?Number(d.jSem):(verdictJsemRepos(DB)||Number(DB.in&&DB.in.jsem)||6);/* C372 */d.hNote=_ouv/_js*d.jAn;d.hKpi=d.hNote;d.heuresSource='saisie';}else d.heuresSource=d.hNote>0?'supposees':null;}catch(e){}
     return d;
   }catch(error){
     var d=verdictLegacyInvalidDerivA10(over);d.exactEngineError=String(error.message||'INVALID');d._saisiesIgnorees=ignored;d._saisiesParDefaut=defaults;return d;
@@ -4070,7 +4147,7 @@ function verdictJoursConnus(over){
   var D=typeof DB!=='undefined'?DB:null;if(!D||!D.in)return null;
   if(over&&Object.prototype.hasOwnProperty.call(over,'mois'))return null;
   if(typeof verdictJoursInconnus==='function'&&verdictJoursInconnus())return null;
-  var I=D.in,mois=Number(I.mois)>0?Number(I.mois):12,jsem=Number(I.jsem),tva=(Number(I.tva)||10)/100,W=typeof window!=='undefined'?window:{};
+  var I=D.in,mois=Number(I.mois)>0?Number(I.mois):12,_jr=verdictJsemRepos(D),jsem=_jr!=null?_jr:Number(I.jsem)/* C372 */,tva=(Number(I.tva)||10)/100,W=typeof window!=='undefined'?window:{};
   var key=[(D.histJour||[]).length,I.jsem,I.mois,I.tva,JSON.stringify(D.fermes||[]),(D.fermesJours||[]).length,(D.ouvertsJours||[]).length,JSON.stringify(D.moisPilotage||{}),D.refSource&&D.refSource.ca,D.ref&&D.ref.ca,D.refSource&&D.refSource.exerciseYear,D.exerciseYear,D.joursSource&&D.joursSource.jours,typeof W.verdictIsOperatingClosed].join('|');
   var base=null;
   if(VERDICT_JOURS_MEMO.db===D&&VERDICT_JOURS_MEMO.k===key)base=VERDICT_JOURS_MEMO.v;
@@ -4080,7 +4157,10 @@ function verdictJoursConnus(over){
     if(C)base={joursAn:C.jours,ticketsAn:C.tickets,joursSource:'caisse',ttc:C.ttc,tva:Number(I.tva)||10,panier:C.tickets>0?Number(C.ttc)/C.tickets:null,cmdj:C.tickets>0&&C.jours>0?C.tickets/C.jours:null};/* C309 (correctif SIM) : la caisse donne aussi le panier (CA ÷ tickets) et les commandes par jour (tickets ÷ jours) */
     else if(typeof W.verdictIsOperatingClosed==='function'&&(D.joursSource||(I.jsem!=null&&I.jsem!==''&&jsem>0)||(D.fermes&&D.fermes.length))){
       var an=Number((D.refSource&&D.refSource.exerciseYear)||(D.ref&&D.ref.exercice)||D.exerciseYear)||new Date().getFullYear(),n=0,mA={};
-      for(var t=Date.UTC(an,0,1);t<Date.UTC(an+1,0,1);t+=864e5){var k=new Date(t).toISOString().slice(0,10);if(!W.verdictIsOperatingClosed(k)){n++;mA[k.slice(5,7)]=1;}}
+      var _P374=verdictReposHebdo(D),_ws374=[0,0,0,0,0,0,0];/* C374 : repos inconnu → chaque jour ouvert compte jsem / 7 (aucun jour deviné) ; si un jour de la semaine
+         est fermé toute l'année alors que le repos est inconnu, c'est un 041 ancien qui le devine encore : pas de pondération (pas de double compte) */
+      for(var t=Date.UTC(an,0,1);t<Date.UTC(an+1,0,1);t+=864e5){var k=new Date(t).toISOString().slice(0,10);if(!W.verdictIsOperatingClosed(k)){n++;mA[k.slice(5,7)]=1;_ws374[new Date(t).getUTCDay()]++;}}
+      if(!_P374.connu&&_P374.part<1&&_ws374.every(function(x){return x>0;}))n=Math.round(n*_P374.part);
       if(n>0&&Object.keys(mA).length===Math.round(mois))base={joursAn:n,ticketsAn:null,joursSource:'calendrier'};
     }
     VERDICT_JOURS_MEMO={db:D,k:key,v:base};
@@ -4094,13 +4174,28 @@ function verdictJoursConnus(over){
 function verdictJoursCaisse(D,d){
   D=D||(typeof DB!=='undefined'?DB:null);if(!D||!Array.isArray(D.histJour)||!D.histJour.length)return null;
   var an=Number((D.refSource&&D.refSource.exerciseYear)||(D.ref&&D.ref.exercice)||D.exerciseYear);if(!an)return null;
-  var vu={},jours=0,tk=0,ttc=0,cts=0,tkOk=true;
-  D.histJour.forEach(function(r){var k=String(r&&r.date||'').slice(0,10);if(k.slice(0,4)!==String(an)||vu[k])return;var ca=Number(r.caJ);if(!(ca>0))return;vu[k]=1;jours++;ttc+=ca;cts+=Math.round(ca*100);var t=Number(r.tkJ);if(t>0)tk+=t;else tkOk=false;});
+  var vu={},jours=0,tk=0,ttc=0,cts=0,tkOk=true,parMois={};
+  D.histJour.forEach(function(r){var k=String(r&&r.date||'').slice(0,10);if(k.slice(0,4)!==String(an)||vu[k])return;var ca=Number(r.caJ);if(!(ca>0))return;vu[k]=1;jours++;parMois[k.slice(5,7)]=1;ttc+=ca;cts+=Math.round(ca*100);var t=Number(r.tkJ);if(t>0)tk+=t;else tkOk=false;});
   if(jours<20)return null;var tva=d&&d.tva!=null&&isFinite(d.tva)?Number(d.tva):((Number(D.in&&D.in.tva)||10)/100),ht=ttc/(1+tva);
-  if(d&&d.ca>0){if(Math.abs(ht-d.ca)>d.ca*0.1)return null;}
-  else if(d&&d.joursEstimes>0){if(Math.abs(jours-d.joursEstimes)>d.joursEstimes*0.15)return null;}/* C309 : sans CA déclaré, la caisse doit couvrir l'exercice */
-  else return null;
-  return {annee:an,jours:jours,tickets:tkOk?Math.round(tk):null,ht:ht,ttc:(cts/100).toFixed(2)/* C309 (correctif SIM) : le total exact de la caisse, au centime */};
+  if(!d)return null;
+  if(d.ca>0){if(Math.abs(ht-d.ca)>d.ca*0.1)return null;/* un document comptable (CA déclaré) reste comparé à la caisse */
+    return {annee:an,jours:jours,tickets:tkOk?Math.round(tk):null,ht:ht,ttc:(cts/100).toFixed(2)/* C309 (correctif SIM) : le total exact de la caisse, au centime */};}
+  /* C375 (chef, URGENT ; erreur de calcul trouvée par L5) : les documents font foi. Un réglage de repos vaut pour l'avenir et ne fait jamais
+     rejeter une caisse réelle : plus de contrôle par « jours par semaine × 4,33 × mois » (avec C372, ajouter le mercredi au repos de la démo
+     Brasserie rejetait ses 313 journées : CA 638 000 → 523 353 €, résultat +42 692 → −70 798 €). Chaque jour avec une vente compte ouvert.
+     La caisse est retenue quand elle couvre les mois actifs de l'exercice ; une caisse partielle d'un établissement ouvert toute l'année
+     se complète mois par mois (mois manquants : panier × commandes par jour saisis × jours ouverts du mois selon le repos), jamais à la place
+     d'un mois réel. Saisonnier partiel : on ne sait pas quels mois manquent vraiment, la caisse n'est pas retenue (comme avant). */
+  var actifs=Math.max(1,Math.min(12,Math.round(Number(D.in&&D.in.mois)||12))),moisV=Object.keys(parMois),manquants=[];
+  if(moisV.length>=actifs)return {annee:an,jours:jours,tickets:tkOk?Math.round(tk):null,ht:ht,ttc:(cts/100).toFixed(2),moisReels:moisV.length};
+  if(actifs<12)return null;
+  var pan=Number(D.in&&D.in.panier),cj=Number(D.in&&D.in.cmdj);if(!(pan>0&&cj>0))return null;
+  var P=typeof verdictReposHebdo==='function'?verdictReposHebdo(D):{connu:false,jours:[],part:1},fer=P.connu?P.jours:[],jE=0,tE=0,cE=0;
+  for(var m=1;m<=12;m++){var mk=(m<10?'0':'')+m;if(parMois[mk])continue;manquants.push(mk);var nb=new Date(Date.UTC(an,m,0)).getUTCDate(),ou=0;
+    for(var j=1;j<=nb;j++){var wd=(new Date(Date.UTC(an,m-1,j)).getUTCDay()+6)%7;if(fer.indexOf(wd)<0)ou+=P.connu?1:P.part;}
+    jE+=ou;tE+=cj*ou;cE+=Math.round(cj*ou*pan*100);}
+  var cts2=cts+cE,ttc2=cts2/100;
+  return {annee:an,jours:Math.round(jours+jE),tickets:tkOk?Math.round(tk+tE):null,ht:ttc2/(1+tva),ttc:ttc2.toFixed(2),moisReels:moisV.length,moisEstimes:manquants,complete:false};
 }
 /* C299 (V15-002, règle confirmée par Steven le 23/10 : « pas de matière en plus, commissions et TVA suivent ») : une hausse du
    panier moyen à volume constant ajoute du CA HT (TTC ÷ TVA) ; la matière ne bouge pas ; les commissions suivent leur taux. Une
@@ -4111,7 +4206,25 @@ function verdictGainPanier(deltaTTC,R){
   return {delta:delta,tickets:tk,ticketsSource:d.joursSource==='caisse'?'caisse':'calcul',caHT:caHT,commissions:commissions,gain:gain,gainMois:gain/12,
     rn:(d.ca+caHT)>0?(d.res+gain)/(d.ca+caHT)*100:null,hypothese:'À volume constant, une hausse de prix ne coûte pas de matière ; seules la TVA et les commissions suivent.'};
 }
+/* C333 (fluidité, décision 19 ; mesuré : au repos 35 calculs complets par seconde, 669 au changement d'établissement, 4 ms
+   chacun) : moteur() sans paramètre rend le même résultat tant que les données n'ont pas bougé. Clé = même dossier (DB),
+   même révision (chaque enregistrement l'augmente), même saisie, mêmes journées, même document, même langue, même jour ;
+   par prudence, le résultat ne vit qu'une seconde. Une simulation (moteur(over)) est toujours recalculée. Aucun montant ne change. */
+var VERDICT_MOTEUR_MEMO={db:null,k:null,r:null,t:0},VERDICT_DB_REV=0,VERDICT_MOTEUR_TTL=1000;
+function verdictMoteurCle(){
+  var D=typeof DB!=='undefined'?DB:null;if(!D)return null;var i;try{i=JSON.stringify(D.in);}catch(e){return null;}
+  var h=D.histJour||[],L=h.length?h[h.length-1]:null;
+  return [VERDICT_DB_REV,typeof LOCALE==='string'?LOCALE:'',new Date().toDateString(),i,h.length,L?(L.date+':'+L.caJ+':'+L.tkJ):'',(D.plats||[]).length,(D.fermes||[]).join(','),(D.fermesJours||[]).length,(D.ouvertsJours||[]).length,
+    D.modele||'',D.etab||'',D.etabType||'',D.exerciseYear||'',D.refSource?D.refSource.ca+':'+D.refSource.nature:'',D.ref?D.ref.ca:'',D.fecImport?(D.fecImport.hash||D.fecImport.appliedAt||1):'',D.docRef?1:0,JSON.stringify(D.docAccords||{}),D.docChoix?D.docChoix.choix:'',D.panierCalcule?JSON.stringify(D.panierCalcule):'',D.livraison?JSON.stringify(D.livraison):''/* C339 */].join('|');
+}
+function verdictMoteurOublier(){VERDICT_MOTEUR_MEMO={db:null,k:null,r:null,t:0};}
 function moteur(over){
+  if(over!=null)return moteurCalcul(over);
+  var k=null;try{k=verdictMoteurCle();}catch(e){k=null;}var M=VERDICT_MOTEUR_MEMO,now=Date.now();
+  if(k&&M.db===DB&&M.k===k&&now-M.t<VERDICT_MOTEUR_TTL)return M.r;
+  var r=moteurCalcul();if(k)VERDICT_MOTEUR_MEMO={db:DB,k:k,r:r,t:now};return r;
+}
+function moteurCalcul(over){
   var _docAttente=null;if(over==null){_docAttente=verdictDocumentsEnAttenteOver();if(_docAttente)over=_docAttente;}
   var d=deriv(over), ca=d.ca;if(_docAttente)d.documentsEnAttente=true;
   var validation=validate(d);
@@ -4387,7 +4500,7 @@ function auCtxPourquoi(id,R){
     fiches:'Cette réponse permet de savoir si le coût matière vient des prix d’achat ou de l’application réelle des recettes et portions.',
     planning:'L’équipe coûte '+Math.round(v.ms||0)+' € pour 100 € vendus. Verdict vérifie donc d’abord si les heures suivent les ventes réelles.',
     heures:'Un coût humain incomplet peut rendre la cause trompeuse, même lorsque le total comptable est juste.',
-    plateformes:'Les commissions représentent '+pct(v.com||0)+' du chiffre d’affaires. Il faut distinguer la commission affichée du coût complet du canal.',
+    plateformes:'Les commissions représentent '+verdictComPoids(v.com)+'. Il faut distinguer la commission affichée du coût complet du canal.',
     prix:'Votre résultat représente '+pct(v.rn||0)+' du chiffre d’affaires. La date de révision des prix aide à départager prix, mix et volume.',
     saison:'Verdict doit comparer des périodes réellement comparables avant d’attribuer un écart à une décision.',
     inventaire:'Sans inventaire valorisé régulier, achats et consommation réelle ne peuvent pas être séparés proprement.',
@@ -4530,6 +4643,16 @@ function point3HTML(R){
     '<button type="button" class="btn" data-point3-action="'+(p.attainable&&p.delta>=0?'stress':'priority')+'" onclick="'+(p.attainable&&p.delta>=0?'point3OpenStress()':'go(\'priorities\')')+'">'+esc(p.attainable&&p.delta>=0?point3T('actionStress'):point3T('actionPriority'))+'</button></div>';
   return h;
 }
+/* C339 (décision 23) : choc « commission +5 points » — les plateformes prennent 5 points de plus sur le prix TTC des ventes livrées.
+   Il n'existe que si la part livrée est connue (source « livraison ») ; sinon le Test de résistance garde ses quatre chocs. */
+(function(){var T={fr:['Commission +5 points','Les plateformes prennent 5 points de plus sur le prix TTC des ventes livrées ; le reste ne bouge pas.'],
+  en:['Commission +5 points','Platforms take 5 more points of the price incl. VAT on delivered sales; everything else stays the same.'],
+  es:['Comisión +5 puntos','Las plataformas cobran 5 puntos más sobre el precio con IVA de las ventas a domicilio; el resto no cambia.'],
+  it:['Commissione +5 punti','Le piattaforme prendono 5 punti in più sul prezzo IVA inclusa delle vendite in consegna; il resto non cambia.'],
+  de:['Provision +5 Punkte','Die Plattformen nehmen 5 Punkte mehr auf den Bruttopreis der gelieferten Verkäufe; alles andere bleibt gleich.'],
+  nl:['Commissie +5 punten','De platforms nemen 5 punten meer van de prijs incl. btw van bezorgde verkopen; de rest blijft gelijk.'],
+  pt:['Comissão +5 pontos','As plataformas ficam com mais 5 pontos do preço com IVA das vendas entregues; o resto não muda.']};
+  try{Object.keys(T).forEach(function(l){if(POINT3_I18N[l]){POINT3_I18N[l].shockCommission=T[l][0];POINT3_I18N[l].shockCommissionD=T[l][1];}});}catch(e){}})();
 function stressStruct(R){
   var d=R.d,p=point3Calc(R);
   function sc(id,name,desc,ca,cv,cf){var res=ca-cv-cf-(d.amort||0);return{id:id,n:name,dd:desc,ca:ca,cv:cv,cf:cf,res:res,margin:ca>0?res/ca*100:0};}
@@ -4539,6 +4662,7 @@ function stressStruct(R){
     sc('ticket',point3T('shockTicket'),point3T('shockTicketD'),d.ca*.90,d.cvT-(d.com||0)*.10,d.cf),/* C299 (V15-037, décision 2) : les commissions suivent les prix */
     sc('volume',point3T('shockVolume'),point3T('shockVolumeD'),d.ca*.80,d.cvT*.80,d.cf)
   ];
+  if(d.caLivTTC>0)ch.push(sc('commission',point3T('shockCommission'),point3T('shockCommissionD'),d.ca,d.cvT+d.caLivTTC*.05,d.cf));/* C339 */
   var worst=ch.slice().sort(function(a,b){return a.res-b.res;})[0];
   /* C205 (V04) : le choc « CA −10 % en volume » (ventes et coûts variables −10 %, fixes et amortissements entiers)
      est calculé ici, une seule fois, pour Structure et l’Audit ; pertes = chocs qui font passer en perte (même compte que l’écran). */
@@ -4590,7 +4714,31 @@ function preparationAllocations(p,seen){
 function coutPlat(p){var raw=coutLignesRecette(p.rec||[]),preps=preparationAllocations(p);return VerdictFinance.recipeMaterial(raw,preps,DB.reg,!!((p.rec&&p.rec.length)||(p.preps&&p.preps.length)));}
 function platTVA(p){ var x=Number(p&&p.tva); return isFinite(x)&&x>=0?x:verdictNumberOrDefault(DB.reg.tvac,10); }
 function platHT(p){var value=VerdictFinance.parseInput(p.ttc,{nonnegative:true});return value.state==='known'?VerdictFinance.ht(VerdictFinance.fromExact(value.exact),platTVA(p)).number():null;}
+/* C340 (L7, décisions 22, 23) : la livraison d'un plat — un seul taux (celui de l'établissement, % du prix TTC payé ; verdictLivraison,
+   sinon les réglages), emballage d'une commande ÷ plats par commande (livraison, sinon panier moyen ÷ prix moyen des plats). */
+var VCL_CACHE=null;
+function verdictCarteLivraison(D){D=D||(typeof DB!=='undefined'?DB:null);var R=(D&&D.reg)||{},I=(D&&D.in)||{},pl=(D&&D.plats)||[];
+ if(VCL_CACHE&&VCL_CACHE.d===D&&VCL_CACHE.pl===pl&&VCL_CACHE.n===pl.length&&VCL_CACHE.pan===I.panier&&VCL_CACHE.pk===R.pack&&VCL_CACHE.cf===R.compf&&VCL_CACHE.lv===(D&&D.livraison))return VCL_CACHE.v;
+ var n=function(x){if(x===null||x===undefined||x==='')return null;var v=Number(x);return isFinite(v)?v:null;},L=null;try{L=verdictLivraison(D);}catch(e){L=null;}
+ var ppc=L&&L.platsParCommande>0?L.platsParCommande:null;if(!ppc){var pan=n(I.panier),s=0,q=0;pl.forEach(function(p){var t=n(p&&p.ttc),v=n(p&&p.vol);if(p&&!p.cpArchived&&t>0){v=v>0?v:1;s+=t*v;q+=v;}});if(pan>0&&q>0&&s>0)ppc=Math.max(1,Math.round(pan/(s/q)*10)/10);}
+ ppc=ppc||1;var emb=L&&L.emballage!=null?L.emballage:(n(R.pack)||0),liv=!!(L&&L.taux>0);
+ var v={taux:liv?L.taux:verdictNumberOrDefault(R.compf,30),emballage:emb,platsParCommande:ppc,emballagePlat:Math.round(emb/ppc*10000)/10000,source:liv?'livraison':'reglages',tauxParDefaut:!!(L&&L.tauxParDefaut)};
+ VCL_CACHE={d:D,pl:pl,n:pl.length,pan:I.panier,pk:R.pack,cf:R.compf,lv:D&&D.livraison,v:v};return v;}
+/* C354 (L2 : premier affichage de la Carte 425 à 572 ms, 1,4 à 1,9 s sur iPhone ; platCalc appelé environ 15 fois par plat, carteStats 9 à 11 fois) :
+   pendant un même dessin (une seule tâche JavaScript), le calcul d'un plat, les statistiques de la carte et ses volumes sont gardés. La mémoire est vidée
+   à la tâche suivante, et aussitôt que la révision des données (save), les réglages, la livraison, les ingrédients ou le plat lui-même changent.
+   Aucun montant ne change. */
+var VERDICT_CARTE_MEMO=null,VERDICT_CARTE_MEMO_ARME=false;
+function verdictCarteMemo(){var g;try{g=[VERDICT_DB_REV,JSON.stringify(DB.reg||null),JSON.stringify(DB.livraison||null),(DB.ing||[]).length,(DB.preparations||[]).length,(DB.plats||[]).length].join('|');}catch(e){return null;}
+  var M=VERDICT_CARTE_MEMO;if(!M||M.db!==DB||M.g!==g){M=VERDICT_CARTE_MEMO={db:DB,g:g,plats:typeof WeakMap==='function'?new WeakMap():null,stats:null,vol:null};
+    if(!VERDICT_CARTE_MEMO_ARME){VERDICT_CARTE_MEMO_ARME=true;setTimeout(function(){VERDICT_CARTE_MEMO=null;VERDICT_CARTE_MEMO_ARME=false;},0);}}
+  return M;}
 function platCalc(p){
+  var M=p&&typeof p==='object'?verdictCarteMemo():null;if(!M||!M.plats)return platCalcCalcul(p);
+  var k;try{k=JSON.stringify(p);}catch(e){return platCalcCalcul(p);}var e=M.plats.get(p);if(e&&e.k===k)return e.v;
+  var v=platCalcCalcul(p);M.plats.set(p,{k:k,v:v});return v;
+}
+function platCalcCalcul(p){
   var c=coutPlat(p), ht=platHT(p);
   var dishLabor=window.VerdictDishLabor?window.VerdictDishLabor.calculate(p.labor||{}):{ready:false,entered:false,cost:null,activeMinutesPerPortion:null,passiveMinutes:0,errors:[]};
   var labor=window.VerdictDishLabor?window.VerdictDishLabor.combine(dishLabor,c.preparationAllocations.allocations):dishLabor;
@@ -4606,9 +4754,9 @@ function platCalc(p){
   o.directMarginPct=c.complete&&labor.ready&&ht>0?o.directMargin/ht*100:null;
   if(p.pf&&p.pfttc>0){
     var pfht=p.pfttc/(1+platTVA(p)/100);
-    var comm=pfht*verdictNumberOrDefault(DB.reg.compf,30)/100;
-    var net=pfht-comm-(DB.reg.pack||0);
-    o.pf={ht:pfht,comm:comm,pack:DB.reg.pack||0,net:net,marge:net-c.total,
+    var LVC=verdictCarteLivraison(DB),comm=p.pfttc*LVC.taux/100; /* C340 : taux × prix TTC payé */
+    var net=pfht-comm-LVC.emballagePlat;
+    o.pf={ht:pfht,comm:comm,pack:LVC.emballagePlat,net:net,marge:net-c.total,
       margePct:pfht>0?(net-c.total)/pfht*100:0};
     o.pf.directCost=c.complete&&labor.ready?c.total+labor.cost+comm+o.pf.pack:null;
     o.pf.directMargin=c.complete&&labor.ready?o.pf.marge-labor.cost:null;
@@ -4640,6 +4788,10 @@ function platCalc(p){
    comme telle par `retires` ; l'historique des ventes n'est pas modifié. */
 var CARTE_REPORT_RETRAIT=0.7;
 function carteVolumesActifs(){
+  var _M=verdictCarteMemo(),_k=null;if(_M){try{_k=JSON.stringify(DB.plats);}catch(e){_M=null;}}if(_M&&_M.vol&&_M.vol.k===_k)return _M.vol.v;/* C354 */
+  var _v=carteVolumesActifsCalcul();if(_M)_M.vol={k:_k,v:_v};return _v;
+}
+function carteVolumesActifsCalcul(){
   var plats=DB.plats||[],bonus=plats.map(function(){return 0;}),ret={n:0,noms:[],volRetire:0,volReporte:0,part:CARTE_REPORT_RETRAIT},parCat={};
   plats.forEach(function(p,i){if(!p||p.cpArchived)return;var v=Number(p.vol)||0;if(v>0&&platCalc(p).complete){var c=p.cat||"Autre";(parCat[c]=parCat[c]||[]).push(i);}});
   plats.forEach(function(p){if(!p||!p.cpArchived)return;ret.n++;ret.noms.push(p.nom||'');var v=Number(p.vol)||0;if(!(v>0))return;ret.volRetire+=v;
@@ -4648,6 +4800,10 @@ function carteVolumesActifs(){
   return {vol:function(i){var p=plats[i];return (p&&!p.cpArchived)?(Number(p.vol)||0)+bonus[i]:0;},retires:ret};
 }
 function carteStats(){
+  var _M=verdictCarteMemo(),_k=null;if(_M){try{_k=JSON.stringify(DB.plats);}catch(e){_M=null;}}if(_M&&_M.stats&&_M.stats.k===_k)return _M.stats.v;/* C354 */
+  var _v=carteStatsCalcul();if(_M)_M.stats={k:_k,v:_v};return _v;
+}
+function carteStatsCalcul(){
   var ca=0,mat=0,vol=0,volFiable=0,marge=0,perte=0,actifs=0,pfN=0,fiables=0,comp={},matBar=0,VA=carteVolumesActifs(),nActifs=0;
   DB.plats.forEach(function(p,_i){
     if(p&&p.cpArchived)return;/* C254 : un plat retiré ne compte plus */nActifs++;
@@ -5217,7 +5373,7 @@ function point5DishWarnings(p,id){
   var seen={};(p.rec||[]).forEach(function(l){var g=ingByName(l[0]),q=Number(l[1]);seen[l[0]]=(seen[l[0]]||0)+1;if(g&&((g.type==='UNITE'&&q>100)||(g.type!=='UNITE'&&q>5000)))out.push('Quantité très élevée pour '+l[0]+' : '+q+'.');});
   Object.keys(seen).forEach(function(k){if(seen[k]>1)out.push(k+' apparaît plusieurs fois dans la recette.');});
   var panier=Number(DB.in&&DB.in.panier)||0;if(panier>0&&(p.ttc<panier*.2||p.ttc>panier*5))out.push('Le prix du plat est très éloigné du panier moyen de l’établissement.');
-  var totalCmd=(Number(DB.in&&DB.in.cmdj)||0)*(Number(DB.in&&DB.in.jsem)||0)*4.345;if(totalCmd>0&&p.vol>totalCmd*1.5)out.push('Le volume du plat dépasse fortement le nombre mensuel de commandes attendu.');
+  var totalCmd=(Number(DB.in&&DB.in.cmdj)||0)*(verdictJoursSemaine()||0)*4.345;/* C372 */if(totalCmd>0&&p.vol>totalCmd*1.5)out.push('Le volume du plat dépasse fortement le nombre mensuel de commandes attendu.');
   var k=platCalc(p);if(k.marge<0)out.push('Sur place, le prix HT ne couvre pas le coût matière.');if(p.pf&&!k.mixReady)out.push('La part des ventes livrées manque : les deux canaux ne pourront pas être pondérés.');if(k.pf&&k.pf.marge<0)out.push('En livraison, le prix ne couvre pas matière, commission et emballage.');
   return out;
 }
@@ -5595,6 +5751,8 @@ function pickModele(k){
      « Charger ? » créait une étape vide et pouvait être prise pour un bug. */
   if(demoActif){
     if(VERDICT_DEMO_FROM_PORTFOLIO)VERDICT_DEMO_PORTFOLIO_MODEL_ACTIVE=true;
+    /* C329 (T4) : un modèle choisi est la démonstration démarrée ; sinon refFirstRun() réinstallait la Brasserie quelques secondes après. */
+    VERDICT_DEMO_STARTED=true;
     appliquerModele(k,true); closeModeles(); return;
   }
   ask("Explorer "+M.e+" ?","Le modèle s'ouvre dans une démonstration isolée. Votre établissement et vos chiffres restent exactement à leur place.","Ouvrir la démonstration",function(){
@@ -7346,17 +7504,34 @@ Object.defineProperty(window,'IND',{get:function(){return indList();}});
    Deux lignes sous chaque indicateur : ce que le chiffre représente
    concrètement (en euros), puis le repère public auquel le comparer.
    Repères sectoriels sourcés uniquement — aucun seuil interne. */
+/* C334 (décision 20 révisée) : la règle des mois de salaires, écrite à côté du coût de l'équipe. */
+function verdictMoisSalTexte(d){var n=Number(d&&d.moisSal),s=d&&d.moisSalSource;if(!(n>0))return '';
+  if(s==='declare')return ' · comptée sur '+String(n).replace('.',',')+' mois de salaires déclarés';
+  if(s==='conges')return ' · comptée sur 12 mois : une fermeture d\u2019un mois = congés payés';
+  if(s==='travailles')return ' · comptée sur '+String(n).replace('.',',')+' mois travaillés';
+  return '';}
+/* C339 (décision 23) : la marge par canal et la commission écrites à côté des montants de l'Indice (classique et cadre premium). */
+/* C339 (chef) : une dark kitchen n'a pas de salle — ses 8 % hors plateformes sont des commandes directes ou à emporter, sans commission. */
+function verdictSansSalle(){try{return !!(typeof DB!=='undefined'&&DB&&DB.etabType==='Dark kitchen');}catch(e){return false;}}
+function verdictLivraisonDefaut(){try{var L=verdictLivraison(DB);return !!(L&&L.tauxParDefaut);}catch(e){return false;}}
+/* C339 suite (décision 28, L7) : objectif plateforme = celui de la Carte (verdictObjectifPlateforme, objectif sur place − commission en points
+   du HT, ou la saisie du patron) ; la marge de la livraison s'y compare. */
+function verdictObjPfTexte(d){try{var f=window.verdictObjectifPlateforme,o=typeof f==='function'?f(DB):null;if(!o||!(o.valeur>0)||!d||!(d.caLivHT>0)||d.mcLiv==null)return '';var m=d.mcLiv/d.caLivHT*100;
+  return ', objectif plateforme '+fr(o.valeur,1)+' %'+(m>=o.valeur?' atteint':' : il manque '+fr(o.valeur-m,1)+' point'+(o.valeur-m>=2?'s':''));}catch(e){return '';}}
+function verdictCanauxTexte(d){if(!d||d.mcLiv==null||!(d.caLivHT>0))return '';var cs=d.caSalleHT!=null?d.caSalleHT:d.ca-d.caLivHT;
+  return ' \u00b7 '+(verdictSansSalle()?'commandes directes et à emporter ':'salle et emporter ')+eur(d.mcSalle)+(cs>0?' ('+pc(d.mcSalle/cs*100,1)+' de ses ventes)':'')+', livraison '+eur(d.mcLiv)+' ('+pc(d.mcLiv/d.caLivHT*100,1)+' de ses ventes)'+verdictObjPfTexte(d);}
+function verdictComTexte(d){if(!d||!(d.com>0))return '';return (d.livTaux>0?' \u00b7 '+fr(d.livTaux,1)+' % de vos ventes livrées TTC'+(d.comSource==='livraison'&&verdictLivraisonDefaut()?' (taux par défaut, à remplacer par vos relevés)':''):'')+(d.comTVA>0?' \u00b7 TVA de la commission avancée puis récupérée : '+eur(d.comTVA)+' / an':'');}
 function indExplique(k,v,d){
   var an=function(x){ return eur(x)+" / an"; };
   var moisT=function(x){ return eur(x/12)+" / mois"; };
   switch(k){
     case "rn":  return {s:"Ce qui reste avant impôt une fois les charges saisies payées :", c:moisT(d.res),
                         r:"Bon niveau visé : garder "+verdictRepereRNNum(verdictRepereRN().repere)+" € sur 100 € vendus, comme le repère médian de votre format ; les meilleurs gardent "+verdictRepereRNNum(verdictRepereRN().cible)+" €."};
-    case "mc":  return {s:"Ce que les ventes laissent pour payer le loyer, les salaires et le reste :", c:an(d.mc),
+    case "mc":  return {s:"Ce que les ventes laissent pour payer le loyer, les salaires et le reste :", c:an(d.mc)+verdictCanauxTexte(d)/* C339 */,
                         r:"Plus ce chiffre est haut, plus chaque vente fait avancer le mois."};
     case "cv":  return {s:"Ce qui repart aussitôt en matière, emballages et commissions :", c:an(d.cvT),
                         r:"C'est le seul poste qui baisse quand vous vendez moins — d'où son importance."};
-    case "ms":  return {s:"Ce que coûte l'équipe, charges comprises :", c:an(d.sal),
+    case "ms":  return {s:"Ce que coûte l'équipe, charges comprises :", c:an(d.sal)+verdictMoisSalTexte(d)/* C334 : la règle écrite à côté du montant */,
                         r:"Repère de pilotage Verdict à adapter à votre format et à votre niveau de service — ce n’est pas une moyenne INSEE."};
     case "acf": return {s:"Loyer, énergie, assurances, comptable :", c:an(d.af),
                         r:"Ce poste tombe tous les mois, que la salle soit pleine ou vide."};
@@ -7372,8 +7547,8 @@ function indExplique(k,v,d){
                         r:"Verdict le traite comme un signal de pilotage interne ; vérifiez surtout sa tendance et son effet sur votre propre résultat."};
     case "com": if(!(d.com>0)) return {s:"Aucune commission plateforme n'est comptabilisée dans votre saisie :", c:"0 \u20ac",
                         r:"Si vous utilisez une plateforme, renseignez le montant réellement facturé sur l'exercice."};
-                return {s:"Ce que prennent les plateformes de livraison :", c:an(d.com),
-                        r:"Verdict utilise votre montant réellement saisi ; vérifiez-le avec vos relevés ou factures de plateforme."};
+                return {s:"Ce que prennent les plateformes de livraison :", c:an(d.com)+verdictComTexte(d)/* C339 */,
+                        r:d.comSource==='livraison'?"Verdict calcule la commission sur le prix TTC payé par le client, avec votre part livrée et le taux de vos plateformes ; vérifiez-la avec vos relevés.":d.comSource==='document'?"Verdict utilise le montant de votre document comptable ; le taux en est déduit.":"Verdict utilise votre montant réellement saisi ; vérifiez-le avec vos relevés ou factures de plateforme."};
     case "prod":return {s:"Ce que chaque heure d'ouverture laisse pour payer le fixe :", c:fr(v.prod,1)+" \u20ac / h",
                         r:"Deux restaurants au même chiffre d'affaires n'ont pas la même productivité — c'est l'organisation qui décide."};
   }
@@ -7382,6 +7557,7 @@ function indExplique(k,v,d){
 function indVal(k,v){
   if(k==="prod")return fr(v.prod,1)+" \u20ac/h";
   if(k==="pm"&&v.pm>=999)return t('d.unreachable');
+  if(k==="com")return verdictComPoids(v.com,true);/* C351 bis */
   return pc(v[k]);
   if(window.translateDOM) translateDOM();
 }
@@ -7501,6 +7677,21 @@ function calerSur(sel){
   }catch(e){}
 }
 
+/* C339 (décision 23) : marge par canal dans Structure. Matière, autres variables et emballages saisis suivent le CA ; la commission et
+   l'emballage par commande livrée ne pèsent que sur la livraison (moteur exact : caLivHT, caLivTTC, mcLiv, mcSalle, livTaux, comTVA). */
+function verdictCanauxHTML(d){
+  if(!d||d.mcLiv==null||!(d.caLivHT>0)||!(d.ca>0))return '';
+  var cs=d.caSalleHT!=null?d.caSalleHT:d.ca-d.caLivHT,part=d.caLivHT/d.ca*100,row=function(n,ca,m,x){return '<div class="autoline"><span class="k">'+n+'</span><b>'+eur(m)+(ca>0?' \u00b7 '+pc(m/ca*100,1):'')+'</b></div><p class="note" style="margin:0 0 8px">'+x+'</p>';};
+  var src=d.comSource==='livraison'?'calculées sur votre part livrée et le taux de vos plateformes':d.comSource==='document'?'le montant de votre document comptable fait foi, le taux en est déduit':'votre montant saisi fait foi, le taux en est déduit';
+  var h='<div class="card" data-c339-canaux="1"><h3>\ud83d\udef5 '+(verdictSansSalle()?'Livraison et commandes directes':'Salle et livraison')+'</h3>'+
+    row(verdictSansSalle()?'Commandes directes et à emporter':'Salle et vente à emporter',cs,d.mcSalle,'Ventes '+eur(cs)+' HT \u00b7 ce qui reste après matière et coûts variables')+
+    row('Livraison',d.caLivHT,d.mcLiv,'Ventes '+eur(d.caLivHT)+' HT ('+pc(part,1)+' des ventes, '+eur(d.caLivTTC)+' TTC payés par les clients) \u00b7 ce qui reste après matière, commissions'+(d.embSource==='livraison'?' et emballages':'')+verdictObjPfTexte(d))+
+    '<p class="note">Commissions des plateformes : '+eur(d.com)+' HT par an'+(d.livTaux>0?', soit '+fr(d.livTaux,1)+' % de vos ventes livrées TTC'+(d.comSource==='livraison'&&verdictLivraisonDefaut()?' (taux par défaut, à remplacer par vos relevés)':''):'')+' ('+src+').'+
+    (d.embSource==='livraison'&&d.cmdLiv>0?' Emballages : '+eur2(d.emb/d.cmdLiv)+' par commande livrée \u00d7 '+fr(d.cmdLiv,0)+' commandes = '+eur(d.emb)+'.':'')+
+    ((d.livPromo>0||d.livRemb>0)?' Promotions financées et remboursements : '+eur((d.livPromo||0)+(d.livRemb||0))+' HT par an, comptés dans la livraison.':'')+/* C339 (décision 32) */
+    (d.comTVA>0?' Trésorerie : la plateforme retient aussi la TVA de sa commission ('+eur(d.comTVA)+' par an), récupérée à votre déclaration de TVA.':'')+'</p></div>';
+  return h;
+}
 function drawData(){
   chrCockpitSchedule('data');
   if(typeof estModeRecent==='function'&&estModeRecent()){drawRecentData();return;}
@@ -7544,6 +7735,7 @@ function drawData(){
     '<div class="kpi"><div class="k">'+t('ind.pc')+'</div><div class="v">'+pc(v.pc,0)+'</div><div class="d">'+t('d.foodPay')+' \u00b7 '+eur(d.nour+d.sal)+'</div></div>'+
     '<div class="kpi"><div class="k">'+t('ind.prod')+'</div><div class="v">'+(R.s.prod==null&&!(d.heuresSource==='supposees'&&v.prod>0)?'\u2014':fr(v.prod,1)+' \u20ac/h')+'</div><div class="d">'+(d.heuresSource==='supposees'&&v.prod>0?'indicatif \u00b7 8 h par jour suppos\u00e9es, hors Indice':(R.s.prod==null?'\u00e0 mesurer : tickets de caisse n\u00e9cessaires':t('d.prodD')+' \u00b7 vos heures d\u2019ouverture'))+'</div></div>'+
     '<div class="kpi"><div class="k">'+t('d.cover')+'</div><div class="v">'+(d.mc>0?fr((d.cf+(d.amort||0))/d.mc*d.mois,1):"\u2014")/* C309 (V16-032) : avec les amortissements, comme le chiffre minimum et la Saisonnalité */+'</div><div class="d">'+t('d.coverD')+'</div></div></div>';
+  h+=verdictCanauxHTML(d);/* C339 : salle et livraison */
   var niv=[[0,6,t('d.n1')],[6,8,t('d.n2')],[8,12,t('d.n3')]];
   niv.forEach(function(nv){
     h+='<h2 class="sec">'+nv[2]+'</h2><div class="card">';
@@ -9517,7 +9709,16 @@ function blocCalendrier(){
    Les points du jour sont stockés en CUMUL depuis le 1er : la barre d'un jour
    est donc l'écart entre deux relevés. Si des jours séparent deux saisies,
    l'écart est réparti sur les jours couverts et la barre est marquée estimée. */
-function progObjJour(R){var op=verdictOperationalClock(),open=0;for(var j=1;j<=new Date(op.year,op.monthIndex+1,0).getDate();j++)if(!estFerme(j))open++;return VerdictFinance.monthlyTargets(R.d,open);}
+/* C374 (décision 38 ; erreur de calcul trouvée par L5) : la règle unique des jours de repos de la semaine, pour 029 (estFerme, progObjJour,
+   verdictJoursConnus) et 041 (weeklyClosed, verdictIsOperatingClosed : L2 lit verdictJoursFermesSemaine).
+   Repos réglé (DB.fermes, ou « aucun repos » dit par le patron) → ces jours-là, part 1 pour les autres. Repos inconnu et moins de 7 jours d'ouverture →
+   AUCUN jour deviné (jamais « le dimanche » d'office) : chaque jour non fermé compte pour jsem / 7. Jours d'ouverture inconnus → part 1, rien deviné. */
+function verdictReposHebdo(D){D=D||(typeof DB!=='undefined'?DB:null)||{};var f=Array.isArray(D.fermes)?D.fermes.map(Number).filter(function(x){return x>=0&&x<=6&&Math.round(x)===x;}):[];
+  if(f.length||D.fermesSource)return {connu:true,jours:f,ouverts:7-f.length,part:1};
+  var j=Number(D.in&&D.in.jsem);if(j>=1&&j<7)return {connu:false,jours:[],ouverts:j,part:j/7};
+  return {connu:false,jours:[],ouverts:j>=7?7:null,part:1};}
+try{window.verdictReposHebdo=verdictReposHebdo;window.verdictJoursFermesSemaine=function(d){return verdictReposHebdo(d).jours.slice();};}catch(e){}/* C374 : 041 (weeklyClosed) lit verdictJoursFermesSemaine */
+function progObjJour(R){var op=verdictOperationalClock(),open=0,J=joursMois(),P=verdictReposHebdo(DB);for(var j=1;j<=new Date(op.year,op.monthIndex+1,0).getDate();j++)if(!estFerme(j))open+=(J[j]&&J[j].ca!=null)?1:P.part;/* C374 : jour saisi = 1 ; sinon la part jsem / 7 tant que le repos n'est pas réglé */return VerdictFinance.monthlyTargets(R.d,Math.round(open*10000)/10000);}
 function progJours(){
   var op=verdictOperationalClock(),pref=op.key.slice(0,7);
   var cum={};
@@ -9978,7 +10179,16 @@ function piloteClotureEtat(R){
   if(C.exact===false)r.push(p12t('closeCalendar'));
   return r.length?{etat:'a_verifier',label:p12t('closeCheck'),raisons:r}:{etat:'pret',label:p12t('closeReady'),raisons:[]};
 }
+/* C333 (décision 19, mesuré : 8 calculs identiques par changement d'établissement) : l'état du mois est gardé pour un même résultat du
+   moteur (même objet R, donc mêmes données), le même jour et la même journée choisie ; toute nouvelle révision le recalcule. */
+var VERDICT_PME_MEMO=typeof WeakMap==='function'?new WeakMap():null;
 function piloteMoisEtat(R){
+  if(!R||!VERDICT_PME_MEMO||typeof R!=='object')return piloteMoisEtatCalcul(R);
+  var c=null;try{var op=verdictOperationalClock();c=[op.key,typeof PIL_JOUR!=='undefined'?PIL_JOUR:'',VERDICT_DB_REV,(DB&&DB.histJour||[]).length].join('|');}catch(e){c=null;}
+  if(c==null)return piloteMoisEtatCalcul(R);var m=VERDICT_PME_MEMO.get(R);if(m&&m.c===c)return m.v;
+  var v=piloteMoisEtatCalcul(R);VERDICT_PME_MEMO.set(R,{c:c,v:v});return v;
+}
+function piloteMoisEtatCalcul(R){
   if(!R||!R.ready)return null;
   var o=progObjJour(R);if(!o)return null;
   var J=joursMois(),A=point4MonthActivity(R,J),C=piloteCalendrierEtat(R,J),cum=0,saisis=0,dates=[],estimes=[],valeurs=[],parJour={};
@@ -10670,6 +10880,9 @@ function refFirstRun(immediate){
     if(VERDICT_DEMO_REQUESTED && !VERDICT_DEMO_STARTED){
       VERDICT_DEMO_STARTED=true;
       demoEntrerSession();
+      /* C329 (T4) : une démonstration reprise au démarrage (modèle ou journée gardés, C323) est déjà installée : refExemple()
+         la remplaçait par la Brasserie, rejouait son animation et rouvrait la découverte guidée (Pilotage ouvert seul, ?demo=1). */
+      if(window.__verdictDemoModeleRepris||window.__verdictDemoJourRepris){try{guideMarquer();}catch(e){}return;}
       refExemple();
       return;
     }
@@ -11435,7 +11648,7 @@ function demoIntentResume(x){
       return 'Cette brasserie doit réaliser environ '+eur(p3.breakEven)+' HT pour couvrir sa structure. '+p3Label+eur(Math.abs(p3.delta))+' : Verdict vous montre le calcul et sa résistance.';
     case 'carte': return (st&&st.actifs?st.actifs+' plats actifs sont lus par marge et volume. '+st.perte+' plat(s) vendus ont une marge négative.':'Verdict attend les prix, ingrédients et volumes avant de classer un plat.')+' La décision reste traçable plat par plat.';
     case 'prix': return 'Le panier moyen de l’exemple est de '+eur2(R.d.panierTTC)+' TTC. Verdict peut rejouer +1 € ou +2 € dans le moteur complet et mesurer l’effet annuel, sans promettre que le volume restera identique.';
-    case 'plateformes': return 'Les commissions saisies représentent '+pc(R.v.com)+' du chiffre d’affaires HT. Verdict les relit avec la matière, l’emballage, la TVA et le prix de chaque plat livré.';
+    case 'plateformes': return 'Les commissions représentent '+verdictComPoids(R.v.com)+'. Verdict les relit avec la matière, l’emballage, la TVA et le prix de chaque plat livré.';
     case 'inventaire': return 'Le comptage ne reste pas une liste : Verdict rapproche stock initial, stock final et achats pour établir une consommation réelle et expliquer l’écart matière.';
     case 'organisation': return 'La contribution calculée est de '+eur(R.v.prod)+' par heure d’ouverture. Verdict la confronte au point mort et aux coûts de service avant de tester une autre organisation.';
     case 'multi-etablissements': return 'Chaque modèle conserve son propre score, ses chiffres et son audit. Verdict compare les ratios sur 100 € HT, nomme les périodes non équivalentes et reste sur la même page quand vous changez d’établissement.';
@@ -15881,7 +16094,7 @@ function drawAudit(){
   ch.push('Apr\u00e8s les co\u00fbts variables, il vous reste <b>'+pct(v.mc)+'</b> pour payer le reste.');
   if(v.ms>=repereMS().sec) ch.push('Vos salaires p\u00e8sent <b>'+pct(v.ms)+'</b> du chiffre d\u2019affaires.');
   if(v.fc>=30) ch.push('Vos achats nourriture p\u00e8sent <b>'+pct(v.fc)+'</b> du chiffre d\u2019affaires.');
-  if(v.com>0) ch.push('Les commissions plateformes p\u00e8sent <b>'+pct(v.com)+'</b> du chiffre d\u2019affaires.');
+  if(v.com>0) ch.push('Les commissions plateformes p\u00e8sent <b>'+verdictComPoids(v.com)+'</b>.');
   ch.push('<b>Conclusion : '+AU_LIB[lim]+' est ce qui commande votre r\u00e9sultat aujourd\u2019hui.</b>');
   h+='<div class="au-sc" style="--zc:'+z.h+'"><div class="au-tag">Le raisonnement</div>'+
     '<h2 class="au-h">Pourquoi Verdict dit cela</h2><ul class="au-chain">'+
@@ -16106,7 +16319,7 @@ function drawPil(){
   var ident=verdictEtabIdentity(DB);
   var ops=typeof invOperationsHTML==='function'?invOperationsHTML('home'):'';
   var _qm=null;try{var _dejaJ=!!(pilJourActif&&joursMois&&joursMois()[pilJourActif()]);_qm=p11QuestionDuMoment(_dejaJ,hh);}catch(e){}
-  head.innerHTML='<h1>'+greet+', '+esc(ident.name)+'</h1><p class="sub" id="pilSub">'+esc(ident.context||t('pil.sub'))+'</p>'+(_qm?'<p class="kicker" id="pilMoment" style="margin:6px 0 0;color:var(--mut2);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase">'+esc(_qm.kicker)+' · '+esc(_qm.question)+'</p>':'');
+  head.innerHTML='<h1>'+greet+', '+esc(ident.name)+'</h1><p class="sub" id="pilSub">'+esc(ident.context||t('pil.sub'))+'</p>'+(_qm?'<p class="kicker" id="pilMoment" style="margin:6px 0 0;color:var(--mut2);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase">'+'<span data-c329-moment>'+esc(_qm.kicker)+'</span> · <span data-c329-moment>'+esc(_qm.question)+'</span></p>':'');
   /* V9.2 — un projet non ouvert n'a jamais de journée à saisir, que son score
      soit calculé ou non. On lui montre sa préparation d'ouverture plutôt que
      l'écran « il manque des chiffres », qui ne lui dit rien de sa situation. */
@@ -19010,21 +19223,21 @@ var DEC_DEFS=[
   {id:"jour",t:"Jours d\u2019ouverture",icon:"📅",step:1,min:-2,max:2,def:0,
    label:"Je modifie mes jours ouverts de",
    fmt:function(v){return (v>0?"+":v<0?"\u2212":"")+Math.abs(v)+" j/sem";},
-   dispBase:function(R){return (DB.in.jsem||6)+" j/semaine";},
-   dispAfter:function(R,v){return Math.max(1,Math.min(7,(DB.in.jsem||6)+v))+" j/semaine";},
-   apply:function(over,v){ over.jsem=Math.max(1,Math.min(7,(DB.in.jsem||6)+v)); }},
+   dispBase:function(R){return (verdictJoursSemaine()||6)+" j/semaine";},/* C372 : 7 − jours de repos quand ils sont connus */
+   dispAfter:function(R,v){return Math.max(1,Math.min(7,(verdictJoursSemaine()||6)+v))+" j/semaine";},
+   apply:function(over,v){ over.jsem=Math.max(1,Math.min(7,(verdictJoursSemaine()||6)+v)); }},
   {id:"cmd",t:"Nombre de commandes",icon:"\uD83D\uDC65",step:1,min:-20,max:20,def:0,
    label:"Je modifie mes commandes par jour de",
    fmt:function(v){return (v>0?"+":v<0?"\u2212":"")+Math.abs(v)+" / jour";},
    dispBase:function(R){return fr(DB.in.cmdj||0,1)+" / jour";},
    dispAfter:function(R,v){return fr(Math.max(0,(DB.in.cmdj||0)+v),1)+" / jour";},
    apply:function(over,v){ over.cmdj=Math.max(0,(DB.in.cmdj||0)+v); }},
-  {id:"com",t:"Commissions plateformes",visible:function(R){ return (DB.in.com||0)>0; },icon:"\uD83D\uDEF5",step:5,min:-100,max:50,def:0,
+  {id:"com",t:"Commissions plateformes",visible:function(R){ return verdictComAn(R)>0; },icon:"\uD83D\uDEF5",step:5,min:-100,max:50,def:0,
    label:"Je modifie mes commissions de",
    fmt:function(v){return (v>0?"+":v<0?"\u2212":"")+Math.abs(v)+" %";},
-   dispBase:function(R){return eur(DB.in.com||0)+" / an";},
-   dispAfter:function(R,v){return eur(Math.max(0,(DB.in.com||0)*(1+v/100)))+" / an";},
-   apply:function(over,v){ over.com=Math.max(0,(DB.in.com||0)*(1+v/100)); }},
+   dispBase:function(R){return eur(verdictComAn(R))+" / an";},
+   dispAfter:function(R,v){return eur(Math.max(0,verdictComAn(R)*(1+v/100)))+" / an";},
+   apply:function(over,v){ verdictCommissionLevier(over,v); }/* C373 : taux de la livraison, ou montant saisi / du document */},
   {id:"fix",t:"Charges fixes",visible:function(R){ return R.d.af>0; },icon:"\uD83C\uDFE0",step:5,min:-40,max:40,def:0,
    label:"Je modifie mes charges fixes de",
    fmt:function(v){return (v>0?"+":v<0?"\u2212":"")+Math.abs(v)+" %";},
@@ -21602,7 +21815,7 @@ function alertesState(){
     {pref:"verdict_margin",n:"Masse salariale",ok:v.ms<=(window.vdRepMs?vdRepMs():36),warn:v.ms<=(window.vdRepMs?vdRepMs():36)+5,val:pc(v.ms,0),msg:v.ms>(window.vdRepMs?vdRepMs():36)+5?"Trop lourd : plus de "+((window.vdRepMs?vdRepMs():36)+5)+" % des ventes":(v.ms>(window.vdRepMs?vdRepMs():36)?"\u00c0 surveiller : au-dessus des "+(window.vdRepMs?vdRepMs():36)+" % conseill\u00e9s":"Sous contr\u00f4le")},
     {pref:"verdict_margin",n:"Food cost",ok:v.fc<=35,warn:v.fc<=40,val:pc(v.fc,0),msg:v.fc>40?"Trop \u00e9lev\u00e9 : au-del\u00e0 de 40 % des ventes":(v.fc>35?"Au-dessus du conseill\u00e9 (35 %)":"Sous contr\u00f4le")},
     {pref:"verdict_cash",n:"Point mort",ok:v.pm<85,warn:v.pm<95,val:v.pm<999?pc(v.pm,0):"\u2014",msg:v.pm>=95?"Le mois ne suffit presque plus":(v.pm>=85?"Couvert seulement en fin de mois":"Confortable")},
-    {pref:"verdict_margin",n:"Commissions plateformes",ok:v.com<=10,warn:v.com<=15,val:pc(v.com,0),msg:v.com>15?"Part command\u00e9e lourde":(v.com>10?"\u00c0 surveiller":"Faible")}
+    {pref:"verdict_margin",n:"Commissions plateformes",ok:v.com<=10,warn:v.com<=15,val:verdictComPoids(v.com,true),msg:v.com>15?"Part command\u00e9e lourde":(v.com>10?"\u00c0 surveiller":"Faible")}
   ];
   if(st&&st.theoR>0){
     var pts=v.fc-st.theoNourR;
@@ -22310,7 +22523,9 @@ function majBandeauDemo(){
     vis=[].filter.call(tous,function(b){return b.offsetParent!==null;});if(!vis.length)return;
     if(!vis.some(function(b){return b.getAttribute('data-v')===k;}))k='plus';
     [].forEach.call(tous,function(b){var on=b.offsetParent!==null&&b.getAttribute('data-v')===k;if(b.classList.contains('on')!==on)b.classList.toggle('on',on);if(on){if(b.getAttribute('aria-current')!=='page')b.setAttribute('aria-current','page');}else if(b.hasAttribute('aria-current'))b.removeAttribute('aria-current');});}catch(e){}}
-  setInterval(function(){if(!document.hidden)navSync();},1000);
+  setInterval(function(){if(!document.hidden)navSync();},4000);/* C333 : la barre suit chaque changement de vue ; le contrôle de secours (mise en page forcée) passe de 1 s à 4 s */
+  try{var _g=window.go;if(typeof _g==='function'&&!_g.__c333){var _w=function(){var r=_g.apply(this,arguments);setTimeout(navSync,0);return r;};_w.__c333=true;window.go=_w;}}catch(_e){}
+  window.addEventListener('popstate',function(){setTimeout(navSync,0);});document.addEventListener('visibilitychange',function(){if(!document.hidden)navSync();});
   document.addEventListener('pointerdown',function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('nav [data-v]');if(!b)return;navTouche=Date.now();
     [].forEach.call(b.parentNode.querySelectorAll('[data-v]'),function(x){x.classList.toggle('on',x===b);});setTimeout(navSync,1600);},true);
   document.addEventListener('click',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('nav [data-v]'))setTimeout(navSync,0);},true);
@@ -23588,7 +23803,9 @@ function runIntro(mode,done,profile){
      pose sur le score de l'établissement. Rythme court au quotidien. */
   /* C323 (V16-051, T2 n° 19) : en démonstration, l'intro de l'Indice ne se joue qu'une fois par appareil, jamais au rechargement :
      déjà vue ici, l'ouverture se termine aussitôt (même chemin que le secours). Hors démonstration, l'anneau du jour reste (V2). */
-  if(mode==='startup'&&!verdictIntroLangueRequise()&&verdictIntroDejaVue()&&verdictIntroV45Demo(profile)){try{if(verdictIntroDebloquer(mode,done,'c323-demo-deja-vue'))return;}catch(e){}}
+  /* C329 (T3, décision 17) : de même sur le compte réel : une fois vue sur cet appareil, l'appli s'ouvre directement, sans intro,
+     y compris quand Pilotage se recharge au changement d'établissement. Le rejeu volontaire (« Revoir l'animation ») reste. */
+  if(mode==='startup'&&!verdictIntroLangueRequise()&&verdictIntroDejaVue()){try{if(verdictIntroDebloquer(mode,done,verdictIntroV45Demo(profile)?'c323-demo-deja-vue':'c329-deja-vue'))return;}catch(e){}}
   if(mode==='startup'&&!verdictIntroLangueRequise()&&(verdictIntroDejaVue()||!verdictIntroV45Demo(profile))){
     try{return runIntroInterne(mode,done,'daily');}
     catch(e){try{verdictIntroDebloquer(mode,done,'exception');}catch(e2){}return;}
@@ -23808,7 +24025,8 @@ function verdictIntroLancerQuandAffiche(){
   }
   VERDICT_STARTUP_STATE=verdictStartupResolve();
   /* C323 : démonstration, intro déjà vue sur cet appareil : l'ouverture se termine tout de suite, sans attendre images ni verrou. */
-  if(verdictIntroDejaVue()&&verdictIntroV45Demo(VERDICT_STARTUP_STATE&&VERDICT_STARTUP_STATE.profile)){window.__verdictIntroLaunchStarted=true;try{if(verdictIntroDebloquer('startup',null,'c323-demo-deja-vue'))return;}catch(e){}}
+  /* C329 (décision 17) : compte réel compris. */
+  if(verdictIntroDejaVue()&&!verdictIntroLangueRequise()){window.__verdictIntroLaunchStarted=true;try{if(verdictIntroDebloquer('startup',null,verdictIntroV45Demo(VERDICT_STARTUP_STATE&&VERDICT_STARTUP_STATE.profile)?'c323-demo-deja-vue':'c329-deja-vue'))return;}catch(e){}}
   /* bug_06_acces_fec_sans_vd_boot — un dossier réel et l'entrée FEC ne
      dépendent d'aucune image ni de la visibilité de l'iframe. Le splash est
      retiré immédiatement ; seule une démonstration explicite attend le rendu
@@ -23997,7 +24215,15 @@ var FORMAT_ORDER=["Restaurant traditionnel","Brasserie","Restaurant gastronomiqu
  "Restaurant italien","Restaurant asiatique","Bar à tapas","Restaurant à burgers","Pizzeria","Kebab",
  "Food truck","Dark kitchen","Coffee shop","Bar / café","Restauration rapide","Traiteur","Boulangerie"];
 function fmtActif(){ var t=DB&&DB.etabType; return (t&&FORMATS[t])?t:null; }
-function famActive(){ var f=fmtActif(); return f?FAMILLES[FORMATS[f].f]:null; }
+/* C339 (décision 23, M8 de l'audit) : une dark kitchen paie la commission sur presque toutes ses ventes. Ses repères de contribution et de
+   coûts variables comptent donc la commission de référence (30 % du prix TTC) sur sa part livrée (100 % sans source « livraison ») :
+   repère rapide − commission pour la contribution, + commission pour les coûts variables. L'Indice ne lit pas ces repères. */
+function verdictFamDark(F){
+  var L=null;try{L=verdictLivraison(DB);}catch(e){}var tva=Number(DB&&DB.in&&DB.in.tva),part=L&&L.part?L.part:100,c=Math.round(30*(1+(isFinite(tva)&&tva>0?tva:10)/100)*part/100);
+  var dn=function(a){return a.map(function(x){return x-c;});},up=function(a){return a.map(function(x){return x+c;});};
+  return Object.assign({},F,{mc:dn(F.mc),cv:up(F.cv),commissionComptee:c,src:F.src+' \u00b7 commission des plateformes comptée ('+c+' % des ventes HT)'});
+}
+function famActive(){ var f=fmtActif(); if(!f)return null; var F=FAMILLES[FORMATS[f].f]; return f==='Dark kitchen'&&F?verdictFamDark(F):F; }
 function repFormat(){ var f=fmtActif(); return f?FORMATS[f]:null; }
 function repFamille(k){ var F=famActive(); return (F&&F[k])?F[k]:null; }
 
@@ -24102,27 +24328,27 @@ function radarSVG(R){
       return val==null?0.06:norm(k,val);
     });
   }
-  var secV={rn:4,mc:55,cv:40,ms:repereMS().sec,pm:85,sen:2,cas:75};
-  var sainV={rn:10,mc:65,cv:35,ms:repereMS().sain,pm:75,sen:10,cas:200};
-  var svg='<svg viewBox="0 0 340 330" style="width:100%;max-width:420px;display:block;margin:0 auto">';
+  /* C365 : deux séries seulement, Vous et Zone cible (la série « Repère Verdict » reste retirée, C173) ; la zone cible est celle du format,
+     la même que les 9 cartes de Repères & secteur (sectActif, C317). */
+  var sainV={rn:10,mc:65,cv:35,ms:repereMS().sain,pm:75,sen:10,cas:200};try{sectActif().forEach(function(s){if(Object.prototype.hasOwnProperty.call(sainV,s.k)&&s.sain!=null&&isFinite(s.sain))sainV[s.k]=s.sain;});}catch(e){}
+  var svg='<svg viewBox="-56 0 452 330" style="width:100%;max-width:480px;display:block;margin:0 auto">';/* C365 : place pour les libellés longs */
   [0.25,0.5,0.75,1].forEach(function(t){
-    svg+='<polygon points="'+poly(axes.map(function(){return t;}))+'" fill="none" stroke="#1e242c" stroke-width="1"/>';
+    svg+='<polygon points="'+poly(axes.map(function(){return t;}))+'" fill="none" style="stroke:var(--line,#1e242c)" stroke-width="1"/>';
   });
   axes.forEach(function(k,i){
     var p=pt(i,1);
-    svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0]+'" y2="'+p[1]+'" stroke="#1e242c" stroke-width="1"/>';
+    svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0]+'" y2="'+p[1]+'" style="stroke:var(--line,#1e242c)" stroke-width="1"/>';
     var lp=pt(i,1.19);
-    svg+='<text x="'+lp[0]+'" y="'+lp[1]+'" fill="#8b94a0" font-size="10.5" font-weight="600" text-anchor="middle" dominant-baseline="middle">'+names[k]+'</text>';
+    svg+='<text x="'+lp[0]+'" y="'+lp[1]+'" style="fill:var(--mut,#8b94a0)" font-size="10.5" font-weight="600" text-anchor="middle" dominant-baseline="middle">'+names[k]+'</text>';
   });
   svg+='<polygon points="'+poly(seriesFor(function(k){return sainV[k];}))+'" fill="rgba(34,197,94,.09)" stroke="rgba(34,197,94,.55)" stroke-width="1.4" stroke-dasharray="4 3"/>';
-  svg+='<polygon points="'+poly(seriesFor(function(k){return secV[k];}))+'" fill="rgba(139,148,160,.10)" stroke="#5f6873" stroke-width="1.3"/>';
   var me=seriesFor(function(k){return bv[k];});
   var mz=zone(R.score);
   svg+='<polygon points="'+poly(me)+'" fill="'+mz.h+'22" stroke="'+mz.h+'" stroke-width="2.2" stroke-linejoin="round"/>';
   me.forEach(function(t,i){ var p=pt(i,t);
     svg+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.4" fill="'+mz.h+'"/>'; });
   svg+='</svg>';
-  return svg+'<div class="rleg"><span><i style="background:'+mz.h+'"></i>Vous</span><span><i style="background:#5f6873"></i>Repère</span><span><i style="background:rgba(34,197,94,.7)"></i>Zone cible</span></div>';
+  return svg+'<div class="rleg"><span><i style="background:'+mz.h+'"></i>Vous</span><span><i style="background:rgba(34,197,94,.7)"></i>Zone cible</span></div>';
 }
 function drawBench(R,el){
   var bv=benchVals(R), d=R.d, sc=R.score, z=zone(sc);
@@ -24151,7 +24377,9 @@ function drawBench(R,el){
       '<b>Banque de France FIBEN \u00b7 secteur 56 Restauration \u00b7 2024</b>'+
       '<p class="note" style="margin:6px 0 0">Taux d\u2019exc\u00e9dent brut global / CA HT : <b>Q1 4,6 %</b> \u00b7 <b>m\u00e9diane 8,8 %</b> \u00b7 <b>Q3 13,9 %</b>. Statistique sectorielle affich\u00e9e pour contexte, sans transformer votre marge avant imp\u00f4t en faux classement.</p>'+
     '</div></div>';
-  /* ── 3. radar : retiré (C173, Steven : « inutile, à supprimer ») ── */
+  /* ── 3. radar (C365 : remis avec Vous et Zone cible seulement ; C173 ne voulait retirer que la série « Repère Verdict ») ── */
+  h+='<div class="card" data-c365-radar="1"><h3>La structure en un regard <span class="r">'+(bv.cas==null?'6':'7')+' axes normalis\u00e9s</span></h3>'+radarSVG(R)+
+    '<p class="note">Plus la surface colori\u00e9e s\u2019approche du polygone vert, plus elle rejoint la zone cible Verdict de votre type d\u2019\u00e9tablissement.</p></div>';
   /* ── 4. forces & vigilance ── */
   var comps=[];
   sectActif().forEach(function(s){

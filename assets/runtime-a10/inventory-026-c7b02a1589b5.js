@@ -68,11 +68,15 @@
    +'@media(max-width:360px){.pinv-g{grid-template-columns:repeat(2,minmax(0,1fr))}.pinv-r{grid-column:1/-1}.pinv-b small{white-space:normal;overflow:visible}}';
   doc.head.appendChild(st);
   /* R75 : même logique d'atterrissage que Pilotage — au changement de vue (Compter, Commande, Analyse, Plus), la vue arrive en haut, juste sous l'en-tête, et reste calée */
-  function tourActif(){try{if(doc.body&&doc.body.classList.contains('demo-tour-active'))return true;var k=[].slice.call(doc.querySelectorAll('*')).some(function(e){return e.children.length===0&&/CHAPITRE \d+ \/ \d+/i.test(e.textContent||'')&&e.getClientRects().length>0;});return k;}catch(e){return false;}}
+  /* C371 : le parcours guidé se reconnaît à son bandeau (.inv-guide-kicker) ; avant, chaque appel lisait le texte de tous les éléments de la page */
+  function tourActif(){try{if(doc.body&&doc.body.classList.contains('demo-tour-active'))return true;var k=doc.querySelectorAll('.inv-guide-kicker');for(var i=0;i<k.length;i++){if(/CHAPITRE \d+ \/ \d+/i.test(k[i].textContent||'')&&k[i].getClientRects().length>0)return true;}return false;}catch(e){return false;}}
   function caler(){try{if(tourActif())return;var on=null,vs=doc.querySelectorAll('[id^="v-"]');for(var i=0;i<vs.length;i++){if(global.getComputedStyle(vs[i]).display!=='none'){on=vs[i];break;}}if(!on)return;
     var hd=doc.querySelector('header'),pos=hd?global.getComputedStyle(hd).position:'',base=(hd&&(pos==='sticky'||pos==='fixed'))?Math.max(0,hd.getBoundingClientRect().bottom):0;
     var y=on.getBoundingClientRect().top+global.scrollY-base-8;global.scrollTo({top:Math.max(0,y),behavior:'auto'});}catch(e){}}
-  (function(){function envelopper(){var o=global.go;if(typeof o!=="function"||o.__pinv)return;var w=function(){var r=o.apply(this,arguments);[40,220,600].forEach(function(ms){global.setTimeout(function(){if(!global.__pinvTouche)caler();},ms);});return r;};w.__pinv=true;global.go=w;}
+  /* C371 (vidéo de Steven : la vue Commande sautait d'environ 300 pt après l'ouverture, des touchers tombaient à côté) : la vue est calée
+     tout de suite, dans le même geste (plus de recalage à 40, 220 et 600 ms) ; un redessin de la même vue (go(VIEW) appelé par d'autres
+     scripts) garde la position de lecture au lieu de remonter en haut. */
+  (function(){function envelopper(){var o=global.go;if(typeof o!=="function"||o.__pinv)return;var w=function(v){var avant=global.VIEW,se=doc.scrollingElement||doc.documentElement,y=se?se.scrollTop:0;var r=o.apply(this,arguments);try{if(v===avant&&avant){if(se&&se.scrollTop!==y)global.scrollTo(0,y);}else caler();}catch(e){}return r;};w.__pinv=true;global.go=w;}
     envelopper();global.addEventListener('load',envelopper);global.setTimeout(envelopper,1500);
     var tT=0;global.addEventListener('touchstart',function(){global.__pinvTouche=true;global.clearTimeout(tT);tT=global.setTimeout(function(){global.__pinvTouche=false;},1500);},{passive:true});
     doc.addEventListener('click',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('nav button'))global.__pinvTouche=false;},true);})();

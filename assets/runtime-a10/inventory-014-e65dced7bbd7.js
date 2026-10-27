@@ -44,8 +44,11 @@
   /* C312 (V16-054) : comptage de l'équipe reçu (produits comptés par un autre prénom que celui du patron, dans les 36 h) : qui, quand, combien. */
   function comptageEquipe(db,sid,now){var patron=String(db&&db.profile&&db.profile.prenom||'').trim().toLowerCase(),par={};
     rows(db||{},sid).forEach(function(x){var p=x.p,by=String(p.countedBy||'').trim(),at=Date.parse(p.countedAt||'');if(!by||!isFinite(at)||by.toLowerCase()===patron||now.getTime()-at>36*3600000)return;
-      if(!par[by])par[by]={by:txt(by,80),at:at,n:0,p:null};par[by].n++;if(at>=par[by].at){par[by].at=at;par[by].p={nom:txt(p.name||'',60),q:p.stock,u:String(p.unit||'')};}});
-    var l=Object.keys(par).map(function(k){return par[k];}).sort(function(a,b){return b.at-a.at;});return l.length?{by:l[0].by,at:new Date(l[0].at).toISOString(),products:l[0].n,produit:l[0].n===1?l[0].p:null}:null;}
+      (par[by]=par[by]||[]).push({at:at,p:p});});
+    /* C329 : un envoi = les produits comptés par ce prénom dans les 3 h du dernier ; il est repéré par son début (même identifiant
+       que la coque, internal/comptage-equipe-c329.js, qui relit le serveur quand l'Inventaire n'est pas ouvert : jamais deux alertes). */
+    var l=Object.keys(par).map(function(by){var a=par[by].sort(function(x,y){return x.at-y.at;}),fin=a[a.length-1].at,g=a.filter(function(x){return fin-x.at<=3*3600000;}),d=g[g.length-1].p;return {by:txt(by,80),at:fin,debut:g[0].at,n:g.length,p:{nom:txt(d.name||'',60),q:d.stock,u:String(d.unit||'')}};}).sort(function(a,b){return b.at-a.at;});
+    return l.length?{by:l[0].by,at:new Date(l[0].at).toISOString(),debut:new Date(l[0].debut).toISOString(),products:l[0].n,produit:l[0].n===1?l[0].p:null}:null;}
   function productMap(db,sid){var out={};rows(db,sid).forEach(function(x){out[x.p.id]={space:x.space,p:x.p};});return out;}
   function profileList(db,sid){var p=db&&db.suppliersBySite&&db.suppliersBySite[sid]||{};return Object.keys(p).map(function(k){return p[k];}).filter(function(x){return x&&x.name;});}
   function nextWindow(profile,now,ordering){
@@ -99,7 +102,7 @@
     var tc=snapshot.teamCount;if(tc&&!open.length){var quand=(function(v){try{var O=typeof globalThis!=='undefined'&&globalThis.VerdictOrdering;if(O&&typeof O.formatDateTime==='function')return O.formatDateTime(v);}catch(e){}return String(v).slice(0,16).replace('T',' ');})(tc.at);
       /* C323 (T3 n° 23) : « Comptage reçu d’Inès · ven. 23/10 · Farine : 3 kg » ; sans prénom donné : « de votre équipe ». */
       var deN=/^[ée]quipe$/i.test(tc.by)?'de votre équipe':(/^[aeiouyhàâäéèêëîïôöùûüœ]/i.test(tc.by)?'d’':'de ')+tc.by,pr=tc.produit,qn=pr&&pr.q!=null&&pr.q!==''?String(pr.q).replace('.',',')+' '+(pr.u==='piece'||pr.u==='unite'?(Number(pr.q)>1?'pièces':'pièce'):pr.u==='l'?'L':pr.u):'';
-      return {kind:'count',level:'info',title:'Comptage reçu '+deN,detail:quand+' · '+(pr&&qn?pr.nom+' : '+qn:tc.products+' produit'+(tc.products>1?'s':'')),route:'inventory',sourceId:'count-'+tc.by+'-'+tc.at.slice(0,16),actorName:tc.by,reportedAt:tc.at};}
+      return {kind:'count',level:'info',title:'Comptage reçu '+deN,detail:quand+' · '+(pr&&qn?pr.nom+' : '+qn:tc.products+' produit'+(tc.products>1?'s':'')),route:'inventory',sourceId:'count-'+tc.by+'-'+(tc.debut||tc.at).slice(0,16),actorName:tc.by,reportedAt:tc.at};}
     if(open.length){var x=open[0];return {kind:'incident',level:'critical',title:'Rupture à décider',detail:x.productName+(x.requiredAt?' · nécessaire '+x.requiredAt:''),route:'inventory',sourceId:x.id,actorName:txt(x.actorName,100),reportedAt:txt(x.reportedAt,40)};}
     var prepared=(snapshot.orders||[]).filter(function(x){return x.status==='prepared';}).sort(function(a,b){return dateMs(a.cutoffAt)-dateMs(b.cutoffAt);});
     if(prepared.length){var p=prepared[0],ms=dateMs(p.cutoffAt)-now.getTime();return {kind:'order',level:ms<=3*3600000?'critical':'warning',title:'Commande préparée à valider',detail:p.supplier+(p.cutoffAt?' · limite '+(function(v){try{var O=typeof globalThis!=='undefined'&&globalThis.VerdictOrdering;if(O&&typeof O.formatDateTime==='function')return O.formatDateTime(v);}catch(e){}return String(v).replace('T',' ');})(p.cutoffAt):''),route:'inventory',sourceId:p.id};}

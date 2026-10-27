@@ -36,6 +36,8 @@
   }
   function composite() { var t = 0; for (var k in etat.revs) t += Number(etat.revs[k]) || 0; return t; }
   function idOk(id) { return /^[A-Za-z0-9._-]{1,120}$/.test(id) && id !== 'demo-brasserie' && id.indexOf('perso-') !== 0 && id.indexOf('demo') !== 0; }
+  /* C330 : dossier archivé dans cet appareil (029, etabIsActive) */
+  function archive(id) { try { return eva('typeof etabIsActive==="function"') && w.etabIsActive(id) === false; } catch (e) { return false; } }
   function etabsSynchro(s) {
     var ok = eva('typeof verdictPayloadAllowed==="function"') ? w.verdictPayloadAllowed : function () { return true; };
     return (s && s.ordre || []).filter(function (id) { var d = s.etabs && s.etabs[id]; return d && idOk(id) && !(d._demo && d._demo.fictional) && ok({ v: 2, actif: id, ordre: [id], etabs: (function () { var o = {}; o[id] = d; return o; })() }); });
@@ -96,6 +98,8 @@
           if (conflit) return;
           var data = s.etabs[id], e = empreinte(texteComparable(data));
           if (!garder && etat.empreintes[id] === e && connus[id]) return; /* inchangé depuis la dernière synchronisation */
+          /* C330 (avec L4, C328) : un dossier archivé que le serveur ne connaît pas n'y est jamais créé (il serait compté au devis) */
+          if (!connus[id] && archive(id)) return;
           var creer = connus[id] ? Promise.resolve() : requete(URL_FLUX, { action: 'ensure_establishment', etabId: id, name: String(data.etab || 'Établissement').slice(0, 160), organisationId: organisation }, true)
             .then(function (j) { if (!j.ok) throw erreur(j, 'Création de l’établissement impossible'); connus[id] = true; });
           var base = garder ? creer.then(function () { return tirer(id).then(function (j) { return Number(j.rev) || 0; }); }) : creer.then(function () { return Number(etat.revs[id]) || 0; });

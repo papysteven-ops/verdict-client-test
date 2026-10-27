@@ -263,8 +263,8 @@
     '#vdBiblio .bb-theme h3 small{margin-left:auto;font:600 13px/1 -apple-system,system-ui;color:var(--bb-sub)}' +
     '#vdBiblio .bb-ic{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:color-mix(in srgb,var(--t) 16%,transparent);color:var(--t)}#vdBiblio .bb-svg{width:20px;height:20px}' +
     '#vdBiblio .bb-grid{list-style:none;margin:0;padding:0;display:grid;gap:10px}' +
-    '#vdBiblio .bb-grid li{opacity:0;transform:translateY(14px);transition:opacity .45s ' + E + ',transform .45s ' + E + ';transition-delay:calc(var(--j)*.05s)}#vdBiblio .bb-on .bb-grid li{opacity:1;transform:none}' +
-    '#vdBiblio .bb-head{opacity:0;transform:translateY(14px);transition:opacity .5s ' + E + ',transform .5s ' + E + '}#vdBiblio .bb-head.bb-on{opacity:1;transform:none}' +
+    '/* décision 27 bis : jamais de trou, ≥ 0,6 d’opacité, 250 ms au plus */#vdBiblio .bb-grid li{opacity:.6;transform:translateY(6px);transition:opacity .2s ' + E + ',transform .2s ' + E + ';transition-delay:min(calc(var(--j)*.01s),.05s)}#vdBiblio .bb-on .bb-grid li{opacity:1;transform:none}' +
+    '#vdBiblio .bb-head{opacity:.6;transform:translateY(6px);transition:opacity .2s ' + E + ',transform .2s ' + E + '}#vdBiblio .bb-head.bb-on{opacity:1;transform:none}' +
     '#vdBiblio .bb-tile{position:relative;display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"n k i" "n b i" "n e i";align-items:center;gap:2px 14px;width:100%;min-height:76px;padding:14px 16px;border-radius:20px;border:1px solid var(--bb-line);background:var(--bb-card);color:var(--bb-txt);text-align:left;font:inherit;cursor:pointer;overflow:hidden;transition:transform .3s ' + E + ',box-shadow .3s ' + E + ',border-color .3s}' +
     '#vdBiblio .bb-tile:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--t)}' +
     '#vdBiblio .bb-n{grid-area:n;align-self:start;display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--t) 14%,transparent);color:var(--t);font:800 14px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums}' +

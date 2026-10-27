@@ -33,6 +33,14 @@
       if (essais++ < 40) setTimeout(tenter, 250);
     })();
   }
+  /* C369 (décisions 36 et 37, trouvé par L1) : le nom imposé par Verdict se voyait sans pouvoir se changer d'ici : « Modifier » ouvre
+     Mes établissements dans Verdict (là où il se renomme ; l'inventaire suit). */
+  function lienModifier(hote, avant) {
+    if (!hote || hote.querySelector('.vd369-modifier')) return; var a = doc.createElement('button'); a.type = 'button'; a.className = 'vd369-modifier'; a.textContent = 'Modifier';
+    a.style.cssText = 'display:inline;margin:0 0 0 4px;padding:6px 4px;min-height:32px;border:0;background:none;color:var(--green,#22c55e);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer';
+    a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); try { if (avant) avant(); } catch (x) {} try { var E = w.parent.VerdictEntete358; if (E && E.gerer) E.gerer(); } catch (x) {} });
+    hote.appendChild(a);
+  }
   var openSpace0 = w.openSpace;
   if (typeof openSpace0 === 'function') {
     w.openSpace = function (k) {
@@ -41,7 +49,7 @@
       var r = openSpace0.apply(this, arguments);
       var n = doc.getElementById('sName'); if (n) { n.readOnly = true; n.setAttribute('aria-readonly', 'true'); n.title = 'Nom de l’établissement dans Verdict'; }
       var del = doc.getElementById('sDel'); if (del) del.style.display = 'none';
-      if (n && !doc.getElementById('sLien')) { var p = doc.createElement('small'); p.id = 'sLien'; p.style.cssText = 'display:block;margin-top:6px;color:var(--mut,#8b94a0);font-size:12.5px'; p.textContent = 'Relié à votre établissement Verdict : le nom se change dans Verdict, l’inventaire suit.'; n.parentNode.appendChild(p); }
+      if (n && !doc.getElementById('sLien')) { var p = doc.createElement('small'); p.id = 'sLien'; p.style.cssText = 'display:block;margin-top:6px;color:var(--mut,#8b94a0);font-size:12.5px'; p.textContent = 'Relié à votre établissement Verdict : le nom se change dans Verdict, l’inventaire suit. '; lienModifier(p, function () { try { if (typeof w.closeSpace === 'function') w.closeSpace(); } catch (e) {} }); n.parentNode.appendChild(p); }
       return r;
     };
   }
@@ -54,7 +62,7 @@
       if (i === 1) {
         var inp = doc.getElementById('wResto'), nom = nomSite();
         if (inp && nom) { inp.value = nom; inp.readOnly = true; inp.setAttribute('aria-readonly', 'true'); inp.classList.remove('miss');
-          var lab = inp.closest('label') && inp.closest('label').querySelector('span'); if (lab) lab.textContent = 'Votre établissement (relié à Verdict)'; }
+          var lab = inp.closest('label') && inp.closest('label').querySelector('span'); if (lab) { lab.textContent = 'Votre établissement (relié à Verdict)'; lienModifier(lab, null); /* l'écart avec « Modifier » vient de sa marge */ } }
       }
       if (i === 2) {
         var rows = doc.querySelectorAll('#w2 .wrow'); var r0 = rows && rows[0];

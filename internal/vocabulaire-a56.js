@@ -98,18 +98,28 @@
   }
   function brancher(d) {
     try {
-      if (!d || !d.body || d.__vx56 || !francais(d)) return; d.__vx56 = true;
-      parcourir(d.body);
+      /* C345 : une page de cadre peut se brancher elle-même dès son <head> (racine = <html>) : chaque texte posé par l'analyseur
+         est corrigé avant la première image (observateur : passe avant le dessin) */
+      var racine = d && (d.body || d.documentElement);
+      if (!racine || d.__vx56 || !francais(d)) return; d.__vx56 = true;
+      parcourir(racine);
       new d.defaultView.MutationObserver(function (L) {
         if (!francais(d)) return;
         L.forEach(function (m) { if (m.type === 'characterData') corriger(m.target); else [].forEach.call(m.addedNodes, parcourir); });
-      }).observe(d.body, { subtree: true, childList: true, characterData: true });
+      }).observe(racine, { subtree: true, childList: true, characterData: true });
     } catch (e) {}
   }
   function tour() { brancher(doc); [].forEach.call(doc.querySelectorAll('iframe'), function (f) { try { brancher(f.contentDocument); } catch (e) {} }); }
   var t = setInterval(tour, 1500); if (t && t.unref) t.unref();
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', tour); else tour();
-  w.VerdictVocabulaire = { corriger: corriger, regles: R, tour: tour, texte: function (v) { for (var i = 0; i < R.length; i++) v = v.replace(R[i][0], R[i][1]); return v; } };
+  /* C345 (décision 27 : jamais un ancien mot puis le bon) : les pages des cadres (srcdoc : Accueil, Carte, Priorités…) étaient
+     branchées par la minuterie, jusqu'à 1,5 s après leur affichage (« Objectif du jour », « Masse salariale », « plat(s) » visibles
+     puis corrigés). Chaque page donnée à un cadre se branche maintenant elle-même, en tête de son <head>. */
+  function dansPage(v) { try { if (typeof v !== 'string' || !francais(doc) || v.indexOf('VerdictVocabulaire.brancher') >= 0) return v; var m = /<head[^>]*>/i.exec(v); if (!m) return v; var i = m.index + m[0].length;
+    return v.slice(0, i) + '<script>try{parent.VerdictVocabulaire.brancher(document)}catch(e){}</' + 'script>' + v.slice(i); } catch (e) { return v; } }
+  try { (function () { var P = w.HTMLIFrameElement && w.HTMLIFrameElement.prototype, DS = P && Object.getOwnPropertyDescriptor(P, 'srcdoc'); if (!DS || !DS.set || P.__vx56) return; P.__vx56 = true;
+    Object.defineProperty(P, 'srcdoc', { configurable: true, enumerable: DS.enumerable, get: DS.get, set: function (v) { return DS.set.call(this, dansPage(v)); } }); })(); } catch (e) {}
+  w.VerdictVocabulaire = { corriger: corriger, regles: R, tour: tour, brancher: brancher, texte: function (v) { for (var i = 0; i < R.length; i++) v = v.replace(R[i][0], R[i][1]); return v; } };
 })();
 
 /* C301 (V15-026, V15-027, V15-028, V15-003) — Alertes, sans toucher au moteur 029 (enveloppe d'alertesState) :

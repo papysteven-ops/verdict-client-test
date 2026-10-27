@@ -88,10 +88,11 @@
     function part() { i++; var len = u[i++], v = u.slice(i, i + len); i += len; while (v.length > 32 && v[0] === 0) v = v.slice(1); var o = new Uint8Array(32); o.set(v, 32 - v.length); return o; }
     var r = part(), s = part(), out = new Uint8Array(64); out.set(r); out.set(s, 32); return out;
   }
-  function bioVerify() {
+  function bioVerify(signal) {
     if (!C || !C.bio) return Promise.reject(new Error('non'));
-    var ch = rnd(32);
-    return navigator.credentials.get({ publicKey: { challenge: ch, allowCredentials: [{ type: 'public-key', id: unb64(C.bio.id), transports: ['internal'] }], userVerification: 'required', timeout: 60000 } })
+    var ch = rnd(32), o = { publicKey: { challenge: ch, allowCredentials: [{ type: 'public-key', id: unb64(C.bio.id), transports: ['internal'] }], userVerification: 'required', timeout: 60000 } };
+    if (signal) o.signal = signal; /* C332 : une demande lancée seule peut être annulée par un toucher ou par la frappe du code */
+    return navigator.credentials.get(o)
       .then(function (a) {
         var r = a.response, cd = JSON.parse(new TextDecoder().decode(r.clientDataJSON)), ad = new Uint8Array(r.authenticatorData);
         if (cd.type !== 'webauthn.get' || cd.challenge !== b64url(ch) || cd.origin !== location.origin) throw new Error('réponse invalide');
@@ -182,20 +183,49 @@
   function waitLeft() { return Math.max(0, Math.ceil(((C && C.until) || 0) - Date.now() / 1000)); }
   function fmt(s) { return s >= 3600 ? Math.ceil(s / 3600) + ' h' : s >= 60 ? Math.ceil(s / 60) + ' min' : s + ' s'; }
   function screenUnlock(autoBio) {
-    S.mode = 'unlock'; S.locked = true;
+    /* C332 : déjà affiché (retour d'arrière-plan puis pageshow, rechargement d'un cadre) : on ne redessine pas — la saisie commencée
+       n'est jamais effacée (un des « il faut taper le code deux fois » de Steven) ; Face ID est seulement relancé si permis. */
+    if (S.mode === 'unlock' && S.locked && !root().hidden && root().querySelector('.vr-pad')) { if (autoBio) bioAuto(); return; }
+    S.mode = 'unlock'; S.locked = true; S.bioArme = false; S.bioFin = 0;
     show('<div class="vr-logo">🔒</div><h2>Verdict est verrouillé</h2><p>' + (C.bio ? 'Utilisez ' + esc(BIO) + ' ou votre code.' : 'Saisissez votre code.') + '</p>' + pad(!!C.bio) + '<button type="button" class="vr-link" data-forgot>Code oublié ?</button>');
     root().querySelector('[data-forgot]').onclick = screenForgot;
     tick();
-    if (autoBio && C.bio && !waitLeft()) tryBio();
+    if (autoBio) bioAuto();
   }
   function tick() {
     clearInterval(S.timer); var left = waitLeft(), el = root();
     [].forEach.call(el.querySelectorAll('.vr-pad button'), function (b) { if (b.getAttribute('data-k') !== 'bio') b.disabled = left > 0; });
     if (left > 0) { msg('Trop d’essais. Réessayez dans ' + fmt(left) + '.'); S.timer = setInterval(function () { if (!waitLeft()) { clearInterval(S.timer); msg(''); tick(); } else msg('Trop d’essais. Réessayez dans ' + fmt(waitLeft()) + '.'); }, 1000); }
   }
-  function tryBio() {
-    if (S.busy) return; S.busy = true;
-    bioVerify().then(function () { S.busy = false; success(); }, function () { S.busy = false; msg(COFFRE ? BIO + ' n’a pas abouti : réessayez ou utilisez votre mot de passe.' : 'Saisissez votre code.'); });
+  /* C332 (décision 18, Steven : « comme l'appli de ma banque ») : à l'ouverture, au retour après le délai et au rechargement, Face ID est
+     demandé tout seul. Si iOS exige un geste pour la clé d'accès, la demande est refusée tout de suite : le premier toucher n'importe où
+     sur l'écran du verrou la relance (jamais un toucher perdu). Annulé, refusé ou en échec : le clavier est prêt, une saisie juste ouvre.
+     La demande n'occupe plus le clavier (avant, S.busy avalait les chiffres tapés pendant ou juste après la feuille iOS) ; un chiffre tapé
+     l'annule ; jamais deux demandes à la suite (la feuille iOS fait passer la page en arrière-plan puis la ramène). */
+  function bioAuto() {
+    if (!C || !C.bio || waitLeft() || S.bioPending || S.entry.length || S.busy) return;
+    if (S.bioFin && Date.now() - S.bioFin < 2500) return;
+    tryBio('auto');
+  }
+  function bioStop() { if (S.bioCtrl) { try { S.bioCtrl.abort(); } catch (e) {} } S.bioCtrl = null; if (S.bioPending) S.bioFin = Date.now(); S.bioPending = false; S.bioArme = false; }
+  function tryBio(origine) {
+    if (!C || !C.bio) return;
+    if (S.bioPending) { if (origine === 'auto' || !S.bioAuto) return; try { S.bioCtrl && S.bioCtrl.abort(); } catch (e) {} }
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null, t0 = Date.now(), modeAvant = S.mode;
+    S.bioCtrl = ctrl; S.bioPending = true; S.bioAuto = origine === 'auto'; S.bioArme = false; if (origine !== 'auto') msg('');
+    var actuel = function () { return S.bioCtrl === ctrl && S.bioPending; };
+    bioVerify(ctrl && ctrl.signal).then(function () {
+      if (!actuel()) return; S.bioPending = false; S.bioCtrl = null; S.bioFin = Date.now();
+      if (S.mode === modeAvant && S.locked) success();
+    }, function (e) {
+      if (!actuel()) return; S.bioPending = false; S.bioCtrl = null;
+      var nom = e && e.name;
+      if (nom === 'AbortError') return;
+      if (origine === 'auto' && nom === 'NotAllowedError' && Date.now() - t0 < 900) { S.bioArme = true; msg(COFFRE ? 'Touchez l’écran pour utiliser ' + BIO + '.' : 'Touchez l’écran pour utiliser ' + BIO + ', ou saisissez votre code.'); return; }
+      S.bioFin = Date.now();
+      msg(COFFRE ? BIO + ' n’a pas abouti : réessayez ou utilisez votre mot de passe.' : 'Saisissez votre code.');
+      try { root().focus({ preventScroll: true }); } catch (x) {}
+    });
   }
   function success() {
     C.fails = 0; C.until = 0; store(C); S.locked = false; S.hiddenAt = 0; hide(); marquer();
@@ -222,9 +252,9 @@
     show('<div class="vr-logo">🔒</div><h2>Verdict est verrouillé</h2><p>Utilisez ' + esc(BIO) + ' ou votre mot de passe.</p><div class="vr-msg" role="alert"></div>' +
       '<button type="button" class="vr-btn" data-bio>Utiliser ' + esc(BIO) + '</button><button type="button" class="vr-btn sec" data-mdp>Mot de passe</button>');
     var el = root();
-    el.querySelector('[data-bio]').onclick = function () { tryBio(); };
+    el.querySelector('[data-bio]').onclick = function () { tryBio('geste'); };
     el.querySelector('[data-mdp]').onclick = motDePasse;
-    if (autoBio) tryBio();
+    if (autoBio) bioAuto();
   }
   /* Revenir à la page du mot de passe : la clé du coffre est oubliée sur cet appareil, puis l'appli se recharge. */
   function motDePasse() {
@@ -287,7 +317,9 @@
     S.mode = 'wipe';
     show('<div class="vr-logo">⚠️</div><h2>Tout effacer ?</h2><p>Vos établissements, cartes, inventaires et réglages Verdict seront supprimés de cet appareil. Cette action est définitive.</p><button type="button" class="vr-btn danger" data-ok>Oui, tout effacer</button><button type="button" class="vr-btn sec" data-back>Annuler</button>');
     var el = root();
-    el.querySelector('[data-back]').onclick = function () { screenUnlock(false); };
+    /* C343 : ouvert depuis l'appli déverrouillée (Paramètres), « Annuler » referme ; depuis « Code oublié ? », retour au verrou. */
+    var depuisAppli = !S.locked;
+    el.querySelector('[data-back]').onclick = function () { if (depuisAppli) hide(); else screenUnlock(false); };
     el.querySelector('[data-ok]').onclick = wipe;
   }
   /* N'efface que Verdict Client : les espaces chiffrés (Perso, Pilote) partagent l'adresse et restent intacts. */
@@ -301,9 +333,14 @@
     Promise.all(jobs).catch(function () {}).then(function () { location.reload(); });
   }
   function screenSettings() {
-    if (S.locked) return;
-    S.mode = 'settings';
+    /* C343 b (signalé par L1) : en démonstration sans code (C312), C est nul : le panneau plantait sur C.delai après avoir posé
+       S.mode = 'settings', et press() refusait ensuite toute touche. Sans code configuré, rien ne s'ouvre ; le mode n'est posé
+       qu'au moment où le panneau s'affiche. */
+    if (S.locked || !configured()) return false;
+    if (!C) C = {};
     bioAvailable().then(function (av) {
+      if (S.locked) return;
+      S.mode = 'settings';
       show('<div class="vr-logo">🔒</div><h2>Sécurité</h2><p>Verdict se verrouille à chaque ouverture et au retour après le délai choisi.</p><div class="vr-list">' +
         (av ? '<label>' + esc(BIO) + '<input type="checkbox" data-bio' + (C.bio ? ' checked' : '') + '></label>' : '<label>' + esc(BIO) + '<span style="color:#a3adb8">indisponible ici</span></label>') +
         (window.VerdictMaj && window.VerdictMaj.notifications && window.VerdictMaj.notifications.etat() !== 'indisponible' ? '<label>Notifications et nombre sur l’icône<input type="checkbox" data-notif' + (window.VerdictMaj.notifications.etat() === 'active' ? ' checked' : '') + '></label>' : '<label>Notifications et nombre sur l’icône<span style="color:#a3adb8">indisponible ici</span></label>') +
@@ -347,6 +384,7 @@
         else { delete C.bio; store(C); toast(BIO + ' désactivé'); }
       };
     });
+    return true;
   }
   function toast(t) {
     var n = doc.createElement('div'); n.textContent = t;
@@ -357,7 +395,8 @@
   /* ───────── Saisie (clavier tactile et clavier physique) ───────── */
   function press(k) {
     if (S.busy || !S.mode || /offer|forgot|wipe|settings|coffre/.test(S.mode)) return;
-    if (k === 'bio') return tryBio();
+    if (k === 'bio') return tryBio('geste');
+    bioStop(); /* C332 : on tape le code : la demande Face ID en cours (ou à venir au toucher) est abandonnée */
     if (k === 'del') { S.entry = S.entry.slice(0, -1); dots(); return; }
     if (!/^\d$/.test(k) || S.entry.length >= LEN) return;
     if (S.mode === 'unlock' && waitLeft()) return;
@@ -378,10 +417,23 @@
   function recent(b) { return b.__vrAt && Date.now() - b.__vrAt < 1000; }
   doc.addEventListener('pointerdown', function (e) {
     var b = e.target.closest && e.target.closest('#vr16 [data-k]'); if (!b || b.disabled) return;
+    /* C332 : Face ID part au doigt levé : pour un toucher, iOS ne compte le geste qu'à ce moment ; lancé au doigt posé, la clé
+       d'accès était refusée sans rien montrer (le « toucher perdu » de Steven). */
+    if (b.getAttribute('data-k') === 'bio') return;
     b.__vrAt = Date.now(); press(b.getAttribute('data-k'));
   }, true);
+  /* C332 : iOS a exigé un geste : le premier toucher n'importe où sur l'écran du verrou (ou sur le voile « VERDICT ») lance Face ID,
+     au doigt levé (seul moment où iOS reconnaît le geste). */
   doc.addEventListener('pointerup', function (e) {
-    var b = e.target.closest && e.target.closest(TAP); if (!b || b.disabled || b.hasAttribute('data-k') || recent(b)) return;
+    var el = doc.getElementById('vr16'); if (!el || el.hidden || !(S.mode === 'unlock' || S.mode === 'coffre')) return;
+    var t = e.target; if (!(el.contains(t) || (t && t.id === 'vr16-cache'))) return;
+    if (t.closest && t.closest('#vr16 button, #vr16 a, #vr16 input, #vr16 select')) return;
+    if (S.bioArme || (S.bioPending && S.bioAuto)) tryBio('geste');
+  }, true);
+  doc.addEventListener('pointerup', function (e) {
+    var b = e.target.closest && e.target.closest(TAP); if (!b || b.disabled || recent(b)) return;
+    if (b.getAttribute('data-k') === 'bio') { b.__vrAt = Date.now(); press('bio'); return; }
+    if (b.hasAttribute('data-k')) return;
     b.__vrAt = Date.now(); b.click();
   }, true);
   doc.addEventListener('click', function (e) {
@@ -438,8 +490,10 @@
   doc.addEventListener('visibilitychange', function () {
     if (doc.hidden) { marquer(); S.hiddenAt = Date.now(); cover(true); return; }
     cover(false);
+    if (S.locked && (S.mode === 'unlock' || S.mode === 'coffre')) { bioAuto(); return; } /* C332 : l'appli rouverte sur le verrou relance Face ID */
     if (!S.locked && configured() && S.hiddenAt && (Date.now() - S.hiddenAt) / 1000 >= (+C.delai || 0)) lock(true);
   });
+  window.addEventListener('focus', function () { if (S.locked && !doc.hidden && (S.mode === 'unlock' || S.mode === 'coffre')) bioAuto(); });
   window.addEventListener('pagehide', function () { marquer(); cover(true); });
   /* C167 — Le voile « VERDICT » (aperçu des applis) ne bloque jamais l'appli : dès qu'on clique, fait défiler ou tape
      dedans, elle est sous les yeux — le voile se retire (Safari peut croire une fenêtre Mac en partie couverte cachée). */
@@ -448,7 +502,10 @@
   window.addEventListener('pageshow', function (e) { cover(false); if (e.persisted && configured() && !encoreOuvert()) lock(true); });
 
   /* Bouton 🔒 dans l'en-tête (à côté des notifications). */
+  /* C343 (décisions 25, 26, 29) : plus de cadenas dans l'en-tête ; la sécurité s'ouvre depuis Paramètres (VerdictVerrou.settings / lock).
+     Le verrouillage automatique reste. Un cadenas posé par une version précédente est retiré. */
   function lockButton() {
+    var vieux = doc.querySelector('.vr16-lockbtn'); if (vieux) vieux.remove(); return;
     var host = doc.querySelector('.shell-actions') || doc.querySelector('.topbar'); if (!host || host.querySelector('.vr16-lockbtn')) return;
     var ref = host.querySelector('button'), b = doc.createElement('button');
     b.type = 'button'; b.className = 'vr16-lockbtn ' + (ref ? ref.className.replace(/\bnotification-button\b/, '') : ''); b.setAttribute('aria-label', 'Sécurité et verrouillage');
@@ -479,7 +536,7 @@
       lock(true);
     });
     lockButton(); hookFrames(); [].forEach.call(doc.querySelectorAll("iframe"), function (f) { f.addEventListener("load", function () { setTimeout(hookFrames, 0); }); });
-    new MutationObserver(lockButton).observe(doc.body, { childList: true, subtree: true });
+    /* C343 : plus d'observateur pour reposer le cadenas */
     /* C57 : tant que le verrou est affiché, il reste au premier plan : un écran ajouté ensuite (animation d’ouverture du
        Perso, fenêtre d’accueil) est rendu inactif et passe dessous, sinon il capterait les appuis sur le clavier. */
     new MutationObserver(function (list) {
@@ -490,6 +547,8 @@
   }
   if (doc.body) start(); else doc.addEventListener('DOMContentLoaded', start);
 
-  window.VerdictVerrou = { lock: function () { effacer(); lock(false); }, _encoreOuvert: function () { return encoreOuvert(); }, settings: screenSettings, state: function () { return { locked: S.locked, mode: S.mode, configured: configured(), coffre: COFFRE, bio: !!(C && C.bio), fails: (C && C.fails) || 0, wait: waitLeft() }; },
+  window.VerdictVerrou = { lock: function () { effacer(); lock(false); },
+    /* C343 : « Effacer cet appareil » depuis Paramètres ; sans effet si l'appli est verrouillée */
+    effacerAppareil: function () { if (S.locked || COFFRE) return false; screenWipe(); return true; }, _encoreOuvert: function () { return encoreOuvert(); }, settings: screenSettings, state: function () { return { locked: S.locked, mode: S.mode, configured: configured(), coffre: COFFRE, bio: !!(C && C.bio), fails: (C && C.fails) || 0, wait: waitLeft() }; },
     _hash: hashCode, _derToRaw: derToRaw, _weak: weak, _wipeKeep: function (n) { return /^coffre:|^verdict-coffre/.test(n); } };
 })();

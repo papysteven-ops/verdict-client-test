@@ -40,8 +40,14 @@ function ctrlLib(id){var c=CTRL[id];return c>=1?'élevé':(c>=.5?'partiel':'faib
    sans boissons ne peut pas expliquer les achats de boissons). La période des achats est écrite. Une seule fonction pour
    l'Audit, Simuler, Priorités, les Alertes et la Carte : window.VerdictEcartMatiere(). */
 function periodeAchats(R){var D=w.DB||{},y=D.refSource&&D.refSource.exerciseYear;if(y)return 'exercice '+y;var m=num(R&&R.d&&R.d.mois);return m&&m<12?'sur '+Math.round(m)+' mois':'sur l’année';}
+/* C333 (décision 19, changement d'établissement) : les statistiques de la carte sont lues une fois par dossier et par « génération »
+   (enregistrement, rafraîchissement, saisie relue, changement d'établissement) ; avant, 20 lectures complètes par changement. */
+var SC={db:null,gen:-1,v:null},GEN=0;
+function statsCarte(){var D=w.DB;if(SC.db===D&&SC.gen===GEN)return SC.v;var v=w.carteStats();SC={db:D,gen:GEN,v:v};return v;}
+(function(){['save','refreshAll','readInputs','switchEtab'].forEach(function(n){var k=0;(function br(){var f=w[n];if(typeof f!=='function'){if(++k<40&&typeof w.setTimeout==='function')w.setTimeout(br,250);return;}if(f.__c333gen)return;
+  var g=function(){GEN++;try{return f.apply(this,arguments);}finally{GEN++;}};for(var p in f)if(Object.prototype.hasOwnProperty.call(f,p))g[p]=f[p];g.__c333gen=true;w[n]=g;})();});})();
 function ecartMatiere(R,st){
-  try{R=R||w.moteur();if(!R||!R.ready)return null;if(st===undefined)st=typeof w.carteStats==='function'&&w.DB&&w.DB.plats&&w.DB.plats.length?w.carteStats():null;}catch(e){return null;}
+  try{R=R||w.moteur();if(!R||!R.ready)return null;if(st===undefined)st=typeof w.carteStats==='function'&&w.DB&&w.DB.plats&&w.DB.plats.length?statsCarte():null;}catch(e){return null;}
   if(!st||!(num(st.theoR)>0))return null;var d=R.d,ca=num(d.ca);if(!(ca>0))return null;
   var tn=st.theoNourR!=null?num(st.theoNourR):num(st.theoR),avec=num(st.theoR)-tn>0.05;
   var reel=(avec?num(d.nour)+num(d.boi):num(d.nour))/ca*100,theo=avec?num(st.theoR):tn,pts=reel-theo;
@@ -105,7 +111,7 @@ function cartePlanCalc(capPct){
     if(!(co>0))return;
     dCa+=ca;dCo+=co;out.rows.push({id:p.id,nom:p.nom,cat:c,avant:ttc,apres:np,hausse:(np/ttc-1)*100,vol:v,contribMois:co,marge:k.contribPct,obj:k.objPond});
   });
-  var mois=num(w.DB.in&&w.DB.in.mois)||12,st=null;try{st=w.carteStats();}catch(e){}
+  var mois=num(w.DB.in&&w.DB.in.mois)||12,st=null;try{st=statsCarte();}catch(e){}
   var caStr=w.moteur().d.ca,caCarte=st&&st.ca>0?st.ca*mois:0,ech=caCarte>0?Math.min(1,caStr/caCarte):1;
   out.dCaAn=dCa*mois*ech;out.dContribAn=dCo*mois*ech;out.echelle=ech;out.mois=mois;
   out.rows.sort(function(a,b){return b.contribMois-a.contribMois;});
@@ -125,7 +131,7 @@ function overAll(state){
   var pan0=num(d0.panierTTC)>0?num(d0.panierTTC):inp('panier'),cmd0=num(d0.cmdj)>0?num(d0.cmdj):inp('cmdj');
   if(vP){var pb=pan0,cible=num(d0.cmdAn)*vP/(1+num(d0.tva)),essai=w.deriv({panier:pb+vP}),pente=(num(essai.ca)-num(d0.ca))/vP;
     over.panier=pb+(cible>0&&pente>0?cible/pente:vP);}
-  var jsem=inp('jsem')||6,cmdj=cmd0;
+  var jsem=(typeof w.verdictJoursSemaine==='function'&&w.verdictJoursSemaine())||inp('jsem')||6/* C372 : 7 − jours de repos quand ils sont connus */,cmdj=cmd0;
   if(vC)over.cmdj=Math.max(0,cmdj+vC);
   if(vJ){var nj=Math.max(1,Math.min(7,jsem+vJ)),dj=nj-jsem;over.jsem=nj;
     /* un jour ajouté (ou retiré) ne vaut pas une journée moyenne : 60 % de la demande d'une journée moyenne */
@@ -151,7 +157,7 @@ function overAll(state){
   /* 4. équipe (curseur + renfort imposé par le volume) */
   var vS=etat(state,'sal');if(vS||renfort)w.decApplyHumanLoaded(over,vS+Math.round(renfort));
   /* 5. autres postes */
-  var vCom=etat(state,'com');if(vCom)over.com=Math.max(0,(over.com!=null?over.com:inp('com'))*(1+vCom/100));
+  var vCom=etat(state,'com');if(vCom){if(typeof w.verdictCommissionLevier==='function')w.verdictCommissionLevier(over,vCom);/* C373 : taux de la livraison, ou montant saisi / du document */else over.com=Math.max(0,(over.com!=null?over.com:inp('com'))*(1+vCom/100));}
   var vX=etat(state,'fix');if(vX){for(var i=1;i<=10;i++){var x=inp('f'+i);if(x>0)over['f'+i]=Math.max(0,x*(1+vX/100));}}
   var vE=etat(state,'emb');if(vE){over.emb=Math.max(0,(over.emb!=null?over.emb:inp('emb'))*(1+vE/100));over.autv=Math.max(0,(over.autv!=null?over.autv:inp('autv'))*(1+vE/100));}
   return over;
@@ -183,7 +189,7 @@ function plan(){
   if(num(d.av)>0&&v.cv>fam.cv[1])add('emb',-10,'Coûts variables à '+pc(v.cv)+' du CA ; repère '+pc(fam.cv[1],0)+'.','Regrouper les commandes, revoir les formats, supprimer les consommables en double.');
   /* matière : la carte (recettes et fuite) quand elle est fiable, sinon l'écart structurel */
   var why=null,pts=0;
-  if(cf){var st=null;try{st=w.carteStats();}catch(e){}
+  if(cf){var st=null;try{st=statsCarte();}catch(e){}
     /* C311 (décision 13) : poste par poste — la part « fuite » de chaque levier est bornée par l'écart de son poste ; un poste déjà sous
        ses fiches n'en a pas ; un écart qui est dans les boissons va au levier « Coût des boissons », jamais à la nourriture. */
     if(st&&st.theoR>0){var tn=st.theoNourR!=null?st.theoNourR:st.theoR,E=ecartMatiere(R,st),rec=tn>fam.fc[1]?(tn-fam.fc[1])/3:0,eN=E&&E.nour?Math.max(0,E.nour.pts):0,eB=E&&E.boi?Math.max(0,E.boi.pts):0,fuite=E&&E.compte?eN/3:0;pts=rec+fuite;
@@ -287,7 +293,7 @@ function installerSimuler(){
   try{var PJ={'HYPOTHÈSE · moteur économique Verdict':'HYPOTHÈSE · calcul Verdict','ASSUMPTION · Verdict economic engine':'ASSUMPTION · Verdict calculation','HIPÓTESIS · motor económico Verdict':'HIPÓTESIS · cálculo Verdict','IPOTESI · motore economico Verdict':'IPOTESI · calcolo Verdict','ANNAHME · Verdict-Wirtschaftsmotor':'ANNAHME · Verdict-Berechnung','AANNAME · economische motor van Verdict':'AANNAME · berekening van Verdict','HIPÓTESE · motor económico Verdict':'HIPÓTESE · cálculo Verdict'};
     if(PU)for(var lj in PU)if(PU[lj]&&PJ[PU[lj].proof])PU[lj].proof=PJ[PU[lj].proof];}catch(e){}
   /* C301 (V15-140) : le poste le plus lourd des charges fixes est un montant mensuel, et il est dit */
-  if(typeof w.point11Decision==='function'&&!w.point11Decision.__c301){var p11b=w.point11Decision;w.point11Decision=function(){var r=p11b.apply(this,arguments);try{(r&&r.items||[]).forEach(function(it){if(it&&typeof it.detail==='string')it.detail=it.detail.replace(/(Le poste le plus lourd est « [^»]+ » \()([^)]*\d\s?€)\)/,'$1$2 par mois)');});}catch(e){}return r;};for(var kp in p11b)if(Object.prototype.hasOwnProperty.call(p11b,kp))w.point11Decision[kp]=p11b[kp];w.point11Decision.__c301=true;}
+  if(typeof w.point11Decision==='function'&&!w.point11Decision.__c301){var p11b=w.point11Decision,P11={db:null,gen:-1,a:null,n:-1,r:null};w.point11Decision=function(){/* C333 : même dossier, même génération, même argument (par identité, jamais sérialisé) : la même réponse */var a0=arguments[0],na=arguments.length;if(P11.db===w.DB&&P11.gen===GEN&&P11.a===a0&&P11.n===na&&P11.r)return P11.r;var r=p11b.apply(this,arguments);P11={db:w.DB,gen:GEN,a:a0,n:na,r:r};try{(r&&r.items||[]).forEach(function(it){if(it&&typeof it.detail==='string')it.detail=it.detail.replace(/(Le poste le plus lourd est « [^»]+ » \()([^)]*\d\s?€)\)/,'$1$2 par mois)');});}catch(e){}return r;};for(var kp in p11b)if(Object.prototype.hasOwnProperty.call(p11b,kp))w.point11Decision[kp]=p11b[kp];w.point11Decision.__c301=true;}
   /* C301 (V15-069) : la décision enregistrée depuis Simuler apparaît tout de suite dans le registre (au-dessus), rattachée à
      l'établissement affiché, et le texte ne renvoie plus vers des écrans absents du menu. */
   if(typeof w.decEnDecision==='function'&&!w.decEnDecision.__c301){var ed=function(){

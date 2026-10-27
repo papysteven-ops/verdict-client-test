@@ -116,7 +116,9 @@
     window.addEventListener('storage',function(event){if(event.key!==key)return;items=merge(readStore(),[]);render();});
     try{new MutationObserver(function(){render();}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});}catch(e){}/* C277 : heures et dates suivent un changement de langue */
     items=merge(readStore(),[]);render();
-    return {version:VERSION,ingest:ingest,ingestMany:ingestMany,remove:remove,removeRead:removeRead,handled:handled,handledRup:handledRup,open:open,close:close,markAllRead:markAllRead,setVisible:setVisible,getItems:function(){return items.slice();},getUnreadCount:function(){return unreadCount(items);}};
+    /* C353 : retirer sans condamner (une alerte de démonstration d'un autre modèle revient si l'on revient sur ce modèle) */
+    function oublier(ids){ids=Array.isArray(ids)?ids:[ids];var n=items.length;items=items.filter(function(item){return ids.indexOf(item.id)<0;});if(items.length!==n){writeStore();render();}}
+    return {version:VERSION,ingest:ingest,ingestMany:ingestMany,remove:remove,oublier:oublier,removeRead:removeRead,handled:handled,handledRup:handledRup,open:open,close:close,markAllRead:markAllRead,setVisible:setVisible,getItems:function(){return items.slice();},getUnreadCount:function(){return unreadCount(items);}};
   }
 
   return {version:VERSION,normalize:normalize,merge:merge,unreadCount:unreadCount,create:create};

@@ -96,10 +96,13 @@
   /* C157 : les cartes de restauration rapide ont beaucoup de petites catégories (Burgers, Tacos, Bowls…) : en dessous de
      3 plats, une catégorie est regroupée avec celles du même rôle pour pouvoir être analysée. */
   function groupe(cat, n) { if (n >= 3) return cat; var c = String(cat || '').toLowerCase(), r = role(cat); return /boisson|bière|biere|vin|cocktail|soft|café|cafe|alcool/.test(c) ? 'Boissons' : r === 'd' ? 'Desserts' : r === 'e' ? 'Entrées et accompagnements' : r === 'p' ? 'Plats' : cat; }
+  /* C352 (c) : livré à 80 % ou plus (dark kitchen), l'Idéale ne parle jamais de « salle » */
+  function partLivree() { try { var L = typeof w.verdictLivraison === 'function' ? w.verdictLivraison(w.DB) : null, p = L && Number(L.part); return p > 0 ? p : null; } catch (e) { return null; } }
+  function votreSalle() { var p = partLivree(); return p != null && p >= 80 ? 'votre activité' : 'votre salle'; }
   function cible(P, r, m) {
     var R = (CIBLES[P.type] || CIBLES.brasserie)[r]; if (!R) return null;
     var places = Number(P.places) || 0, pos = places < 30 ? 0 : places > 80 ? 1 : (places - 30) / 50, raisons = [];
-    raisons.push((places < 30 ? 'petite salle' : places > 80 ? 'grande salle' : 'salle moyenne') + ' (' + places + ' places)');
+    var livP = partLivree(); raisons.push(livP != null && livP >= 80 ? 'livraison à ' + Math.round(livP) + ' %' : (places < 30 ? 'petite salle' : places > 80 ? 'grande salle' : 'salle moyenne') + ' (' + places + ' places)');
     var serv = P.services === 'deux' ? 2 : 1, rot = Number(P.couverts) / Math.max(1, places * serv);
     if (rot > 1.5) { pos -= 0.25; raisons.push('rotation rapide (' + rot.toFixed(1).replace('.', ',') + ' couverts par place et par service) : carte plus courte, envoi plus rapide'); }
     if (P.habitants === 'village' && P.tourisme === 'non') { pos -= 0.25; raisons.push('petite commune hors tourisme : clientèle d’habitués, carte courte et renouvelée'); }
@@ -255,8 +258,8 @@
       '<label>Type d’établissement<select name="type"><option value="">Choisir…</option>' + opt(TYPES, P.type) + '</select></label>' +
       '<label>Habitants de la commune<select name="habitants"><option value="">Choisir…</option>' + opt(HAB, P.habitants) + '</select></label>' +
       '<label>Saison<select name="tourisme"><option value="">Choisir…</option>' + opt(TOUR, P.tourisme) + '</select>' + (P.saisonCaisse ? '<small class="ci-lu">Lue dans votre caisse : ' + esc(P.saisonCaisse) + '</small>' : '') + '</label>' +
-      '<label>Places assises<input name="places" type="number" inputmode="numeric" min="1" step="1" value="' + (P.places || '') + '"></label>' +
-      '<label>Couverts par jour en moyenne<input name="couverts" type="number" inputmode="numeric" min="1" step="1" value="' + (P.couverts || '') + '">' + (P.couvertsCaisse || couvertsCaisse(DB() || {}) === Number(P.couverts) ? '<small class="ci-lu">Lus dans votre caisse</small>' : (!(Number(P.couverts) > 0) && sansTickets(DB() || {}) ? '<small class="ci-lu">Votre export de caisse ne donne pas les tickets : déposez vos journées de caisse (CA et nombre de tickets) pour le remplir sans saisie.</small>' : '')) + '</label>' +
+      '<label>' + (votreSalle() === 'votre activité' ? 'Places assises (commandes directes et à emporter)' : 'Places assises') + '<input name="places" type="number" inputmode="numeric" min="1" step="1" value="' + (P.places || '') + '"></label>' +
+      '<label>' + (votreSalle() === 'votre activité' ? 'Commandes par jour en moyenne' : 'Couverts par jour en moyenne') + '<input name="couverts" type="number" inputmode="numeric" min="1" step="1" value="' + (P.couverts || '') + '">' + (P.couvertsCaisse || couvertsCaisse(DB() || {}) === Number(P.couverts) ? '<small class="ci-lu">Lus dans votre caisse</small>' : (!(Number(P.couverts) > 0) && sansTickets(DB() || {}) ? '<small class="ci-lu">Votre export de caisse ne donne pas les tickets : déposez vos journées de caisse (CA et nombre de tickets) pour le remplir sans saisie.</small>' : '')) + '</label>' +
       '<label>Services<select name="services">' + opt(SERV, P.services) + '</select></label>' +
       '<div class="ci-a" style="grid-column:1/-1"><button type="submit" class="ci-b ci-p">Lancer l’analyse</button>' + (profilComplet(P) ? '<button type="button" class="ci-b" data-ci="annuler">Annuler</button>' : '') + '</div></form>';
   }
@@ -319,10 +322,10 @@
   function dessiner() {
     var host = doc.getElementById('c-smart'); if (!host) return; css();
     var R = analyse(), h = '<p class="ci-sub" style="margin:0;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">Carte · analyse</p><h2 class="ci-t" data-cp-title tabindex="-1">Carte intelligente <span class="ci-pro">PRO</span></h2>' +
-      '<p class="ci-sub">La carte la plus rentable pour votre établissement : chaque plat pesé, le bon nombre de plats pour votre salle et votre saison, l’argent investi dans le stock, et ce que cela vous rapporte mois après mois.</p>';
+      '<p class="ci-sub">La carte la plus rentable pour votre établissement : chaque plat pesé, le bon nombre de plats pour ' + votreSalle() + ' et votre saison, l’argent investi dans le stock, et ce que cela vous rapporte mois après mois.</p>';
     /* C218 (W73) : la carte idéale fait partie de Pro (badge PRO, grille de l'appli, site) : sous Pilotage elle est fermée et
        le dit, comme Achats ; Ma carte, Ventes et Décisions (avec les mêmes prix conseillés) restent dans Pilotage. */
-    if (!pro()) { host.innerHTML = h + '<div class="ci-sec" data-ci-verrou><h3>🔒 Réservé à Verdict Pro</h3><p class="ci-m">La carte idéale (nombre de plats pour votre salle et votre saison, plats à mettre en avant ou à retirer, argent libéré du stock, gain sur 12 mois) fait partie de Verdict Pro. Votre offre Pilotage comprend Ma carte, Ventes et Décisions : les prix conseillés pour les plats sous leur objectif y sont déjà.</p><div class="ci-a"><button type="button" class="ci-b ci-p" data-ci="offres">Voir les offres</button><button type="button" class="ci-b" data-cp-page="plats">Ouvrir Décisions</button></div></div>'; return; }
+    if (!pro()) { host.innerHTML = h + '<div class="ci-sec" data-ci-verrou><h3>🔒 Réservé à Verdict Pro</h3><p class="ci-m">La carte idéale (nombre de plats pour ' + votreSalle() + ' et votre saison, plats à mettre en avant ou à retirer, argent libéré du stock, gain sur 12 mois) fait partie de Verdict Pro. Votre offre Pilotage comprend Ma carte, Ventes et Décisions : les prix conseillés pour les plats sous leur objectif y sont déjà.</p><div class="ci-a"><button type="button" class="ci-b ci-p" data-ci="offres">Voir les offres</button><button type="button" class="ci-b" data-cp-page="plats">Ouvrir Décisions</button></div></div>'; return; }
     if (!R) { host.innerHTML = h + '<p class="ci-m">Chargement…</p>'; return; }
     var P = R.profil;
     if (!R.pret) {
@@ -330,7 +333,7 @@
       return;
     }
     if (!R.profilOk || editProfil) {
-      host.innerHTML = h + '<div class="ci-sec"><h3>Votre établissement</h3><p class="ci-m">Six réponses suffisent pour adapter la carte à votre salle, votre commune et votre saison' + (P.demo ? ' (démonstration : réponses d’exemple)' : '') + '.</p>' + formProfil(P) + '</div>';
+      host.innerHTML = h + '<div class="ci-sec"><h3>Votre établissement</h3><p class="ci-m">Six réponses suffisent pour adapter la carte à ' + votreSalle() + ', votre commune et votre saison' + (P.demo ? ' (démonstration : réponses d’exemple)' : '') + '.</p>' + formProfil(P) + '</div>';
       return;
     }
     var M = projection(R, part), m12 = M[11].cumul, m36 = M[35].cumul;
@@ -1026,6 +1029,109 @@
     if (typeof MutationObserver === 'function') new MutationObserver(function () { if (!prevu) { prevu = true; setTimeout(passe, 40); } }).observe(doc.body, { childList: true, subtree: true });
     passe();
   }
+  /* ── C340 (décisions 22 et 23) : une seule source « livraison » ; marge par canal et prix plateforme conseillé ─────────────── */
+  /* Lecture : verdictLivraison (moteur, C339) ; sinon DB.livraison (C341 : Σ taux × part des plateformes, base TTC, emballage par
+     commande) ; sinon les anciens réglages de la Carte. Aucun taux propre à la Carte. */
+  function platsParCommande(d) {
+    try { var pan = num((d.in || {}).panier), s = 0, v = 0; (d.plats || []).forEach(function (p) { var t = num(p && p.ttc), q = num(p && p.vol); if (p && !p.cpArchived && t > 0) { q = q > 0 ? q : 1; s += t * q; v += q; } });
+      var moy = v > 0 ? s / v : null; return pan > 0 && moy > 0 ? Math.max(1, Math.round(pan / moy * 10) / 10) : null; } catch (e) { return null; }
+  }
+  function livraisonSource(d) {
+    d = d || D() || {}; var R = d.reg || {}, pk = num(R.pack) || 0;
+    try { if (typeof w.verdictLivraison === 'function') { var L = w.verdictLivraison(d); if (L && num(L.taux) > 0) { var e0 = num(L.emballage); return { taux: num(L.taux), base: L.base === 'ht' ? 'ht' : 'ttc', emballage: e0 != null ? e0 : pk, ppc: num(L.platsParCommande) || platsParCommande(d) || 1, part: num(L.part), source: L.source || 'livraison', tauxParDefaut: !!L.tauxParDefaut }; } } } catch (e) {}
+    var Lv = d.livraison;
+    if (Lv && Array.isArray(Lv.plateformes) && Lv.plateformes.length) {
+      var t = 0, s = 0; Lv.plateformes.forEach(function (x) { var pa = num(x.part); if (!(pa > 0)) pa = 100 / Lv.plateformes.length; t += (num(x.taux) || 0) * pa; s += pa; });
+      var e1 = num(Lv.emballage);
+      return { taux: s > 0 ? t / s : 30, base: Lv.base === 'ht' ? 'ht' : 'ttc', emballage: e1 != null ? e1 : pk, ppc: num(Lv.platsParCommande) || platsParCommande(d) || 1, part: num(Lv.part), source: 'livraison' };
+    }
+    return { taux: num(R.compf) != null ? num(R.compf) : 30, base: 'ttc', emballage: pk, ppc: platsParCommande(d) || 1, part: null, source: 'reglages' };
+  }
+  /* C340 (décision 28) : objectif de marge plateforme par défaut = objectif sur place − commission exprimée en points du HT
+     (30 % du TTC à 10 % de TVA = 33 points : 75 % → 42 %) ; modifiable par le patron (Réglages de la carte), jamais 65 % codé en dur. */
+  function objectifPlateforme(d) {
+    d = d || D(); if (!d || !d.reg) return null;
+    var r = d.reg, L = livraisonSource(d), tva = 10 /* décision 22 : TVA des repas livrés */, salle = num(r.objp) > 0 ? num(r.objp) : 75;
+    var pts = Math.round(L.taux * (L.base === 'ttc' ? 1 + tva / 100 : 1) * 10) / 10, defaut = Math.max(0, Math.round((salle - pts) * 10) / 10);
+    return { salle: salle, points: pts, taux: L.taux, tva: tva, defaut: defaut, saisi: !!r.objpfSaisi, valeur: r.objpfSaisi && num(r.objpf) > 0 ? num(r.objpf) : defaut, part: L.part, source: L.source };
+  }
+  function poserObjpf() {
+    try { var d = D(); if (!d || !d.reg) return; var r = d.reg; if (r.objpfSaisi) return;
+      if (!r.objpfAuto && r.objpf != null && num(r.objpf) !== 65) { r.objpfSaisi = true; return; } /* une valeur choisie avant C340 reste celle du patron */
+      var o = objectifPlateforme(d); if (!o) return; if (num(r.objpf) !== o.defaut) r.objpf = o.defaut; if (!r.objpfAuto) r.objpfAuto = true;
+    } catch (e) {}
+  }
+  w.verdictObjectifPlateforme = objectifPlateforme;
+  /* posé avant chaque calcul (rafraîchissement, changement d'établissement) ; la saisie du patron dans les Réglages de la carte fait foi */
+  ['refreshAll', 'switchEtab', 'moteur'].forEach(function (n) { var k = 0; (function br() { var f = w[n]; if (typeof f !== 'function') { if (++k < 40) setTimeout(br, 250); return; } if (f.__c340obj) return;
+    var g = function () { poserObjpf(); return f.apply(this, arguments); }; for (var p in f) if (Object.prototype.hasOwnProperty.call(f, p)) g[p] = f[p]; g.__c340obj = true; w[n] = g; })(); });
+  (function () { var k = 0; (function br() { var f = w.saveReg; if (typeof f !== 'function') { if (++k < 40) setTimeout(br, 250); return; } if (f.__c340obj) return;
+    var g = function () { var el = doc.getElementById('r-objpf'), v = el ? num(el.value) : null, r = f.apply(this, arguments);
+      try { var d = D(), o = d && objectifPlateforme(d); if (d && d.reg && o && v != null) { if (Math.abs(v - o.defaut) < 0.05) { delete d.reg.objpfSaisi; d.reg.objpfAuto = true; } else { d.reg.objpfSaisi = true; delete d.reg.objpfAuto; } } } catch (e) {}
+      return r; }; g.__c340obj = true; w.saveReg = g; })(); })();
+  var PLATEFORME = 80; /* livré à 80 % ou plus : le prix de la fiche EST le prix plateforme (décision 28, règle B) */
+  var COULOIR = 1.30; /* prix plateforme au plus +30 % du prix en salle : au-delà, le plat ne tient pas sur la plateforme */
+  function canalPlat(p) {
+    if (!p || typeof w.platCalc !== 'function') return null;
+    var k = w.platCalc(p); if (!k || !k.recetteComplete || !(num(p.ttc) > 0)) return null;
+    var tva = (typeof w.platTVA === 'function' ? num(w.platTVA(p)) : num(p.tva)); if (tva == null) tva = 10; tva /= 100;
+    var L = livraisonSource(), cout = k.cout, emb = L.emballage / Math.max(1, L.ppc), t = L.taux / 100;
+    var salle = { ttc: num(p.ttc), ht: num(p.ttc) / (1 + tva) }; salle.marge = salle.ht - cout; salle.pct = salle.ht > 0 ? salle.marge / salle.ht * 100 : null;
+    /* décision 28 révisée : le prix qui atteint l'objectif plateforme, avec le coût réel du plat, le taux et la TVA réels */
+    var OBJ = objectifPlateforme(), objf = OBJ ? OBJ.valeur / 100 : 0.42, pts = L.base === 'ttc' ? t * (1 + tva) : t, den = 1 - pts - objf, conseil = den > 0 ? (1 + tva) * (cout + emb) / den : null;
+    if (conseil != null) conseil = Math.ceil(conseil * 10 - 1e-9) / 10;
+    var livre = L.part != null ? L.part : num(p.pfshare), plateforme = livre != null && livre >= PLATEFORME;
+    if (plateforme) conseil = null;
+    var out = { objectif: OBJ ? OBJ.valeur : objf * 100, horsAtteinte: !plateforme && !(den > 0), dejaAtteint: conseil != null && conseil <= salle.ttc + 1e-9, taux: L.taux, base: L.base, emballageParPlat: emb, ppc: L.ppc, source: L.source, salle: salle, conseille: conseil, couloir: Math.floor(salle.ttc * COULOIR * 10 + 1e-9) / 10, tient: conseil != null && conseil <= salle.ttc * COULOIR + 1e-9, plateforme: plateforme, livre: livre, tauxParDefaut: !!L.tauxParDefaut };
+    if (p.pf && num(p.pfttc) > 0) {
+      var P = num(p.pfttc), ht = P / (1 + tva), comm = t * (L.base === 'ttc' ? P : ht);
+      out.livraison = { ttc: P, ht: ht, commission: comm, emballage: emb, marge: ht - comm - emb - cout }; out.livraison.pct = ht > 0 ? out.livraison.marge / ht * 100 : null;
+      out.part = num(p.pfshare);
+    }
+    return out;
+  }
+  w.verdictCanalPlat = canalPlat; w.verdictLivraisonCarte = livraisonSource;
+  /* La fiche du plat (055, #c-dish) : salle et livraison côte à côte, et le prix plateforme conseillé */
+  function blocCanal(p) {
+    var c = canalPlat(p); if (!c || !p.pf) return '';
+    var L = c.livraison, s = c.salle;
+    var ligne = function (t, v) { return '<div class="cp-metric"><span>' + esc(t) + '</span><strong>' + v + '</strong></div>'; };
+    var h = '<section class="cp-card" data-c340-canal><h3>Par canal</h3><div class="cp-breakdown">' +
+      ligne((c.plateforme ? 'Commandes directes et à emporter · ' : 'Salle · ') + eur(s.ttc), eur(s.marge) + ' · ' + pct(s.pct, 1)) +
+      (L ? ligne('Livraison · ' + eur(L.ttc), eur(L.marge) + ' · ' + pct(L.pct, 1)) : '') + '</div>';
+    if (L) h += '<p class="cp-note">Sur la plateforme : commission ' + eur(L.commission) + ' (' + nb(c.taux, 1).replace(/,0$/, '') + ' % du prix ' + (c.base === 'ttc' ? 'TTC' : 'HT') + (c.tauxParDefaut ? ', taux par défaut, à remplacer par vos relevés' : '') + ')' + (L.emballage > 0 ? ', emballage ' + eur(L.emballage) + ' par plat (emballage d’une commande ÷ ' + nb(c.ppc, 1).replace(/,0$/, '') + ' plats par commande)' : '') + '.</p>';
+    var O = objectifPlateforme(); if (L && O) h += '<p class="cp-note" data-c340-objectif>Objectif de marge sur la plateforme : ' + pct(O.valeur, 1) + (O.saisi ? ' (le vôtre)' : ' (votre objectif ' + (c.plateforme ? 'de marge' : 'sur place') + ', ' + pct(O.salle, 0) + ', moins la commission, ' + nb(O.points, 1).replace(/,0$/, '') + ' points du prix HT)') + '.</p>';
+    if (c.plateforme) h += '<p class="cp-note" data-c340-plateforme>Livré à ' + nb(c.livre, 0) + ' % : le prix de la fiche est votre prix sur la plateforme.</p>';
+    var ob = pct(c.objectif, 1);
+    if (c.horsAtteinte) h += '<p class="cp-note" data-c340-conseil>Avec cette commission, aucun prix n’atteint votre objectif de marge sur la plateforme (' + ob + ') : réduisez d’abord le coût (portion, emballage) ou revoyez cet objectif.</p>';
+    else if (c.conseille != null) h += '<p class="cp-note" data-c340-conseil>' + (c.dejaAtteint
+      ? 'Au prix de la salle (' + eur(s.ttc) + ' TTC), ce plat atteint déjà votre objectif de marge sur la plateforme (' + ob + ').'
+      : c.tient
+      ? 'Prix plateforme conseillé : ' + eur(c.conseille) + ' TTC, le prix qui atteint votre objectif de marge sur la plateforme (' + ob + ').'
+      : 'Ce plat ne tient pas sur la plateforme : pour atteindre votre objectif de marge (' + ob + '), il faudrait ' + eur(c.conseille) + ' TTC (+' + Math.round((c.conseille / s.ttc - 1) * 100) + ' %), au-delà des +' + Math.round((COULOIR - 1) * 100) + ' % que les clients acceptent en livraison : réduisez d’abord le coût (portion, emballage).') + '</p>';
+    return h + '</section>';
+  }
+  function poserCanal() {
+    try {
+      var host = doc.getElementById('c-dish'); if (!host) return;
+      var h3 = host.querySelector('.cp-detail-title h3'); if (!h3) return;
+      var nom = h3.textContent, d = D(), p = d && (d.plats || []).filter(function (x) { return x && x.nom === nom && !x.cpArchived; })[0];
+      var ex = host.querySelector('[data-c340-canal]'), cle = p ? JSON.stringify([p.id, p.ttc, p.pfttc, p.pfshare, p.pf, (d.livraison || {}).at]) : '';
+      if (ex && ex.getAttribute('data-c340-cle') === cle) return;
+      if (ex) ex.parentNode.removeChild(ex);
+      if (!p) return; var html = blocCanal(p); if (!html) return;
+      var carte = host.querySelector('.cp-card'), box = doc.createElement('div'); box.innerHTML = html; var el = box.firstChild; el.setAttribute('data-c340-cle', cle);
+      if (carte && carte.parentNode) carte.parentNode.insertBefore(el, carte.nextSibling); else host.appendChild(el);
+    } catch (e) {}
+  }
+  /* la fiche (#c-dish) n'existe qu'à la première ouverture de la Carte : on observe la vue Carte entière (présente dès le chargement) ; poserCanal ne
+     réécrit rien si le plat n'a pas changé (clé), et l'observateur passe avant le dessin : le bloc arrive avec la fiche */
+  (function () { var k = 0; function br() { var v = doc.getElementById('v-carte'); if (!v || typeof w.MutationObserver !== 'function') return false; new w.MutationObserver(function () { if (doc.getElementById('c-dish')) poserCanal(); }).observe(v, { childList: true, subtree: true }); poserCanal(); return true; }
+    if (!br()) { var t = setInterval(function () { if (br() || ++k > 120) clearInterval(t); }, 500); } })();
+  /* Décision 37 (fenêtres) : le mécanisme commun de L6 (fenetres-c366 : croix, toucher à côté, Échap, glisser vers le bas) n'était chargé
+     que dans la coque ; les fenêtres de la Carte (Vera, gestes, historique, établissements) vivent dans l'appli : on l'y charge, une fois. */
+  try { if (!w.__vdFenetres366 && !doc.querySelector('script[src*="fenetres-c366"]')) { var cs = doc.currentScript, src = cs && cs.src ? cs.src.replace(/carte-intelligente-a48\.js[^/]*$/, 'fenetres-c366.js') : '../../internal/fenetres-c366.js';
+    var sf = doc.createElement('script'); sf.src = src; (doc.head || doc.documentElement).appendChild(sf); } } catch (e) {}
   if (doc.body) boot(40); else doc.addEventListener('DOMContentLoaded', function () { boot(40); });
   w.VerdictCarteGestes = { eur: eur, catDuNom: catDuNom, ficheLocale: ficheLocale, prixConseille: prixConseille, corriger: corriger, texteCorrection: texteCorrection, journaliser: journaliser, historique: ouvrirHistorique, geste: ouvrirGeste, retirer: retirer, remettre: remettre, deviner: deviner, statsCarte: statsCarte };
 })();

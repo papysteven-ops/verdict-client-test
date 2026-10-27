@@ -19,6 +19,7 @@
     compte: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     langue: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
     chercher: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+    parametres: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
     /* C312 (V16-071) : modules */
     pilotage: '<path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/>',
     carte: '<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
@@ -30,7 +31,11 @@
   function modeleDemo() { try { return !w.VERDICT_TEST_SESSION && typeof w.modeleDansDemonstration === 'function' && !!w.modeleDansDemonstration(); } catch (e) { return false; } }
   var portail = typeof w.VERDICT_TEAM_PORTAL_URL === 'string' && !!w.VERDICT_TEAM_PORTAL_URL;
   function pilotage() { try { return typeof w.verdictNiveau === 'function' && w.verdictNiveau() === 'pilotage'; } catch (e) { return false; } }
+  /* C343 (décision 25 de Steven) : les réglages vivent dans un seul écran « Paramètres » (coque, internal/parametres-c343.js),
+     ouvert par la première ligne de Plus. Plus ne garde que le travail. Pilotage ouvert seul, sans la coque : l'ancien groupe reste. */
+  function parametres() { try { return !!(w.top && w.top !== w && w.top.VerdictParametres && typeof w.top.VerdictParametres.ouvrir === 'function'); } catch (e) { return false; } }
   var ACTIONS = {
+    parametres: function () { w.top.VerdictParametres.ouvrir(); },
     /* C305 (V15-101) : en Pilotage, l'équipe (à l'année et au mois) est comprise : on l'ouvre directement, au lieu du cadenas
        Pro « Coût par service ». « À faire » et les Alertes, compris dans Pilotage, ont enfin un chemin visible. */
     equipe: function () { w.go(pilotage() ? 'sal' : 'planning'); },
@@ -57,27 +62,33 @@
       /* C210 (V35) : en démonstration, ce bouton ouvre le choix des modèles fictifs (openEtabs → openModeles) : le dire. */
       { t: 'Établissement & compte', l: [['etabs', 'Établissements', modeleDemo() ? 'Démonstration : changer de modèle d’établissement' : 'Ajouter, renommer ou changer d’établissement']] }
     ];
-    if (demo() || portail) g[2].l.push(['acces', 'Accès du personnel', 'Inventaire pour votre équipe, droits choisis par vous']);
-    g[2].l.push(['compte', 'Compte et abonnement', 'Accès, essai et facturation']);
-    if (w.I18N_ENABLED !== false && typeof w.langModal === 'function') g[2].l.push(['langue', 'Langue', 'Changer la langue de l’application']);
+    if (parametres()) g.pop();
+    else {
+      if (demo() || portail) g[2].l.push(['acces', 'Accès du personnel', 'Inventaire pour votre équipe, droits choisis par vous']);
+      g[2].l.push(['compte', 'Compte et abonnement', 'Accès, essai et facturation']);
+      if (w.I18N_ENABLED !== false && typeof w.langModal === 'function') g[2].l.push(['langue', 'Langue', 'Changer la langue de l’application']);
+    }
     /* C312 (V16-071) : hors de la coque, la barre des modules n'existe pas : Plus les propose (le module ouvert n'est pas répété). */
     var seul = false, prof = 'pilotage';
     try { seul = w.top === w && !(w.VerdictUnified && w.VerdictUnified.embedded); var MP = w.VerdictModuleProfilesV45; if (MP && MP.getProfile) prof = MP.getProfile(); } catch (e) {}
     if (seul) g.unshift({ t: 'Modules', l: [prof === 'carte' ? ['pilotage', 'Pilotage', 'Accueil, Structure, Simuler et Audit'] : ['carte', 'Carte', 'Plats, recettes, prix et marges'], ['inventaire', 'Inventaire', 'Stock, comptages et commandes']] });
     return g;
   }
+  function ligne(r) {
+    return '<button type="button" class="vp-row" data-vp="' + r[0] + '"><span class="vp-tile">' + svg(r[0]) + '</span><span class="vp-txt"><b>' + esc(r[1]) + (r[3] ? ' <span class="vp-badge">' + esc(r[3]) + '</span>' : '') + '</b><small>' + esc(r[2]) + '</small></span><span class="vp-chev" aria-hidden="true">›</span></button>';
+  }
   function rendre() {
     var v = doc.getElementById('v-plus'); if (!v) return;
+    var param = parametres();
     var box = doc.getElementById('vd-plus');
     if (!box) { box = doc.createElement('section'); box.id = 'vd-plus'; v.insertBefore(box, v.firstChild); }
     box.innerHTML =
-      '<header class="vp-head"><span class="vp-kicker">Verdict</span><h1>Plus</h1><p>Réglages, données et outils de votre établissement.</p></header>' +
+      '<header class="vp-head"><span class="vp-kicker">Verdict</span><h1>Plus</h1><p>' + (param ? 'Outils et données de votre établissement.' : 'Réglages, données et outils de votre établissement.') + '</p></header>' +
+      (param ? '<div class="vp-group vp-param"><div class="vp-list">' + ligne(['parametres', 'Paramètres', 'Compte, abonnement, sécurité, apparence, langue']) + '</div></div>' : '') +
       '<form class="vp-search" role="search" onsubmit="var s=this.querySelector(&quot;#plusSearchQ21&quot;),d=document.getElementById(&quot;plusSearchQ&quot;);if(!d){d=document.createElement(&quot;input&quot;);d.type=&quot;hidden&quot;;d.id=&quot;plusSearchQ&quot;;this.appendChild(d);}d.value=s?s.value:&quot;&quot;;return plusSearchSubmit(event)">' + svg('chercher', 'vp-search-ic') +
       '<input id="plusSearchQ21" type="search" autocomplete="off" enterkeyhint="search" placeholder="Demander à Vera…" aria-label="Demander à Vera"><button type="submit">Trouver</button></form>' +
       groupes().map(function (gr) {
-        return '<div class="vp-group"><h2>' + esc(gr.t) + '</h2><div class="vp-list">' + gr.l.map(function (r) {
-          return '<button type="button" class="vp-row" data-vp="' + r[0] + '"><span class="vp-tile">' + svg(r[0]) + '</span><span class="vp-txt"><b>' + esc(r[1]) + (r[3] ? ' <span class="vp-badge">' + esc(r[3]) + '</span>' : '') + '</b><small>' + esc(r[2]) + '</small></span><span class="vp-chev" aria-hidden="true">›</span></button>';
-        }).join('') + '</div></div>';
+        return '<div class="vp-group"><h2>' + esc(gr.t) + '</h2><div class="vp-list">' + gr.l.map(ligne).join('') + '</div></div>';
       }).join('');
     [].forEach.call(box.querySelectorAll('[data-vp]'), function (b) { b.onclick = function () { var f = ACTIONS[b.getAttribute('data-vp')]; if (f) try { f(); } catch (e) {} }; });
   }
@@ -89,6 +100,7 @@
     'html.vd-workspace-dark #vd-plus{--vp-card:#11161d;--vp-line:#222b36;--vp-txt:#f1f5f9;--vp-sub:#94a3b8;--vp-tile:#14251c;--vp-ic:#4ade80;--vp-input:#0b0f14;--vp-shadow:0 1px 0 rgba(255,255,255,.03),0 10px 30px rgba(0,0,0,.45)}' +
     '#vd-plus .vp-head{padding:8px 4px 18px}#vd-plus .vp-kicker{font:700 12px/1 -apple-system,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--vp-ic)}' +
     '#vd-plus .vp-head h1{margin:8px 0 6px;font:800 34px/1.05 -apple-system,system-ui,sans-serif;letter-spacing:-.02em;color:var(--vp-txt)}#vd-plus .vp-head p{margin:0;color:var(--vp-sub);font-size:15px;line-height:1.4}' +
+    '#vd-plus .vp-param{margin:0 0 18px}' +
     '#vd-plus .vp-search{display:flex;align-items:center;gap:10px;margin:0 0 26px;padding:6px 6px 6px 14px;border-radius:16px;background:var(--vp-card);border:1px solid var(--vp-line);box-shadow:var(--vp-shadow)}' +
     '#vd-plus .vp-search-ic{width:20px;height:20px;flex:0 0 20px;color:var(--vp-sub)}' +
     '#vd-plus .vp-search input{flex:1;min-width:0;height:44px;border:0!important;background:transparent!important;color:var(--vp-txt)!important;font:500 16px -apple-system,system-ui,sans-serif;outline:none;box-shadow:none!important;padding:0!important}' +

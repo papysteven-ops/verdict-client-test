@@ -21,7 +21,7 @@
   function lire(){try{return global.localStorage.getItem(KEY);}catch(e){return null;}}
   function ecrire(v){try{if(v===null)global.localStorage.removeItem(KEY);else global.localStorage.setItem(KEY,v);}catch(e){}}
   try{
-    var q=new URLSearchParams(global.location.search+(self.__vdq||"")).get('premium');
+    var q=new URLSearchParams(global.location.search).get('premium');
     if(q==='off')ecrire('off');else if(q==='on')ecrire(null);
   }catch(e){}
 
@@ -143,13 +143,13 @@
     function tourActif(){try{return (typeof global.demoTourActif==='function'&&global.demoTourActif())||(doc.body&&doc.body.classList.contains('demo-tour-active'));}catch(e){return false;}}
     var w=function(sel){if(tourActif())return o.apply(this,arguments);/* le guide garde son propre positionneur */
       try{var el=(typeof sel==='string')?doc.querySelector(sel):sel;if(!el)return;var vue=doc.querySelector('.view.on'),ong=vue&&(vue.querySelector('.actbar')||vue.querySelector(':scope > .chips'));
-      var mb=doc.getElementById('modeBar'),nav=doc.querySelector('body > nav'),base=(mb&&mb.getClientRects().length)?Math.max(0,mb.getBoundingClientRect().bottom):0;if(nav&&global.innerWidth>=768)base=Math.max(base,Math.max(0,nav.getBoundingClientRect().bottom));var haut=base+(ong?ong.getBoundingClientRect().height:0)+16;
+      var mb=doc.getElementById('modeBar'),base=(mb&&mb.getClientRects().length)?Math.max(0,mb.getBoundingClientRect().bottom):0;var haut=base+(ong?ong.getBoundingClientRect().height:0)+10;
       var y=global.scrollY+el.getBoundingClientRect().top-haut;global.scrollTo({top:Math.max(0,y),behavior:'auto'});}catch(e){}};
     w.__p40=true;global.calerSur=w;
     /* R75 : après l'atterrissage, l'app peut encore bouger (cadre premium qui finit de se mesurer, bandeau qui se replie) ; on recale trois fois, sans lissage, puis on laisse la main au client */
     var o2=global.verdictSettleSubview;if(typeof o2==="function"&&!o2.__p40){var w2=function(target){var r=o2.apply(this,arguments);var el=(typeof target==='string')?doc.querySelector(target):target;if(!el)return r;
       if(tourActif())return r;
-      var tries=[220,600,1200];tries.forEach(function(ms){global.setTimeout(function(){try{if(tourActif()||!el.isConnected||el.getClientRects().length===0)return;var vue=doc.querySelector('.view.on'),ong=vue&&(vue.querySelector('.actbar')||vue.querySelector(':scope > .chips'));var mb=doc.getElementById('modeBar'),nav=doc.querySelector('body > nav'),base=(mb&&mb.getClientRects().length)?Math.max(0,mb.getBoundingClientRect().bottom):0;if(nav&&global.innerWidth>=768)base=Math.max(base,Math.max(0,nav.getBoundingClientRect().bottom));var want=base+(ong?ong.getBoundingClientRect().height:0)+16;var top=el.getBoundingClientRect().top;if(Math.abs(top-want)>6&&!global.__p40Touche)global.calerSur(el);}catch(e){}},ms);});return r;};w2.__p40=true;global.verdictSettleSubview=w2;}}
+      var tries=[220,600,1200];tries.forEach(function(ms){global.setTimeout(function(){try{if(tourActif()||!el.isConnected||el.getClientRects().length===0)return;var vue=doc.querySelector('.view.on'),ong=vue&&(vue.querySelector('.actbar')||vue.querySelector(':scope > .chips'));var mb=doc.getElementById('modeBar'),base=(mb&&mb.getClientRects().length)?Math.max(0,mb.getBoundingClientRect().bottom):0;var want=base+(ong?ong.getBoundingClientRect().height:0)+10;var top=el.getBoundingClientRect().top;if(Math.abs(top-want)>6&&!global.__p40Touche)global.calerSur(el);}catch(e){}},ms);});return r;};w2.__p40=true;global.verdictSettleSubview=w2;}}
     envelopper();global.addEventListener('load',envelopper);global.setTimeout(envelopper,1500);
     try{if(global.parent&&global.parent!==global)doc.documentElement.setAttribute('data-p40-coque','1');}catch(e){}
     /* R84 : le bandeau « Démonstration fictive » se replie d'une croix ; C285 : il garde toujours la sortie, le repli ne vaut que pour la démo en cours
@@ -200,10 +200,6 @@
       if(global.MutationObserver&&doc.body)new MutationObserver(function(){appliquerMb();}).observe(doc.body,{childList:true,subtree:false});
       if(global.MutationObserver)new MutationObserver(function(){appliquerMb();}).observe(doc.documentElement,{attributes:true,attributeFilter:['lang']});
       global.addEventListener('vd:demobar',appliquerMb);})();
-/* C312 (V16-078) : la sortie reste dans le bandeau (une seule « Revenir à mon établissement ») ; (V16-088) à 375 px, avec plusieurs établissements,
-   la barre tient sur une ligne qui défile (l'actif d'abord, puis les autres, Comparer, réglages, +) au lieu de 3 à 5 lignes ;
-   (V16-068) la croix du bandeau de démonstration ne chevauche plus « Recommencer » jusqu'à 360 px. Hors du bloc R84 partagé. */
-;(function(){try{var d=document;if(d.getElementById('c312-etab-css'))return;var s=d.createElement('style');s.id='c312-etab-css';s.textContent='#etabBar .p40-etab-reel{display:none!important}@media(max-width:480px){#etabBar.etabbar:has(>button:not(.on):not(.cmp12):not(.gear):not(.add):not(.p40-etab-reel)){flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-x:contain;scrollbar-width:none}#etabBar.etabbar:has(>button:not(.on):not(.cmp12):not(.gear):not(.add):not(.p40-etab-reel))::-webkit-scrollbar{display:none}#etabBar.etabbar:has(>button:not(.on):not(.cmp12):not(.gear):not(.add):not(.p40-etab-reel))>button{flex:0 0 auto!important}#etabBar.etabbar:has(>button:not(.on):not(.cmp12):not(.gear):not(.add):not(.p40-etab-reel))>button.on{order:-1;max-width:72vw!important}#etabBar.etabbar:has(>button:not(.on):not(.cmp12):not(.gear):not(.add):not(.p40-etab-reel))>button:not(.on):not(.cmp12):not(.gear):not(.add){max-width:50vw!important}#etabBar.etabbar:has(>button:not(.on):not(.cmp12):not(.gear):not(.add):not(.p40-etab-reel))>button.cmp12{order:1}#etabBar.etabbar:has(>button:not(.on):not(.cmp12):not(.gear):not(.add):not(.p40-etab-reel))>button.gear{order:2}#etabBar.etabbar:has(>button:not(.on):not(.cmp12):not(.gear):not(.add):not(.p40-etab-reel))>button.add{order:3}}@media(max-width:420px){html body.modebar #modeBar{grid-template-columns:minmax(0,1fr) auto auto!important;column-gap:4px!important;padding-left:6px!important}html body.modebar #modeBar .mb-label{grid-column:1/2!important;font-size:11px!important;min-width:0!important;padding-right:0!important}html body.modebar #modeBar .mb-label .p40-mb-x{width:26px!important;min-width:26px!important;margin:0 0 0 3px!important;padding:0!important}html body.modebar #modeBar>button:not(.p40-mb-ouvrir):not(.mb-info){grid-row:1!important;padding:5px 6px!important;font-size:10.5px!important;letter-spacing:0!important}}';(d.head||d.documentElement).appendChild(s);}catch(e){}})();
     /* si le client a repris la main (il fait défiler), on ne recale plus */
     var tT=0;global.addEventListener('touchstart',function(){global.__p40Touche=true;global.clearTimeout(tT);tT=global.setTimeout(function(){global.__p40Touche=false;},1500);},{passive:true});
     doc.addEventListener('click',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('.chips button,.actbar button'))global.__p40Touche=false;},true);})();
@@ -226,11 +222,8 @@
       try{gestes(doc.body);}catch(e){}
     }
   }
-  var passesIntro=0,attenteIntro=false;
   function planifier(){
     if(minut!==null)return;
-    /* C103 : pendant l'écran d'ouverture, une seule passe (pour préparer l'Accueil) ; les suivantes attendent la fin de l'anneau. */
-    if(doc.getElementById('splash')){if(passesIntro>=1){if(!attenteIntro){attenteIntro=true;global.addEventListener('verdict:intro-complete',function(){attenteIntro=false;global.setTimeout(planifier,120);},{once:true});}return;}passesIntro++;}
     /* pendant le parcours guidé, l'app redessine certaines vues plus de dix fois par seconde : la couche ne se recalcule qu'une fois toutes les deux secondes */
     var tour=false;try{tour=(typeof global.demoTourActif==='function'&&global.demoTourActif())||(doc.body&&doc.body.classList.contains('demo-tour-active'));}catch(e){}
     var attente=tour?Math.max(400,2000-(Date.now()-dernier)):Math.max(90,250-(Date.now()-dernier));
@@ -251,7 +244,7 @@
   if(lire()==='off'){root.classList.remove('p40','p40-'+surface);return;}
   root.classList.add('p40','p40-'+surface);root.setAttribute('data-p40-surface',surface);
   if(surface==='shell'){
-    global.addEventListener('message',function(ev){var d=ev.data;if(!d||d.p41!=='gate')return;lastGateShell=!!d.open;root.classList.toggle('p40-gate',!!d.open);});
+    global.addEventListener('message',function(ev){var d=ev.data;if(!d||d.p41!=='gate')return;/* C217 W63 : un cadre caché (Pilotage préparé pendant l'Inventaire) ne masque pas l'en-tête */try{if(d.open){var fr=[].filter.call(doc.querySelectorAll('iframe'),function(f){return f.contentWindow===ev.source;})[0];if(fr&&!fr.getClientRects().length)return;}}catch(e){}lastGateShell=!!d.open;root.classList.toggle('p40-gate',!!d.open);});
     root.classList.add('p40-gate');global.setTimeout(function(){if(lastGateShell==null)root.classList.remove('p40-gate');},20000);
     return;}
 
@@ -260,11 +253,10 @@
       for(var i=0;i<recs.length;i++){
         var r=recs[i],t=r.target;
         if(r.type==='attributes'){
-          if(t.classList&&(t.classList.contains('view')||t.classList.contains('sv')||t.classList.contains('modal')||t.id==='refSh'||t.id==='mDemoIntent')){planifier();return;}
+          if(t.classList&&(t.classList.contains('view')||t.classList.contains('sv')||t.classList.contains('modal')||t.id==='refSh'||t.id==='splash'||t.id==='mDemoIntent')){planifier();return;}
           continue;
         }
         if(horsChamp(t))continue;
-        if(t&&t.closest&&t.closest('#splash,#verdictIntroHandoff'))continue;/* C103 : l'écran d'ouverture ne relance pas la couche */
         for(var j=0;j<r.addedNodes.length;j++){
           var n=r.addedNodes[j];
           if(n.nodeType===1&&!(n.classList&&n.classList.contains('p40-own'))){planifier();return;}
@@ -275,23 +267,46 @@
   }
   planifier();
   global.addEventListener('load',planifier);
-  /* V05 (21/10) : au toucher d'un onglet (go) ou d'un sous-onglet de Structure (dsub), la lecture premium se pose dans le
-     même geste que la vue. L'observateur la posait 90 à 250 ms plus tard, davantage si le fil principal était occupé :
-     l'écran d'origine, avec ses propres calculs (Saisonnalité 51 662 €, repère 38,0 %), s'affichait entre les deux.
-     Pas pendant l'écran d'ouverture ni le parcours guidé, qui gardent leur rythme (C103). */
-  if(surface==='app'){
-    var poserAuToucher=function(nom){var f=global[nom];if(typeof f!=='function'||f.__p40Pose)return;
-      var w=function(){var r=f.apply(this,arguments);if(r!==false&&!doc.getElementById('splash')){var tour=false;try{tour=(typeof global.demoTourActif==='function'&&global.demoTourActif())||(doc.body&&doc.body.classList.contains('demo-tour-active'));}catch(e){}
-        if(!tour){if(minut!==null){global.clearTimeout(minut);minut=null;}try{appliquer();}catch(e){}}}return r;};
-      for(var k in f){try{w[k]=f[k];}catch(e){}}w.__p40Pose=true;global[nom]=w;};
-    poserAuToucher('go');poserAuToucher('dsub');}
-  /* C103 : plus de relances à 900 et 2600 ms (la couche se recalculait 6 à 8 fois au lancement). */
+  global.setTimeout(planifier,900);
+  global.setTimeout(planifier,2600);
 })(window);
 /* R199 point 47 (WCAG 3.1.1) : la langue du document hote suit celle du module affiche. Sans effet hors coque (pas de frame-verdict). */
 ;(function(){try{
   var fv=document.getElementById('frame-verdict');if(!fv)return;
-  function sync(){try{var d=fv.contentDocument,l=d&&d.documentElement&&d.documentElement.lang;if(l&&/^[a-z]{2}/i.test(l)&&document.documentElement.lang!==l)document.documentElement.lang=l;}catch(e){}}
+  /* C302 (V15-064) : Pilotage absent (Inventaire gratuit, lien d'équipe) : la coque prend la langue choisie sur cet appareil
+     au lieu de rester en français (« En ligne », « Inventaire ») à côté d'un Inventaire en allemand. */
+  function choisie(){try{var l=String(localStorage.getItem('verdict_locale')||'').replace(/"/g,'').slice(0,2).toLowerCase();return /^(fr|en|es|it|de|nl|pt)$/.test(l)?l:'';}catch(e){return '';}}
+  function sync(){try{var d=fv.getAttribute('src')&&fv.contentDocument,l=d&&d.documentElement&&d.documentElement.lang;if(!(l&&/^[a-z]{2}/i.test(l)))l=choisie();if(l&&document.documentElement.lang!==l)document.documentElement.lang=l;}catch(e){}}
   function attach(){try{var d=fv.contentDocument,r=d&&d.documentElement;if(!r||fv.__lgObs===r)return;fv.__lgObs=r;new MutationObserver(sync).observe(r,{attributes:true,attributeFilter:['lang']});sync();}catch(e){}}
-  fv.addEventListener('load',attach);attach();window.setTimeout(attach,1500);window.setTimeout(attach,4000);
+  fv.addEventListener('load',attach);attach();sync();window.setTimeout(attach,1500);window.setTimeout(attach,4000);window.setTimeout(sync,1500);
+}catch(e){}})();
+/* C312 (V16-055) : la pastille de l'établissement de la coque est un sélecteur (avant : elle ne réagissait pas, on changeait
+   d'établissement par les onglets de l'Inventaire ou les pastilles de Pilotage sans que rien ne le dise). Elle liste les
+   établissements du module affiché (sites de l'Inventaire, établissements de Pilotage) ; jamais pendant une démonstration. */
+;(function(){try{
+  var ctx=document.querySelector('.app-shell-context');if(!ctx)return;
+  var TXT={fr:['Changer d’établissement','Établissement affiché'],en:['Switch business','Business shown'],es:['Cambiar de establecimiento','Establecimiento mostrado'],it:['Cambia attività','Attività mostrata'],de:['Betrieb wechseln','Angezeigter Betrieb'],nl:['Andere zaak kiezen','Getoonde zaak'],pt:['Mudar de estabelecimento','Estabelecimento mostrado']};
+  function t(i){var l=String(document.documentElement.lang||'fr').slice(0,2);return (TXT[l]||TXT.fr)[i];}
+  function cadre(id){var f=document.getElementById(id);try{return f&&f.getAttribute('src')?f.contentWindow:null;}catch(e){return null;}}
+  function propre(s){var d=document.createElement('div');d.innerHTML=String(s||'');return (d.textContent||'').trim();}
+  function liste(){var U=window.VerdictUnifiedShell,c=(U&&U.getContext&&U.getContext())||{},mod='';try{mod=String(U&&U.getActiveModule?U.getActiveModule():'');}catch(e){}
+    if(c.demo)return [];var I=cadre('frame-inventory'),V=cadre('frame-verdict'),out=[];
+    try{if(/inventor/.test(mod)&&I&&I.DB&&Array.isArray(I.DB.siteList)&&typeof I.setSite==='function'){I.DB.siteList.forEach(function(k){var n='';try{n=typeof I.siteName==='function'?I.siteName(k):(I.DB.sites[k]||{}).name;}catch(e){}out.push({nom:propre(n)||k,actif:k===I.DB.site,choisir:function(){I.setSite(k);}});});return out;}}catch(e){}
+    try{if(V&&V.STORE&&V.STORE.etabs&&typeof V.switchEtab==='function'){var S=V.STORE,ids=Array.isArray(S.ordre)?S.ordre:Object.keys(S.etabs);ids.forEach(function(id){var d=S.etabs[id]||{};if(d._demo&&d._demo.active)return;out.push({nom:propre(d.etab)||id,actif:id===S.actif,choisir:function(){V.switchEtab(id);}});});}}catch(e){}
+    return out;}
+  var menu=null;function fermer(){if(menu&&menu.parentNode)menu.parentNode.removeChild(menu);menu=null;ctx.setAttribute('aria-expanded','false');}
+  function ouvrir(){var l=liste();if(l.length<2)return;fermer();menu=document.createElement('div');menu.id='vd-etab-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label',t(0));
+    var r=ctx.getBoundingClientRect();menu.style.cssText='position:fixed;z-index:95;left:'+Math.round(r.left)+'px;top:'+Math.round(r.bottom+6)+'px;min-width:'+Math.max(200,Math.round(r.width))+'px;max-width:calc(100vw - 24px);padding:6px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:#10161c;color:#f3f5f7;box-shadow:0 18px 40px rgba(0,0,0,.35);font:600 13px/1.3 Inter,-apple-system,system-ui,sans-serif';
+    l.forEach(function(e){var b=document.createElement('button');b.type='button';b.setAttribute('role','menuitemradio');b.setAttribute('aria-checked',e.actif?'true':'false');b.textContent=(e.actif?'✓ ':'')+e.nom;
+      b.style.cssText='display:block;width:100%;min-height:40px;padding:9px 11px;border:0;border-radius:10px;background:'+(e.actif?'rgba(34,197,94,.16)':'transparent')+';color:inherit;font:inherit;text-align:left;cursor:pointer';
+      b.addEventListener('click',function(){fermer();if(!e.actif)try{e.choisir();}catch(x){}});menu.appendChild(b);});
+    document.body.appendChild(menu);ctx.setAttribute('aria-expanded','true');var p=menu.querySelector('[aria-checked="true"]')||menu.querySelector('button');if(p)p.focus();}
+  /* C333 : contrôle toutes les 2 s sans rien écrire si rien ne change (avant : title, role… reposés à chaque passe). */
+  function pose(k,v){if(v==null){if(ctx.hasAttribute(k))ctx.removeAttribute(k);}else if(ctx.getAttribute(k)!==v)ctx.setAttribute(k,v);}
+  function etat(){var n=liste().length>1;if(ctx.style.cursor!==(n?'pointer':''))ctx.style.cursor=n?'pointer':'';pose('role',n?'button':null);pose('tabindex',n?'0':null);pose('aria-haspopup',n?'menu':null);pose('title',t(n?0:1));}
+  ctx.addEventListener('click',function(ev){ev.stopPropagation();if(menu)fermer();else ouvrir();});
+  ctx.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();if(menu)fermer();else ouvrir();}});
+  document.addEventListener('click',function(ev){if(menu&&!menu.contains(ev.target))fermer();});document.addEventListener('keydown',function(ev){if(ev.key==='Escape')fermer();});
+  etat();window.setInterval(etat,2000);
 }catch(e){}})();
 

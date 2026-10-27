@@ -195,7 +195,14 @@
     var key = ctx.demo ? String(ctx.siteId || '') + '|' + String(ctx.name || '') : '';
     if (key === lastDemo) return; var prev = lastDemo; lastDemo = key; if (!prev) return;
     var cur = currentKey();
-    c.getItems().forEach(function (it) { if (it.demo && siteBase(it).key !== cur && String(it.establishmentId || '') !== String(ctx.siteId || '')) c.remove(it.id); });
+    /* C353 (T2, S04, S15) : la cloche passait de 1 à 3 à chaque changement de modèle : toutes les alertes de démonstration sont
+       rattachées à l'unique établissement fictif de Pilotage et aucune n'était purgée. Elle compte désormais les alertes du modèle
+       affiché : celles d'un autre modèle sont retirées sans être condamnées (elles reviennent avec leur modèle). */
+    var modele = ctx.demo ? norm(nomDemo(ctx.name)) : '', partir = [];
+    c.getItems().forEach(function (it) { if (!it.demo) return;
+      if (siteBase(it).key !== cur && String(it.establishmentId || '') !== String(ctx.siteId || '')) partir.push(it.id);
+      else if (modele && it.establishmentName && norm(nomDemo(it.establishmentName)) !== modele) partir.push(it.id); });
+    if (partir.length) { if (typeof c.oublier === 'function') c.oublier(partir); else partir.forEach(function (id) { c.remove(id); }); }
   }
 
   function start() {
@@ -207,5 +214,7 @@
     purgeDemo(); decorate();
   }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start); else start();
-  window.VerdictNotifEtabs = { decorate: decorate, siteOf: siteOf, level: level, prefs: prefs, _shown: shown };
+  /* C343 : Paramètres ouvre directement les réglages des notifications par établissement (la cloche reste dans l'en-tête). */
+  function ouvrirReglages() { var c = center(); if (!c || typeof c.open !== 'function') return false; UI.settings = true; c.open(); decorate(); var top = doc.getElementById('notification-sheet'); if (top) top.scrollTop = 0; return true; }
+  window.VerdictNotifEtabs = { decorate: decorate, siteOf: siteOf, level: level, prefs: prefs, _shown: shown, ouvrirReglages: ouvrirReglages };
 })();

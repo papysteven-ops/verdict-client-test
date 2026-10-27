@@ -178,7 +178,16 @@
     }).catch(function () { return false; });
   }
   function planifier() { clearTimeout(minuteur); minuteur = setTimeout(envoyer, 2600); }
+  /* C328 (L4, via L7) : le serveur compte les établissements déclarés : un dossier archivé dans Pilotage (etabIsActive === false) n'est
+     jamais créé au serveur par « ensure_establishment ». Seul un dossier que Pilotage connaît compte : un site d'Inventaire seul,
+     inconnu de Pilotage, reste créé normalement. Pilotage est lu dans cette page ou dans son cadre voisin (coque). */
+  function archiveEtab(id) {
+    var V = [w]; try { var f = w.parent && w.parent !== w && w.parent.document.getElementById('frame-verdict'); if (f && f.contentWindow) V.push(f.contentWindow); } catch (e) {}
+    for (var i = 0; i < V.length; i++) { try { if (typeof V[i].etabIsActive === 'function' && V[i].STORE && V[i].STORE.etabs && V[i].STORE.etabs[id]) return V[i].etabIsActive(id) === false; } catch (e) {} }
+    return false;
+  }
   function envoyerEtab(etab, info) {
+    if (serveur.indexOf(etab) < 0 && archiveEtab(etab)) return Promise.resolve('archive');
     var E = lireEtats(), etat = E.docs[etab] || { rev: 0, base: null }, donnees = extraire(DB(), etab);
     if (etat.base && S().equal(donnees, etat.base)) return Promise.resolve('same');
     var avant = Promise.resolve();

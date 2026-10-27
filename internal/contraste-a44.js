@@ -35,27 +35,39 @@
     return 'rgb(' + Math.round(c.r) + ',' + Math.round(c.g) + ',' + Math.round(c.b) + ')';
   }
   var vus = new WeakSet(); /* textes déjà vérifiés pour le thème courant : pas remesurés */
-  function passe(racine) {
+  /* C371 (L6 ; Inventaire sur iPhone : chaque toucher répondait en ≈ 1 s) : la passe relisait tous les éléments de tous les documents
+     (cadres cachés compris), mesurait l'opacité de chaque ancêtre pour chaque texte et écrivait au fil de l'eau (mise en page recalculée
+     à chaque correction) : jusqu'à 1,27 s d'un seul tenant après un changement de vue. Désormais : seulement ce qui est à l'écran ou
+     tout près (le reste est mesuré quand il approche, au défilement) ; l'opacité n'est mesurée que pour un texte en défaut ; toutes les
+     lectures, puis toutes les écritures ; au plus 12 ms par tranche, la suite à l'image suivante. Les mêmes textes sont corrigés. */
+  var reste = false, etats = new WeakMap(); /* tranche suivante : reprise là où la précédente s'est arrêtée (par document) */
+  function passe(racine, budget) {
     var d = racine.ownerDocument || racine, win = d.defaultView; if (!win) return 0;
-    var n = 0, liste = racine.querySelectorAll('body *');
-    for (var i = 0; i < liste.length; i++) {
+    var H = win.innerHeight || 800, t0 = Date.now(), ecr = [];
+    var st = etats.get(d); if (!st || !budget) { st = { liste: racine.querySelectorAll('body *'), i: 0 }; if (budget) etats.set(d, st); }
+    var n = 0, liste = st.liste, i = st.i;
+    for (; i < liste.length; i++) {
       var e = liste[i]; if (vus.has(e)) continue;
+      if (budget && Date.now() - t0 > budget) { reste = true; st.i = i; break; }
       if (e.closest('svg') || /^(INPUT|TEXTAREA|SELECT|OPTION|SCRIPT|STYLE|IMG|CANVAS|VIDEO)$/.test(e.tagName)) continue;
       if (e.disabled || e.getAttribute('aria-disabled') === 'true' || e.closest('[disabled],.attente,[aria-hidden="true"]')) continue;
       var direct = false; for (var k = 0; k < e.childNodes.length; k++) { var nd = e.childNodes[k]; if (nd.nodeType === 3 && nd.nodeValue.trim()) { direct = true; break; } }
       if (!direct) continue;
       var r = e.getBoundingClientRect(); if (r.width < 1 || r.height < 1) continue;
+      if (r.bottom < -H * 0.5 || r.top > H * 1.5) continue; /* loin de l'écran : mesuré quand il approche */
       var cs = win.getComputedStyle(e); if (cs.visibility === 'hidden' || cs.display === 'none') continue;
       var t = rgb(cs.color); if (!t || t.a < 0.4) continue;
-      if (opacite(e, win) < 0.6) continue; /* animation en cours ou effacement voulu */
       var f = fondDe(e, win), taille = parseFloat(cs.fontSize) || 14, gras = Number(cs.fontWeight) >= 600;
       var seuil = (taille >= 24 || (taille >= 18.6 && gras)) ? 3 : 4.5;
-      vus.add(e);
-      if (ratio(lum(t), lum(f)) >= seuil) continue;
-      e.style.setProperty('color', corriger(t, f, seuil), 'important'); e.setAttribute('data-vx44', '1'); n++;
+      if (ratio(lum(t), lum(f)) >= seuil) { vus.add(e); continue; }
+      if (opacite(e, win) < 0.6) continue; /* animation en cours ou effacement voulu : revu plus tard */
+      vus.add(e); ecr.push([e, corriger(t, f, seuil)]);
     }
+    if (i >= liste.length) etats.delete(d);
+    for (var j = 0; j < ecr.length; j++) { ecr[j][0].style.setProperty('color', ecr[j][1], 'important'); ecr[j][0].setAttribute('data-vx44', '1'); n++; }
     return n;
   }
+
   /* C147 (Steven, 18/10 : « pourquoi je vois des repos côte à côte, Structure, mois ») : dans les courbes de journées
      et du mois, une pastille « N j repos » est posée à chaque interruption ; deux repos proches (jours de fermeture
      rapprochés, écran étroit) se superposaient ou se répétaient (« 1 j repos » « 1 j repos »). Une seule étiquette
@@ -107,19 +119,23 @@
   /* Changement de thème : on efface nos corrections puis on repasse. */
   function effacer(d) { [].forEach.call(d.querySelectorAll('[data-vx44]'), function (e) { e.style.removeProperty('color'); e.removeAttribute('data-vx44'); }); }
   var minuteur = 0, dernierTheme = '';
-  function planifier() { clearTimeout(minuteur); minuteur = setTimeout(tout, 450); }
+  function planifier() { clearTimeout(minuteur); minuteur = setTimeout(function () { etats = new WeakMap(); tout(); }, 450); } /* passe neuve après un changement */
+  function suite() { clearTimeout(minuteur); minuteur = setTimeout(tout, 16); } /* C371 : tranche suivante */
   function documents() {
-    var l = [doc]; [].forEach.call(doc.querySelectorAll('iframe'), function (f) { try { if (f.contentDocument && f.contentDocument.body) l.push(f.contentDocument); } catch (e) {} });
+    var l = [doc]; [].forEach.call(doc.querySelectorAll('iframe'), function (f) { try { if (f.contentDocument && f.contentDocument.body && f.getClientRects().length) l.push(f.contentDocument); } catch (e) {} }); /* C371 : cadres visibles seulement */
     return l;
   }
   function tout() {
     var theme = doc.documentElement.className.indexOf('vd-workspace-dark') >= 0 ? 'sombre' : 'clair';
     var ds = documents();
     if (theme !== dernierTheme) { ds.forEach(effacer); dernierTheme = theme; vus = new WeakSet(); }
-    ds.forEach(function (d) { try { fusionRepos(d); petitsDefauts(d); passe(d); } catch (e) {} });
+    reste = false;
+    ds.forEach(function (d) { try { fusionRepos(d); petitsDefauts(d); passe(d, 12); } catch (e) {} });
+    if (reste) suite();
   }
   function surveiller(d) {
     if (!d || d.__vx44) return; d.__vx44 = true;
+    try { d.defaultView.addEventListener('scroll', planifier, { passive: true }); } catch (e) {} /* C371 : textes qui arrivent à l'écran */
     try { new d.defaultView.MutationObserver(function (l) { for (var i = 0; i < l.length; i++) { var x = l[i]; if (x.type === 'attributes' && x.target.hasAttribute && x.target.hasAttribute('data-vx44')) continue; planifier(); return; } }).observe(d.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'open'] }); } catch (e) {}
   }
   /* Santé › Diagnostic de solidité : « Correct » était coupé en « Corr / ect » (colonne de 56 px, coupure autorisée
