@@ -243,16 +243,16 @@
   'use strict';
   function n(x) { x = Number(x); return isFinite(x) ? x : 0; }
   function noter(st) {
-    var D = w.DB || {}, tot = 0, ok = 0, objW = 0;
+    var D = w.DB || {}, tot = 0, ok = 0, objW = 0, sous = 0;
     (D.plats || []).forEach(function (p) {
       if (!p || p.cpArchived) return; var v = n(p.vol); if (!(v > 0)) return;
       var k = null; try { k = w.platCalc(p); } catch (e) {} if (!k || !k.complete) return;
       var poids = v * n(k.htPond || k.ht), obj = n(k.objPond); if (!(poids > 0)) return;
-      tot += poids; objW += poids * obj; if (n(k.contribPct) >= obj - 1e-9) ok += poids;
+      tot += poids; objW += poids * obj; if (n(k.contribPct) >= obj - 1e-9) ok += poids; else sous++;
     });
     if (!(tot > 0)) return null;
     var obj = objW / tot, marge = n(st && st.margePond), pm = 60 * Math.max(0, Math.min(1, (marge - (obj - 20)) / 20)), pv = 40 * ok / tot;
-    return { objectif: obj, marge: marge, ventesOk: ok / tot * 100, margePoints: Math.round(pm), ventesPoints: Math.round(pv), total: Math.round(pm + pv) };
+    return { objectif: obj, marge: marge, ventesOk: ok / tot * 100, margePoints: Math.round(pm), ventesPoints: Math.round(pv), total: Math.round(pm + pv), platsSous: sous };
   }
   var COPIE = {
     fr: { independent: 'Note de la carte seule : les marges de vos plats face à vos objectifs', formulaText: 'Marge de la carte face à votre objectif : {m} / 60 points · part des ventes faite par des plats au-dessus de leur objectif : {c} / 40 points · total {t} / 100. Toutes les fiches vendues sont un prérequis, pas des points bonus.', limit: 'La note juge la carte seule, avec les recettes et les ventes renseignées. Le loyer, l’équipe et les autres charges n’y entrent pas : ils sont dans l’Indice de sérénité.' },
@@ -285,6 +285,64 @@
   }
   if (!brancher() && typeof w.setInterval === 'function') { var k = 0, iv = w.setInterval(function () { if (brancher() || ++k > 40) w.clearInterval(iv); }, 250); }
   w.VerdictIndiceCarte = { noter: noter };
+})(window);
+
+/* C449 (L7, décision 49 : Steven voyait « Carte 84 » sur l'onglet sans savoir ce que c'était) : la page Carte dit sa note en tête de
+   « Ma carte », sous l'objectif : « Note de la carte : 84 / 100 · saine », la barre des 4 zones (jamais un anneau : l'anneau est
+   l'Indice de sérénité de l'en-tête), une phrase sur ce qui lui coûte le plus de points (jamais « vendez plus »), et le toucher ouvre
+   le détail qui existe déjà (cardScoreSheetOpen). Posée par l'observateur de #v-carte, avant l'image ; recalculée seulement quand les
+   données, la langue ou l'établissement changent, et réécrite seulement si son contenu change (0 changement au repos). */
+(function (w) {
+  'use strict';
+  var doc = w.document, CACHE = { db: null, k: null, html: '' }, MOTS = { critique: 'critique', fragile: 'fragile', correcte: 'correcte', saine: 'saine' };
+  function n(x) { x = Number(x); return isFinite(x) ? x : 0; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function pct(x, d) { return n(x).toLocaleString('fr-FR', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }) + ' %'; }
+  function zones() { var L = [], prev = null; for (var i = 0; i <= 100; i++) { var z = null; try { z = w.zone(i); } catch (e) {} if (!z) return []; if (!prev || prev.c !== z.c) { prev = { c: z.c, h: z.h, de: i, a: i }; L.push(prev); } else prev.a = i; } return L; }
+  function contenu() {
+    var st = w.carteStats(), sc = w.scoreCarte(st), N = sc && sc.c301;
+    if (!sc || !sc.available || !N) return '<span class="cr-note-t">Note de la carte : à compléter</span><span class="cr-note-p">Pour la calculer, il faut la fiche de chaque plat vendu et un mois de ventes.</span>';
+    var tot = Math.round(n(sc.total)), z = w.zone(tot), mot = MOTS[z.c] || String(z.t || '').toLowerCase(), Z = zones();
+    var barre = Z.length ? '<span class="cr-note-z" aria-hidden="true">' + Z.map(function (s) { return '<i style="flex:' + (s.a - s.de + 1) + ';background:' + s.h + (s.c === z.c ? '' : ';opacity:.3') + '"></i>'; }).join('') + '<b style="left:' + Math.max(0, Math.min(100, tot)) + '%"></b></span>' : '';
+    var pm = 60 - n(N.margePoints), pv = 40 - n(N.ventesPoints), k = n(N.platsSous), ph = [];
+    if (pm < 0.5 && pv < 0.5) ph.push('Ce qui la tient haut : la marge atteint votre objectif et chaque vente vient d’un plat au-dessus du sien.');
+    else if (pv >= pm && k > 0) {
+      ph.push('Ce qui la tire vers le bas : ' + (k === 1 ? '1 plat sous son objectif fait ' : k + ' plats sous leur objectif font ') + pct(100 - n(N.ventesOk), 0) + ' des ventes.');
+      if (pm < 0.5) ph.push('La marge de la carte atteint votre objectif.');
+    } else {
+      ph.push('Ce qui la tire vers le bas : il reste ' + pct(N.marge, 1) + ' une fois les produits payés, pour un objectif de ' + pct(N.objectif, 0) + '.');
+      if (pv < 0.5) ph.push('Chaque vente vient d’un plat au-dessus de son objectif.');
+    }
+    return '<span class="cr-note-t"><span class="cr-note-d" style="background:' + z.h + '"></span>Note de la carte : ' + tot + ' / 100 · ' + esc(mot) + '</span>' + barre +
+      ph.map(function (p) { return '<span class="cr-note-p">' + esc(p) + '</span>'; }).join('');
+  }
+  function style() {
+    if (doc.getElementById('cr-note-css')) return; var s = doc.createElement('style'); s.id = 'cr-note-css';
+    s.textContent = '#c-menu .cp-menuhead:has(>.cr-note){flex-wrap:wrap}#c-menu .cp-menuhead:has(>.cr-note)>div:first-child{flex:1 1 0;min-width:0}#c-menu .cp-menuhead:has(>.cr-note)>.cp-button{max-width:34%}#c-menu .cr-note{flex:1 1 100%;order:9;display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;margin:12px 0 0;padding:10px 12px;border-radius:14px;border:1px solid rgba(127,127,127,.28);background:rgba(127,127,127,.07);color:inherit;font:inherit;text-align:left;cursor:pointer}' +
+      '#c-menu .cr-note-t{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;line-height:1.25}#c-menu .cr-note-d{flex:none;width:10px;height:10px;border-radius:50%}' +
+      '#c-menu .cr-note-z{position:relative;display:flex;gap:2px;width:100%;max-width:240px;height:6px}#c-menu .cr-note-z i{display:block;height:6px;border-radius:3px}' +
+      '#c-menu .cr-note-z b{position:absolute;top:-3px;width:3px;height:12px;margin-left:-1.5px;border-radius:2px;background:currentColor}#c-menu .cr-note-p{font-size:13.5px;line-height:1.4}';
+    (doc.head || doc.documentElement).appendChild(s);
+  }
+  function ouvrir() { try { if (typeof w.cardScoreSheetOpen === 'function') w.cardScoreSheetOpen(); else if (typeof w.scoreSheet === 'function') w.scoreSheet(); } catch (e) {} }
+  function poser() {
+    var head = doc.querySelector('#c-menu .cp-menuhead'); if (!head) return; /* sur toute la largeur de la carte « Ma carte », en dernière rangée (aussi sans objectif : « à compléter ») */
+    if (typeof w.carteStats !== 'function' || typeof w.scoreCarte !== 'function' || typeof w.zone !== 'function') return;
+    var key = [w.VERDICT_DB_REV, w.LOCALE].join('|');
+    if (CACHE.db !== w.DB || CACHE.k !== key) { var h; try { h = contenu(); } catch (e) { return; } CACHE = { db: w.DB, k: key, html: h }; }
+    var b = head.querySelector('[data-cr-note]');
+    if (!b) { style(); b = doc.createElement('button'); b.type = 'button'; b.className = 'cr-note'; b.setAttribute('data-cr-note', ''); b.addEventListener('click', ouvrir); head.appendChild(b); }
+    else if (b.parentElement !== head || b.nextElementSibling) head.appendChild(b);
+    if (b.__html !== CACHE.html) { b.innerHTML = CACHE.html; b.__html = CACHE.html; }
+  }
+  w.VerdictNoteCarte = { poser: poser, contenu: contenu };
+  (function br(k) {
+    if (!doc || typeof doc.getElementById !== 'function') return;
+    var v = doc.getElementById('v-carte');
+    if (!v || typeof w.MutationObserver !== 'function') { if (k < 40 && typeof w.setTimeout === 'function') w.setTimeout(function () { br(k + 1); }, 250); return; }
+    new w.MutationObserver(function () { try { poser(); } catch (e) {} }).observe(v, { childList: true, subtree: true });
+    try { poser(); } catch (e) {}
+  })(0);
 })(window);
 
 /* C307 (B M1 / FINAL-N1) : la TVA d'un plat inconnue (null, vide) n'est jamais 0 %. platTVA() faisait Number(null) = 0, qui passe

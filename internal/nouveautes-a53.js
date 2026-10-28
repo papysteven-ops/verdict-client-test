@@ -11,6 +11,12 @@
   'use strict';
   var w = window, doc = document; if (w.top !== w || w.VerdictNouveautes) return;
   var NOUVEAUTES = [
+    { id: 'C455', date: '2026-10-28', titre: 'L’onglet Carte n’affiche plus de chiffre seul : la note de la carte est écrite en clair en haut de la Carte' },
+    { id: 'C453', date: '2026-10-28', titre: '« J’ai mon document » en une étape courte : déposez votre document, dites vos jours de fermeture, et votre vrai minimum s’affiche tout de suite' },
+    { id: 'C452', date: '2026-10-28', titre: 'Accueil › Ventes et heures par service › Année : le détail mois par mois, avec les mois où l’équipe coûte le plus, en chiffres réels' },
+    { id: 'C451', date: '2026-10-28', titre: 'Verdict démarre plus vite dans votre langue : seule votre langue est chargée' },
+    { id: 'C450', date: '2026-10-28', titre: 'La barre du bas s’affiche dans votre langue dès le lancement, sans libellé technique' },
+    { id: 'C449', date: '2026-10-28', titre: 'En thème clair, la fiche de l’Indice de sérénité et les cases à cocher sont claires ; en thème sombre, l’avertissement de langue de l’Audit n’est plus un bloc blanc' },
     { id: 'C438', date: '2026-10-28', titre: 'En anglais, en espagnol et dans les autres langues, l’Accueil s’ouvre d’un seul coup, aussi vite qu’en français' },
     { id: 'C437', date: '2026-10-28', titre: 'Après votre code, l’Accueil s’affiche plus vite et d’un seul coup : plus d’écran « Verdict n’a pas pu démarrer », et il ne se redessine plus quelques secondes après l’ouverture' },
     { id: 'C436', date: '2026-10-28', titre: 'Verdict ne recalcule plus rien au repos : les écrans répondent plus vite, la batterie tient mieux, revenir de l’Inventaire est immédiat quand rien n’a changé, et plus aucune animation ne tourne sans fin' },

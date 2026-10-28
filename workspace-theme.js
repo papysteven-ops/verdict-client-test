@@ -120,7 +120,7 @@
        surface sombre, il était repeint en blanc opaque et cachait toute l'appli derrière le panneau des notifications. */
     if(e.id==='notification-layer'||vdlVoile(win,e)){if(e.__vdl)vdlClear(e);return;}
     /* C400 (A28) : ces éléments ont leur couleur finale en CSS (clairFinal) : le correcteur n'y touche plus, et retire ce qu'il y avait posé. */
-    if(doc.getElementById('vd-clair-c400')&&e.closest&&e.closest('#cp-nav,#v32ModuleDock,.btn.prim,button.vx40-suiv')){if(e.__vdl)vdlClear(e);return;}
+    if(doc.getElementById('vd-clair-c400')&&e.closest&&e.closest('#cp-nav,#v32ModuleDock,.btn.prim,button.vx40-suiv,#shSco')){if(e.__vdl)vdlClear(e);return;}
     /* V2-A8 : un onglet qui n’est plus sélectionné perd son fond « sélectionné » (avant : « Indice de sérénité » restait allumé). */
     if((e.__vdl==='sel'&&!vdlSelected(e))||(e.__vdl==='btn'&&vdlSelected(e)))vdlClear(e);
     if(e.__vdl&&e.__vdlVals){for(var pk in e.__vdlVals){if(e.style.getPropertyValue(pk)!==e.__vdlVals[pk]||e.style.getPropertyPriority(pk)!=='important'){vdlClear(e);e.__vdlVals=null;break;}}}
@@ -203,7 +203,15 @@
         L+'#cp-nav>button,'+L+'#v32ModuleDock .chips>button{transition:none!important}'+/* la puce de la Carte garde la couleur que lui donne déjà la page ; seul le correcteur n'y repasse plus */
         L+'#v32ModuleDock>.actbar>.chips{background:#ffffff!important;border-color:#d5dde5!important;box-shadow:0 8px 24px rgba(16,24,40,.12)!important}'+
         L+'#v32ModuleDock>.actbar>.chips>button{color:#334155!important;background-image:none!important}'+
-        L+'#v32ModuleDock>.actbar>.chips>button.on,'+L+'#v32ModuleDock>.actbar>.chips>button[aria-current],'+L+'#v32ModuleDock>.actbar>.chips>button[aria-selected="true"]{background:#e7f1eb!important;color:#14532d!important}';
+        L+'#v32ModuleDock>.actbar>.chips>button.on,'+L+'#v32ModuleDock>.actbar>.chips>button[aria-current],'+L+'#v32ModuleDock>.actbar>.chips>button[aria-selected="true"]{background:#e7f1eb!important;color:#14532d!important}'+
+        /* A63 (appui L1, audit du 27/10) : la page déclare color-scheme:dark sur body (cases à cocher noires, curseurs sombres en clair) et la
+           fiche « Indice de sérénité en détail » (#shSco) n'a que des couleurs sombres ; en clair, sa version claire. */
+        'html.vd-workspace-light:not(#vd-c400) body{color-scheme:light!important}'+
+        L+'#shSco{background:rgba(15,23,42,.45)!important}'+L+'#shSco .p{background:#ffffff!important;border-color:#d5dde5!important;box-shadow:0 28px 70px rgba(15,23,42,.18)!important;color:#14202b!important}'+
+        L+'#shSco h3,'+L+'#shSco .big span,'+L+'#shSco .shlim b{color:#14202b!important}'+L+'#shSco .shd,'+L+'#shSco .shn{color:#5b6878!important}'+L+'#shSco .shn{border-top-color:#e3e8ee!important}'+
+        L+'#shSco .shrow span{color:#334155!important}'+L+'#shSco .shrow .bar{background:#e6ebf0!important}'+L+'#shSco .shlim{background:rgba(15,23,42,.04)!important;color:#4f5f6e!important}'+
+        L+'#shSco .shproof{background:#f3f7fb!important;border-color:#cfdbe7!important;color:#334155!important}'+L+'#shSco .shproof strong{color:#0f172a!important}'+
+        L+'#shSco .shtopx,'+L+'#shSco .shx{background:#f3f5f7!important;border-color:#d5dde5!important;color:#14202b!important}';
       (doc.head||doc.documentElement).appendChild(s);}catch(e){}
   }
   /* C342 (Steven, iPhone : « trou noir » au défilement rapide, « ça ne fait pas premium ») : décision 24, tout le contenu est peint

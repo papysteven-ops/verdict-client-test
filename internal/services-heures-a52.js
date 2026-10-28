@@ -120,7 +120,9 @@
     if (!auj) { var n = new Date(); auj = n.getFullYear() + '-' + ('0' + (n.getMonth() + 1)).slice(-2) + '-' + ('0' + n.getDate()).slice(-2); }
     return { D: D, tva: tva, auj: auj, rep: repere() };
   }
-  function etat(periode, choisi) { var C = contexte(); if (!C) return null; return analyser(C.D.services, periode, C.auj, C.tva, C.rep, secoursMois(C.D, C.tva), choisi); }
+  function etat(periode, choisi) { var C = contexte(); if (!C) return null; var R = analyser(C.D.services, periode, C.auj, C.tva, C.rep, secoursMois(C.D, C.tva), choisi);
+    if (periode === 'annee' && R && !R.vide) R.mois = parMois(R, C.D.services, C.auj, C.tva, C.rep, secoursMois(C.D, C.tva), C.D.histJour); /* C447 */
+    return R; }
   /* Jour choisi dans « Vos journées » (accueil-courbes-a46.js, C183) : AAAA-MM-JJ, ou null pour le dernier jour saisi. */
   function jourChoisi(d) { return (d && d.__vx46jour) || null; }
   /* C333 (décision 19) : signature des données, < 1 ms, calculée avant tout calcul. */
@@ -193,6 +195,80 @@
     'html.vd-workspace-dark .sh52 .sh52-vert{color:#4ade80}html.vd-workspace-dark .sh52 .sh52-orange{color:#fb923c}html.vd-workspace-dark .sh52 .sh52-rouge{color:#f87171}' +
     '.sh52 .sh52-lien{margin:2px 0 10px;padding:9px 12px;border-radius:12px;background:rgba(148,163,184,.12);font-size:14px;line-height:1.45}.sh52 .sh52-c{display:none}.sh52 small.sh52-s{display:block;font-size:11px;font-weight:500;opacity:.7;margin-top:2px}.sh52 td{vertical-align:top}' +
     '@media (max-width:520px){.sh52 table{font-size:13px}.sh52 th,.sh52 td{padding:6px 3px}.sh52 th,.sh52 td{white-space:normal}.sh52 .sh52-hab,.sh52 .sh52-l{display:none}.sh52 .sh52-c{display:inline}.sh52 .sh52-p{min-width:0;padding:2px 5px}}';
+  /* C447 (L2, décision 48 ; Steven, 28/10 : « quel mois est très élevé, chiffre réel, pour avoir un visuel direct et comprendre ») :
+     sous le tableau de l'Année, le détail mois par mois. Mêmes lignes que l'Année (mêmes sources, journées exceptionnelles écartées) :
+     la somme des mois égale l'année ; les arrondis sont répartis au plus grand reste (C205). Un mois avec des ventes mais sans heures
+     est dit « heures non saisies » : rien n'est calculé ni inventé. */
+  function repartir(v, total) {
+    var f = v.map(function (a) { return Math.floor(a); }), reste = total - f.reduce(function (s, a) { return s + a; }, 0);
+    v.map(function (a, i) { return i; }).sort(function (i, j) { return (v[j] - f[j]) - (v[i] - f[i]); }).forEach(function (i) { if (reste > 0) { f[i]++; reste--; } });
+    return f;
+  }
+  function parMois(Ran, services, aujourdhui, tva, repere, secours, jours) {
+    if (!Ran || Ran.vide || Ran.periode !== 'annee' || !Ran.total) return null;
+    var an = Ran.cle, courant = aujourdhui.slice(0, 7), brut = {}, cles = {}, ventes = {};
+    if (Ran.source === 'services') {
+      (services || []).forEach(function (s) { var d = String(s && s.d || ''), k = d.slice(0, 7); if (d.slice(0, 4) !== an || d > aujourdhui) return; (brut[k] = brut[k] || []).push(s); cles[k] = 1; if (!(s.exceptional && s.exceptional !== 'normal') && num(s.ca) > 0) ventes[k] = 1; });
+      (jours || []).forEach(function (j) { var d = String(j && j.date || ''), k = d.slice(0, 7); if (d.slice(0, 4) !== an || d > aujourdhui || !(num(j.caJ) > 0) || (j.exceptional && j.exceptional !== 'normal')) return; cles[k] = 1; ventes[k] = 1; });
+    } else if (secours) secours(an).forEach(function (l) { cles[l.d.slice(0, 7)] = 1; });
+    var M = Object.keys(cles).sort().map(function (k) {
+      var fin = k === courant ? aujourdhui : k + '-31', Rm = Ran.source === 'services' ? analyser(brut[k], 'mois', fin, tva, repere, null) : analyser([], 'mois', fin, tva, repere, secours);
+      return Rm && !Rm.vide ? { cle: k, i: +k.slice(5, 7) - 1, enCours: k === courant, R: Rm } : ventes[k] ? { cle: k, i: +k.slice(5, 7) - 1, enCours: k === courant, sansHeures: true } : null;
+    }).filter(Boolean);
+    var C = M.filter(function (m) { return m.R; }); if (!C.length) return null;
+    var T = Ran.total, connu = T.coutConnu && C.every(function (m) { return m.R.total.coutConnu; });
+    var ht = repartir(C.map(function (m) { return m.R.total.ht; }), Math.round(T.ht)), h = repartir(C.map(function (m) { return m.R.total.h; }), Math.round(T.h));
+    var cout = connu ? repartir(C.map(function (m) { return m.R.total.cout; }), Math.round(T.cout)) : null, trop = connu ? repartir(C.map(function (m) { return m.R.total.cout - repere * m.R.total.ht; }), Math.round(T.cout - repere * T.ht)) : null;
+    C.forEach(function (m, ix) { var t = m.R.total; m.ht = ht[ix]; m.h = h[ix]; m.part = t.part; m.prod = t.prod; m.cout = cout ? cout[ix] : t.coutConnu ? Math.round(t.cout) : null; m.trop = trop ? trop[ix] : t.coutConnu ? Math.round(t.cout - repere * t.ht) : null; m.tropBrut = t.coutConnu ? t.cout - repere * t.ht : null; });
+    var lourds = C.filter(function (m) { return m.part != null && m.part > repere + 0.005 && m.trop >= 1; }).sort(function (a, b) { return b.tropBrut - a.tropBrut; }).slice(0, 3);
+    lourds.forEach(function (m) { m.lourd = true; });
+    return { annee: an, source: Ran.source, repere: repere, mois: M, lourds: lourds, tousConnus: C.every(function (m) { return m.part != null; }),
+      somme: { ht: C.reduce(function (s, m) { return s + m.R.total.ht; }, 0), h: C.reduce(function (s, m) { return s + m.R.total.h; }, 0), cout: connu ? C.reduce(function (s, m) { return s + m.R.total.cout; }, 0) : null } };
+  }
+  function nomMois(i) { var l = String(w.LOCALE || 'fr').slice(0, 2); if (l === 'fr') return MOIS[i]; try { return new Date(Date.UTC(2026, i, 15)).toLocaleString({ en: 'en-GB', es: 'es-ES', it: 'it-IT', de: 'de-DE', nl: 'nl-NL', pt: 'pt-PT' }[l] || l, { month: 'long', timeZone: 'UTC' }); } catch (e) { return MOIS[i]; } }
+  function pastille(trop, part, rep) { var ok = trop != null && trop <= 0; return '<span class="sh52-p sh52-' + (trop == null ? 'info' : ok ? 'vert' : couleur(part, rep) === 'vert' ? 'jaune' : couleur(part, rep)) + '">' + (trop == null ? '—' : trop < 0 ? eur(-trop) + ' en dessous' : trop === 0 ? 'au conseillé' : '+' + eur(trop) + ' de trop') + '</span>'; }
+  function moisHTML(P) {
+    if (!P) return '';
+    var rep = P.repere, max = rep;
+    P.mois.forEach(function (m) { if (m.part != null && m.part > max) max = m.part; });
+    /* même origine que la jauge de la carte (C188) : conseillé − 15 points ; la barre la plus longue s'arrête avant le bord */
+    var min = Math.max(0, rep - 0.15), haut = Math.max(max, rep + 0.05) + 0.02, pos = function (v) { return Math.max(0, Math.min(100, (v - min) / (haut - min) * 100)); };
+    var item = function (m) { return nomMois(m.i) + ' (' + Math.round(m.part * 100) + ' € pour 100 €, ' + eur(m.trop) + ' de trop)'; };
+    var L = P.lourds, tete = L.length ? (L.length === 1 ? 'Le mois le plus lourd : ' : 'Les mois les plus lourds : ') + L.slice(0, -1).map(item).join(', ') + (L.length > 1 ? ' et ' : '') + item(L[L.length - 1]) + '.' : P.tousConnus ? 'Tous les mois sont au conseillé ou en dessous.' : '';
+    var h = '<section class="sh52-m" aria-label="Mois par mois"><h4 class="sh52-mh">Mois par mois</h4>' + (tete ? '<p class="sh52-mt">' + phrases(tete) + '</p>' : '') + '<div class="sh52-ml">';
+    P.mois.forEach(function (m) {
+      var nom = esc(cap(nomMois(m.i))) + (m.enCours ? '<small class="sh52-me">en cours</small>' : '');
+      if (m.sansHeures) { h += '<div class="sh52-mr sh52-mz" data-mois="' + m.cle + '"><span class="sh52-mn">' + nom + '</span><span class="sh52-mzt">heures non saisies</span></div>'; return; }
+      var k = m.part == null ? 'info' : m.trop != null && m.trop <= 0 ? 'vert' : couleur(m.part, rep) === 'vert' ? 'jaune' : couleur(m.part, rep), Rm = m.R;
+      var S = Rm.lourd ? { nom: Rm.lourd.nom, trop: Rm.lourd.trop } : (Rm.depassent || []).slice().sort(function (a, b) { return b.trop - a.trop; })[0];
+      var srv = S ? 'Le service qui pèse le plus ce mois-là : ' + le(S.nom) + ', ' + eur(S.trop) + ' de trop.' + (Rm.lourd && Rm.lourd.nom === S.nom ? ' Pour ' + le(S.nom) + ' : ' + hh(Rm.lourd.heuresEnTrop) + ' de travail en moins pour les mêmes ventes, en calant les horaires sur le vrai rush.' : '') : m.part != null ? 'Chaque service reste dans le conseillé ce mois-là.' : 'Coût de l’équipe inconnu ce mois-là : taux horaire non saisi.';
+      h += '<details class="sh52-mr' + (m.lourd ? ' sh52-mx' : '') + '" data-mois="' + m.cle + '" style="--c:' + COUL[k] + '"><summary>' +
+        '<span class="sh52-mn">' + nom + (m.part != null ? '<small class="sh52-mv">' + Math.round(m.part * 100) + ' € pour 100 €</small>' : '') + '</span>' + pastille(m.trop, m.part, rep) +
+        '<span class="sh52-mb" aria-hidden="true">' + (m.part != null ? '<i style="width:' + pos(m.part).toFixed(1) + '%"></i>' : '') + '<em style="left:' + pos(rep).toFixed(1) + '%"></em></span></summary>' +
+        '<div class="sh52-md"><dl><div><dt>Ventes hors TVA</dt><dd>' + eur(m.ht) + '</dd></div><div><dt>Équipe (salaires + cotisations)</dt><dd>' + (m.cout != null ? eur(m.cout) : '—') + '</dd></div>' +
+        '<div><dt>Heures de travail</dt><dd>' + hh(m.h) + '</dd></div><div><dt>Ventes par heure travaillée</dt><dd>' + eur(m.prod) + '</dd></div></dl><p class="sh52-ms">' + phrases(srv) + '</p></div></details>';
+    });
+    return h + '</div><p class="sh52-mleg">' + phrases('Barre : ce que coûte l’équipe pour 100 € vendus, mois par mois (elle part de ' + Math.max(0, Math.round(rep * 100) - 15) + ' €). Trait : le conseillé (' + Math.round(rep * 100) + ' € pour 100 €). Touchez un mois pour son détail.') + '</p></section>';
+  }
+  CSS += '.sh52-m{margin:4px 0 14px;padding:14px 12px 10px;border-radius:16px;background:linear-gradient(180deg,rgba(148,163,184,.11),rgba(148,163,184,.04));border:1px solid rgba(148,163,184,.22)}' +
+    '.sh52-mh{margin:0 0 4px;font-size:16px;font-weight:800;letter-spacing:.01em}.sh52-mt{margin:0 0 8px;font-size:14px;line-height:1.45}' +
+    '.sh52-mr{border-top:1px solid rgba(148,163,184,.18)}.sh52-ml>.sh52-mr:first-child{border-top:0}' +
+    '.sh52-mr>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr auto auto;grid-template-areas:"n p c" "b b b";align-items:center;gap:7px 8px;padding:10px 6px 11px;border-radius:12px;-webkit-tap-highlight-color:transparent}' +
+    '.sh52-mr>summary::-webkit-details-marker{display:none}.sh52-mr>summary::after{content:"";grid-area:c;width:7px;height:7px;margin:0 4px 3px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);opacity:.45;transition:transform .2s}' +
+    '.sh52-mr[open]>summary::after{transform:rotate(-135deg);margin-bottom:-3px}.sh52-mr[open]>summary{background:rgba(148,163,184,.10)}.sh52-mr>summary:focus-visible{outline:2px solid rgba(34,197,94,.6);outline-offset:1px}' +
+    '.sh52-mn{grid-area:n;font-weight:700;font-size:14.5px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}.sh52-mv{order:3;flex-basis:100%;font-size:12px;font-weight:600;opacity:.7;font-variant-numeric:tabular-nums}' +
+    '.sh52-me{padding:1px 7px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(59,130,246,.14);color:#1d4ed8}html.vd-workspace-dark .sh52-me{color:#93c5fd}' +
+    '.sh52-mr>summary>.sh52-p{grid-area:p;font-size:12.5px;min-width:0}' +
+    '.sh52-mb{grid-area:b;position:relative;height:10px;border-radius:999px;background:rgba(148,163,184,.18);box-shadow:inset 0 1px 2px rgba(15,23,42,.18)}' +
+    '.sh52-mb>i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 62%,#fff),var(--c));box-shadow:0 0 12px -3px var(--c);transform-origin:left center;animation:sh52Grow .25s ease-out both}' +
+    '.sh52-mb>em{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:1px;background:currentColor;opacity:.5}' +
+    '.sh52-mx>summary{background:linear-gradient(90deg,color-mix(in srgb,var(--c) 15%,transparent),transparent 75%)}.sh52-mx .sh52-mn{font-weight:800}' +
+    '.sh52-mx .sh52-mn::before{content:"";align-self:center;width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 25%,transparent)}' +
+    '.sh52-md{padding:6px 6px 12px}.sh52-md dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 8px;padding:0}.sh52-md dl>div{display:block;min-width:0;border:0;padding:8px 10px;border-radius:12px;background:rgba(148,163,184,.11)}' +
+    '.sh52-md dt{display:block;margin:0;font-size:11.5px;font-weight:600;line-height:1.3;opacity:.72;text-align:left}.sh52-md dd{display:block;margin:3px 0 0;font-size:15px;font-weight:800;text-align:left;font-variant-numeric:tabular-nums}.sh52-ms{margin:0;font-size:13.5px;line-height:1.45}' +
+    '.sh52-mz{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;padding:10px 6px}.sh52-mzt{font-size:12.5px;font-weight:600;opacity:.7}' +
+    '.sh52-mleg{margin:8px 0 0;font-size:12px;line-height:1.4;opacity:.7}' +
+    '@keyframes sh52Grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}@media (prefers-reduced-motion:reduce){.sh52-mb>i{animation:none}}';
   function carteHTML(R) {
     var jour = R.periode === 'jour', aHab = jour && R.services.some(function (x) { return x.habituel != null; });
     var h = '<p class="kicker">Ventes et heures par service · ' + esc(libelle(R)) + (w.DB && (w.DB.demo || (w.DB.services || []).some(function (s) { return s && s.demo; })) ? ' · démonstration' : '') + '</p>' +
@@ -218,7 +294,7 @@
         '<td><span class="sh52-p sh52-' + (trop == null ? 'info' : ok ? 'vert' : couleur(x.part, R.repere) === 'vert' ? 'jaune' : couleur(x.part, R.repere)) + '">' + (trop == null ? '—' : trop < 0 ? eur(-trop) + ' en dessous' : trop === 0 ? 'au conseillé' : '+' + eur(trop) + ' de trop') + '</span>' +
         (x.part != null ? '<small class="sh52-s">' + Math.round(x.part * 100) + '\u00a0€ pour 100\u00a0€</small>' : '') + '</td></tr>';
     });
-    h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + phrases((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Conseillé pour votre type d’établissement : ' + conseil(R) + ' d’équipe (salaires + cotisations) pour 100 € vendus. « de trop » = ce que l’équipe a coûté au-delà du conseillé ; « en dessous » = ce qu’elle a coûté en moins. Ventes sans la TVA.') + '</p>' +
+    h += '</tbody></table>' + moisHTML(R.mois) /* C447 : le détail mois par mois, sous le tableau de l'Année */ + '<p class="sous" style="font-size:13px;opacity:.8">' + phrases((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Conseillé pour votre type d’établissement : ' + conseil(R) + ' d’équipe (salaires + cotisations) pour 100 € vendus. « de trop » = ce que l’équipe a coûté au-delà du conseillé ; « en dessous » = ce qu’elle a coûté en moins. Ventes sans la TVA.') + '</p>' +
       '<div class="actions"><button class="btn ghost bloc" data-c399b="1" type="button" data-sh52-equipe="1">Voir mon équipe, salarié par salarié</button><button class="btn ghost bloc" data-c399b="1" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
     return h;
   }
@@ -265,5 +341,5 @@
   var t = setInterval(tour, 3000); if (t && t.unref) t.unref(); setTimeout(tour, 1500);
   /* C179 : le même conseil partout (Alertes, jauge, cartes) : salaires conseillés pour le type d'établissement, en %. */
   w.vdRepMs = function () { return Math.round(repere() * 100); };
-  w.VerdictServicesHeures = { analyser: analyser, etat: etat, phrase: phrase, tour: tour, secoursMois: secoursMois };
+  w.VerdictServicesHeures = { analyser: analyser, etat: etat, phrase: phrase, tour: tour, secoursMois: secoursMois, parMois: parMois, moisHTML: moisHTML };
 })();

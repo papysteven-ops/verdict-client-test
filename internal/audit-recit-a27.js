@@ -340,6 +340,8 @@
     '#vdRecit .rc-on .rc-wf-row{opacity:1;transform:none}#vdRecit .rc-on .rc-wf-bar{transform:scaleX(1)}' +
     /* 6 · appel */
     '#vdRecit .rc-cta{min-height:60px;border:0;border-radius:18px;background:linear-gradient(180deg,#22c55e,#16a34a);color:#05100a!important;-webkit-text-fill-color:#05100a;font:900 18px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 14px 34px rgba(22,163,74,.45)}' /* C421 (A70) : texte #05100a (≈ 9:1 sur le vert, comme .av31-primary) ; en blanc (2,3:1), contraste-a44 l'assombrissait en gris rgb(56,56,56) */ +
+    'html:not(.vd-workspace-light) #auditBody .au-card[data-audit-language]{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.12)!important;border-left-color:#eab308!important;box-shadow:none!important;color:#e5e7eb!important}' +
+    'html:not(.vd-workspace-light) #auditBody .au-card[data-audit-language] .au-k{color:#fcd34d!important}html:not(.vd-workspace-light) #auditBody .au-card[data-audit-language] .au-p{color:#e5e7eb!important}' /* C447 (A63) : encart de langue sombre en thème sombre ; le clair ne change pas */ +
     '#vdRecit .rc-on .rc-cta{animation:rcHalo 1.9s ease-out .6s 3}@keyframes rcHalo{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6),0 14px 34px rgba(22,163,74,.45)}70%{box-shadow:0 0 0 16px rgba(34,197,94,0),0 14px 34px rgba(22,163,74,.45)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0),0 14px 34px rgba(22,163,74,.45)}}' +
     '#vdRecit .rc-cta2{display:flex;gap:10px}#vdRecit .rc-cta2 button{flex:1;min-height:50px;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font:800 15px/1 -apple-system,system-ui;cursor:pointer}' +
     '#vdRecit .rc-navwrap,#vdRecit .rc-l,#vdRecit .rc-stack i>span{display:none}' +

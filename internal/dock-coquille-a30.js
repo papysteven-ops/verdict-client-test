@@ -172,12 +172,21 @@
 
   /* La barre de la coquille n'est montrée que si le cadre affiche une barre basse fixe, non couverte par un écran
      (lecteur, feuille, fenêtre), hors ouverture et hors verrou. */
+  function cleTechnique() {
+    return [].some.call(cnav.querySelectorAll(':scope>button[data-v]'), function (b) {
+      if (b.hidden || cdoc.defaultView.getComputedStyle(b).display === 'none') return false;
+      return /^nav\.[a-z]/.test(String(b.textContent || '').trim());
+    });
+  }
   function visibleDansCadre() {
     if (!cdoc || !cnav || !cnav.isConnected) return false;
     var html = cdoc.documentElement;
     if (!html.classList.contains('premium-fixed-dock')) return false;
     if (cdoc.getElementById('splash') || cdoc.getElementById('verdictIntroHandoff')) return false;
     var cs = cdoc.defaultView.getComputedStyle(cnav); if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    /* C446 (audit A12) : jamais de clé technique (« nav.dec », « nav.audit ») dans la barre de la coque : tant qu'un bouton visible du cadre
+       n'est pas traduit, la barre attend (elle se reconstruit dès que le libellé change). Les boutons cachés (Audit) ne comptent pas. */
+    if (/nav\.[a-z]/.test(cnav.textContent || '') && cleTechnique()) return false;
     var r = cnav.getBoundingClientRect(); if (r.width < 120 || r.height < 30 || r.bottom <= 0 || r.top >= (cdoc.defaultView.innerHeight || 0)) return false;
     if (html.classList.contains('premium-dock-hidden')) return !!geom; /* repliée : état précédent conservé */
     try {

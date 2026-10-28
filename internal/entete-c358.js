@@ -129,7 +129,6 @@
         H + ' .shell-actions{padding:0!important}' + H + ' .notification-button{width:40px!important;height:40px!important;min-width:40px!important}' +
         H + ' .module-tabs{padding:2px!important;min-height:0!important}' +
         H + ' .module-tabs button{min-height:32px!important;height:32px!important;padding:3px 5px!important}}' +
-      H + ' .module-tabs .vd358-cn{margin-left:4px;font-weight:800;font-variant-numeric:tabular-nums}' +
       /* menus */
       '#vd358-voile{position:fixed;inset:0;z-index:2147482000;background:rgba(2,6,23,.32)}' +
       '#vd358-menu{position:fixed;z-index:2147482001;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));max-width:440px;max-height:calc(100dvh - 140px);overflow:auto;-webkit-overflow-scrolling:touch;' +
@@ -190,7 +189,7 @@
       return s.replace(/^D[ée]monstration fictive\s*·\s*/i, '');
     }
     /* le moteur et l'Indice Carte ne sont recalculés que si le dossier affiché ou le chiffre de l'anneau du cadre a changé */
-    var memo = { s: { k: null }, c: { k: null } };
+    var memo = { s: { k: null } };
     function cle() { try { var ts = F.document.getElementById('topScore'); return [F.DB, ts ? ts.textContent : '', profil()]; } catch (e) { return [null, '', '']; } }
     function meme(a, b) { return a && b && a[0] === b[0] && a[1] === b[1] && a[2] === b[2]; }
     function serenite() {
@@ -202,14 +201,6 @@
         var v = Math.round(R.score), sim = false; try { sim = !!F.verdictScoreIsSimulation(R); } catch (e) {}
         var c = '#94a3b8'; try { c = F.zone(R.score).h || c; } catch (e) {}
         return { v: v, c: c, sim: sim };
-      } catch (e) { return null; }
-    }
-    function indiceCarte() {
-      if (!F) return null; var k = cle(); if (meme(memo.c.k, k)) return memo.c.v; var v = indiceCarteCalc(); if (v != null) memo.c = { k: k, v: v }; return v; /* pas encore prêt : pas gardé */
-    }
-    function indiceCarteCalc() {
-      try { if (profil() === 'carte') { var ts = F.document.getElementById('topScore'), x = ts && parseInt(ts.textContent, 10); return isFinite(x) ? x : null; }
-        var P = F.VerdictCartePages; if (!P || typeof P.scoreState !== 'function') return null; var n = P.scoreState(); return n && n.ready ? n.value : null;
       } catch (e) { return null; }
     }
     function etatDemo() {
@@ -241,12 +232,9 @@
         pose(bInd, 'aria-label', t('indice') + (s.sim ? ' ' + t('simule') : '') + ' ' + (v == null ? '—' : v + ' ' + t('sur')));
         if (bInd.hasAttribute('data-vide')) bInd.removeAttribute('data-vide');
       }
-      /* « Carte 84 » sur l'onglet Carte : une autre forme, une autre place */
-      if (tabCarte) { var cn = tabCarte.querySelector('.vd358-cn'), ic = indiceCarte();
-        if (ic == null) { if (cn) cn.remove(); if (essaisCarte < 10) { essaisCarte++; setTimeout(planifier, 1500); } } /* Carte pas encore prête (machine chargée) : relue, 10 fois au plus */
-        else { if (!cn) { cn = doc.createElement('b'); cn.className = 'vd358-cn'; tabCarte.appendChild(cn); } texte(cn, String(ic)); pose(cn, 'aria-label', t('carte') + ' ' + ic + ' ' + t('sur')); } }
+      /* Décision 49 (Steven, 28/10 : « Carte → 84 ? On ne sait pas c'est quoi ») : plus de chiffre seul sur l'onglet Carte ; l'anneau reste
+         l'Indice de sérénité sur tous les onglets (décision 33) et la note de la carte est écrite en clair en haut de la Carte (L7). */
     }
-    var essaisCarte = 0;
     function planifier() { if (prevu) return; prevu = (w.requestAnimationFrame || setTimeout).call(w, dessiner); }
 
     /* ── branchement sur le cadre : événements seulement, aucune minuterie ── */

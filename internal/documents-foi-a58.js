@@ -631,7 +631,10 @@
     if (r.vide) delete D[LIV]; else { r.L.source = 'saisie'; r.L.at = new Date().toISOString(); D[LIV] = r.L; }
     el.setAttribute('data-df58-sig', JSON.stringify(D[LIV] || null) + '|0'); enregistrer(true);
   }, true);
-  function css() { if (!doc.getElementById('df58-css')) { var s = doc.createElement('style'); s.id = 'df58-css'; s.textContent = CSS; (doc.head || doc.documentElement).appendChild(s); } }
+  function css() { if (!doc.getElementById('df58-css')) { var s = doc.createElement('style'); s.id = 'df58-css'; s.textContent = CSS + VB_TYPE; (doc.head || doc.documentElement).appendChild(s); } }
+  /* Vague B (L5) : une seule liste « type d’établissement » à l’écran. #te-type et #i-etabtype écrivent la même donnée (DB.etabType) ;
+     la ligne de Mes informations est masquée quand la carte « Quel type d’établissement ? » est là (elle reste remplie pour le calcul). */
+  var VB_TYPE = '#v-in:has(#te-type) label.f:has(> #i-etabtype){display:none!important}';
   /* Étiquette de la note : document + changements déclarés = « calcul à jour », pas « FEC importé » tout court. */
   function etiquette() {
     var orig = w.verdictScoreText; if (typeof orig !== 'function' || orig.__df58) return;

@@ -151,8 +151,11 @@
     /* En démonstration, le cache hors ligne et Inventaire attendent désormais
        le progrès réel du visiteur. Le premier écran et ses clics gardent le
        fil principal pour eux seuls. */
-    if(state.context&&!bool(state.context.demo))queueWorkerRegistration(source==='fallback'?1200:700);
-    queueInventoryAtRest();
+    /* C397 c (garde-fou, chef) : une tâche de fin de démarrage qui échoue (EQUIPE absente dans le Perso : l'appli restait sur « Ouverture de
+       Verdict… ») n'empêche plus jamais la suite ; et 5 s après la fin du démarrage, un voile encore là sur un cadre chargé est levé. */
+    setTimeout(function(){try{if(!startupCover)return;var f=els[state.module]||els.verdict,dd=f&&f.contentDocument;if(dd&&dd.readyState==='complete'&&dd.body&&dd.body.children.length)finishStartupCover();}catch(e){}},5000);
+    try{if(state.context&&!bool(state.context.demo))queueWorkerRegistration(source==='fallback'?1200:700);}catch(e){}
+    try{queueInventoryAtRest();}catch(e){}
     return true;
   }
   /* C397 (audit A06) : la première ouverture de l'Inventaire était à froid pour un vrai client (préchargement seulement en démo, à l'étape 12
@@ -161,7 +164,8 @@
   var inventoryRestTimer=0,lastShellInput=0;
   ['pointerdown','keydown','wheel','touchstart'].forEach(function(t){document.addEventListener(t,function(){lastShellInput=Date.now();},{capture:true,passive:true});});
   function preloadInventoryNow(){
-    if(EQUIPE||!startupUnlocked||state.frames.inventory)return false;
+    /* C397 c : EQUIPE n'existe que dans la coque du Client (lien d'équipe) ; le Perso et l'atelier n'ont pas d'équipe et gardent l'Inventaire */
+    if((typeof EQUIPE!=='undefined'&&EQUIPE)||!startupUnlocked||state.frames.inventory)return false;
     if(state.context&&bool(state.context.demo))return preloadDemoInventory();
     return ensureFrame('inventory',{preload:true});
   }
@@ -170,7 +174,7 @@
      sans toucher depuis 0,8 s) ; passé 2,8 s sans y parvenir, il ne part plus qu'au toucher de l'onglet, jamais pendant le repos. */
   var inventoryRestDeadline=0;
   function queueInventoryAtRest(){
-    if(EQUIPE||state.frames.inventory||inventoryRestTimer)return;
+    if((typeof EQUIPE!=='undefined'&&EQUIPE)||state.frames.inventory||inventoryRestTimer)return;
     if(!inventoryRestDeadline)inventoryRestDeadline=Date.now()+2800;
     inventoryRestTimer=setTimeout(function(){inventoryRestTimer=0;
       if(state.frames.inventory||Date.now()>inventoryRestDeadline)return;
@@ -757,7 +761,7 @@
     }
     if(data.type==='verdict-unified-startup-state'&&sourceModule==='verdict'&&data.ready===true)setStartupUnlocked(true);
     if(data.type==='verdict-unified-intro-complete'&&sourceModule==='verdict'){
-      markStartupVisualReady('verdict');
+      try{markStartupVisualReady('verdict');}catch(e){}
       if(state.pendingVerdictResume){state.pendingVerdictResume.sent=false;flushVerdictResume();}
     }
     if(data.type==='verdict-unified-demo-resume-result'&&sourceModule==='verdict')finishVerdictResume(data);
@@ -844,7 +848,7 @@
     /* Le contexte local restauré ci-dessus ne peut jamais remplacer la
        décision d'accès serveur. Celle-ci est appliquée en dernier. */
     if(!demo&&window.VERDICT_WORKSPACE_CONNECTED===true)updateContext({siteId:resolved.site.id,name:resolved.site.name,accountScope:access.context&&access.context.organisationId,demo:false,source:target==='inventory'?'inventory':'verdict',locale:rememberedLocale()},target==='inventory'?'inventory':'verdict');
-    if(target==='inventory'){setStartupUnlocked(true);markStartupVisualReady('workspace-direct');}
+    if(target==='inventory'){setStartupUnlocked(true);try{markStartupVisualReady('workspace-direct');}catch(e){}}
     activateCapability(target,{authorizedStartup:true,demo:demo,guide:params.get('guide')==='1',siteId:params.get('inventory')||state.context&&state.context.siteId||'',locale:rememberedLocale(),route:params.get('route')||'',profile:target==='carte'?'carte':state.profile,navigate:false},false);
     loadManagerAlert();return true;
   }

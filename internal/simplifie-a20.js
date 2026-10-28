@@ -51,8 +51,7 @@
   /* C73 — « Simuler » a son propre module dans la barre du bas, juste avant Audit : il s'allume sur l'écran Simuler et
      n'est plus un onglet de Structure (une seule entrée). */
   var SIMULER = { fr: 'Simuler', en: 'Simulate', es: 'Simular', it: 'Simula', de: 'Simulieren', nl: 'Simuleren', pt: 'Simular' };
-  try { if (w.I18N_DICT) Object.keys(SIMULER).forEach(function (l) { if (w.I18N_DICT[l]) w.I18N_DICT[l]['nav.dec'] = SIMULER[l]; }); } catch (e) {}
-  try { var packs = w.VERDICT_I18N_PACKS || {}; Object.keys(packs).forEach(function (l) { if (packs[l] && packs[l].dict && SIMULER[l]) packs[l].dict['nav.dec'] = SIMULER[l]; }); } catch (e) {}
+  /* C448 (audit A12) : « nav.dec » et « nav.audit » sont dans le dictionnaire de base de chaque langue (029, 010 à 015) ; plus de correctif après coup. */
   /* Filet : si un libellé de traduction manque encore, le bouton garde « Simuler » (jamais une clé technique). */
   function libelleSimuler() {
     var b = doc.querySelector('nav button[data-v="dec"]'); if (!b) return;
