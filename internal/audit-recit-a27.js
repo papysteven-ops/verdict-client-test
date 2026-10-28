@@ -11,8 +11,20 @@
   var REDUIT = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   /* C218 (W70) : espace insécable visible entre les milliers (l'espace fine U+202F disparaissait dans les gros chiffres gras : « +15377 € »). */
-  function eur(v) { return Math.round(Number(v) || 0).toLocaleString('fr-FR').replace(/[\u202f\s]/g, '\u00a0') + '\u00a0€'; }
-  function pct(v) { return (Number(v) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
+  /* C407 (décision 41) : le récit dans la langue du patron — phrases entières par tr() (Langues), montants et % mis en forme dans la langue */
+  var TAG = { fr: 'fr-FR', en: 'en-GB', es: 'es-ES', it: 'it-IT', de: 'de-DE', nl: 'nl-NL', pt: 'pt-PT' };
+  function lg() { try { return String(w.LOCALE || doc.documentElement.lang || 'fr').slice(0, 2).toLowerCase(); } catch (e) { return 'fr'; } }
+  function loc() { return TAG[lg()] || 'fr-FR'; }
+  function tr(s) { try { var V = w.VerdictLanguesComplements, t = V && V.traduire && V.traduire(String(s)); return t || s; } catch (e) { return s; } }
+  function eur(v) { if (lg() === 'fr') return Math.round(Number(v) || 0).toLocaleString('fr-FR').replace(/[\u202f\s]/g, '\u00a0') + '\u00a0€';
+    try { return new Intl.NumberFormat(loc(), { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Math.round(Number(v) || 0)); } catch (e) { return Math.round(Number(v) || 0) + ' €'; } }
+  function pct(v) { return (Number(v) || 0).toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + (/^(en|nl)$/.test(lg()) ? '%' : ' %'); }
+  /* le récit déjà rendu passe par tr() texte par texte (chaque nœud est une phrase entière) ; rien en français */
+  function traduire(box) { if (!box || lg() === 'fr') return; try {
+    var it = doc.createTreeWalker(box, 4), t, L = []; while ((t = it.nextNode())) L.push(t);
+    L.forEach(function (n) { var v = n.nodeValue, s = v.trim(); if (!s || !/[A-Za-zÀ-ÿ]/.test(s)) return; var x = tr(s); if (x && x !== s) n.nodeValue = v.replace(s, x); });
+    [].forEach.call(box.querySelectorAll('[aria-label]'), function (e) { var a = e.getAttribute('aria-label'), x = tr(a); if (x && x !== a) e.setAttribute('aria-label', x); });
+  } catch (e) {} }
   function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
   /* C311 (V16-012) : le titre suit aussi le Test de résistance, comme le chapitre 01 (« rentable, mais fragile » dès que deux chocs
      sur quatre font passer en perte) : jamais « Une structure solide » au-dessus d'un chapitre qui dit fragile. */
@@ -57,7 +69,7 @@
     return {
       R: R, ca: num(d.ca), res: num(d.res), rn: rn, score: Math.round(num(R.score)), postes: postes,
       mini: mini, securite: isFinite(Number(seuil.securiteEur)) ? Number(seuil.securiteEur) : num(d.ca) - mini,
-      leviers: leviers, fuite: fuite, cible: G && G.max ? num(d.res) + leviers.reduce(function (s, x) { return s + num(x.gain); }, 0) : null, /* C301 (V15-041) : le possible est la somme des lignes */ cibleScore: G && G.max ? Math.round(num(G.max.score)) : null,
+      leviers: leviers, combine: G ? num(G.combine) : 0, fuite: fuite, cible: G && G.max ? num(d.res) + leviers.reduce(function (s, x) { return s + num(x.seul != null ? x.seul : x.gain); }, 0) + (G ? num(G.combine) : 0) : null, /* C382 : gains isolés + effet combiné = total du plan */ /* C301 (V15-041) : le possible est la somme des lignes */ cibleScore: G && G.max ? Math.round(num(G.max.score)) : null,
       nom: (function () { try { return (w.DB && w.DB.etab) || 'Votre établissement'; } catch (e) { return 'Votre établissement'; } })()
     };
   }
@@ -77,17 +89,17 @@
       '<p class="rc-p">Indice de sérénité Verdict, calculé avec vos chiffres.</p><span class="rc-suite">Voir où part l’argent ↓</span></section>');
     /* 2 · Où part chaque 100 € */
     /* C98 — sur grand écran, chaque segment assez large porte son nom et son montant. */
-    function dedans(l, v) { return v >= 9 ? '<span><small>' + esc(l) + '</small>' + (Math.round(v * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</span>' : ''; }
+    function dedans(l, v) { return v >= 9 ? '<span><small>' + esc(l) + '</small>' + (Math.round(v * 10) / 10).toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</span>' : ''; }
     var seg = D.postes.map(function (x, i) { return '<i style="--w:' + Math.max(0, x.v).toFixed(2) + '%;--c:' + x.c + ';--i:' + i + '">' + dedans(x.l, x.v) + '</i>'; }).join('') +
       (D.rn > 0 ? '<i class="rc-res" style="--w:' + D.rn.toFixed(2) + '%;--c:#22c55e;--i:' + D.postes.length + '">' + dedans('Reste avant impôt', D.rn) + '</i>' : '');
-    var leg = D.postes.map(function (x) { return '<li><i style="background:' + x.c + '"></i>' + esc(x.l) + '<b>' + (Math.round(x.v * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>'; }).join('') +
-      '<li' + (D.rn < 0 ? ' class="rc-neg"' : '') + '><i style="background:' + (D.rn > 0 ? '#22c55e' : '#ef4444') + '"></i>' + (D.rn >= 0 ? 'Reste avant impôt' : 'Il manque') + '<b>' + (D.rn >= 0 ? '' : '−') + Math.abs(Math.round(D.rn * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>';
+    var leg = D.postes.map(function (x) { return '<li><i style="background:' + x.c + '"></i>' + esc(x.l) + '<b>' + (Math.round(x.v * 10) / 10).toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>'; }).join('') +
+      '<li' + (D.rn < 0 ? ' class="rc-neg"' : '') + '><i style="background:' + (D.rn > 0 ? '#22c55e' : '#ef4444') + '"></i>' + (D.rn >= 0 ? 'Reste avant impôt' : 'Il manque') + '<b>' + (D.rn >= 0 ? '' : '−') + Math.abs(Math.round(D.rn * 10) / 10).toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' €</b></li>';
     /* V51 (21/10) : les montants sont HT (« encaissés » laissait croire à du TTC) ; « le premier poste est l’équipe », avec l'article. */
     var ART = { 'matière': 'la matière', 'équipe': 'l’équipe', 'plateformes': 'les plateformes', 'emballages': 'les emballages', 'structure': 'la structure', 'amortissements': 'les amortissements', 'loyer et autres charges': 'le loyer et les autres charges' };
     var premier = D.postes.length ? D.postes.slice().sort(function (a, b) { return b.v - a.v; })[0].l.toLowerCase() : '';
     t.push('<section class="rc-card rc-c2" data-rc="2"><span class="rc-k">2 · Où part l’argent</span><h2>Sur 100 € de chiffre d’affaires HT</h2>' +
       '<div class="rc-stack">' + seg + '</div><ul class="rc-leg">' + leg + '</ul>' +
-      '<p class="rc-p">' + (premier ? 'Le premier poste est <b>' + esc(ART[premier] || premier) + '</b>.' : '') + '</p><span class="rc-suite">Votre seuil ↓</span></section>');
+      '<p class="rc-p">' + (premier ? esc('Le premier poste est ' + (ART[premier] || premier) + '.') : '') + '</p><span class="rc-suite">Votre seuil ↓</span></section>');
     /* 3 · Le seuil */
     if (D.mini > 0) {
       var echelle = Math.max(D.ca, D.mini) * 1.08, pc = D.ca / echelle * 100, pm = D.mini / echelle * 100, ok = D.securite >= 0;
@@ -97,6 +109,9 @@
         '<p class="rc-big"><b data-rc-count="' + Math.round(Math.abs(D.securite)) + '" data-rc-eur>0 €</b><small>' + (ok ? 'de marge de sécurité sur un an' : 'à aller chercher sur un an') + '</small></p>' +
         '<span class="rc-suite">Vos fuites ↓</span></section>');
     }
+    /* C420 (L7) : un seul nom par levier dans les images 4 et 5, celui de l'écran (vocabulaire-a56 : « Coût humain chargé » → « Coût de l’équipe »),
+       posé avant la traduction : sans cela, en es et en it, l'image 4 et l'image 5 donnaient deux noms différents. */
+    function nomLevier(n) { return String(n || '').replace(/\bCoût humain chargé(?![\wÀ-ÿ])/g, 'Coût de l’équipe'); }
     /* 4 · Les fuites */
     /* C218 (W70) : d'abord ce qui s'échappe vraiment (l'écart matière entre achats et fiches), puis ce que Verdict propose de
        récupérer, avec les montants de Simuler. Le nombre de commandes n'y figure plus : ce n'est pas une décision du patron. */
@@ -104,22 +119,22 @@
       var n0 = 0, fuites = '';
       if (D.fuite) {
         /* C318 (V16C-N1) : un seul arrondi, à partir de l'écart exact (Burger 1,99 → « 2,0 points », comme le chapitre 13) */
-        var ecA = Math.round((D.fuite.pts != null ? Number(D.fuite.pts) : D.fuite.reel - D.fuite.theo) * 10) / 10, fpt = ecA.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-        fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière (' + esc(D.fuite.perimetre || 'nourriture + boissons') + ')</b><small>Achats ' + esc(D.fuite.periode || '') + ' : ' + pct(D.fuite.reel) + ' du CA ; ' + (D.fuite.brouillons ? 'fiches-types proposées par Vera, à confirmer' : 'fiches') + ' : ' + pct(D.fuite.theo) + '. ' + fpt + ' point' + (Math.abs(ecA) >= 2 ? 's' : '') + ' de pertes, portions ou offerts non saisis' + (D.fuite.compte ? (function () { /* C311 (V16-026) : ce que le plan compte vraiment, et seulement si le levier existe */
+        var ecA = Math.round((D.fuite.pts != null ? Number(D.fuite.pts) : D.fuite.reel - D.fuite.theo) * 10) / 10, fpt = ecA.toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière (' + esc(D.fuite.perimetre || 'nourriture + boissons') + ')</b><small>' /* C420 (L7) : trois phrases entières, chacune dans son <span> (une phrase = un nœud traduisible, Langues) */ + '<span>Achats ' + esc(D.fuite.periode || '') + ' : ' + pct(D.fuite.reel) + ' du CA ; ' + (D.fuite.brouillons ? 'fiches-types proposées par Vera, à confirmer' : 'fiches') + ' : ' + pct(D.fuite.theo) + '.</span> <span>' + fpt + ' point' + (Math.abs(ecA) >= 2 ? 's' : '') + ' de pertes, portions ou offerts non saisis' + (D.fuite.compte ? (function () { /* C311 (V16-026) : ce que le plan compte vraiment, et seulement si le levier existe */
           /* C311 (décision 13) : poste par poste — nourriture et boissons, chacune bornée par son propre écart */
-          var p1 = function (x) { return (Math.round(x * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }, pl = function (x) { return p1(x) + ' point' + (Math.abs(Math.round(x * 10) / 10) >= 2 ? 's' : ''); };
+          var p1 = function (x) { return (Math.round(x * 10) / 10).toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }, pl = function (x) { return p1(x) + ' point' + (Math.abs(Math.round(x * 10) / 10) >= 2 ? 's' : ''); };
           var lf = D.leviers.filter(function (x) { return x && x.id === 'fc'; })[0], lb = D.leviers.filter(function (x) { return x && x.id === 'boi'; })[0];
           var vf = lf && lf.over ? Math.abs(num(lf.over.fc)) : 0, vb = lb && lb.over ? Math.abs(num(lb.over.boi)) : 0, N = D.fuite.nour, B = D.fuite.boi;
           var postes = N && B ? ' (nourriture ' + (N.pts >= 0 ? '+' : '−') + pl(Math.abs(N.pts)) + ', boissons ' + (B.pts >= 0 ? '+' : '−') + pl(Math.abs(B.pts)) + ')' : '';
-          if (!lf && !lb) return postes + ' ; le plan ne retient pas de levier matière' + (N && N.pts <= 0 ? ' (la nourriture est déjà sous vos fiches)' : '') + ' : cet écart n’est pas compté dans le gain';
+          if (!lf && !lb) return postes + '.</span> <span>Le plan ne retient pas de levier matière' + (N && N.pts <= 0 ? ' (la nourriture est déjà sous vos fiches)' : '') + ' : cet écart n’est pas compté dans le gain.</span>';
           var parts = []; if (lf) parts.push(pl(vf) + ' dans « Coût de la nourriture »'); if (lb) parts.push(pl(vb) + ' dans « Coût des boissons »');
           var tN = N ? Math.max(0, N.pts) / 3 : D.fuite.pts / 3, tB = B ? Math.max(0, B.pts) / 3 : 0, reduit = (lf && vf < tN - 0.55) || (lb && vb < tB - 0.55);
-          return postes + ' ; Verdict en compte ' + parts.join(' et ') + ' ci-dessous : un tiers de l’écart de chaque poste, par pas de 0,5 point' + (reduit ? ', réduit pour rester au niveau des meilleurs établissements de votre format' : '');
-        })() : ' ; sous 4 points, non compté dans le gain') + '</small></div><strong>≈\u00a0<em data-rc-count="' + Math.round(D.fuite.eur) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
+          return postes + '.</span> <span>Verdict en compte ' + parts.join(' et ') + ' ci-dessous : un tiers de l’écart de chaque poste, par pas de 0,5 point' + (reduit ? ', réduit pour rester au niveau des meilleurs établissements de votre format' : '') + '.</span>';
+        })() : '.</span> <span>Sous 4 points, non compté dans le gain.</span>') + '</small></div><strong>≈\u00a0<em data-rc-count="' + Math.round(D.fuite.eur) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
         n0 = 1;
       }
       fuites += D.leviers.map(function (x, i) {
-        return '<li style="--i:' + (i + n0) + '"><span class="rc-n">' + (i + 1) + '</span><div><b>' + esc(x.n) + '</b><small>' + esc(x.vers || '') + ' · à récupérer</small></div><strong>+<em data-rc-count="' + Math.round(x.gain) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
+        return '<li style="--i:' + (i + n0) + '"><span class="rc-n">' + (i + 1) + '</span><div><b>' + esc(nomLevier(x.n)) + '</b><small>' + esc(x.vers || '') + ' · à récupérer</small></div><strong>+<em data-rc-count="' + Math.round(x.seul != null ? x.seul : x.gain) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
       }).join('');
       t.push('<section class="rc-card rc-c4" data-rc="4"><span class="rc-k">4 · Vos fuites</span><h2>L’argent qui s’échappe</h2><ol class="rc-leaks">' + fuites + '</ol>' +
         '<p class="rc-p">' + (D.leviers.length ? 'Montants à récupérer calculés comme dans Simuler, et repris tels quels dans Carte › Décisions pour les prix.' : 'Aucun levier réaliste à ajouter pour l’instant.') + '</p><span class="rc-suite">Comment remonter ↓</span></section>');
@@ -127,10 +142,11 @@
     /* 5 · Comment remonter : cascade du résultat */
     if (D.leviers.length && D.cible != null) {
       var pas = [{ l: 'Aujourd’hui', v: D.res, base: true }];
-      D.leviers.forEach(function (x) { pas.push({ l: x.n, v: x.gain }); });
+      D.leviers.forEach(function (x) { pas.push({ l: nomLevier(x.n), v: x.seul != null ? x.seul : x.gain }); });
+      if (Math.abs(num(D.combine)) >= 1) pas.push({ l: 'Effet combiné des leviers', v: num(D.combine), comb: true }); /* C382 (A47) */
       /* C97 — Cascade horizontale (lisible sur iPhone), échelle depuis 0 sans coupure, chaque barre chiffrée. */
       var bornes = [0, D.res, D.cible], cumul = D.res, barres = '';
-      D.leviers.forEach(function (x) { cumul += x.gain; bornes.push(cumul); });
+      pas.forEach(function (p) { if (!p.base) { cumul += p.v; bornes.push(cumul); } });
       var lo = Math.min.apply(null, bornes), hi = Math.max.apply(null, bornes), plage = Math.max(1, hi - lo);
       function ligne(i, cls, lib, val, a, z) {
         var g = (Math.min(a, z) - lo) / plage * 100, l = Math.max(1.6, Math.abs(z - a) / plage * 100);
@@ -140,7 +156,7 @@
       cumul = D.res;
       pas.forEach(function (p, i) {
         if (p.base) { barres += ligne(i, 'base', p.l, eur(p.v), 0, p.v); return; }
-        barres += ligne(i, 'gain', '+ ' + p.l, '+' + eur(p.v), cumul, cumul + p.v); cumul += p.v;
+        barres += ligne(i, p.v < 0 ? 'comb' : 'gain', (p.comb ? '' : '+ ') + p.l, (p.v < 0 ? '−' + eur(-p.v) : '+' + eur(p.v)), cumul, cumul + p.v); cumul += p.v;
       });
       barres += ligne(pas.length, 'cible', 'Possible', eur(D.cible), 0, D.cible);
       t.push('<section class="rc-card rc-c5" data-rc="5"><span class="rc-k">5 · Comment remonter</span><h2>Votre résultat, levier par levier</h2>' +
@@ -227,7 +243,7 @@
   function monter() {
     var body = doc.getElementById('auditBody'); if (!body) return;
     var D = donnees(); if (!D) return;
-    var cle = [D.score, Math.round(D.res), Math.round(D.ca), D.leviers.length, D.cible].join('|');
+    var cle = [D.score, Math.round(D.res), Math.round(D.ca), D.leviers.length, D.cible, lg()].join('|'); /* C407 : la langue entre dans la clé */
     var box = doc.getElementById('vdRecit');
     if (box && box.getAttribute('data-cle') === cle && box.parentNode) return;
     if (!box) { box = doc.createElement('div'); box.id = 'vdRecit'; }
@@ -242,6 +258,7 @@
       '<div class="rc-navwrap"><div class="rc-nav" role="navigation" aria-label="Chapitres de l’audit">' + puces + '</div></div>' + corps;
     /* C301 (V15-080) : chaque montant est écrit dès le départ (l'animation repart de 0 à l'écran seulement) */
     [].forEach.call(box.querySelectorAll('[data-rc-count]'), function (x) { var v = Number(x.getAttribute('data-rc-count')); x.setAttribute('data-vd-compteur', '1'); if (isFinite(v)) x.textContent = x.hasAttribute('data-rc-eur') ? eur(v) : String(Math.round(v)); });
+    traduire(box); /* C407 (décision 41) */
     RENDU_RC = performance.now();
     var wrap = body.querySelector('.au-wrap') || body;
     if (box.parentNode !== wrap || wrap.firstChild !== box) wrap.insertBefore(box, wrap.firstChild);
@@ -281,7 +298,7 @@
     '#vdRecit .rc-p{margin:0;color:rgba(248,250,252,.82);font-size:16px;line-height:1.4}#vdRecit .rc-p b{color:#fff}' +
     '#vdRecit .rc-big{margin:4px 0 0;display:flex;flex-direction:column;gap:6px}#vdRecit .rc-big b{font:900 clamp(40px,11vw,64px)/1 -apple-system,system-ui;letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:#fff}' +
     '#vdRecit .rc-big small{font-size:14.5px;color:rgba(248,250,252,.78)}' +
-    '#vdRecit .rc-suite{margin-top:6px;padding-top:8px;font:700 13px/1 -apple-system,system-ui;color:rgba(255,255,255,.62);animation:rcBouge 1.8s ease-in-out infinite}' +
+    '#vdRecit .rc-suite{margin-top:6px;padding-top:8px;font:700 13px/1 -apple-system,system-ui;color:rgba(255,255,255,.62);animation:rcBouge 1.8s ease-in-out 2}/* C412 : jamais sans fin */' +
     '@keyframes rcBouge{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}' +
     /* entrées */
     '/* décision 27 bis */#vdRecit .rc-card>*{opacity:.6;transform:translateY(6px);transition:opacity .2s ' + E + ',transform .2s ' + E + '}' +
@@ -322,7 +339,7 @@
     '#vdRecit .rc-wf-row.cible{padding-top:12px;border-top:1px solid rgba(255,255,255,.14)}' +
     '#vdRecit .rc-on .rc-wf-row{opacity:1;transform:none}#vdRecit .rc-on .rc-wf-bar{transform:scaleX(1)}' +
     /* 6 · appel */
-    '#vdRecit .rc-cta{min-height:60px;border:0;border-radius:18px;background:linear-gradient(180deg,#22c55e,#16a34a);color:#fff;font:900 18px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 14px 34px rgba(22,163,74,.45)}' +
+    '#vdRecit .rc-cta{min-height:60px;border:0;border-radius:18px;background:linear-gradient(180deg,#22c55e,#16a34a);color:#05100a!important;-webkit-text-fill-color:#05100a;font:900 18px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 14px 34px rgba(22,163,74,.45)}' /* C421 (A70) : texte #05100a (≈ 9:1 sur le vert, comme .av31-primary) ; en blanc (2,3:1), contraste-a44 l'assombrissait en gris rgb(56,56,56) */ +
     '#vdRecit .rc-on .rc-cta{animation:rcHalo 1.9s ease-out .6s 3}@keyframes rcHalo{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6),0 14px 34px rgba(22,163,74,.45)}70%{box-shadow:0 0 0 16px rgba(34,197,94,0),0 14px 34px rgba(22,163,74,.45)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0),0 14px 34px rgba(22,163,74,.45)}}' +
     '#vdRecit .rc-cta2{display:flex;gap:10px}#vdRecit .rc-cta2 button{flex:1;min-height:50px;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font:800 15px/1 -apple-system,system-ui;cursor:pointer}' +
     '#vdRecit .rc-navwrap,#vdRecit .rc-l,#vdRecit .rc-stack i>span{display:none}' +

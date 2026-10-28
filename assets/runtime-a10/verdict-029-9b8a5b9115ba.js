@@ -854,6 +854,9 @@ function freshDB(model){
     d.in.treso = d.in.treso==null ? null : d.in.treso;
     d.plats = M.plats.map(function(x,i){
       var livre=!!x[5], part=livre?(x[9]==null?(key==='DarkKitchen'?100:30):x[9]):0;
+      /* C414 (audit A48) : la part livrée se lit en pourcentage (C337) ; une valeur strictement entre 0 et 1 est une fraction : ×100. Le dossier
+         de départ de la démo (créé avant la correction C337 de la liste) gardait 0,03 : « livré à 0 % » et une autre marge de la carte. */
+      if(typeof part==='number'&&part>0&&part<1)part=Math.round(part*1000)/10;
       return {id:"p"+i,nom:x[0],cat:x[1],ttc:x[2],vol:x[3],
         rec:x[4].map(function(l){ return [l[0],l[1]]; }),preps:[],pf:livre, pfttc:x[6]||null,
         pfshare:part,pq:(x[7]||[false,false,false,false,false]).slice(),tva:x[8]!=null?x[8]:/* C307 : un plat de modèle sans TVA reçoit celle du modèle, 20 % pour l'alcool */(/sangria|(verre|pichet|bouteille|carafe) de vin|bi[eè]res?\b|spiritueux|champagne/i.test(String(x[0]||''))?20:(M&&M.in&&M.in.tva!=null&&isFinite(Number(M.in.tva))?Number(M.in.tva):10))};
@@ -1138,7 +1141,7 @@ function setLocale(l){
   if(l!=='fr'&&!I18N_DICT[l]){
     verdictLoadLanguagePack(l,function(ok){
       if(ok)setLocale(l);
-      else{try{document.documentElement.classList.remove('verdict-i18n-loading');}catch(e){}try{var note=document.querySelector('#mLang .lang-note');if(note)note.textContent='Langue indisponible hors connexion · Réessayez';}catch(e){}}
+      else{try{document.documentElement.classList.remove('verdict-i18n-loading');}catch(e){}try{verdictPremierDessinEnAttente();}catch(e){}/* C438 */try{var note=document.querySelector('#mLang .lang-note');if(note)note.textContent='Langue indisponible hors connexion · Réessayez';}catch(e){}}
     });
     return;
   }
@@ -1175,13 +1178,15 @@ function setLocale(l){
     /* C299 (Langues) : changer de langue ne rejoue jamais l'ouverture ; elle ne se joue qu'une fois. */
   }
   function rendreLangue(){
-    try{window.dispatchEvent(new CustomEvent('verdict:locale-changed',{detail:{locale:l,managedRender:true}}));}catch(e){}
+    try{window.dispatchEvent(new CustomEvent('verdict:locale-changed',{detail:{locale:l,managedRender:true,premierDessin:!!window.__vdPremierDessinAttendLangue||document.readyState==='loading'}}));}catch(e){}/* C438 */
     if(!_memeLangue){
       try{if(typeof applyI18nChrome==='function')applyI18nChrome({chromeOnly:true});else applyI18nDOM();}catch(e){try{applyI18nDOM();}catch(e2){}}
       try{if(typeof verdictInvalidateViews==='function')verdictInvalidateViews();}catch(e){}
-      try{if(typeof go==='function')go(typeof VIEW==='string'?VIEW:'pil');}catch(e){}
+      if(document.readyState==='loading'){window.__vdLangueAppliqueeEnLecture=true;setTimeout(verdictPremierDessinFilet,5000);}/* C438 : page encore en lecture : le premier dessin du DOMContentLoaded fera l'unique dessin, puis montrera la page */
+      else if(!verdictPremierDessinEnAttente()){try{if(typeof go==='function')go(typeof VIEW==='string'?VIEW:'pil');}catch(e){}}/* C438 : l'unique dessin du démarrage */
     }
-    try{document.documentElement.classList.remove('verdict-i18n-loading');}catch(e){}
+    try{verdictPremierDessinEnAttente();}catch(e){}/* C438 : même langue (cas limite) */
+    if(!window.__vdLangueAppliqueeEnLecture){try{document.documentElement.classList.remove('verdict-i18n-loading');}catch(e){}}
     try{window.scrollTo(0,0);}catch(e){}
     var confirmation=verdictLangConfirmerChoix(l);
     if(confirmation){
@@ -1342,9 +1347,9 @@ function trIndex(){
 function verdictBootStoredLocale(){
   var wanted=lsGet('verdict_locale');
   if(!wanted||wanted==='fr'||I18N_LANGS.indexOf(wanted)<0)return;
-  try{document.documentElement.classList.add('verdict-i18n-loading');}catch(e){}
+  try{document.documentElement.classList.add('verdict-i18n-loading');}catch(e){}setTimeout(verdictPremierDessinFilet,5000);/* C438 : la page n'est jamais cachée plus de 5 s */
   LOCALE='fr';LOCALE_TAG='fr-FR';
-  verdictLoadLanguagePack(wanted,function(ok){if(ok)setLocale(wanted);else try{document.documentElement.classList.remove('verdict-i18n-loading');}catch(e){}});
+  verdictLoadLanguagePack(wanted,function(ok){if(ok)setLocale(wanted);else{try{document.documentElement.classList.remove('verdict-i18n-loading');}catch(e){}try{verdictPremierDessinEnAttente();}catch(e){}/* C438 */}});
 }
 verdictBootStoredLocale();
 function trNorm(x){
@@ -2573,6 +2578,8 @@ function fixDB(d){
        On ne l'invente pas : 0 seulement quand la livraison est désactivée,
        sinon null jusqu'à confirmation par le client. */
     if(p.pfshare===undefined)p.pfshare=p.pf?null:0;
+    /* C414 : un dossier de démonstration déjà créé avec la fraction (0,03) est réparé ; une part saisie par le patron n'est jamais touchée */
+    if(p.pf&&typeof p.pfshare==='number'&&p.pfshare>0&&p.pfshare<1&&(d.exempleCharge||d.userMode==='demo'||d.presentationProfile||d._demo))p.pfshare=Math.round(p.pfshare*1000)/10;
     if(!Array.isArray(p.preps))p.preps=[];
     if(!p.esp)p.esp=/boisson|soft|bi[eè]re|vin|cocktail|spiritueux|caf[eé]|th[eé]/i.test(p.cat||'')?'bar':'cuisine';
   });
@@ -2865,6 +2872,8 @@ function verdictSaveSignature(){
      reste dans la comparaison. */
   try{return JSON.stringify(STORE,function(key,value){
     if(key==="veraUpdatedAt")return undefined;
+    /* C416 : l'heure de la surveillance des coûts (vera-carte-a14) est réécrite à chaque enregistrement ; ce n'est pas une donnée (sync-espace l'ignore déjà) */
+    if(key==="cpCostWatch"&&value&&typeof value==="object"&&!Array.isArray(value)){var cw={};Object.keys(value).forEach(function(k){if(k!=="at")cw[k]=value[k];});return cw;}
     if(key==="_safety"&&value&&typeof value==="object"){
       var copy={};Object.keys(value).forEach(function(k){
         if(["updatedAt","localRev","cloudSyncedAt","cloudLocalRev"].indexOf(k)<0)copy[k]=value[k];
@@ -2877,11 +2886,18 @@ var VERDICT_SAVE_DIFFERE=false,VERDICT_SAVE_DEMANDE=false;
 /* C333 (décision 19) : pendant un changement d'établissement, les enregistrements demandés (switchEtab, readInputs, plans de 041) sont
    regroupés en un seul, lancé juste après ; une tâche à part le lance quoi qu'il arrive, aucune donnée n'attend. */
 function verdictSaveFlush(){if(!VERDICT_SAVE_DIFFERE)return;VERDICT_SAVE_DIFFERE=false;if(VERDICT_SAVE_DEMANDE){VERDICT_SAVE_DEMANDE=false;save('etab-switch');}}
+/* C416 (audit A08) : save() ouvrait une révision et invalidait tous les écrans avant de regarder si quelque chose avait changé (aussi en démo,
+   où rien n'est écrit) : un aller-retour par l'Inventaire, sans aucun changement, faisait tout redessiner au retour (Pilotage 0,4 à 0,58 s,
+   Carte 0,44 à 1,24 s). La révision n'avance plus que si la signature métier (STORE, sans les preuves de sauvegarde) ou la langue change. */
+var VERDICT_VIEW_SIGNATURE=null;
+/* le dossier affiché hors du portefeuille (démonstration) compte aussi : sinon une vraie modification ne serait pas vue */
+function verdictSignatureDossierHorsStore(){try{if(!DB||(STORE&&STORE.etabs&&STORE.etabs[STORE.actif]===DB))return '';return JSON.stringify(DB,function(k,v){return k==='veraUpdatedAt'?undefined:v;});}catch(e){return '?'+Date.now();}}
 function save(reason){
- try{VERDICT_DB_REV++;verdictMoteurOublier();}catch(_r){}/* C333 : une nouvelle révision des données */ verdictInvalidateViews();try{if(window.VerdictSeasonalCacheInvalidate)window.VerdictSeasonalCacheInvalidate();}catch(e){}
- if(VERDICT_SAVE_DIFFERE){VERDICT_SAVE_DEMANDE=true;return {status:'deferred',committed:false};}/* C333 : seule l'écriture attend */
+ if(VERDICT_SAVE_DIFFERE){try{VERDICT_DB_REV++;verdictMoteurOublier();}catch(_r){}verdictInvalidateViews();VERDICT_VIEW_SIGNATURE=null;VERDICT_SAVE_DEMANDE=true;return {status:'deferred',committed:false};}/* C333 : seule l'écriture attend */
+ var signature=verdictSaveSignature(),_vs=signature?signature+'|'+verdictSignatureDossierHorsStore()+'|'+(typeof LOCALE==='string'?LOCALE:''):'';
+ if(!_vs||_vs!==VERDICT_VIEW_SIGNATURE){try{VERDICT_DB_REV++;verdictMoteurOublier();}catch(_r){}/* C333 : une nouvelle révision des données */ verdictInvalidateViews();try{if(window.VerdictSeasonalCacheInvalidate)window.VerdictSeasonalCacheInvalidate();}catch(e){}VERDICT_VIEW_SIGNATURE=_vs||null;}
  if(!SAVE||VERDICT_DEMO_SESSION||VERDICT_DEMO_RESTORE_ACTIVE)return {status:'temporary',committed:false};
- var signature=verdictSaveSignature();if(signature&&signature===VERDICT_LAST_BUSINESS_SIGNATURE){try{drawDataSafety();}catch(e){}return {status:'same',committed:true};}
+ if(signature&&signature===VERDICT_LAST_BUSINESS_SIGNATURE){try{drawDataSafety();}catch(e){}return {status:'same',committed:true};}
  var why=reason||'automatic',sm=verdictSafetyMeta(),expected=Number(sm.localRev)||0,previousAt=sm.updatedAt,saveKey=SKEY,saveStore=STORE;
  try{VerdictPersistence.assertNoNewer(localStorage,saveKey,expected);}catch(error){if(error.message==='STORAGE_CONFLICT'||error instanceof SyntaxError)throw error;}
  if(DB)DB.veraUpdatedAt=new Date().toISOString();sm.updatedAt=new Date().toISOString();sm.localRev=expected+1;
@@ -3111,11 +3127,19 @@ function etabScore(id){
   DB=prev;
   return (R&&R.ready)?Math.round(R.score):null;
 }
+/* C418 (audit A33) : la barre, le menu de l'en-tête, Gérer et Comparer notaient chaque dossier à chaque dessin (Perso : 19 notes, 115 à 157 ms à
+   chaud), et chaque note effaçait le mémo du moteur du dossier actif (36 calculs pour 18 notes). La note est gardée par dossier (révision,
+   langue, jour, saisie, dernière journée) ; le mémo du dossier actif est rendu tel quel après la note d'un autre dossier. */
+var VERDICT_NOTE_ETAB=typeof WeakMap==='function'?new WeakMap():null;
 function etabScoreMeta(id){
-  var prev=DB,d=STORE&&STORE.etabs?STORE.etabs[id]:null,R=null,out=null;
+  var prev=DB,d=STORE&&STORE.etabs?STORE.etabs[id]:null,R=null,out=null,ck=null;
+  if(d&&VERDICT_NOTE_ETAB){try{var _h=d.histJour||[],_l=_h.length?_h[_h.length-1]:null;ck=[typeof VERDICT_DB_REV!=='undefined'?VERDICT_DB_REV:'',typeof LOCALE==='string'?LOCALE:'',new Date().toDateString(),JSON.stringify(d.in||null),_h.length,_l?(_l.date+':'+_l.caJ):'',d.userMode||''].join('|');var _m=VERDICT_NOTE_ETAB.get(d);if(_m&&_m.k===ck)return _m.v;}catch(e){ck=null;}}
+  var _mm=typeof VERDICT_MOTEUR_MEMO!=='undefined'?VERDICT_MOTEUR_MEMO:null,_ms=typeof VERDICT_MOTEUR_SIM!=='undefined'?VERDICT_MOTEUR_SIM:null;
   try{DB=d;if(DB&&DB.userMode==='recent'&&DB.recent&&DB.recent.closed!==true)R=null;else R=moteur();
     if(R&&R.ready){var q=verdictScoreTruth(R,d);out={score:Math.round(R.score),final:q.final,label:verdictScoreText('short',R,d)};}}
-  catch(e){out=null;}DB=prev;return out;
+  catch(e){out=null;}DB=prev;
+  if(d!==prev){if(_mm)VERDICT_MOTEUR_MEMO=_mm;if(_ms)VERDICT_MOTEUR_SIM=_ms;}
+  if(ck&&d)VERDICT_NOTE_ETAB.set(d,{k:ck,v:out});return out;
 }
 /* Sept langues, y compris pour les phrases dynamiques contenant les noms des
    établissements : translateDOM() ne peut pas traduire un texte recomposé. */
@@ -3181,6 +3205,7 @@ function etabCmpF(k,v){var s=etabCmpT(k);Object.keys(v||{}).forEach(function(x){
    Aucun chiffre n'est fusionné, sauvegardé ailleurs ni recalculé par Vera. */
 function etabNature(d){
   d=d||{};
+  if(d._modeleDiffere===true)return {key:'demo',label:etabCmpT('demo'),period:etabCmpT('simulation')};/* C411 : modèle fictif pas encore ouvert, même nature qu'une fois fabriqué */
   /* La provenance prime sur le nom, le mode mémorisé ou un ancien drapeau.
      Un établissement créé depuis un modèle reste une simulation tant que le
      client n'a pas remplacé les estimations par ses données observées. */
@@ -3333,7 +3358,7 @@ function drawEtabs(){
   bar.classList.add("on");
   etabTopFix();
   bar.innerHTML=ids.map(function(id){
-    var d=STORE.etabs[id], sm=etabScoreMeta(id),sc=sm?sm.score:null,z=sc!=null?zone(sc):null,on=(id===STORE.actif);
+    var d=STORE.etabs[id], sm=(d&&d._barHidden&&id!==STORE.actif&&d._modeleDiffere===true)?null:etabScoreMeta(id)/* C411 : un modèle caché pas encore ouvert n'est pas calculé pour la barre */,sc=sm?sm.score:null,z=sc!=null?zone(sc):null,on=(id===STORE.actif);
     var ident=verdictEtabIdentity(d),badge=ident.kind;
     return '<button class="'+(on?"on":"")+'" onclick="switchEtab(\''+id+'\')">'+
       '<i class="sd" style="background:'+(z?z.h:"#3a4048")+'"></i><span class="enm">'+esc(ident.name)+'</span>'+
@@ -4174,8 +4199,13 @@ function verdictJoursConnus(over){
 function verdictJoursCaisse(D,d){
   D=D||(typeof DB!=='undefined'?DB:null);if(!D||!Array.isArray(D.histJour)||!D.histJour.length)return null;
   var an=Number((D.refSource&&D.refSource.exerciseYear)||(D.ref&&D.ref.exercice)||D.exerciseYear);if(!an)return null;
+  /* C410 (audit A18) : la lecture des journées (1 821 pour la Brasserie) passait 148 fois en 10 s au repos (chaque deriv, dont les
+     10 tests d'anomalies) ; elle est gardée pour les mêmes journées (tableau, nombre, dernière journée, exercice, révision). */
+  var _hj=D.histJour,_hl=_hj[_hj.length-1],_mk=[typeof VERDICT_DB_REV!=='undefined'?VERDICT_DB_REV:'',an,_hj.length,_hl?(_hl.date+':'+_hl.caJ+':'+_hl.tkJ):''].join('|'),_M=verdictJoursCaisse._m;
   var vu={},jours=0,tk=0,ttc=0,cts=0,tkOk=true,parMois={};
-  D.histJour.forEach(function(r){var k=String(r&&r.date||'').slice(0,10);if(k.slice(0,4)!==String(an)||vu[k])return;var ca=Number(r.caJ);if(!(ca>0))return;vu[k]=1;jours++;parMois[k.slice(5,7)]=1;ttc+=ca;cts+=Math.round(ca*100);var t=Number(r.tkJ);if(t>0)tk+=t;else tkOk=false;});
+  if(_M&&_M.h===_hj&&_M.k===_mk){jours=_M.jours;tk=_M.tk;ttc=_M.ttc;cts=_M.cts;tkOk=_M.tkOk;parMois=_M.parMois;}
+  else D.histJour.forEach(function(r){var k=String(r&&r.date||'').slice(0,10);if(k.slice(0,4)!==String(an)||vu[k])return;var ca=Number(r.caJ);if(!(ca>0))return;vu[k]=1;jours++;parMois[k.slice(5,7)]=1;ttc+=ca;cts+=Math.round(ca*100);var t=Number(r.tkJ);if(t>0)tk+=t;else tkOk=false;});
+  if(!(_M&&_M.h===_hj&&_M.k===_mk))verdictJoursCaisse._m={h:_hj,k:_mk,jours:jours,tk:tk,ttc:ttc,cts:cts,tkOk:tkOk,parMois:parMois};
   if(jours<20)return null;var tva=d&&d.tva!=null&&isFinite(d.tva)?Number(d.tva):((Number(D.in&&D.in.tva)||10)/100),ht=ttc/(1+tva);
   if(!d)return null;
   if(d.ca>0){if(Math.abs(ht-d.ca)>d.ca*0.1)return null;/* un document comptable (CA déclaré) reste comparé à la caisse */
@@ -4209,18 +4239,25 @@ function verdictGainPanier(deltaTTC,R){
 /* C333 (fluidité, décision 19 ; mesuré : au repos 35 calculs complets par seconde, 669 au changement d'établissement, 4 ms
    chacun) : moteur() sans paramètre rend le même résultat tant que les données n'ont pas bougé. Clé = même dossier (DB),
    même révision (chaque enregistrement l'augmente), même saisie, mêmes journées, même document, même langue, même jour ;
-   par prudence, le résultat ne vit qu'une seconde. Une simulation (moteur(over)) est toujours recalculée. Aucun montant ne change. */
-var VERDICT_MOTEUR_MEMO={db:null,k:null,r:null,t:0},VERDICT_DB_REV=0,VERDICT_MOTEUR_TTL=1000;
+   par prudence, le résultat ne vit qu'une seconde. Une simulation (moteur(over)) est toujours recalculée. Aucun montant ne change.
+   C410 (audit A18) : la seconde tombait sur la période des boucles au repos (documents-foi, couche premium, prévisions) : 13 calculs
+   complets en 10 s sans rien toucher. Le résultat vit maintenant tant que la clé ne change pas (révision, saisie, journées, document,
+   langue, jour) ; refreshAll et chaque enregistrement l'oublient. */
+var VERDICT_MOTEUR_MEMO={db:null,k:null,r:null,t:0},VERDICT_DB_REV=0,VERDICT_MOTEUR_TTL=Infinity,VERDICT_MOTEUR_SIM={db:null,k:null,m:null,n:0};
 function verdictMoteurCle(){
   var D=typeof DB!=='undefined'?DB:null;if(!D)return null;var i;try{i=JSON.stringify(D.in);}catch(e){return null;}
   var h=D.histJour||[],L=h.length?h[h.length-1]:null;
   return [VERDICT_DB_REV,typeof LOCALE==='string'?LOCALE:'',new Date().toDateString(),i,h.length,L?(L.date+':'+L.caJ+':'+L.tkJ):'',(D.plats||[]).length,(D.fermes||[]).join(','),(D.fermesJours||[]).length,(D.ouvertsJours||[]).length,
     D.modele||'',D.etab||'',D.etabType||'',D.exerciseYear||'',D.refSource?D.refSource.ca+':'+D.refSource.nature:'',D.ref?D.ref.ca:'',D.fecImport?(D.fecImport.hash||D.fecImport.appliedAt||1):'',D.docRef?1:0,JSON.stringify(D.docAccords||{}),D.docChoix?D.docChoix.choix:'',D.panierCalcule?JSON.stringify(D.panierCalcule):'',D.livraison?JSON.stringify(D.livraison):''/* C339 */].join('|');
 }
-function verdictMoteurOublier(){VERDICT_MOTEUR_MEMO={db:null,k:null,r:null,t:0};}
+function verdictMoteurOublier(){VERDICT_MOTEUR_MEMO={db:null,k:null,r:null,t:0};VERDICT_MOTEUR_SIM={db:null,k:null,m:null,n:0};}
 function moteur(over){
-  if(over!=null)return moteurCalcul(over);
   var k=null;try{k=verdictMoteurCle();}catch(e){k=null;}var M=VERDICT_MOTEUR_MEMO,now=Date.now();
+  /* C410 b (audit A18) : une simulation est gardée pour le même dossier, les mêmes données et le même paramètre (au repos, les mêmes
+     leviers du point de départ de Simuler étaient recalculés à chaque passage de la couche premium). Paramètre non lisible → recalcul. */
+  if(over!=null){var ko=null;if(k){try{ko=JSON.stringify(over,function(_k,v){if(typeof v==='number'&&!isFinite(v))throw 0;return v;});}catch(e){ko=null;}}
+    if(ko==null)return moteurCalcul(over);var S=VERDICT_MOTEUR_SIM;if(S.db!==DB||S.k!==k||!S.m)S=VERDICT_MOTEUR_SIM={db:DB,k:k,m:Object.create(null),n:0};
+    if(Object.prototype.hasOwnProperty.call(S.m,ko))return S.m[ko];var ro=moteurCalcul(over);if(S.n<48){S.m[ko]=ro;S.n++;}return ro;}
   if(k&&M.db===DB&&M.k===k&&now-M.t<VERDICT_MOTEUR_TTL)return M.r;
   var r=moteurCalcul();if(k)VERDICT_MOTEUR_MEMO={db:DB,k:k,r:r,t:now};return r;
 }
@@ -5615,8 +5652,23 @@ function etabIndicesHTML(id){return verdictIndicesHTML(etabScoreMeta(id),etabCar
 /* C317 (règle du chef : la caisse fait foi) : les chiffres d'un modèle montrés dans sa légende se calculent sur sa caisse,
    par le même chemin que le chargement (modeleDossierDemo, rien n'est enregistré) : tickets ÷ jours de caisse arrondis à l'unité,
    panier = CA TTC ÷ tickets. Jamais un chiffre écrit à la main. */
+/* C422 (audit A11, L3) : la liste des modèles fabriquait un dossier complet par ligne, deux fois (chiffres de caisse, résumé), à chaque
+   affichage (83 à 197 ms la ligne). Les chiffres d'un modèle non chargé sont calculés une fois par jour et par langue et gardés (petits
+   résultats seulement) ; le modèle chargé suit toujours le dossier affiché ; le mémo du moteur du dossier actif est rendu. */
+var VERDICT_MODELE_CHIFFRES={};
+function verdictModeleChiffres(k){
+  var cle=[new Date().toDateString(),typeof LOCALE==='string'?LOCALE:'',typeof VERDICT_DEMO_SESSION!=='undefined'&&VERDICT_DEMO_SESSION?1:0].join('|'),m=VERDICT_MODELE_CHIFFRES[k];if(m&&m.cle===cle)return m;
+  var prev=DB,prevM=MODELE_ACTIF,d=null,r=null,_mm=typeof VERDICT_MOTEUR_MEMO!=='undefined'?VERDICT_MOTEUR_MEMO:null,_ms=typeof VERDICT_MOTEUR_SIM!=='undefined'?VERDICT_MOTEUR_SIM:null,out={cle:cle,d0:false,caisse:null,p:null,meta:null,ca:null,rn:null,ready:false};
+  try{d=modeleDossierDemo(k,true);}catch(e){d=null;}finally{MODELE_ACTIF=prevM;}
+  if(d){out.d0=true;try{DB=d;r=moteur();}catch(e){r=null;}finally{DB=prev;if(_mm)VERDICT_MOTEUR_MEMO=_mm;if(_ms)VERDICT_MOTEUR_SIM=_ms;}
+    try{out.meta=etabCarteMeta(d);}catch(e){out.meta=null;}
+    if(r&&r.ready){out.ready=true;out.p={score:Math.round(r.score),final:true};out.ca=r.d.ca;out.rn=r.v.rn;
+      if(r.d.cmdj>0)out.caisse={tk:Math.round(r.d.cmdj),panier:Math.round(r.d.panierTTC*100)/100,jsem:Number(d.in&&d.in.jsem)||null,mois:Number(d.in&&d.in.mois)||null,source:r.d.caSource};}}
+  VERDICT_MODELE_CHIFFRES[k]=out;return out;
+}
 function modeleChiffresCaisse(k){
   if(!MODELES[k])return null;var actif=DB&&DB.modele===k,prev=DB,prevM=MODELE_ACTIF,d=null,r=null;
+  if(!actif)return verdictModeleChiffres(k).caisse;/* C422 */
   try{d=actif?DB:modeleDossierDemo(k,true);}catch(e){d=null;}finally{MODELE_ACTIF=prevM;}if(!d)return null;
   try{DB=d;r=moteur();}catch(e){r=null;}finally{DB=prev;}
   if(!r||!r.ready||!(r.d.cmdj>0))return null;
@@ -5631,6 +5683,8 @@ function modeleResume(k){
   /* C205 (V09) : le modèle actif montre les chiffres que l’appli affiche (même moteur, même dossier chargé), jamais ceux du modèle brut. */
   /* C257 (T4 N11) : les autres modèles aussi, par le même chemin que le chargement (modeleDossierDemo), sans rien enregistrer. */
   var actif=DB&&DB.modele===k,prev=DB,prevM=MODELE_ACTIF,r=null,d=null,p=null;
+  if(!actif){var _m=verdictModeleChiffres(k);if(!_m.d0)return '';/* C422 : mêmes chiffres, gardés */
+    return verdictIndicesHTML(_m.p,_m.meta)+(_m.ready?'<span style="display:block;margin-top:7px;font-size:12px;color:var(--mut)">'+eur(Math.round(_m.ca/1000)*1000)+' &middot; '+String(pc(_m.rn,1)).replace(/^-/,'\u2212')+'</span>':'');}
   try{d=actif?DB:modeleDossierDemo(k,true);}catch(e){d=null;}finally{MODELE_ACTIF=prevM;}
   if(!d)return '';
   try{DB=d;r=moteur();if(r&&r.ready)p={score:Math.round(r.score),final:true};}catch(e){}finally{DB=prev;}
@@ -7484,9 +7538,11 @@ function headerState(R){
 }
 function refreshAll(){
   try{ majBandeauDemo(); }catch(e){}
+  try{ verdictMoteurOublier(); }catch(e){}/* C410 : un rafraîchissement complet recalcule une fois */
   var R=moteur();
   var ts=document.getElementById("topScore");
   headerState(R);
+  if(window.__vdRefreshSansVue)return;/* C426 b : premier dessin déjà publié, seuls les dessins de vue sont sautés */
   if(VIEW==="data")drawData(); if(VIEW==="carte")drawCarte(); if(VIEW==="x")drawX(); if(VIEW==="pil")drawPil();
   if(VIEW==="priorities")drawPriorities();
   if(VIEW==="hist")drawTraj(); if(VIEW==="dec")drawDec(); if(VIEW==="org")drawOrg();
@@ -11433,7 +11489,8 @@ function choisirFEC(){
   setTimeout(function(){
     try{
       var card=document.getElementById('v44-fec'),consent=document.getElementById('v44-fec-consent');
-      if(card){ card.classList.add('v44-deep-target','v44-focus'); card.scrollIntoView({block:'start',behavior:'auto'}); setTimeout(function(){try{card.classList.remove('v44-focus');}catch(e){}},1600); }
+      /* C423 (audit A79) : la carte déjà visible dans les 60 % du haut de l'écran ne fait plus sauter la page (435 px), comme dans 044 (L5) */
+      if(card){ card.classList.add('v44-deep-target','v44-focus'); var _r423=card.getBoundingClientRect(),_h423=window.innerHeight||document.documentElement.clientHeight||0;if(!(_r423.top>=0&&_r423.top<=_h423*0.6))card.scrollIntoView({block:'start',behavior:'auto'}); setTimeout(function(){try{card.classList.remove('v44-focus');}catch(e){}},1600); }
       if(consent){ consent.focus({preventScroll:true}); }
     }catch(e){}
   },140);
@@ -22383,20 +22440,34 @@ function spBalayageScore(scoreReel,rythme,suite){
   /* Le filet ne juge QUE le démarrage initial. Une ouverture rejouée plus tard
      (changement de langue, changement d'établissement) recrée un écran
      d'ouverture : ce n'est pas une panne. */
-  setTimeout(function(){
+  /* C417 (audit A05) : avec un code et l'intro déjà vue, ce filet jugeait la vue vide derrière le verrou (body.verdict-entry-locked masque tout)
+     ou sous la feuille d'accueil, posait #secours (z-index 9999) et rien ne le retirait : à l'ouverture, « Verdict n'a pas pu démarrer » couvrait
+     l'appli (3 fois sur 3). Le temps passé sous le verrou ne compte plus ; une fenêtre ouverte (feuille d'accueil) est un démarrage réussi ;
+     #secours disparaît dès qu'une vue s'affiche ; la lecture se fait sans mise en page (textContent, plus innerText toutes les 400 ms). */
+  function _vdVueAffichee(){
+    var v=document.querySelector('.view.on');if(v&&String(v.textContent||'').trim().length>20)return true;
+    var m=document.querySelectorAll('.modal.on,[role="dialog"]');for(var i=0;i<m.length;i++){var x=m[i];if(x.id==='secours'||x.hidden)continue;if(x.getClientRects().length)return true;}
+    return false;
+  }
+  function _vdSousVerrou(){try{return !!(document.body&&document.body.classList.contains('verdict-entry-locked'))||document.hidden;}catch(e){return false;}}
+  var _vdAttente=0,_vdDernier=Date.now();
+  function _vdJuger(){
     if(DEMARRE) return;
-    var vue=document.querySelector('.view.on');
-    var rien = !vue || String(vue.innerText||vue.textContent||'').trim().length<20;
-    if(rien){ if(!document.getElementById('secours')) ecranSecours(); }
-  }, 12500);
-
-  window.__verdictDemarre=function(){ DEMARRE=true; };
+    var now=Date.now();if(_vdSousVerrou())_vdAttente+=now-_vdDernier;_vdDernier=now;
+    if(_vdVueAffichee()){DEMARRE=true;return;}
+    if(_vdSousVerrou()||now-_vdAttente-_vdDebut0<12500){setTimeout(_vdJuger,1000);return;}
+    if(!document.getElementById('secours')) ecranSecours();
+    setTimeout(_vdRetirerSecours,1000);
+  }
+  function _vdRetirerSecours(){var s=document.getElementById('secours');if(!s)return;if(_vdVueAffichee()){DEMARRE=true;try{s.remove();}catch(e){}return;}setTimeout(_vdRetirerSecours,1000);}
+  var _vdDebut0=Date.now();setTimeout(_vdJuger,12500);
+  window.__verdictDemarre=function(){ DEMARRE=true; var s=document.getElementById('secours');if(s)try{s.remove();}catch(e){} };
   /* dès qu'une vue affiche du contenu, le démarrage est réussi */
   var _guetActif=true,_guetDebut=Date.now();
   function _guetterDemarrage(){
     if(!_guetActif)return;
-    var v=document.querySelector('.view.on');
-    if(v && String(v.innerText||v.textContent||'').trim().length>20){ DEMARRE=true;_guetActif=false;return; }
+    if(_vdSousVerrou()){_guetDebut+=400;setTimeout(_guetterDemarrage,400);return;}/* C417 : le temps sous le verrou ne compte pas */
+    if(_vdVueAffichee()){ DEMARRE=true;_guetActif=false;var s=document.getElementById('secours');if(s)try{s.remove();}catch(e){}return; }
     if(Date.now()-_guetDebut<20000)setTimeout(_guetterDemarrage,400);else _guetActif=false;
   }
   setTimeout(_guetterDemarrage,400);
@@ -22523,7 +22594,13 @@ function majBandeauDemo(){
     vis=[].filter.call(tous,function(b){return b.offsetParent!==null;});if(!vis.length)return;
     if(!vis.some(function(b){return b.getAttribute('data-v')===k;}))k='plus';
     [].forEach.call(tous,function(b){var on=b.offsetParent!==null&&b.getAttribute('data-v')===k;if(b.classList.contains('on')!==on)b.classList.toggle('on',on);if(on){if(b.getAttribute('aria-current')!=='page')b.setAttribute('aria-current','page');}else if(b.hasAttribute('aria-current'))b.removeAttribute('aria-current');});}catch(e){}}
-  setInterval(function(){if(!document.hidden)navSync();},4000);/* C333 : la barre suit chaque changement de vue ; le contrôle de secours (mise en page forcée) passe de 1 s à 4 s */
+  /* C419 (L5, mesure au repos) : le contrôle de secours toutes les 4 s forçait une mise en page même sans rien changer. La barre suit désormais
+     les changements réels : une vue ou un onglet change de classe → un seul recalage à l'image suivante ; rien au repos. */
+  (function(){var plan=0,mo=null;function recaler(){plan=0;if(document.hidden)return;navSync();try{if(mo)mo.takeRecords();}catch(e){}}
+    function demander(){if(plan)return;plan=1;(window.requestAnimationFrame||setTimeout)(recaler);}
+    try{mo=new MutationObserver(demander);[].forEach.call(document.querySelectorAll('.view'),function(v){mo.observe(v,{attributes:true,attributeFilter:['class']});});
+      var nv=document.querySelector('nav');if(nv)mo.observe(nv,{attributes:true,subtree:true,attributeFilter:['class','hidden','style']});}
+    catch(e){setInterval(function(){if(!document.hidden)navSync();},4000);}})();
   try{var _g=window.go;if(typeof _g==='function'&&!_g.__c333){var _w=function(){var r=_g.apply(this,arguments);setTimeout(navSync,0);return r;};_w.__c333=true;window.go=_w;}}catch(_e){}
   window.addEventListener('popstate',function(){setTimeout(navSync,0);});document.addEventListener('visibilitychange',function(){if(!document.hidden)navSync();});
   document.addEventListener('pointerdown',function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('nav [data-v]');if(!b)return;navTouche=Date.now();
@@ -24153,7 +24230,42 @@ applyI18nChrome();
     v.insertBefore(d,v.firstChild);
   }catch(e){}
 })();
-fillInputs(); readInputs(); refreshAll(); verdictLoadAlertPreferences();
+fillInputs(); readInputs(); verdictLoadAlertPreferences();
+/* C426 (audit A02, avec L2) : le premier dessin de l'Accueil attend la fin de la lecture de la page (041 compris : plan du mois). Avant, 029
+   dessinait l'Accueil sans le plan, puis 041 le redessinait (C308, 118 ms). La marque ci-dessous dit à 041 que ce rattrapage est inutile. */
+window.VERDICT_PREMIER_DESSIN_APRES_041=true;
+/* C438 (L3, avec L2) : avec une langue étrangère gardée sur l'appareil, l'Accueil était dessiné trois fois au démarrage (en français, page
+   cachée par verdict-i18n-loading, puis deux fois à l'arrivée de la langue : 048 sur 'verdict:locale-changed', puis go(VIEW)). Le premier
+   dessin attend la langue ; rendreLangue le fait, une seule fois, avant d'afficher la page. Si la langue est posée pendant la lecture de
+   la page (dictionnaire déjà en mémoire), la page reste cachée : c'est le premier dessin, à la fin de la lecture (041 compris), qui la
+   montre juste après l'unique dessin. Un échec de la langue fait le dessin en français ; un filet de 5 s montre la page dans tous les cas. */
+function verdictPremierDessinEnAttente(){if(!window.__vdPremierDessinAttendLangue)return false;window.__vdPremierDessinAttendLangue=false;window.__vdPremierDessinLangue=true;try{verdictPremierDessin();}finally{window.__vdPremierDessinLangue=false;}return true;}
+function verdictPremierDessinFilet(){try{verdictPremierDessinEnAttente();}catch(e){}window.__vdLangueAppliqueeEnLecture=false;try{document.documentElement.classList.remove('verdict-i18n-loading');}catch(e){}}
+function verdictPremierDessin(){
+  if(!window.__vdPremierDessinLangue&&!window.__vdLangueAppliqueeEnLecture&&document.documentElement.classList.contains('verdict-i18n-loading')){if(!window.__vdPremierDessinAttendLangue){window.__vdPremierDessinAttendLangue=true;setTimeout(verdictPremierDessinFilet,5000);}return;}
+  /* C438 b (chef, régression de C426) : depuis C426, ce dessin passe après 048 ; son go('pil') sans condition écrasait l'écran choisi par 048
+     (profil Carte, saisie) : rouvrir l'appli sur la Carte affichait l'Accueil. L'écran choisi par 048 reste ; si la langue a été attendue,
+     048 n'a pas navigué (C438) : il ouvre lui-même son écran ici, une fois, dans la langue. */
+  var _P438=window.VerdictModuleProfilesV45;
+  if((window.__vdPremierDessinLangue||window.__vdLangueAppliqueeEnLecture)&&_P438&&typeof _P438.setProfile==='function'&&typeof _P438.getProfile==='function'){
+    window.__vdRefreshSansVue=true;try{refreshAll();}catch(_e438){}finally{window.__vdRefreshSansVue=false;}
+    try{_P438.setProfile(_P438.getProfile(),true);}catch(_e438){}
+  }else{
+  var _vp=document.getElementById('v-pil');
+  if(VIEW!=='pil'){window.__vdRefreshSansVue=true;try{refreshAll();}catch(_e438){}finally{window.__vdRefreshSansVue=false;}}
+  else if(!(_vp&&_vp.classList.contains('on')&&_vp.getAttribute('data-verdict-render-revision')===String(VERDICT_VIEW_REVISION))){refreshAll();
+/* C419 (audit A02, points 2 et 4) : refreshAll vient de dessiner l'Accueil ; go('pil') ci-dessous le redessinait aussitôt (127 à 221 ms de plus,
+   un saut à l'écran). Le dessin est marqué à la révision courante : go('pil') le publie tel quel ; la traduction est faite ici, une fois. */
+try{if(VIEW==='pil'&&!VERDICT_PARTIAL_VIEW_RENDER){var _vp419=document.getElementById('v-pil');if(_vp419&&_vp419.children.length){_vp419.setAttribute('data-verdict-render-revision',String(VERDICT_VIEW_REVISION));if(typeof LOCALE==='string'&&LOCALE!=='fr'&&window.translateDOM)translateDOM(_vp419);}}}catch(_e419){}
+  }else{/* C426 b (L6, version de L3 retenue par le chef) : le redessin est sauté ici, mais pas le reste de refreshAll : bandeau de démonstration
+     (#modeBar, pastille Démo et menu de l'en-tête), moteur, en-tête, et les enveloppes des autres modules (bannière et « ville · quartier »
+     d'etab-portfolio-a12, magMarquer de verdict-055). La marque fait sauter les seuls dessins de vue de la fonction de base. */
+    window.__vdRefreshSansVue=true;try{refreshAll();}catch(_e426){}finally{window.__vdRefreshSansVue=false;}}
+  if(VIEW==='pil')go('pil');/* C438 b : l'écran choisi par 048 (Carte, saisie) reste */
+  }
+  if(window.__vdLangueAppliqueeEnLecture){window.__vdLangueAppliqueeEnLecture=false;try{document.documentElement.classList.remove('verdict-i18n-loading');}catch(e){}}/* C438 : la page se montre après l'unique dessin */
+  if(!window.__verdictIntroWaitingLanguage)verdictIntroLancerQuandAffiche();/* C438 : si l'ouverture attend la langue, poursuivreApresConfirmation la lance, une seule fois */
+}
 document.querySelectorAll('#v-in input').forEach(function(el){
   el.addEventListener("change",function(){ if(readInputs())refreshAll(); });
 });
@@ -24162,8 +24274,7 @@ document.querySelectorAll('#v-in input').forEach(function(el){
   if(el)el.addEventListener("change",saveIdentite);
 });
 document.getElementById("i-etabnom").addEventListener("blur",saveIdentite);
-go('pil');
-verdictIntroLancerQuandAffiche();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',verdictPremierDessin,{once:true});else verdictPremierDessin();/* C426 */
 /* Le pont Inventaire est lancé après le compte et le coffre cloud ci-dessus :
    aucun minuteur ne peut désormais le rattacher au mauvais établissement. */
 /* V6.4 — le guide de première prise en main ne démarre plus sur un minuteur
@@ -24274,9 +24385,24 @@ function verdictRepereRNNum(x){ return String(x).replace('.',','); }
    Tant qu’ils manquent, aucune valeur par défaut (6, 7) n’entre dans les calculs. */
 function verdictJoursSemaine(){var D=(typeof DB!=='undefined'&&DB)||{};if(D.fermes&&D.fermes.length)return Math.max(1,7-D.fermes.length);var v=D.in&&D.in.jsem,j=Number(v);if(v!=null&&v!==''&&j>=1&&j<=7)return j;return null;}
 function verdictJoursInconnus(){try{return !!(typeof verdictDirectAnnualSource==='function'&&verdictDirectAnnualSource(DB))&&verdictJoursSemaine()==null;}catch(e){return false;}}
+/* C415 (audit A43, décision 38 précisée par le chef) : tant que les jours d'ouverture sont moins de 7 et que le jour fermé n'est pas connu, le
+   minimum du jour reste la moyenne (C374 : minimum du mois ÷ jours du mois × jours d'ouverture / 7) et le dit : une seule source pour l'Accueil. */
+var VERDICT_MINIMUM_MOYENNE_TEXTE='en moyenne, en attendant votre jour de fermeture';
+function verdictMinimumEnMoyenne(D){try{var P=verdictReposHebdo(D||DB);return !!(P&&!P.connu&&P.part<1);}catch(e){return false;}}
+if(typeof window!=='undefined'){window.verdictMinimumEnMoyenne=verdictMinimumEnMoyenne;window.VERDICT_MINIMUM_MOYENNE_TEXTE=VERDICT_MINIMUM_MOYENNE_TEXTE;}
 function verdictJoursRepondre(n){n=Math.round(Number(n));if(!(n>=1&&n<=7))return;DB.in=DB.in||{};DB.in.jsem=n;DB.joursSource={source:'patron',jours:n,date:new Date().toISOString().slice(0,10)};var q=document.getElementById('vdJoursQ');if(q)q.remove();save();try{refreshAll();}catch(e){}try{toast(n+(n>1?' jours':' jour')+' d’ouverture par semaine : c’est enregistré.');}catch(e){}}
 function verdictJoursQuestionHTML(){if(!verdictJoursInconnus())return '';var b='';for(var i=1;i<=7;i++)b+='<button type="button" class="btn sec" style="display:inline-flex;justify-content:center;width:auto;min-width:46px;margin:6px 6px 0 0" onclick="verdictJoursRepondre('+i+')">'+i+'</button>';
-  return '<div class="card" id="vdJoursQ" data-c245="1" style="border-left:3px solid #f97316;margin:0 0 12px"><b>Combien de jours ouvrez-vous par semaine ?</b><p class="note" style="margin:6px 0 2px">Votre document comptable ne le dit pas. En attendant, le minimum du mois est provisoire : il s’ajustera à vos jours d’ouverture, comme celui de chaque jour. L’export de votre caisse le donne aussi.</p><div>'+b+'</div></div>';}
+  return '<div class="card" id="vdJoursQ" data-c245="1" style="border-left:3px solid #f97316;margin:0 0 12px"><b>Combien de jours ouvrez-vous par semaine ?</b><p class="note" style="margin:6px 0 2px">Votre document comptable ne le dit pas. En attendant, le minimum du mois est provisoire : il s’ajustera à vos jours d’ouverture, comme celui de chaque jour.</p><div>'+b+'</div>'+
+    '<p class="note" style="margin:8px 0 0"><button type="button" class="btn sec" data-c425-caisse="1" style="display:inline-flex;width:auto;margin:0" onclick="verdictJoursOuvrirCaisse()">Déposer l’export de caisse : il le donne aussi</button></p></div>';}
+/* C425 (audit A84 ; chef, décision 36 : les documents font foi, on règle là où on le voit) : même geste que la question du jour fermé
+   (passage-unique-a15, C383 de L5) : Mes chiffres, puis le dépôt de la caisse ; rien n'est écrit. */
+function verdictJoursOuvrirCaisse(){try{go('in');}catch(e){}try{verdictCancelHomeScroll();}catch(e){}/* C425 b (L5) : la remise en haut de go() tombait jusqu'à 1,14 s après le clic */var t0=Date.now();
+  /* la vue est d'abord dessinée cachée (« preparing ») : on défile une fois qu'elle est publiée, au plus tard après 1,5 s */
+  /* go() remet ensuite la page en haut : on vérifie que la zone de dépôt est bien arrivée en haut, sinon on recommence */
+  var bon=0;(function essai(){var v=document.getElementById('v-in'),p=document.getElementById('a15-passage');
+    if(v&&v.classList.contains('on')&&!v.classList.contains('preparing')&&p&&p.getClientRects().length){var t=p.getBoundingClientRect().top;
+      if(t>=-8&&t<=140){if(++bon>=3)return;}else{bon=0;try{p.scrollIntoView({block:'start'});}catch(e){}}}
+    if(Date.now()-t0<1500)setTimeout(essai,100);})();}
 function repereMS(){ var F=famActive()||FAMILLES.trad; return {sec:F.ms[1],sain:F.ms[0],haut:F.ms[2]}; }/* C309 (décision 5) : « trop lourd » = repère haut du format */
 function sectActif(){ var m=repereMS(),r=verdictRepereRN(),F=null;try{F=famActive()||FAMILLES.trad;}catch(e){F=null;} return SECT.map(function(s){ if(s.k==="ms")return Object.assign({},s,{sec:m.sec,sain:m.sain}); if(s.k==="rn")return Object.assign({},s,{sec:r.repere,sain:r.cible});
   /* C317 (V16-025) : contribution, coûts variables, charges fixes et chiffre minimum suivent aussi le type d'établissement, comme le cadre premium (052) et l'Audit */

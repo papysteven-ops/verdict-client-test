@@ -119,6 +119,8 @@
     /* C302 (V15-097) : un voile plein écran translucide (derrière la cloche, une fenêtre) reste un voile. Pris pour une
        surface sombre, il était repeint en blanc opaque et cachait toute l'appli derrière le panneau des notifications. */
     if(e.id==='notification-layer'||vdlVoile(win,e)){if(e.__vdl)vdlClear(e);return;}
+    /* C400 (A28) : ces éléments ont leur couleur finale en CSS (clairFinal) : le correcteur n'y touche plus, et retire ce qu'il y avait posé. */
+    if(doc.getElementById('vd-clair-c400')&&e.closest&&e.closest('#cp-nav,#v32ModuleDock,.btn.prim,button.vx40-suiv')){if(e.__vdl)vdlClear(e);return;}
     /* V2-A8 : un onglet qui n’est plus sélectionné perd son fond « sélectionné » (avant : « Indice de sérénité » restait allumé). */
     if((e.__vdl==='sel'&&!vdlSelected(e))||(e.__vdl==='btn'&&vdlSelected(e)))vdlClear(e);
     if(e.__vdl&&e.__vdlVals){for(var pk in e.__vdlVals){if(e.style.getPropertyValue(pk)!==e.__vdlVals[pk]||e.style.getPropertyPriority(pk)!=='important'){vdlClear(e);e.__vdlVals=null;break;}}}
@@ -154,8 +156,11 @@
     vdlSchedule(doc);
   }
   function vdlSchedule(doc){if(doc.__vdlPend)return;doc.__vdlPend=true;var w=doc.defaultView||window;w.requestAnimationFrame(function(){doc.__vdlPend=false;vdlWork(doc);});}
+  /* C400 (A28) : jamais de correction dans un cadre caché (Pilotage derrière l'Inventaire) ; elle reprend quand il réapparaît. */
+  function vdlCadreVisible(win){try{for(var x=win;x&&x.frameElement;x=x.parent){var f=x.frameElement;if(!f.getClientRects().length||x.parent.getComputedStyle(f).visibility==='hidden')return false;}}catch(e){}return true;}
   function vdlWork(doc){
     var win=doc.defaultView;if(!win||!doc.body)return;
+    if(!vdlCadreVisible(win))return;
     var t0=win.performance.now();
     if(!doc.documentElement.classList.contains('vd-workspace-light')){doc.querySelectorAll('[data-vdl]').forEach(vdlClear);doc.__vdlQ=[];return;}
     [doc.documentElement,doc.body].forEach(function(e){if(!e||e.__vdl==='page')return;var L=vdlBgLum(win,e);if(L!==null&&L<0.1)vdlSet(e,'page');});
@@ -184,7 +189,22 @@
     /* V2 : fin d’animation ou de transition → relecture du bloc animé (feuilles qui glissent, fondus). */
     try{['animationend','transitionend'].forEach(function(t){doc.addEventListener(t,function(ev){if(ev.target&&ev.target.nodeType===1&&doc.documentElement.classList.contains('vd-workspace-light')&&ev.target.closest('.modal,.sheet,[role=dialog],#refSh'))vdlQueue(doc,ev.target.closest('.modal,.sheet,[role=dialog],#refSh')||ev.target,false);},true);});}catch(e){}
     doc.__vdlGo=function(){vdlQueue(doc,null,true);};
+    try{var fe=doc.defaultView&&doc.defaultView.frameElement;if(fe&&window.ResizeObserver)new window.ResizeObserver(function(){if(doc.__vdlQ&&doc.__vdlQ.length&&vdlCadreVisible(doc.defaultView))vdlSchedule(doc);}).observe(fe);}catch(e){}
     doc.__vdlGo();
+  }
+  /* C400 (A28 de l'audit du 27/10 : « des couleurs changent sous les yeux ») : en clair, la couleur finale des éléments que le
+     correcteur repeignait après coup est donnée en CSS dans chaque page de Pilotage, posée au chargement du cadre (avant qu'il soit
+     montré) : bouton principal vert dès la première image (Accueil « Enregistrer ma journée »), rail collé de À faire clair ; la
+     puce de la Carte garde la couleur de sa page (le correcteur n'y repasse plus) ; aucune transition de couleur. En sombre, rien ne change. */
+  function sousPilotage(f){try{for(var x=f;x;x=x.ownerDocument.defaultView.frameElement)if(x.id==='frame-verdict')return true;}catch(e){}return false;}
+  function clairFinal(doc){
+    try{if(!doc||doc.getElementById('vd-clair-c400'))return;var s=doc.createElement('style');s.id='vd-clair-c400';var L='html.vd-workspace-light:not(#vd-c400) body ';/* l'identifiant l'emporte sur les règles de page (052 : bouton principal foncé en clair, !important) */
+      s.textContent=L+'.btn.prim,'+L+'button.vx40-suiv{background:#15803d!important;background-image:none!important;border-color:#15803d!important;color:#fff!important;transition:none!important}'+
+        L+'#cp-nav>button,'+L+'#v32ModuleDock .chips>button{transition:none!important}'+/* la puce de la Carte garde la couleur que lui donne déjà la page ; seul le correcteur n'y repasse plus */
+        L+'#v32ModuleDock>.actbar>.chips{background:#ffffff!important;border-color:#d5dde5!important;box-shadow:0 8px 24px rgba(16,24,40,.12)!important}'+
+        L+'#v32ModuleDock>.actbar>.chips>button{color:#334155!important;background-image:none!important}'+
+        L+'#v32ModuleDock>.actbar>.chips>button.on,'+L+'#v32ModuleDock>.actbar>.chips>button[aria-current],'+L+'#v32ModuleDock>.actbar>.chips>button[aria-selected="true"]{background:#e7f1eb!important;color:#14532d!important}';
+      (doc.head||doc.documentElement).appendChild(s);}catch(e){}
   }
   /* C342 (Steven, iPhone : « trou noir » au défilement rapide, « ça ne fait pas premium ») : décision 24, tout le contenu est peint
      dès qu'il entre à l'écran. Les bandeaux collants (en-tête de la coque, haut de Pilotage, barre des établissements) floutaient ce
@@ -209,6 +229,7 @@
       doc.documentElement.style.backgroundColor=dark?'#08090b':'#fff';
       doc.querySelectorAll('iframe').forEach(function (inner) { applyToFrame(inner, dark); });
       peinture(doc);
+      if (sousPilotage(frame)) clairFinal(doc);
       try { vdlWatch(doc); if (doc.__vdlGo) doc.__vdlGo(); } catch (e) {}
       if (!frameObservers.has(doc)) {
         var observer = new MutationObserver(function () {

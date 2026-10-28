@@ -188,9 +188,10 @@
     /* C357 (T1, avec L2) : aujourd'hui déjà saisi — le minimum reste celui du matin (C298), mais l'avance du mois est aussi dite telle
        qu'elle est maintenant, la même que l'onglet Mois (3 061 € le matin, 3 100 € avec la journée de 2 350 €, Brasserie Collet le 23/10). */
     var aujK = (function () { try { return String(w.verdictOperationalClock().key).slice(0, 10); } catch (e0) { return ''; } })();
-    if (!S.cle && cleS && cleS === aujK && cNow && cNow !== c && cNow.exact) { var emN = ecartMois(cNow); e = e.replace(' Le mois a ', ' Ce matin, le mois avait ');
+    if (!S.cle && cleS && cleS === aujK && cNow && cNow !== c && cNow.exact) { var emN = ecartMois(cNow); e = e.replace(' Le mois a ', ' Ce matin, le mois avait ').replace(' Le mois est dans les temps.', ' Ce matin, le mois était dans les temps.'); /* C395 (audit A42) : jamais « dans les temps » puis « de retard » */
       e += emN.avance > 0 ? ' Avec cette journée, le mois a maintenant <b>' + eur(emN.avance) + '</b> d’avance.' : emN.retard > 0 ? ' Avec cette journée, le mois a maintenant <b>' + eur(emN.retard) + '</b> de retard.' : ' Avec cette journée, le mois est dans les temps.'; }
-    lp.className = 'vx53-o'; /* C165 : « minimum », comme les repères (« objectif » est réservé à l'objectif de résultat) */ lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>' + eur(t) + '</b>';
+    lp.className = 'vx53-o'; /* C165 : « minimum », comme les repères (« objectif » est réservé à l'objectif de résultat) */ var moy = false; try { moy = typeof w.verdictMinimumEnMoyenne === 'function' && !!w.verdictMinimumEnMoyenne(); } catch (e0) { moy = false; } /* audit A43 (décision 38, L3 C415) */
+    lp.innerHTML = 'Minimum à faire ' + (passe ? 'cette journée-là' : 'aujourd’hui') + ' : <b>' + eur(t) + '</b>' + (moy ? ' <span class="vx53-moy">' + String(w.VERDICT_MINIMUM_MOYENNE_TEXTE || 'en moyenne, en attendant votre jour de fermeture') + '</span>' : '');
     var ex = lp.nextElementSibling; if (!ex || !ex.classList.contains('vx53-e')) { ex = lp.ownerDocument.createElement('p'); ex.className = 'vx53-e'; lp.insertAdjacentElement('afterend', ex); }
     ex.innerHTML = e;
   }
@@ -273,6 +274,11 @@
     });
   }
   var suivis = new WeakSet();
+  /* C393 (audit A41) : la carte du jour brute est réécrite avant l'image suivante ; le reste garde le délai de 60 ms. */
+  function suivre(f, d) {
+    if (!d || !d.body || suivis.has(d)) return; suivis.add(d); var att = null;
+    new MutationObserver(function () { var brut = null; try { brut = d.querySelector('#modSaisie .day-total p.day-a-realiser'); } catch (e) {} if (brut) { enrichir(f); return; } if (att) return; att = setTimeout(function () { att = null; enrichir(f); }, 60); }).observe(d.body, { childList: true, subtree: true });
+  }
   function tour() {
     try { libelleSeuil(); mentionTTC(doc.getElementById('v-data')); deuxCouts(); } catch (e) {}
     var ck = ''; try { ck = w.verdictOperationalClock().key; } catch (e) {}
@@ -280,14 +286,17 @@
     [].forEach.call(doc.querySelectorAll('iframe.p41-ecran'), function (f) {
       var d; try { d = f.contentDocument; } catch (e) { d = null; }
       if (!d || d.__vx39rev !== rev || !suivis.has(d)) { enrichir(f); if (d) d.__vx39rev = rev; } /* sinon l’observateur suffit */
-      if (d && d.body && !suivis.has(d)) {
-        suivis.add(d); var att = null;
-        new MutationObserver(function () { if (att) return; att = setTimeout(function () { att = null; enrichir(f); }, 60); }).observe(d.body, { childList: true, subtree: true });
-      }
+      suivre(f, d);
       if (!f.__vx39) { f.__vx39 = true; f.addEventListener('load', function () { setTimeout(function () { enrichir(f); tour(); }, 50); }); }
     });
   }
-  setInterval(tour, 1500);
+  /* Repos (chef, 27/10) : plus de passe toutes les 1,5 s ; tour() suit les changements de la page, regroupés à l'image suivante. */
+  var planifie = false, image = w.requestAnimationFrame ? function (f) { w.requestAnimationFrame(f); } : function (f) { Promise.resolve().then(f); };
+  function bientot() { if (planifie) return; planifie = true; image(function () { planifie = false; try { tour(); } catch (e) {} }); }
+  if (typeof MutationObserver === 'function' && doc.documentElement) new MutationObserver(bientot).observe(doc.documentElement, { childList: true, subtree: true });
+  doc.addEventListener('visibilitychange', function () { if (!doc.hidden) bientot(); }); w.addEventListener('focus', bientot); w.addEventListener('pageshow', bientot);
+  /* C393 : un cadre neuf (ou le double tampon C316 / C391) est enrichi dès son chargement, avant que 052 ne le montre. */
+  doc.addEventListener('load', function (e) { var f = e.target; if (!f || f.tagName !== 'IFRAME' || !f.classList || !f.classList.contains('p41-ecran')) return; try { enrichir(f); suivre(f, f.contentDocument); } catch (x) {} }, true);
   doc.addEventListener('DOMContentLoaded', tour);
   w.addEventListener('load', function () { setTimeout(tour, 300); });
   /* C129 — Un seul minimum du mois partout : quand le plan du mois existe (part saisonnière du plan annuel + report),
@@ -319,5 +328,5 @@
     };
     f.__c129 = true; w.progObjJour = f;
   })();
-  w.VerdictObjectifExplique = { capitalAnnuel: capitalAnnuel, report: report, bloc: bloc, position: position, lignesJour: lignesJour, tour: tour };
+  w.VerdictObjectifExplique = { capitalAnnuel: capitalAnnuel, report: report, bloc: bloc, position: position, lignesJour: lignesJour, tour: tour, enrichir: function (f) { try { enrichir(f); suivre(f, f && f.contentDocument); } catch (e) {} } /* C393 : appelé par la carte du jour de 052 à la fin de son rendu */ };
 })();

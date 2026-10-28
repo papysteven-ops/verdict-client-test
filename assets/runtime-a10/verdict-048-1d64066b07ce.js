@@ -2909,11 +2909,13 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     if(!embedded||event.source!==root.parent||(root.location.origin!=='null'&&root.location.protocol!=='file:')&&event.origin!==root.location.origin||!event.data)return;
     if(event.data.type==='verdict-unified-profile')queueProfileMessage(event.data);
   });
-  root.addEventListener('verdict:locale-changed',function(){/* R320 : setLocale réécrit la barre APRÈS cet événement (ancien libellé « Diagnostic ») ; on repasse ensuite pour garder « Structure » quel que soit le chemin. */setTimeout(applyChrome,0);applyChrome();if(root.VIEW==='plus')renderPlus();if(root.VIEW==='carte')renderCarteEmpty();if(root.VIEW==='data')renderAccounting();if(root.VIEW==='sante')renderCashStatus();if(root.VIEW==='pil'&&root.drawPil)root.drawPil();});
+  root.addEventListener('verdict:locale-changed',function(event){/* R320 : setLocale réécrit la barre APRÈS cet événement (ancien libellé « Diagnostic ») ; on repasse ensuite pour garder « Structure » quel que soit le chemin. */setTimeout(applyChrome,0);applyChrome();if(root.VIEW==='plus')renderPlus();if(root.VIEW==='carte')renderCarteEmpty();if(root.VIEW==='data')renderAccounting();if(root.VIEW==='sante')renderCashStatus();/* C438 : 029 redessine lui-même la vue quand managedRender est vrai */if(root.VIEW==='pil'&&root.drawPil&&!(event&&event.detail&&event.detail.managedRender))root.drawPil();});
 
   root.VerdictModuleProfilesV45=Object.freeze({VERSION:VERSION,maxHomeBlocks:MAX_HOME_BLOCKS,conclusionWordLimit:CONCLUSION_WORD_LIMIT,getProfile:function(){return profile;},setProfile:setProfile,requestInventory:requestInventory,admin:admin,renderPlus:renderPlus,renderHome:renderPilotageHome});
   applyChrome();
   var languageGate=root.document.getElementById('mLang');
-  if(!languageGate||!languageGate.classList.contains('on'))setProfile(profile,true);else notify();
+  /* C438 : langue en chargement (page cachée), le profil et la barre sont posés sans naviguer ; rendreLangue (029) fait l'unique dessin. */
+  var enChargement=root.document.documentElement.classList.contains('verdict-i18n-loading');
+  if(!languageGate||!languageGate.classList.contains('on'))setProfile(profile,!enChargement);else notify();
 })(window);
 

@@ -219,13 +219,13 @@
         (x.part != null ? '<small class="sh52-s">' + Math.round(x.part * 100) + '\u00a0€ pour 100\u00a0€</small>' : '') + '</td></tr>';
     });
     h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">' + phrases((R.source === 'mois' ? 'Heures du mois midi / soir (Salaires) et ventes par service de vos saisies. ' : '') + 'Conseillé pour votre type d’établissement : ' + conseil(R) + ' d’équipe (salaires + cotisations) pour 100 € vendus. « de trop » = ce que l’équipe a coûté au-delà du conseillé ; « en dessous » = ce qu’elle a coûté en moins. Ventes sans la TVA.') + '</p>' +
-      '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-equipe="1">Voir mon équipe, salarié par salarié</button><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
+      '<div class="actions"><button class="btn ghost bloc" data-c399b="1" type="button" data-sh52-equipe="1">Voir mon équipe, salarié par salarié</button><button class="btn ghost bloc" data-c399b="1" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
     return h;
   }
   function jourSansHeuresHTML(R) {
     return '<p class="kicker">Ventes et heures par service · ' + esc(libelle(R)) + '</p><p class="titre">Pas d’heures saisies pour ce jour</p>' +
       '<p class="sous">Les heures de chaque service de ce jour n’ont pas été saisies (ou c’était un jour de repos) : touchez une autre journée du calendrier, ou saisissez ses heures.</p>' +
-      '<div class="actions"><button class="btn sec bloc" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
+      '<div class="actions"><button class="btn ghost bloc" data-c399b="1" type="button" data-sh52-heures="1">Saisir ou corriger mes heures</button></div>';
   }
   function videHTML(periode) {
     return '<p class="kicker">Ventes et heures par service</p><p class="titre">Combien rapporte une heure de travail, midi et soir ?</p>' +

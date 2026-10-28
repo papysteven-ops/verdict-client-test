@@ -127,7 +127,7 @@
   }
   function tout() {
     var theme = doc.documentElement.className.indexOf('vd-workspace-dark') >= 0 ? 'sombre' : 'clair';
-    var ds = documents();
+    var ds = documents(); ds.forEach(surveiller);/* C387 : les cadres devenus visibles sont surveillés à la passe, plus par une minuterie */
     if (theme !== dernierTheme) { ds.forEach(effacer); dernierTheme = theme; vus = new WeakSet(); }
     reste = false;
     ds.forEach(function (d) { try { fusionRepos(d); petitsDefauts(d); passe(d, 12); } catch (e) {} });
@@ -136,7 +136,7 @@
   function surveiller(d) {
     if (!d || d.__vx44) return; d.__vx44 = true;
     try { d.defaultView.addEventListener('scroll', planifier, { passive: true }); } catch (e) {} /* C371 : textes qui arrivent à l'écran */
-    try { new d.defaultView.MutationObserver(function (l) { for (var i = 0; i < l.length; i++) { var x = l[i]; if (x.type === 'attributes' && x.target.hasAttribute && x.target.hasAttribute('data-vx44')) continue; planifier(); return; } }).observe(d.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'open'] }); } catch (e) {}
+    try { new d.defaultView.MutationObserver(function (l) { for (var i = 0; i < l.length; i++) { var x = l[i]; if (x.type === 'attributes' && x.target.hasAttribute && x.target.hasAttribute('data-vx44')) continue; if (d === doc) raccourcir(); planifier(); return; } }).observe(d.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'open'] }); } catch (e) {}
   }
   /* Santé › Diagnostic de solidité : « Correct » était coupé en « Corr / ect » (colonne de 56 px, coupure autorisée
      partout). Le mot garde sa largeur ; c'est le texte voisin qui passe à la ligne. */
@@ -180,12 +180,14 @@
   })();
   function demarrer() { surveiller(doc); documents().forEach(surveiller); planifier(); }
   if (doc.readyState === 'complete') setTimeout(demarrer, 1200); else w.addEventListener('load', function () { setTimeout(demarrer, 1200); });
-  setInterval(function () { documents().forEach(surveiller); }, 3000);
+  /* C387 (audit A17) : plus de minuterie de 3 s ; un cadre est surveillé dès son chargement. */
+  doc.addEventListener('load', function (ev) { var f = ev.target; if (f && f.tagName === 'IFRAME') { try { if (f.getClientRects().length) surveiller(f.contentDocument); planifier(); } catch (e) {} } }, true);
   /* C160 — Le bandeau de démonstration est redessiné à chaque changement de modèle : « Recommencer » est raccourci sans
      attendre (le texte long recouvrait la croix pendant quelques secondes). */
-  var tBandeau = setInterval(function () {
+  /* C387 (audit A17) : plus de minuterie de 250 ms ; le bouton est raccourci dès que l'observateur voit le bandeau changer. */
+  function raccourcir() {
     if (w.innerWidth >= 600) return;
     [].forEach.call(doc.querySelectorAll('#modeBar button'), function (b) { if (/^Recommencer\s+la\s+démonstration$/.test((b.textContent || '').replace(/\s+/g, ' ').trim())) { b.setAttribute('aria-label', 'Recommencer la démonstration'); b.textContent = 'Recommencer'; } });
-  }, 250); if (tBandeau && tBandeau.unref) tBandeau.unref();
+  }
   w.VerdictContraste = { passe: function () { tout(); }, mesurer: passe };
 })();

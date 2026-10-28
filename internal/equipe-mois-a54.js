@@ -161,7 +161,7 @@
     });
     if (P.h != null) h += '<tr class="em54-prev"><td>' + esc(court(P.m)) + '<small class="em54-s">estimation</small></td><td>≈ ' + eur(arr(P.ht, 100)) + '</td><td>' + (Math.abs(P.hHaut - P.hBas) >= 10 ? Math.round(arr(P.hBas, 10)).toLocaleString('fr-FR') + '–<wbr>' + hh(arr(P.hHaut, 10)) : '≈ ' + hh(arr(P.h, 10))) + '</td><td>' + (Math.abs(P.prodHaut - P.prodBas) >= 1 ? Math.round(P.prodBas) + '–<wbr>' + eur(P.prodHaut) : eur(P.prodHaut)) + '</td><td>' + (P.coutBas != null ? (Math.abs(P.coutHaut - P.coutBas) >= 100 ? Math.round(P.coutBas / P.ht * 100) + '–<wbr>' + pc(P.coutHaut / P.ht) : pc(P.cout / P.ht)) + '<small class="em54-s">≈ ' + (Math.abs(P.coutHaut - P.coutBas) >= 100 ? Math.round(arr(P.coutBas, 100)).toLocaleString('fr-FR') + '–<wbr>' + eur(arr(P.coutHaut, 100)) : eur(arr(P.cout, 100))) + '</small>' : '—') + '</td></tr>';
     h += '</tbody></table><p class="sous" style="font-size:13px;opacity:.8">Estimation pour vous organiser (extras, congés, renforts), pas un calcul de paie : heures supplémentaires et salaires restent ceux de votre logiciel de paie ou de votre comptable. Mois passés : vos heures et coûts saisis' + (A.lignes.some(function (x) { return x.src === 'bulletins'; }) ? ' (bulletins en priorité)' : '') + '.</p>' +
-      '<div class="actions"><button class="btn sec bloc" type="button" data-em54-heures="1">Saisir les heures du mois</button></div>';
+      '<div class="actions"><button class="btn ghost bloc" data-c399b="1" type="button" data-em54-heures="1">Saisir les heures du mois</button></div>';
     return h;
   }
   function contexte() {

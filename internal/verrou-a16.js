@@ -172,6 +172,10 @@
     var c = el.querySelector('[data-close]'); if (c) c.onclick = function () { hide(); };
   }
   function hide() { var el = root(); el.hidden = true; el.innerHTML = ''; S.mode = ''; shield(false); annoncerOuvert(); }
+  function preparer() {
+    try { window.dispatchEvent(new CustomEvent('verdict:verrou-preparer')); } catch (e) {}
+    try { [].forEach.call(doc.querySelectorAll('iframe'), function (f) { try { f.contentWindow.postMessage({ type: 'verdict-verrou-preparer' }, location.origin); } catch (e) {} }); } catch (e) {}
+  }
   /* C103 : l'appli (dans son cadre) attend ce signal pour lancer l'anneau du score : il n'est plus joué derrière le verrou. */
   function annoncerOuvert() {
     if (S.locked) return;
@@ -403,6 +407,8 @@
     S.entry += k; dots(); msg('');
     if (S.entry.length < LEN) return;
     var code = S.entry;
+    /* C378 (décision 40, A02) : au 6e chiffre, pendant le calcul du code, la coque charge le Pilotage (porte-c378) */
+    if (S.mode === 'unlock') preparer();
     setTimeout(function () {
       if (S.mode === 'unlock') onUnlockCode(code);
       else if (S.mode === 'create' || S.mode === 'create2') onCreate(code);

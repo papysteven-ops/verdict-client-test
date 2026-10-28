@@ -317,7 +317,8 @@ function prixQuote(q){var m=q&&q.montantNouveau||{},per=q&&/an/.test(String(q.pe
 function dire(t){try{if(typeof root.toast==='function')root.toast(t);}catch(e){}}
 /* C356 : dates de l'essai et de l'échéance (VERDICT_COMPTE du serveur, sinon VerdictPlan) */
 function dateLongue(t){try{var n=Number(t),ms=String(t==null?'':t).trim()!==''&&isFinite(n)?(n<1e12?n*1000:n):Date.parse(String(t));if(!isFinite(ms)||ms<=0)return '';
-  return new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'long',year:'numeric'}).format(new Date(ms));}catch(e){return '';}}
+  /* C367 (L4, demande de Langues) : la date dans la langue du patron ; en français, inchangée */
+  return new Intl.DateTimeFormat(locC367(),{day:'numeric',month:'long',year:'numeric'}).format(new Date(ms));}catch(e){return '';}}
 function finEssai(){try{var CC=lireHaut('VERDICT_COMPTE');if(CC&&CC.essaiFin)return dateLongue(CC.essaiFin);if(CC&&Number(CC.joursRestants)>0)return dateLongue(Date.now()+Number(CC.joursRestants)*86400000);
   var VP=lireHaut('VerdictPlan'),E=VP&&VP.etat&&VP.etat();if(E&&E.niveau==='essai'){if(E.fin)return dateLongue(E.fin);if(E.jours>0)return dateLongue(Date.now()+E.jours*86400000);}}catch(e){}return '';}
 /* C367 (L4, demande du chef) : le serveur donne des données (échéance en ISO, montants en centimes) ; l'appli les met en forme dans la
@@ -325,7 +326,7 @@ function finEssai(){try{var CC=lireHaut('VERDICT_COMPTE');if(CC&&CC.essaiFin)ret
    la traduit par gabarit et garde ces valeurs, déjà dans la bonne langue. */
 var LOC_C367={fr:'fr-FR',en:'en-GB',es:'es-ES',it:'it-IT',de:'de-DE',nl:'nl-NL',pt:'pt-PT'};
 function locC367(){var l='fr';try{l=String(lireHaut('LOCALE')||'fr').slice(0,2).toLowerCase();}catch(e){}return LOC_C367[l]||'fr-FR';}
-function eurosC367(c){c=Math.round(Number(c)||0);try{return new Intl.NumberFormat(locC367(),{style:'currency',currency:'EUR',minimumFractionDigits:c%100?2:0,maximumFractionDigits:2}).format(c/100);}catch(e){return String(c/100)+' €';}}
+function eurosC367(c){c=Math.round(Number(c)||0);try{return new Intl.NumberFormat(locC367(),{style:'currency',currency:'EUR',minimumFractionDigits:c%100?2:0,maximumFractionDigits:2}).format(c/100).replace(/\u202f/g,'\u00a0');}catch(e){return String(c/100)+' €';}}
 function jourC367(iso){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''));if(!m)return '';var l=locC367(),s='';try{s=new Intl.DateTimeFormat(l,{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(+m[1],+m[2]-1,+m[3],12)));}catch(e){return String(iso);}return l==='fr-FR'?s.replace(/^1 /,'1er '):s;}
 function phraseC367(q){var p=q&&q.prorata;if(!p||!(Number(p.montant)>0)||!(Number(p.supplement)>0)||!jourC367(p.echeance))return '';
   var an=/an/.test(String(q.periode||'')),u=an?'an':'mois',d=jourC367(p.echeance),n=Number(q.prochain)||0,tot=p.total!=null?p.total:(q.montantNouveau&&q.montantNouveau.premier);
@@ -338,14 +339,14 @@ function declarer(nom,suite){
     if(q&&q.inclus)dire(q.raison==='essai'?'Établissement inclus pendant l’essai.':'Établissement inclus dans votre abonnement.');}
   function envoyer(q,confirme){var b={action:'add_establishment',etabId:id,name:String(nom||'Nouvel établissement').slice(0,100)};if(tz)b.timezone=tz;if(confirme!=null)b.confirmedAmount=confirme;/* C367 (L4) : la date et le montant du prorata affichés reviennent au serveur, qui fait facturer ce montant par Stripe */if(q&&q.prorata&&q.prorata.date){b.prorataDate=q.prorata.date;if(confirme!=null)b.confirmedProrata=q.prorata.montant;}
     postServeur('/api/workspace',b).then(function(r){
-      if(r.status===200&&r.j.ok!==false){if(typeof DEVIS!=='undefined'){DEVIS.q=null;DEVIS.t=0;}creerLocal(r.j.quote||q);return;}
+      if(r.status===200&&r.j.ok!==false){if(typeof DEVIS!=='undefined'){DEVIS.q=null;DEVIS.t=0;}creerLocal(r.j.duplicate?null:(r.j.quote||q));/* C367 (revue) : « déjà là » après « Vérifier » : créé ici, sans bulle « inclus » */return;}
       if(r.status===402&&r.j.quote){demander(r.j.quote);return;}
       if(r.status===409){root.ask('Abonnement à mettre à jour','Votre abonnement est géré dans la page Compte : ajoutez-y cet établissement, puis revenez le créer ici. Rien n’a été créé.','Ouvrir mon abonnement',function(){root.location.href='../../account.html?view=abo';});return;}
       echec(causeEchec(r));
     }).catch(function(x){if(x&&x.c306){echec(causeEchec(x));return;}
       /* C367 (revue) : réponse perdue : le serveur a peut-être déjà créé (et facturé) ; « Vérifier » renvoie le même établissement,
          que le serveur reconnaît (déjà là) sans le facturer une seconde fois. */
-      var vu=false;try{if(typeof root.ask==='function'){root.ask('Réponse non reçue','La réponse du serveur n’est pas arrivée : l’établissement a peut-être déjà été créé. « Vérifier » le contrôle, sans jamais le facturer deux fois.','Vérifier',function(){envoyer(q,confirme);});vu=true;}}catch(e){}
+      var vu=false;try{if(typeof root.ask==='function'){root.ask('Réponse non reçue','La réponse du serveur n’est pas arrivée : l’établissement a peut-être déjà été créé. « Vérifier » le contrôle, sans jamais le facturer deux fois. Vérifiez avant tout nouvel ajout.','Vérifier',function(){envoyer(q,confirme);});vu=true;}}catch(e){}
       if(!vu)dire('La réponse du serveur n’est pas arrivée : l’établissement a peut-être déjà été créé. Vérifiez avant tout nouvel ajout.');});}
   /* C330 (avec L4, C328) : le montant est celui du serveur, seul ; les dossiers de cet appareil qui ne sont pas déclarés au compte sont dits à part,
      jamais comptés dans le prix. */
@@ -444,6 +445,15 @@ root.addEventListener('message',function(ev){var d=ev&&ev.data;if(!d||!d.context
 /* C258 : en démonstration, la barre ne dit jamais « Mon établissement · RÉEL » (vu pendant le chargement de la démo,
    chiffres de la Brasserie Collet affichés) : un dossier réel n'existe pas dans une session de démonstration. */
 (function(){var f=root.verdictEtabIdentity;if(typeof f!=='function'||f.__c258)return;var g=function(d){var r=f.apply(this,arguments);try{var demo=root.eval('typeof VERDICT_DEMO_SESSION!=="undefined"&&!!VERDICT_DEMO_SESSION');if(demo&&r&&r.kind==='RÉEL'){var x=d||{},nm=String(x.etab||'').trim();return {name:nm&&!/^mon établissement$/i.test(nm)?nm:'Démonstration',kind:'DÉMONSTRATION',context:'Démonstration fictive · aucune donnée réelle'};}}catch(e){}return r;};g.__c258=true;root.verdictEtabIdentity=g;})();
+/* C385 (A83) : un établissement réel attend-il le patron à la sortie de la démo ? (stockage local trouvé, portefeuille configuré, compte) */
+function aUnReel(){try{var R=root.eval('typeof VERDICT_DEMO_RETURN!=="undefined"?VERDICT_DEMO_RETURN:null');if(!R)return true;if(R.localFound)return true;
+  var S=R.store;if(S&&S.etabs&&Object.keys(S.etabs).some(function(id){var d=S.etabs[id];return d&&!d.exempleCharge&&(d.onboardingDone===true||(d.in&&Number(d.in.panier)>0));}))return true;
+  var A=R.accountState;if(A&&(A.signedIn||A.email||A.user))return true;return false;}catch(e){return true;}}
+var QUITTER={fr:'Quitter la démonstration',en:'Leave the demo',es:'Salir de la demostración',it:'Esci dalla dimostrazione',de:'Demo verlassen',nl:'Demo verlaten',pt:'Sair da demonstração'};
+/* C385 (A83) : à toute sortie de démo, l'adresse (cadre et coque) perd demo, presentation et guide */
+(function(){var k=0;(function br(){var f=root.quitterDemo;if(typeof f!=='function'){if(++k<40)setTimeout(br,250);return;}if(f.__c385)return;
+  var g=function(){var r=f.apply(this,arguments);[root,root.top].forEach(function(W){try{if(!W||!W.location)return;var u=new URL(W.location.href),s0=u.search;['demo','presentation','guide'].forEach(function(p){u.searchParams.delete(p);});if(u.search!==s0)W.history.replaceState(W.history.state,'',u.pathname+u.search+u.hash);}catch(e){}});return r;};
+  for(var p in f)if(Object.prototype.hasOwnProperty.call(f,p))g[p]=f[p];g.__c385=true;root.quitterDemo=g;})();})();
 /* C289 (C285 en partie, T1) : pendant une démo, toucher la pastille de l'établissement affiché ne répond plus « Déjà affiché ·
    … · MODÈLE FICTIF » : il propose « Revenir à mon établissement », le même libellé et la même action que le bandeau (C288). */
 (function(){var f=root.switchEtab;if(typeof f!=='function'||f.__c289)return;
@@ -460,8 +470,8 @@ root.addEventListener('message',function(ev){var d=ev&&ev.data;if(!d||!d.context
         de:['Zurück zu meinem Betrieb','Sie sehen eine Demo','Ihre eigenen Zahlen warten auf Sie.'],nl:['Terug naar mijn zaak','U bekijkt een demo','Uw eigen cijfers wachten op u.'],
         pt:['Voltar ao meu estabelecimento','Está a ver uma demonstração','Os seus próprios números esperam por si.']},lg=String(root.LOCALE||root.document.documentElement.lang||'fr').slice(0,2),x=L[lg]||L.fr;
       /* C356 (T4) : la pastille ouvre la liste des établissements et des modèles ; « Revenir à mon établissement » y vient en tête */
-      if(typeof root.openModeles==='function'&&listeDemo(x[0]))return true;
-      var fr=x===L.fr;root.ask(x[0]+(fr?' ?':'?'),x[1]+(nm?(fr?' (« '+nm+' »)':' (“'+nm+'”)'):'')+'. '+x[2],x[0],function(){root.quitterDemo();});return true;}
+      var lib0=aUnReel()?x[0]:(QUITTER[lg]||QUITTER.fr);/* C385 */if(typeof root.openModeles==='function'&&listeDemo(lib0))return true;
+      var fr=x===L.fr;root.ask(lib0+(fr?' ?':'?'),x[1]+(nm?(fr?' (« '+nm+' »)':' (“'+nm+'”)'):'')+'. '+(lib0===x[0]?x[2]:''),lib0,function(){root.quitterDemo();});return true;}
   }catch(e){}return f.apply(this,arguments);};for(var k in f)if(Object.prototype.hasOwnProperty.call(f,k))g[k]=f[k];g.__c289=true;root.switchEtab=g;})();
 /* C301 (V15-023) : majValidationVisible (029) ne retire l'aide « Depuis votre compte de résultat : … €/an ÷ 12 » que
    lorsqu'il en pose une nouvelle ; un établissement sans compte de résultat gardait celle du précédent (87 000 € de

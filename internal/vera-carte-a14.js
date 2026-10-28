@@ -338,12 +338,12 @@ function css(){
   s.textContent=
   '#vc14{position:fixed;inset:0;z-index:2147480000;background:rgba(8,12,18,.5);display:flex;align-items:flex-end;justify-content:center}'+
   '@media(min-width:760px){#vc14{align-items:center}}'+
-  '#vc14 .vc-sheet{width:min(820px,100%);max-height:94vh;overflow:auto;background:var(--card,#fff);color:var(--txt,#111827);border-radius:24px 24px 0 0;box-shadow:0 30px 80px rgba(0,0,0,.35);padding:18px 16px calc(22px + env(safe-area-inset-bottom,0px));font:500 15px/1.45 -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;animation:vcUp .35s cubic-bezier(.2,.8,.2,1)}'+
+  '#vc14 .vc-sheet{width:min(820px,100%);max-height:94vh;overflow:auto;background:var(--card,#fff);color:var(--txt,#111827);border-radius:24px 24px 0 0;box-shadow:0 30px 80px rgba(0,0,0,.35);padding:18px 16px calc(22px + env(safe-area-inset-bottom,0px));font:500 15px/1.45 -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;animation:vcUp .25s cubic-bezier(.2,.8,.2,1)}'+
   '@media(min-width:760px){#vc14 .vc-sheet{border-radius:24px}}'+
   /* C258 (T1 N7) : en thème clair, la fenêtre de Vera est claire (les variables --card/--txt du cadre restent sombres). */
   'html.vd-workspace-light #vc14 .vc-sheet{background:#ffffff!important;color:#14202b!important;box-shadow:0 30px 80px rgba(16,24,40,.22)!important}html.vd-workspace-light #vc14 .vc-av{background:#f3f5f7}'+
-  '@keyframes vcUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}'+
-  '#vc14 .vc-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}#vc14 .vc-av{width:54px;height:54px;border-radius:50%;object-fit:cover;background:#111;box-shadow:0 0 0 3px #d4a72c,0 0 22px rgba(212,167,44,.55);animation:vcGlow 2.4s ease-in-out infinite}'+
+  '@keyframes vcUp{from{transform:translateY(8px);opacity:.6}to{transform:none;opacity:1}}'+
+  '#vc14 .vc-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}#vc14 .vc-av{width:54px;height:54px;border-radius:50%;object-fit:cover;background:#111;box-shadow:0 0 0 3px #d4a72c,0 0 22px rgba(212,167,44,.55);animation:vcGlow 2.4s ease-in-out 2}/* C412 */'+
   '@keyframes vcGlow{50%{box-shadow:0 0 0 3px #f2cf63,0 0 34px rgba(242,207,99,.8)}}'+
   '#vc14 h2{margin:0;font-size:21px;font-weight:800}#vc14 .vc-sub{margin:2px 0 0;font-size:13.5px;opacity:.75}#vc14 .vc-x{margin-left:auto;width:42px;height:42px;border-radius:50%;border:1px solid rgba(127,127,127,.3);background:transparent;color:inherit;font-size:18px;cursor:pointer}'+
   '#vc14 .vc-tabs{display:flex;gap:6px;margin:6px 0 14px;overflow:auto}#vc14 .vc-tab{flex:1;min-width:max-content;padding:10px 12px;border-radius:12px;border:1.5px solid rgba(127,127,127,.25);background:transparent;color:inherit;font-weight:700;cursor:pointer}#vc14 .vc-tab.on{border-color:#d4a72c;background:rgba(212,167,44,.12)}'+
@@ -351,10 +351,10 @@ function css(){
   '#vc14 label.vc-f{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700}#vc14 .vc-f input,#vc14 .vc-f select{padding:11px 12px;border-radius:12px;border:1.5px solid rgba(127,127,127,.3);background:transparent;color:inherit;font:600 15px system-ui}'+
   '#vc14 .vc-tg{display:flex;gap:6px}#vc14 .vc-tg button{flex:1;padding:10px;border-radius:12px;border:1.5px solid rgba(127,127,127,.3);background:transparent;color:inherit;font-weight:700;cursor:pointer}#vc14 .vc-tg button.on{background:#14532d;color:#fff;border-color:#14532d}'+
   '#vc14 .vc-go{width:100%;padding:14px;border-radius:14px;border:0;background:linear-gradient(90deg,#b8860b,#e3b341);color:#1a1200;font:800 16px system-ui;cursor:pointer;margin:4px 0 14px}'+
-  '#vc14 .vc-think{display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 0}#vc14 .vc-dots span{display:inline-block;width:9px;height:9px;margin:0 3px;border-radius:50%;background:#d4a72c;animation:vcDot 1s infinite}#vc14 .vc-dots span:nth-child(2){animation-delay:.15s}#vc14 .vc-dots span:nth-child(3){animation-delay:.3s}'+
+  '#vc14 .vc-think{display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 0}#vc14 .vc-dots span{display:inline-block;width:9px;height:9px;margin:0 3px;border-radius:50%;background:#d4a72c;animation:vcDot 1s 4}/* C412 */#vc14 .vc-dots span:nth-child(2){animation-delay:.15s}#vc14 .vc-dots span:nth-child(3){animation-delay:.3s}'+
   '@keyframes vcDot{50%{transform:translateY(-7px);opacity:.5}}#vc14 .vc-steps{list-style:none;margin:0;padding:0;font-size:14px}#vc14 .vc-steps li{opacity:.35;transition:opacity .25s}#vc14 .vc-steps li.ok{opacity:1}#vc14 .vc-steps li.ok:before{content:"✓ ";color:#16a34a;font-weight:800}'+
-  '#vc14 .vc-card{border:1.5px solid rgba(127,127,127,.22);border-radius:18px;padding:14px;margin-bottom:12px;animation:vcIn .45s both}#vc14 .vc-card:nth-child(2){animation-delay:.12s}#vc14 .vc-card:nth-child(3){animation-delay:.24s}#vc14 .vc-card:nth-child(4){animation-delay:.36s}'+
-  '@keyframes vcIn{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}'+
+  '#vc14 .vc-card{border:1.5px solid rgba(127,127,127,.22);border-radius:18px;padding:14px;margin-bottom:12px;animation:vcIn .2s both}#vc14 .vc-card:nth-child(2){animation-delay:.02s}#vc14 .vc-card:nth-child(3){animation-delay:.04s}#vc14 .vc-card:nth-child(4){animation-delay:.05s}'+
+  '@keyframes vcIn{from{transform:translateY(6px);opacity:.6}to{transform:none;opacity:1}}'+
   '#vc14 .vc-badge{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(212,167,44,.16);color:#8a6400;margin-bottom:6px}#vc14 .vc-badge.new{background:rgba(22,163,74,.14);color:#15803d}#vc14 .vc-badge.act{background:rgba(59,130,246,.14);color:#1d4ed8}'+
   '#vc14 .vc-card h3{margin:0 0 4px;font-size:18px}#vc14 .vc-kpi{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;margin:6px 0}#vc14 .vc-kpi b{font-variant-numeric:tabular-nums}#vc14 ul.vc-why{margin:6px 0 10px;padding-left:18px;font-size:13.5px}'+
   '#vc14 .vc-act{display:flex;gap:8px;flex-wrap:wrap}#vc14 .vc-act button{padding:10px 14px;border-radius:12px;border:1.5px solid rgba(127,127,127,.3);background:transparent;color:inherit;font-weight:700;cursor:pointer}#vc14 .vc-act button.pri{background:#16a34a;color:#fff;border-color:#16a34a}'+
@@ -482,7 +482,8 @@ function install(){
   var sw=root.switchEtab;if(typeof sw==='function'&&!sw._vc14){var wsw=function(){var r=sw.apply(this,arguments);setTimeout(function(){try{ensureMemory();watchCosts(true);}catch(e){}},300);return r;};wsw._vc14=true;for(var k2 in sw)if(Object.prototype.hasOwnProperty.call(sw,k2))wsw[k2]=sw[k2];root.switchEtab=wsw;}
   /* C258 (T1 N5e) : la fenêtre de Vera se ferme quand on change d'écran. */
   var gg=root.go;if(typeof gg==='function'&&!gg._vc258){var wg=function(){try{close();}catch(e){}return gg.apply(this,arguments);};wg._vc258=true;for(var k3 in gg)if(Object.prototype.hasOwnProperty.call(gg,k3))wg[k3]=gg[k3];root.go=wg;}
-  if(root.MutationObserver){var t=0;new root.MutationObserver(function(){if(t)return;t=setTimeout(function(){t=0;mountButton();},120);}).observe(doc.body,{childList:true,subtree:true});}
+  /* C381 (A30) : le bouton est posé avant le dessin de l'image (plus 120 ms après : la recherche et la liste descendaient) */
+  if(root.MutationObserver){new root.MutationObserver(function(){try{var h=doc.querySelector('#c-menu .cp-actions');if(h&&!h.querySelector('.vc14-open'))mountButton();}catch(e){}}).observe(doc.body,{childList:true,subtree:true});}
   mountButton();return true;
 }
 root.VerdictVeraCarte={_prixNouveaute:function(n,cat){prixSaison(n,cat,null);var ok=coutAuPrix(n,n.ttc);return {ttc:n.ttc,ok:ok,marge:marginAt(n,n.ttc),corrige:n.cpCoutCorrige||null,carte:n.cpCarte||null};},version:'C104',open:open,close:close,ensureMemory:ensureMemory,proposeDish:proposeDish,proposeMenu:proposeMenu,applyMenu:applyMenu,addToMenu:addToMenu,watchCosts:watchCosts,bestSellers:bestSellers,qtyOn:qtyOn,seasonFit:seasonFit,warmth:warmth,isSimulated:isSimulated,_newCreation:newCreation};
@@ -554,3 +555,5 @@ if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',function()
   }
   if(!corriger()&&typeof root.setInterval==='function'){var k=0,iv=root.setInterval(function(){if(corriger()||++k>40)root.clearInterval(iv);},250);}
 })(window);
+
+/* C412 (arrivées) : règle 27 bis */

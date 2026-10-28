@@ -56,11 +56,38 @@
   function nouvelOnglet(url) { try { w.open(url, '_blank', 'noopener'); } catch (e) {} }
   /* Ouvre le module puis appelle la fonction dans son cadre dès qu'elle est prête (au plus 6 s). */
   function dansModule(cap, id, appel) {
+    var section = retourSection; retourSection = '';
     fermer();
     var U = w.VerdictUnifiedShell;
     try { if (U && U.activateModule && (!U.getActiveModule || U.getActiveModule() !== cap)) U.activateModule(cap); } catch (e) {}
     var n = 0;
-    (function essai() { var X = cadre(id); if (X && X.document.readyState === 'complete') { try { if (appel(X) !== false) return; } catch (e) { return; } } if (n++ < 60) setTimeout(essai, 100); })();
+    (function essai() { var X = cadre(id); if (X && X.document.readyState === 'complete') { var avant = fenetres(X); try { if (appel(X) !== false) { if (section) revenir(X, section, avant); return; } } catch (e) { return; } } if (n++ < 60) setTimeout(essai, 100); })();
+  }
+  /* C401 (A78 de l'audit du 27/10) : une fenêtre ouverte depuis Paramètres (Mes établissements, Jours d'ouverture, Connecter la
+     caisse, Repartir de zéro…) ramène à Paramètres en se fermant, sur la même section, comme la cloche ou les connexions. Les écrans
+     (Abonnement, Alertes, Aide) ne sont pas des fenêtres : on y reste. Rien n'est observé au repos : seulement tant que la fenêtre est là. */
+  var retourSection = '';
+  function visible(X, e) { if (!e.isConnected) return false; var cs = X.getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return false; var r = e.getBoundingClientRect(); return r.width >= 40 && r.height >= 40; }
+  function fenetres(X) {
+    var out = [];
+    try { [].forEach.call(X.document.querySelectorAll('.modal.on,[role="dialog"],[aria-modal="true"],body>*'), function (e) {
+      if (out.indexOf(e) >= 0 || !visible(X, e)) return;
+      if (!e.matches('.modal.on,[role="dialog"],[aria-modal="true"]')) { var cs = X.getComputedStyle(e), r = e.getBoundingClientRect(); if (cs.position !== 'fixed' || r.width * r.height < 0.3 * X.innerWidth * X.innerHeight) return; }
+      out.push(e);
+    }); } catch (e) {}
+    return out;
+  }
+  function revenir(X, section, avant) {
+    setTimeout(function () {
+      function neuves() { return fenetres(X).filter(function (e) { return avant.indexOf(e) < 0; }); }
+      if (!neuves().length) return;
+      var fin = Date.now() + 1800000, mo = new X.MutationObserver(function () {
+        if (Date.now() > fin) return mo.disconnect();
+        if (neuves().length) return;
+        mo.disconnect(); if (!ouvert()) ouvrir(section);
+      });
+      mo.observe(X.document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'open'] });
+    }, 350);
   }
   function pilotage(appel) { dansModule('pilotage', 'frame-verdict', appel); }
   function inventaire(appel) { dansModule('inventory', 'frame-inventory', appel); }
@@ -276,7 +303,9 @@
       return;
     }
     var row = t.closest('button.vpa-row[data-l]'); if (!row) return;
-    var f = actions[row.getAttribute('data-l')]; if (f) try { f(); } catch (e) {}
+    var f = actions[row.getAttribute('data-l')], sx = row.closest('.vpa-sec'); retourSection = sx ? sx.getAttribute('data-sec') : '';
+    if (f) try { f(); } catch (e) {}
+    retourSection = '';
   }
   function changement(ev) {
     var t = ev.target;

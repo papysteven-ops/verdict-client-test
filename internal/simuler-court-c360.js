@@ -30,6 +30,8 @@
     'Pour 100 € vendus': ['Per €100 sold', 'Por cada 100 € vendidos', 'Per 100 € venduti', 'Je 100 € Umsatz', 'Per € 100 verkocht', 'Por cada 100 € vendidos'],
     'Aucun changement pour l’instant : touchez un levier pour le régler.': ['No change yet: tap a lever to adjust it.', 'Ningún cambio por ahora: toque una palanca para ajustarla.', 'Nessuna modifica per ora: tocchi una leva per regolarla.', 'Noch keine Änderung: tippen Sie auf einen Hebel, um ihn einzustellen.', 'Nog geen wijziging: tik op een hefboom om hem in te stellen.', 'Nenhuma alteração por agora: toque numa alavanca para a ajustar.'],
     'par an avec vos changements': ['per year with your changes', 'al año con sus cambios', 'all’anno con le sue modifiche', 'pro Jahr mit Ihren Änderungen', 'per jaar met uw wijzigingen', 'por ano com as suas alterações'],
+    'dont effet combiné des leviers :': ['of which combined effect of the levers:', 'de ello, efecto combinado de las palancas:', 'di cui effetto combinato delle leve:', 'davon Kombinationseffekt der Hebel:', 'waarvan gecombineerd effect van de hefbomen:', 'dos quais efeito combinado das alavancas:'],
+    'chaque ligne montre un levier seul': ['each line shows one lever on its own', 'cada línea muestra una palanca sola', 'ogni riga mostra una leva da sola', 'jede Zeile zeigt einen Hebel allein', 'elke regel toont één hefboom apart', 'cada linha mostra uma alavanca sozinha'],
     'Remettre à zéro': ['Reset', 'Poner a cero', 'Azzera', 'Zurücksetzen', 'Op nul zetten', 'Repor a zero'],
     'Mes décisions': ['My decisions', 'Mis decisiones', 'Le mie decisioni', 'Meine Entscheidungen', 'Mijn beslissingen', 'As minhas decisões'],
     'Ce que vous avez décidé, ce qui est en cours et ce qui a été mesuré, avec le journal des gains.': ['What you decided, what is under way and what has been measured, with the gains log.', 'Lo que ha decidido, lo que está en curso y lo que se ha medido, con el registro de ganancias.', 'Ciò che ha deciso, ciò che è in corso e ciò che è stato misurato, con il registro dei guadagni.', 'Was Sie entschieden haben, was läuft und was gemessen wurde, mit dem Gewinnjournal.', 'Wat u hebt besloten, wat loopt en wat is gemeten, met het winstlogboek.', 'O que decidiu, o que está em curso e o que foi medido, com o registo de ganhos.'],
@@ -87,6 +89,8 @@
     return '<div class="c360-grille"><div class="c360-l c360-tete"><span class="c360-k"></span><span class="c360-a">Aujourd’hui</span>' +
       '<span class="c360-fl" aria-hidden="true">→</span><span class="c360-b">Après</span></div>' +
       ligne('Résultat sur un an', 'r0', 'r1') + ligne('Indice de sérénité', 's0', 's1') + ligne('Pour 100 € vendus', 'n0', 'n1') + '</div>' +
+      /* C382 (A47, L7) : chaque ligne montre un levier seul ; leur somme + l'effet combiné = le total du bloc. */
+      '<p class="c360-combine"><span>dont effet combiné des leviers :</span> <b data-c360="c"></b> <small>chaque ligne montre un levier seul</small></p>' +
       '<div class="c360-pied"><p class="c360-vide">Aucun changement pour l’instant : touchez un levier pour le régler.</p>' +
       '<p class="c360-gain"><b data-c360="g"></b> <span>par an avec vos changements</span></p>' +
       '<span class="c360-actions">' + (typeof w.decEnDecision === 'function' ? '<button type="button" class="c360-zero c360-decider" onclick="decEnDecision()">J’en fais une décision</button>' : '') +
@@ -119,6 +123,13 @@
     setTexte(q('g'), (g >= 0 ? '+' : '−') + euros(Math.abs(g)));
     tonalite(q('g'), 0, g, true);
     basculer(b, 'c360-repos', !n);
+    /* C382 : écart entre le total (leviers appliqués ensemble) et la somme des lignes (chacun seul), calculé par
+       decEffetCombine (a24, L7) ; montré seulement à partir d'1 €. */
+    var E = null;
+    try { E = n && typeof w.decEffetCombine === 'function' ? w.decEffetCombine() : null; } catch (e) { E = null; }
+    var c = E && isFinite(E.combine) ? Number(E.combine) : 0, voir = Math.abs(c) >= 1;
+    basculer(b, 'c360-avec-combine', voir);
+    if (voir) { setTexte(q('c'), (c >= 0 ? '+' : '−') + euros(Math.abs(c))); tonalite(q('c'), 0, c, true); }
   }
 
   /* ── Une ligne par levier ── */
@@ -280,6 +291,8 @@
     '#c360Bloc .c360-decider{background:#15803d;border-color:#15803d;color:#fff}' +
     '#c360Bloc .c360-zero{flex:none;font-size:12.5px;font-weight:700;padding:7px 11px;border-radius:10px;border:1px solid var(--line,rgba(127,127,127,.3));background:transparent;color:var(--txt,#0f172a);cursor:pointer}' +
     '#c360Bloc.c360-attente{visibility:hidden}' +
+    '#c360Bloc .c360-combine{display:none;margin:6px 0 0;font-size:12.5px;color:var(--mut,#64748b)}#c360Bloc.c360-avec-combine:not(.c360-repos) .c360-combine{display:block}' +
+    '#c360Bloc .c360-combine b{font-family:var(--mono,ui-monospace,monospace);font-weight:800}#c360Bloc .c360-combine small{display:block;font-size:11.5px;opacity:.85}' +
     /* Grand écran : les chiffres restent près de leur libellé. */
     '@media (min-width:700px){#c360Bloc .c360-grille,#c360Bloc .c360-pied{max-width:640px}}' +
     /* Une ligne par levier, dépliée au toucher */

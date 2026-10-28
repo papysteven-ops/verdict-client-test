@@ -953,7 +953,7 @@
   global.VerdictPerformanceIntegrated.minimumDemande=function(date){return global.verdictMinimumDemande(date);};
   try{global.addEventListener("verdict:caisse-importee",function(){setTimeout(recalculerAvecCaisse,0);});}catch(_){ }
   /* C308 (V16-001) : un Accueil dessiné avant 041, pendant la lecture de la page (mois moyen entier), est redessiné tout de suite avec le plan du mois. */
-  try{if(global.VIEW==="pil"&&document.getElementById("point4-month")&&typeof global.drawPil==="function")global.drawPil();}catch(_){ }
+  try{if(global.VIEW==="pil"&&!global.VERDICT_PREMIER_DESSIN_APRES_041&&document.getElementById("point4-month")&&typeof global.drawPil==="function")global.drawPil();}catch(_){ }/* audit A02 (L3 C426) : le premier dessin attend 041, plus de rattrapage */
   /* C316 : le suivi d’un établissement réel commence à son premier affichage (sa création), posé tout de suite, avant toute caisse ou tout document. */
   try{var dT=data();if(dT&&dT.in&&!dT._demo&&!(dT.dataProvenance&&dT.dataProvenance.nature==="model_estimate")&&!global.VERDICT_DEMO_SESSION&&!validDateKey(String(dT.performanceTrackingStartedAt||"").slice(0,10)))ensureTrackingStart();}catch(_){ }
   function renameTab(){var button=document.querySelector('[onclick*="dsub(\'carnet\'"]');if(button){var names={fr:"Performances",en:"Performance",es:"Rendimiento",it:"Prestazioni",de:"Leistung",nl:"Prestaties",pt:"Desempenho"};button.removeAttribute("data-i18n");button.textContent=names[global.LOCALE]||names.fr;}}

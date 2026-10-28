@@ -328,6 +328,11 @@ function installerSimuler(){
       w.drawPriorities=function(){var r=dp.apply(this,arguments);try{var el=document.getElementById('priorities-container');if(el){var old=document.getElementById('c324-dec');if(old&&old.parentNode)old.parentNode.removeChild(old);var h=aFaireDecisionsHTML();if(h)el.insertAdjacentHTML('afterbegin',h);}}catch(e){}return r;};
       for(var kk in dp)if(Object.prototype.hasOwnProperty.call(dp,kk))w.drawPriorities[kk]=dp[kk];w.drawPriorities.__c324=true;return true;}
     if(!br()&&typeof w.setInterval==='function'){var t=w.setInterval(function(){if(br()||++k>40)w.clearInterval(t);},250);}})();
+  /* C382 (A47) : Simuler — chaque ligne montre le gain isolé d'un levier (decImpact) ; le total (decImpactTotal) les applique ensemble.
+     decEffetCombine() rend la somme des lignes, le total et l'écart (« Effet combiné des leviers »), pour que les lignes ramènent au total. */
+  w.decEffetCombine=function(){try{if(typeof w.decLeviersActifs!=='function'||typeof w.decImpactTotal!=='function')return null;var T=w.decImpactTotal();if(!T)return null;
+    var som=0;w.decLeviersActifs().forEach(function(a){var di=w.decImpact(a.def.id,a.v);if(di&&isFinite(di.delta))som+=di.delta;});
+    return {lignes:som,total:T.delta,combine:T.delta-som};}catch(e){return null;}};
   w.decImpact=function(id,v){
     var R0=w.moteur();if(!R0.ready)return null;var s={};s[id]=v;var R1=w.moteur(overAll(s));
     return {R0:R0,R1:R1,before:R0.d.res,after:R1.d.res,delta:R1.d.res-R0.d.res,score0:R0.score,score1:R1.score,rn0:R0.v.rn,rn1:R1.v.rn};
@@ -335,11 +340,15 @@ function installerSimuler(){
   /* Priorités « Votre potentiel » et le paquet de Simuler : le même plan, les mêmes montants */
   w.potentiel=function(){
     var P=plan();if(!P)return null;var b=P.base;
+    var R0res=b.res;try{var R0=w.moteur();if(R0&&R0.ready&&R0.d)R0res=R0.d.res;}catch(e){}
+    function seulDe(x,M){var d=M.d.res-R0res;if(x.id==='panier'&&R0&&typeof w.verdictGainPanier==='function'){try{var g=w.verdictGainPanier(num(x.v),R0);if(g&&isFinite(g.gain))return g.gain;}catch(e){}}return d;}
     var lev=P.retenus.map(function(x){var o={};o[x.id]=x.v;var M=w.moteur(overAll(o)),dd=def(x.id);
-      return {n:dd?dd.t:x.id,de:'',vers:dd?dd.fmt(x.v):String(x.v),act:x.how,gain:(isFinite(x.gain)?x.gain:M.d.res-b.res),pts:M.score-b.score,sc:M.score,over:o,livraison:x.id==='com',id:x.id,why:x.why};})
+      return {n:dd?dd.t:x.id,de:'',vers:dd?dd.fmt(x.v):String(x.v),act:x.how,gain:(isFinite(x.gain)?x.gain:M.d.res-b.res),seul:seulDe(x,M)/* C382 : gain isolé, le calcul même de decImpact (moteur avec ce seul levier − moteur actuel ; panier : verdictGainPanier), sans recalcul */,pts:M.score-b.score,sc:M.score,over:o,livraison:x.id==='com',id:x.id,why:x.why};})
       .filter(function(x){return x.gain>1||x.pts>0;});
     lev.sort(function(a,c){return c.gain-a.gain;});
-    return {base:b.score,baseRes:b.res,leviers:lev,max:{score:P.central.score,res:P.central.res},state:P.state,realiste:P};
+    /* C382 (A47) : ce que les leviers rapportent ensemble en plus (ou en moins) de la somme de leurs gains isolés */
+    var comb=P.central.gain-lev.reduce(function(s,x){return s+(isFinite(x.seul)?x.seul:0);},0);
+    return {base:b.score,baseRes:b.res,leviers:lev,combine:comb,max:{score:P.central.score,res:P.central.res},state:P.state,realiste:P};
   };
   /* C301 bis (panier exact, suite) : le moteur arrondit le panier HT au centime (marches de CA de plusieurs centaines d'euros) ;
      l'impact du levier panier et le total de Simuler lisent donc la règle unique (verdictGainPanier), comme l'Audit. */
@@ -361,8 +370,8 @@ function installerSimuler(){
   /* C311 (V16-009) : le registre de Simuler reprend le point de départ (même montant, mêmes leviers) et l'écart matière de l'Audit
      (le levier « coût de la nourriture » du plan s'il est retenu, sinon l'écart entier, non compté dans le gain). */
   if(typeof w.decisionsRegistre==='function'&&!w.decisionsRegistre.__c311){var dr0=w.decisionsRegistre;w.decisionsRegistre=function(){var G=dr0.apply(this,arguments);
-    try{if(G&&G.aExaminer){var P=plan(),L=G.aExaminer;if(P&&P.state){var gain=Math.round(num(P.central&&P.central.res)-num(P.base&&P.base.res)),noms=[];
-      Object.keys(P.state).filter(function(k){return P.state[k];}).sort(function(a,b){return ORDER.indexOf(a)-ORDER.indexOf(b);}).forEach(function(k){var d=def(k);if(d)noms.push(d.t+' '+d.fmt(P.state[k]));});
+    try{if(G&&G.aExaminer){var P=plan(),L=G.aExaminer;if(P&&P.state){var gain=Math.round(num(P.central&&P.central.res)-num(P.base&&P.base.res)),noms=[],/* C407 (A67) : chaque levier traduit en entier avant d'être joint */trA=function(s){try{var V=w.VerdictLanguesComplements,t=V&&V.traduire&&V.traduire(String(s));return t||s;}catch(e){return s;}};
+      Object.keys(P.state).filter(function(k){return P.state[k];}).sort(function(a,b){return ORDER.indexOf(a)-ORDER.indexOf(b);}).forEach(function(k){var d=def(k);if(d)noms.push(trA(d.t+' '+d.fmt(P.state[k])));});
       L.forEach(function(x){var r=x&&x.reco;if(!r||r.id!=='FOOD_GAP_VERIFY')return;var g=null;try{var T13=titreEcart(ecartMatiere());if(T13)r.t=T13;}catch(e){}
         if(P.state.fc||P.state.boi){try{var s9={};if(P.state.fc)s9.fc=P.state.fc;if(P.state.boi)s9.boi=P.state.boi;var M=w.moteur(overAll(s9));g=Math.round(M.d.res-num(P.base.res));}catch(e){}}
         if(!(g>0)){var E=w.VerdictEcartMatiere?w.VerdictEcartMatiere():null;if(E&&E.eur>0)g=Math.round(E.eur);}
@@ -370,7 +379,7 @@ function installerSimuler(){
       /* C311 (V16-018) : jamais « Impact estimé : 0 € par an » ; un constat sans levier chiffré est dit comme tel */
       L.forEach(function(x){var r=x&&x.reco;if(r&&r.imp!=null&&!(Math.abs(num(r.imp))>=1)){r.imp=null;r.t=String(r.t||'')+' — constat : pas de montant chiffré, le levier se choisit dans Simuler';}});
       if(gain>0&&noms.length&&!L.some(function(x){return x&&x.reco&&x.reco.id==='SIMU_DEPART';})){var c0=L[0]&&L[0].reco&&L[0].reco.conf;
-        L.unshift({reco:{id:'SIMU_DEPART',t:'Point de départ de Simuler : '+noms.join(' · '),imp:gain,conf:c0!=null?c0:null},etat:'a-examiner'});G.compte.e=L.length;}}}}catch(e){}
+        L.unshift({reco:{id:'SIMU_DEPART',t:trA('Point de départ de Simuler')+(String(w.LOCALE||'fr').slice(0,2)==='fr'?' : ':': ')+noms.join(' · '),imp:gain,conf:c0!=null?c0:null},etat:'a-examiner'});G.compte.e=L.length;}}}}catch(e){}
     return G;};w.decisionsRegistre.__c311=true;}
   w.decBest=decBest;
   if(typeof w.point11Decision==='function'&&!w.point11Decision.__c91){var p11=w.point11Decision;w.point11Decision=function(db){var r=p11.apply(this,arguments);try{sansVolume(r);}catch(e){}try{aligner(r,db);}catch(e){}return r;};w.point11Decision.__c91=true;}
@@ -536,7 +545,7 @@ function aligner(res,db){
 
 /* ── Point de départ de Simuler ── */
 function chips(state){
-  return Object.keys(state).filter(function(k){return state[k];}).sort(function(a,b){return ORDER.indexOf(a)-ORDER.indexOf(b);}).map(function(k){var d=def(k);return d?'<b>'+d.icon+' '+esc(d.t)+' '+esc(d.fmt(state[k]))+'</b>':'';}).join(' · ');
+  return Object.keys(state).filter(function(k){return state[k];}).sort(function(a,b){return ORDER.indexOf(a)-ORDER.indexOf(b);}).map(function(k){var d=def(k);return d?'<b>'+esc(d.t)+' '+esc(d.fmt(state[k]))+'</b>':'';}).join(' · '); /* C412 : sans emoji de tête (G6) : plus rien n'est retiré après l'affichage */
 }
 function decBest(){
   var out=document.getElementById('dec-best-out');if(!out)return;

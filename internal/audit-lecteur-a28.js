@@ -11,7 +11,7 @@
       de l'Audit (leurs styles et leurs boutons continuent de fonctionner).
    4. Tous les accès existants (« Pourquoi et comment », raccourci Exports de Plus, « Voir les preuves ») ouvrent le
       lecteur au bon chapitre. */
-(function () {
+/* C412 (arrivées) : règle 27 bis */(function () {
   'use strict';
   var w = window, doc = document; if (w.VerdictLecteur) return;
   var REDUIT = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -257,7 +257,7 @@
     'html.vd-workspace-dark #vdBiblio{--bb-card:#11161d;--bb-line:#222b36;--bb-txt:#f1f5f9;--bb-sub:#94a3b8;--bb-hov:0 20px 44px rgba(0,0,0,.5)}' +
     '#vdBiblio .bb-head{padding:4px 4px 8px}#vdBiblio .bb-k{font:800 11.5px/1 -apple-system,system-ui;letter-spacing:.14em;text-transform:uppercase;color:#16a34a}' +
     '#vdBiblio .bb-head h2{margin:8px 0 6px;font:900 30px/1.08 -apple-system,system-ui;letter-spacing:-.025em;color:var(--bb-txt)}#vdBiblio .bb-head p{margin:0 0 16px;color:var(--bb-sub);font-size:15px}' +
-    '#vdBiblio .bb-go{display:inline-flex;align-items:center;gap:12px;min-height:52px;padding:0 22px;border:0;border-radius:16px;background:linear-gradient(180deg,#22c55e,#16a34a);color:#fff;font:800 16px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 12px 28px rgba(22,163,74,.35);transition:transform .25s ' + E + '}' +
+    '#vdBiblio .bb-go{display:inline-flex;align-items:center;gap:12px;min-height:52px;padding:0 22px;border:0;border-radius:16px;background:linear-gradient(180deg,#22c55e,#16a34a);color:#05100a!important;-webkit-text-fill-color:#05100a;font:800 16px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 12px 28px rgba(22,163,74,.35);transition:transform .25s ' + E + '}' +
     '#vdBiblio .bb-go span{font-size:20px;transition:transform .25s ' + E + '}#vdBiblio .bb-go:active{transform:scale(.97)}' +
     '#vdBiblio .bb-theme{margin:30px 0 0}#vdBiblio .bb-theme h3{display:flex;align-items:center;gap:12px;margin:0 4px 12px;font:800 19px/1.2 -apple-system,system-ui;color:var(--bb-txt)}' +
     '#vdBiblio .bb-theme h3 small{margin-left:auto;font:600 13px/1 -apple-system,system-ui;color:var(--bb-sub)}' +
@@ -285,8 +285,8 @@
     '#vdLecteur{--lx-bg:#f3f5f8;--lx-chrome:#ffffff;--lx-line:#e5e9ef;--lx-txt:#0f172a;--lx-sub:#64748b;--lx-paper:#ffffff;--lx-btn:#f1f4f8;position:fixed;inset:0;z-index:10;display:none;font-family:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif}' +
     'html.vd-workspace-dark #vdLecteur{--lx-bg:#080b10;--lx-chrome:#0e131a;--lx-line:#1e2733;--lx-txt:#f1f5f9;--lx-sub:#94a3b8;--lx-paper:#fbfbf8;--lx-btn:#161d26}' +
     '#vdLecteur.on{display:block}' +
-    '#vdLecteur .lx-fond{position:absolute;inset:0;background:rgba(2,6,12,.58);opacity:0;transition:opacity .35s ease}#vdLecteur.vis .lx-fond{opacity:1}' +
-    '#vdLecteur .lx-pan{position:absolute;inset:0;display:flex;background:var(--lx-bg);color:var(--lx-txt);transform:translateY(104%);transition:transform .42s ' + E + ';overflow:hidden}#vdLecteur.vis .lx-pan{transform:none}' +
+    '#vdLecteur .lx-fond{position:absolute;inset:0;background:rgba(2,6,12,.58);opacity:0;transition:opacity .2s ease}#vdLecteur.vis .lx-fond{opacity:1}' +
+    '#vdLecteur .lx-pan{position:absolute;inset:0;display:flex;background:var(--lx-bg);color:var(--lx-txt);transform:translateY(104%);transition:transform .25s ' + E + ';overflow:hidden}#vdLecteur.vis .lx-pan{transform:none}' +
     '#vdLecteur .lx-som{display:none}#vdLecteur .lx-main{flex:1;min-width:0;display:flex;flex-direction:column}' +
     '#vdLecteur .lx-tete{display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;background:var(--lx-chrome);border-bottom:1px solid var(--lx-line)}' +
     '#vdLecteur .lx-x{flex:0 0 44px;width:44px;height:44px;border-radius:50%;border:0;background:var(--lx-btn);color:var(--lx-txt);display:grid;place-items:center;cursor:pointer}#vdLecteur .lx-svg{width:20px;height:20px}' +
@@ -313,7 +313,7 @@
     '#vdLecteur .lx-page details{border-radius:14px;border:1px solid #e8ecf1;padding:2px 14px;margin:8px 0;background:#ffffff}#vdLecteur .lx-page details>summary{min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700}' +
     '#vdLecteur .lx-page .src-l{border-radius:14px;border:1px solid #e8ecf1;padding:12px 14px;margin:8px 0;background:#ffffff}#vdLecteur .lx-page .svt-l{padding:10px 0;border-bottom:1px solid #eef1f5}' +
     /* Tablette : panneau arrondi */
-    '@media (min-width:700px){#vdLecteur .lx-pan{inset:3vh 3vw;border-radius:28px;box-shadow:0 40px 120px rgba(0,0,0,.45);transform:translateY(30px) scale(.97);opacity:0;transition:transform .42s ' + E + ',opacity .3s ease}#vdLecteur.vis .lx-pan{transform:none;opacity:1}' +
+    '@media (min-width:700px){#vdLecteur .lx-pan{inset:3vh 3vw;border-radius:28px;box-shadow:0 40px 120px rgba(0,0,0,.45);transform:translateY(8px) scale(.99);opacity:.6;transition:transform .25s ' + E + ',opacity .2s ease}#vdLecteur.vis .lx-pan{transform:none;opacity:1}' +
       '#vdLecteur .lx-tete{padding:14px 20px}#vdLecteur .lx-corps{padding:26px 28px 36px}#vdLecteur .lx-page{padding:42px 48px 46px!important}#vdLecteur .lx-pied{padding:12px 20px;grid-template-columns:1fr 1fr}}' +
     /* Mac, iPad à l'horizontale : sommaire à gauche */
     '@media (min-width:1100px){#vdLecteur .lx-pan{inset:4vh max(3vw,calc((100vw - 1320px)/2))}' +

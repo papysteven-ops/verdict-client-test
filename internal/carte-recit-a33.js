@@ -31,7 +31,8 @@
       if (GC.P === P && GC.v) return GC.v;
       var ret = (P.retenus || []).filter(function (x) { return x.id === 'carte'; })[0] || null;
       var cap = ret ? (num(ret.v) || 8) : 8, cp = G.cartePlan(cap) || {};
-      var an = ret ? num(ret.gain) : num(w.moteur(G.overAll({ carte: cap })).d.res) - num(P.base && P.base.res);
+      /* C382 (A47) : le gain isolé des prix, le même que le curseur « Prix de la carte » de Simuler et que l'Audit */
+      var an = num(w.moteur(G.overAll({ carte: cap })).d.res) - num(P.base && P.base.res);
       var v = { fiable: true, retenu: !!ret, cap: cap, rows: cp.rows || [], sous: cp.sous || 0, an: an, mois: an / 12,
         plan: num(P.central && P.central.gain), plafond: !!(P.plafond && P.plafond.atteint), rnHaut: P.plafond && P.plafond.rn,
         rnPlan: num(P.central && P.central.rn), leviers: (P.retenus || []).map(function (x) { return x.id; }).filter(function (id) { return id !== 'carte'; }) };
@@ -136,7 +137,8 @@
     (function tour(t) { if (fini) return; var p = Math.min(1, (t - t0) / duree); if (p >= 1) return finir(); aff(fin * (1 - Math.pow(2, -10 * p))); requestAnimationFrame(tour); })(t0);
     setTimeout(finir, duree + 300);
   }
-  function jouer(card) { if (card.classList.contains('cr-on')) return; var L = card.querySelectorAll('[data-cr-count]'); if (!REDUIT) [].forEach.call(L, function (el) { el.textContent = el.hasAttribute('data-cr-eur') ? eur(0) : '0'; }); card.classList.add('cr-on'); [].forEach.call(L, function (el, i) { setTimeout(function () { compter(el); }, REDUIT ? 0 : 180 + i * 120); }); }
+  /* C380 (A29) : le chiffre juste reste affiché (jamais remis à 0 puis compté pendant le geste) ; seule l'arrivée (0,2 s) se joue */
+  function jouer(card) { if (card.classList.contains('cr-on')) return; card.classList.add('cr-on'); }
 
   function monter() {
     var p = P(), hote = doc.getElementById('c-menu'); if (!p || !hote) return;
@@ -168,7 +170,7 @@
     });
     var cartes = box.querySelectorAll('.cr-card');
     if (!('IntersectionObserver' in w) || REDUIT) { [].forEach.call(cartes, jouer); return; }
-    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting && (e.intersectionRatio >= 0.45 || (e.target === cartes[0] && e.intersectionRatio >= 0.15))) { jouer(e.target); io.unobserve(e.target); } }); }, { threshold: [0.15, 0.45], rootMargin: '0px 0px -8% 0px' });
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { jouer(e.target); io.unobserve(e.target); } }); }, { threshold: 0, rootMargin: '0px 0px 50% 0px' }); /* C380 : une demi-hauteur avant l'entrée à l'écran */
     [].forEach.call(cartes, function (c) { io.observe(c); });
   }
 
@@ -187,9 +189,9 @@
     '#vdRecitCarte h2{margin:0;font:900 clamp(28px,7.4vw,44px)/1.04 -apple-system,system-ui;letter-spacing:-.03em;color:#fff}' +
     '#vdRecitCarte .cr-p{margin:0;color:rgba(248,250,252,.82);font-size:16px;line-height:1.4}' +
     '#vdRecitCarte .cr-big{margin:4px 0 0;display:flex;flex-direction:column;gap:6px}#vdRecitCarte .cr-big b{font:900 clamp(40px,11vw,64px)/1 -apple-system,system-ui;letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:#fff}#vdRecitCarte .cr-big small{font-size:14.5px;color:rgba(248,250,252,.78)}' +
-    '#vdRecitCarte .cr-suite{margin-top:6px;padding-top:8px;font:700 13px/1 -apple-system,system-ui;color:rgba(255,255,255,.62);animation:crBouge 1.8s ease-in-out infinite}@keyframes crBouge{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}' +
-    '#vdRecitCarte .cr-card>*{opacity:0;transform:translateY(16px);transition:opacity .55s ' + E + ',transform .55s ' + E + '}#vdRecitCarte .cr-card.cr-on>*{opacity:1;transform:none}' +
-    '#vdRecitCarte .cr-card.cr-on>*:nth-child(2){transition-delay:.07s}#vdRecitCarte .cr-card.cr-on>*:nth-child(3){transition-delay:.14s}#vdRecitCarte .cr-card.cr-on>*:nth-child(4){transition-delay:.21s}#vdRecitCarte .cr-card.cr-on>*:nth-child(n+5){transition-delay:.3s}' +
+    '#vdRecitCarte .cr-suite{margin-top:6px;padding-top:8px;font:700 13px/1 -apple-system,system-ui;color:rgba(255,255,255,.62);animation:crBouge 1.8s ease-in-out 2}/* C412 : jamais sans fin */@keyframes crBouge{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}' +
+    '/* C380 (décision 27 bis) */#vdRecitCarte .cr-card>*{opacity:.6;transform:translateY(6px);transition:opacity .2s ' + E + ',transform .2s ' + E + '}#vdRecitCarte .cr-card.cr-on>*{opacity:1;transform:none}' +
+    '#vdRecitCarte .cr-card.cr-on>*:nth-child(2){transition-delay:.01s}#vdRecitCarte .cr-card.cr-on>*:nth-child(3){transition-delay:.02s}#vdRecitCarte .cr-card.cr-on>*:nth-child(4){transition-delay:.03s}#vdRecitCarte .cr-card.cr-on>*:nth-child(n+5){transition-delay:.05s}' +
     '#vdRecitCarte .cr-dial{position:relative;width:180px;height:180px;margin:4px auto 0}#vdRecitCarte .cr-ring{width:100%;height:100%;transform:rotate(-90deg)}#vdRecitCarte .cr-ring-bg{fill:none;stroke:rgba(255,255,255,.12);stroke-width:14}' +
     '#vdRecitCarte .cr-ring-arc{fill:none;stroke-width:14;stroke-linecap:round;stroke-dashoffset:var(--len);transition:stroke-dashoffset 1.2s ' + E + ' .2s;filter:drop-shadow(0 0 10px currentColor)}#vdRecitCarte .cr-on .cr-ring-arc{stroke-dashoffset:var(--off)}' +
     '#vdRecitCarte .cr-dial-n{position:absolute;inset:0;display:flex;align-items:baseline;justify-content:center;padding-top:62px}#vdRecitCarte .cr-dial-n b{font:900 56px/1 -apple-system,system-ui;font-variant-numeric:tabular-nums}#vdRecitCarte .cr-dial-n small{font-size:16px;color:rgba(255,255,255,.7);margin-left:3px}' +
@@ -197,13 +199,13 @@
     '#vdRecitCarte .cr-stack i{display:block;height:100%;flex:0 0 var(--w);background:var(--c);min-width:0}#vdRecitCarte .cr-stack i+i{box-shadow:inset 2px 0 0 rgba(0,0,0,.18)}#vdRecitCarte .cr-stack .cr-res{background:linear-gradient(90deg,#16a34a,#4ade80)}' +
     '#vdRecitCarte .cr-stack i>span{display:none;flex-direction:column;justify-content:center;height:100%;padding:0 12px;overflow:hidden;white-space:nowrap;color:#0b1120;font:800 17px/1.1 -apple-system,system-ui;font-variant-numeric:tabular-nums}#vdRecitCarte .cr-stack i>span small{font:700 11px/1.2 -apple-system,system-ui;letter-spacing:.06em;text-transform:uppercase;opacity:.72}' +
     '#vdRecitCarte .cr-bars,#vdRecitCarte .cr-prix,#vdRecitCarte .cr-leaks{list-style:none;margin:0;padding:0;display:grid;gap:12px}' +
-    '#vdRecitCarte .cr-bars li{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;opacity:0;transform:translateY(10px);transition:opacity .35s ' + E + ',transform .35s ' + E + ';transition-delay:calc(var(--i)*.16s + .1s)}#vdRecitCarte .cr-on .cr-bars li{opacity:1;transform:none}' +
+    '#vdRecitCarte .cr-bars li{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;opacity:.6;transform:translateY(4px);transition:opacity .2s ' + E + ',transform .2s ' + E + ';transition-delay:min(calc(var(--i)*.02s),.05s)}#vdRecitCarte .cr-on .cr-bars li{opacity:1;transform:none}' +
     '#vdRecitCarte .cr-bl{font-size:14.5px;color:#fff;font-weight:700;min-width:0}#vdRecitCarte .cr-bl small{display:block;font-weight:400;color:rgba(248,250,252,.7);font-size:12.5px}#vdRecitCarte .cr-bars b{font:800 15px/1.1 -apple-system,system-ui;font-variant-numeric:tabular-nums;color:#fde68a}' +
     '#vdRecitCarte .cr-track{grid-column:1/-1;position:relative;height:12px;border-radius:6px;background:rgba(255,255,255,.07)}#vdRecitCarte .cr-track i{position:absolute;top:0;bottom:0;left:0;width:var(--w);border-radius:6px;background:linear-gradient(90deg,#d4a017,#fde68a);transform:scaleX(0);transform-origin:left;transition:transform .6s ' + E + ';transition-delay:calc(var(--i)*.16s + .25s)}#vdRecitCarte .cr-on .cr-track i{transform:scaleX(1)}' +
-    '#vdRecitCarte .cr-leaks li{display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);transform:translateX(-12px);opacity:0;transition:transform .6s ' + E + ',opacity .6s ' + E + ';transition-delay:calc(var(--i)*.16s + .25s)}#vdRecitCarte .cr-on .cr-leaks li{transform:none;opacity:1}' +
+    '#vdRecitCarte .cr-leaks li{display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);transform:translateX(-6px);opacity:.6;transition:transform .2s ' + E + ',opacity .2s ' + E + ';transition-delay:min(calc(var(--i)*.02s),.05s)}#vdRecitCarte .cr-on .cr-leaks li{transform:none;opacity:1}' +
     '#vdRecitCarte .cr-n{flex:0 0 30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(239,68,68,.22);color:#fca5a5;font-weight:900}#vdRecitCarte .cr-leaks li div{flex:1;min-width:0}#vdRecitCarte .cr-leaks li div b{display:block;color:#fff;font-size:16px}#vdRecitCarte .cr-leaks li div small{color:rgba(248,250,252,.7);font-size:12.5px}' +
     '#vdRecitCarte .cr-leaks strong{text-align:right;color:#fde68a;font:900 19px/1.1 -apple-system,system-ui;font-variant-numeric:tabular-nums;white-space:nowrap}#vdRecitCarte .cr-leaks strong small{display:block;font-size:11px;color:rgba(253,230,138,.75);font-weight:600}' +
-    '#vdRecitCarte .cr-prix li{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:4px 8px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.1);opacity:0;transform:translateY(10px);transition:opacity .35s ' + E + ',transform .35s ' + E + ';transition-delay:calc(var(--i)*.16s + .1s)}#vdRecitCarte .cr-on .cr-prix li{opacity:1;transform:none}' +
+    '#vdRecitCarte .cr-prix li{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:4px 8px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.1);opacity:.6;transform:translateY(4px);transition:opacity .2s ' + E + ',transform .2s ' + E + ';transition-delay:min(calc(var(--i)*.02s),.05s)}#vdRecitCarte .cr-on .cr-prix li{opacity:1;transform:none}' +
     '#vdRecitCarte .cr-prix .cr-av{color:rgba(248,250,252,.6);text-decoration:line-through;font-variant-numeric:tabular-nums}#vdRecitCarte .cr-prix .cr-fl{color:rgba(248,250,252,.5)}#vdRecitCarte .cr-prix .cr-ap{font:800 17px/1 -apple-system,system-ui;color:#6ee7b7;font-variant-numeric:tabular-nums}#vdRecitCarte .cr-prix small{grid-column:1/-1;color:rgba(248,250,252,.6);font-size:12px}' +
     '#vdRecitCarte .cr-btn{align-self:flex-start;min-height:48px;padding:0 20px;border-radius:14px;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.1);color:#fff;font:800 15px/1 -apple-system,system-ui;cursor:pointer}' +
     '#vdRecitCarte .cr-cta{min-height:60px;border:0;border-radius:18px;background:linear-gradient(90deg,#b8860b,#e3b341);color:#1a1200;font:900 18px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 14px 34px rgba(212,167,44,.4)}' +

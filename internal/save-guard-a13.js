@@ -12,7 +12,8 @@ if(!doc||root.VerdictSaveGuard)return;
 
 var GESTURE_MS=1500;
 /* C216 (W53) : l'assistant de bienvenue (#refP) a sa propre validation (« Créer ma référence ») : ses champs ne déclenchent ni barre ni seconde demande. */
-var IGNORE_FIELDS='[type=search],[data-guard-ignore],#refP *,#sg13-ask *,#sg13-bar *,.cmp12-sheet *,[id*=search],[id*=Search],[id*=filtre],[id*=Filtre],[id*=recherche],[id*=query],#ntfCenter *,.ntf-center *';
+/* C380 (audit A15) : la feuille « Vos journées » (#vx364) enregistre chaque choix tout de suite : jamais surveillée. */
+var IGNORE_FIELDS='[type=search],[data-guard-ignore],[data-guard-ignore] *,#vx364 *,#refP *,#sg13-ask *,#sg13-bar *,.cmp12-sheet *,[id*=search],[id*=Search],[id*=filtre],[id*=Filtre],[id*=recherche],[id*=query],#ntfCenter *,.ntf-center *';
 var COMMIT_BUTTON=/enregistr|valider|confirmer|appliquer|terminer|importer ces|ajouter au|cr[eé]er (ma|mon|mes|la|le|les|un|une)\b/i;
 /* C300 (V15-022, avec L7) : le remplissage venu des documents (documents-foi, un-seul-passage) est une opération du programme,
    enregistrée comme un import : « Enregistrer ? → Non » au changement d'établissement ne l'annule plus. */
@@ -62,9 +63,13 @@ function rebase(){
   hideBar();forgetRecovery();
 }
 function ensureBase(){if(S.stale&&!S.touched)rebase();}
+/* C385 (audit A53) : la référence périmée est reprise au repos, une fois, hors geste ; le premier toucher n'a plus rien de lourd à faire. */
+var repos=0;function planRebase(){if(repos||!S.mode||S.mode==='shell')return;var fait=function(){repos=0;if(!S.stale||S.touched||S.busy||S.asking)return;if(Date.now()-S.gestureAt<GESTURE_MS){repos=setTimeout(fait,400);return;}
+  var o=data();S.base=sigOf(o);try{S.baseFull=o?JSON.stringify(o):null;}catch(e){S.baseFull=null;}S.baseId=activeId();S.stale=false;};
+  try{repos=root.requestIdleCallback?root.requestIdleCallback(fait,{timeout:2000}):setTimeout(fait,300);}catch(e){repos=setTimeout(fait,300);}}
 function pending(){
   if(!S.touched)return false;
-  if(activeId()!==S.baseId){S.touched=false;S.stale=true;hideBar();return false;}
+  if(activeId()!==S.baseId){S.touched=false;S.stale=true;planRebase();hideBar();return false;}
   if(sigOf(data())===S.base){S.touched=false;hideBar();forgetRecovery();return false;}
   return true;
 }
@@ -99,7 +104,7 @@ function summary(list){if(!list.length)return '';return list.length<=3?list.join
    ouverture ; fermer ou quitter avec une valeur changée déclenche la même demande. ───────── */
 var F={sheet:null,modal:false,fields:[],structural:false,obs:null};
 function visible(e){try{if(!e||!e.isConnected)return false;var cs=root.getComputedStyle(e);return cs.display!=='none'&&cs.visibility!=='hidden'&&e.getClientRects().length>0;}catch(x){return false;}}
-function sheetOf(t){var s=t&&t.closest&&t.closest('.sheet,[role=dialog]');if(!s||s.id==='sg13-ask'||s.closest('#sg13-ask'))return null;return s;}
+function sheetOf(t){var s=t&&t.closest&&t.closest('.sheet,[role=dialog]');if(!s||s.id==='sg13-ask'||s.closest('#sg13-ask'))return null;if(s.id==='vx364'||s.closest('#vx364,[data-guard-ignore]')||s.hasAttribute('data-guard-ignore'))return null;/* C380 */return s;}
 function saveBtnOf(sheet){
   var bs=[].slice.call(sheet.querySelectorAll('button')).filter(visible),txt=function(b){return (b.textContent||'').replace(/\s+/g,' ').trim();};
   var exact=bs.filter(function(b){return /^enregistrer\b/i.test(txt(b));});
@@ -330,14 +335,14 @@ function wrapSave(){
     var r=orig.apply(this,arguments);
     if(S.busy)return r;
     var why=typeof reason==='string'?reason:'';
-    if(EXPLICIT_REASON.test(why)){S.touched=false;S.stale=true;hideBar();forgetRecovery();return r;}
+    if(EXPLICIT_REASON.test(why)){S.touched=false;S.stale=true;planRebase();hideBar();forgetRecovery();return r;}
     if(gestureRecent()||Date.now()<(S.importUntil||0)){
       /* C216 (W53) : « Enregistrer » d'une fiche vaut enregistrement de ses champs : plus de bandeau juste après. */
       if(Date.now()-S.commitClickAt<GESTURE_MS){if(F.sheet&&S.commitBtn&&F.sheet.contains(S.commitBtn)){F.fields.forEach(function(x){if(x.el.isConnected)x.v=valueOf(x.el);});F.structural=false;}setTimeout(function(){if(!formDirty())rebase();},0);return r;}
-      if(!editRecent()){if(!S.touched)S.stale=true;return r;}
+      if(!editRecent()){if(!S.touched){S.stale=true;planRebase();}return r;}
       if(!S.touched){S.touched=true;}
       scheduleBar();
-    }else if(!S.touched)S.stale=true;
+    }else if(!S.touched){S.stale=true;planRebase();}
     return r;
   };
   w.__sg13=true;w.__orig=orig;root.save=w;
@@ -352,7 +357,7 @@ function guardFn(name,shouldAsk){
       return false;
     }
     if(S.asking&&!S.bypass&&shouldAsk.apply(null,args))return false;
-    S.bypass++;try{return orig.apply(self,args);}finally{S.bypass--;}
+    S.bypass++;try{return orig.apply(self,args);}finally{S.bypass--;if(name==='switchEtab'&&!S.touched){S.stale=true;planRebase();}/* C385 */}
   };
   w.__sg13=true;w.__orig=orig;root[name]=w;
 }

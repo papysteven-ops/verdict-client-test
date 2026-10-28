@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr" style="background:#08090b">
 <head>
+<!-- C397 (audit A06) : dans la coque, l'écran d'ouverture noir « VERDICT INVENTAIRE » n'est jamais montré (il masquait aussi l'en-tête de la coque) ;
+     ouvert seul, il prend la couleur du thème clair. Masqué en CSS seulement : il reste dans la page le temps prévu (repère pour les autres scripts). -->
+<style id="vd-c397">html.vd-dans-coque #splash{display:none!important}html.vd-workspace-light #splash{background:#f4f6f8!important}html.vd-workspace-light #splash .sl{color:#0f172a!important}html.vd-workspace-light #splash .sl .ss{color:#475569!important}</style>
+<script>try{if(window.parent!==window&&window.parent.VerdictUnifiedShell)document.documentElement.classList.add("vd-dans-coque");}catch(e){}</script>
 <meta name="verdict-product-version" content="V2-A9">
 <script id="vd-recharge-perimee-c238" src="../../internal/recharge-perimee-c238.js"></script>
+<script id="vd-porte-c378" src="../../internal/porte-c378.js"></script>
 <script id="vd-appearance-boot-r307" src="../../assets/runtime-a10/inventory-000-7f4e89838a82.js"></script><script id="vd-number-fields-r321" src="../../assets/runtime-a10/inventory-001-76dfdb95ab35.js"></script>
 
 <style id="vd-first-paint-r307">html.vd-workspace-dark,html.vd-workspace-dark body{background-color:#08090b!important;color:#f5f7fa}html.vd-workspace-light,html.vd-workspace-light body{background-color:#fff!important;color:#17212b}</style>
@@ -753,7 +758,7 @@ html[data-inventory-share-role] #siteSeg .add{display:none!important}
 <script src="../../assets/runtime-a10/inventory-012-6209e66eee55.js"></script>
 <script data-mono="./supplier-ordering-v1.js" src="../../assets/runtime-a10/inventory-013-4a1fa3453d17.js"></script>
 <script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/inventory-014-e65dced7bbd7.js"></script>
-<script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-079daa80a183.js"></script>
+<script data-mono="./supplier-ordering-app-v1.js" src="../../assets/runtime-a10/inventory-015-120a00e4b1b7.js"></script>
 <script data-mono="./supplier-emergency-v1.js" src="../../assets/runtime-a10/inventory-016-556ea9c7bae3.js"></script>
 
 <div id="vdSheet" class="modal" role="dialog" aria-modal="true" aria-labelledby="vdTitle" style="position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:none;align-items:flex-end">

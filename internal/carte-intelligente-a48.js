@@ -117,7 +117,10 @@
   function lignes(p) { return (p.rec || []).filter(function (l) { return l && l[0]; }); }
   function coutLigne(l) { try { var r = w.coutLignesRecette([l]); return r && isFinite(r.st) ? r.st : null; } catch (e) { return null; } }
   function vegetarien(p) { var L = lignes(p); return L.length > 0 && !L.some(function (l) { return VIANDE.test(String(l[0])); }); }
-  function analyse() {
+  /* C384 (A27) : l'analyse de l'Idéale est gardée par révision des données et par langue (second clic immédiat) */
+  var AN = {};
+  function analyse() { var k = [w.VERDICT_DB_REV, w.LOCALE].join('|'); if (AN.v && AN.db === w.DB && AN.k === k) return AN.v; var v = analyseCalc(); AN = { db: w.DB, k: k, v: v }; return v; }
+  function analyseCalc() {
     var GPR = prixDecisions(); /* C182 : prix conseillés de Décisions et Simuler */
     /* C307 (FINAL-N3) : quand le plan de prix de Décisions est fiable, il est la seule règle de prix de l'Idéale (même s'il ne propose
        aucune hausse) ; sinon, une hausse de l'Idéale est dite hors plan : Simuler et l'Audit ne la comptent pas. */
@@ -309,15 +312,18 @@
     if (retires) q.push(retires + ' plat' + (retires > 1 ? 's' : '') + ' retiré' + (retires > 1 ? 's' : '') + ' (70 % de leurs clients reportés)');
     return 'Le reste (' + signe((R.gainMois - R.gainPrix) * part) + ' par mois) vient de ' + (q.length ? q.join(' et de ') : 'l’argent libéré du stock') + ' : Simuler et l’Audit ne le comptent pas.';
   }
+  function trL(s) { try { var V = w.VerdictLanguesComplements, t = V && V.traduire && V.traduire(String(s)); return t || s; } catch (e) { return s; } }
   function lienSimuler(R, part) {
     var g = R.gc;
     /* C307 (FINAL-N3) : sans hausse de prix, le gain de l'Idéale est dit hors plan, comme le reste d'un gain avec prix (Kebab). */
     if (!(R.gainPrix > 0.5) && R.gainMois > 0.5) return '<p class="ci-m" data-ci-lien style="margin-top:10px">Aucune hausse de prix, comme dans Décisions et Simuler. ' + resteTxt(R, part).replace(/^Le reste \(/, 'Ce gain (') + '</p>';
     if (!(R.gainPrix > 0.5) || !g || !g.fiable) return '';
-    return '<p class="ci-m" data-ci-lien style="margin-top:10px">Dont <b>' + signe(R.gainPrix * part) + ' par mois</b> par les nouveaux prix de ' + R.prixPlats + (R.prixPlats > 1 ? ' plats sous leur objectif' : ' plat sous son objectif') +
-      (R.prixTous ? ' : le chiffre du curseur « Prix de la carte » de Simuler' : ', calculés comme dans Simuler') + '. ' +
-      (g.retenu ? 'Ces prix sont compris dans votre plan Simuler.' : g.texte ? g.texte /* C301 (V15-042) : la même phrase que le récit */ : 'Votre plan Simuler (' + signe(g.plan) + ' par an) ne les ajoute pas.') +
-      (R.gainMois - R.gainPrix > 0.5 ? ' ' + resteTxt(R, part) : '') + '</p>';
+    /* C407 (A67) : trois phrases entières, chacune dans son élément et traduite en entier ; le gras couvre la première */
+    var s1 = 'Dont ' + signe(R.gainPrix * part) + ' par mois par les nouveaux prix de ' + R.prixPlats + (R.prixPlats > 1 ? ' plats sous leur objectif' : ' plat sous son objectif') +
+      (R.prixTous ? ' : le chiffre du curseur « Prix de la carte » de Simuler' : ', calculés comme dans Simuler') + '.',
+      s2 = g.retenu ? 'Ces prix sont compris dans votre plan Simuler.' : g.texte ? g.texte /* C301 (V15-042) : la même phrase que le récit */ : 'Votre plan Simuler (' + signe(g.plan) + ' par an) ne les ajoute pas.',
+      s3 = R.gainMois - R.gainPrix > 0.5 ? resteTxt(R, part) : '';
+    return '<p class="ci-m" data-ci-lien style="margin-top:10px"><b>' + esc(trL(s1)) + '</b> <span>' + esc(trL(s2)) + '</span>' + (s3 ? ' <span>' + esc(trL(s3)) + '</span>' : '') + '</p>';
   }
   function dessiner() {
     var host = doc.getElementById('c-smart'); if (!host) return; css();
@@ -405,10 +411,12 @@
     if (typeof p.open === 'function') { var o0 = p.open; p.open = function () { var out = o0.apply(this, arguments); setTimeout(monter, 0); return out; }; }
     return true;
   }
-  if (typeof w.go === 'function') { var go0 = w.go; w.go = function (v) { var out = go0.apply(this, arguments); if (v === 'carte') setTimeout(monter, 0); return out; }; for (var k in go0) { try { w.go[k] = go0[k]; } catch (e) {} } }
+  if (typeof w.go === 'function') { var go0 = w.go; w.go = function (v) { var out = go0.apply(this, arguments); if (v === 'carte') { try { monter(); } catch (e) {} } return out; }; /* C381 : avant le dessin de l'image */ for (var k in go0) { try { w.go[k] = go0[k]; } catch (e) {} } }
   w.VerdictCarteIntelligente = { analyse: analyse, projection: projection, ouvrir: ouvrir, dessiner: dessiner, cible: cible, familleDe: familleDe };
   /* La barre d'onglets est reconstruite par la Carte à chaque rendu : l'onglet est reposé dès qu'il manque. */
-  setInterval(function () { try { if (w.VIEW === 'carte' || doc.querySelector('#v-carte.on')) monter(); } catch (e) {} }, 700);
+  /* C381 (A30) : plus de minuterie de 700 ms : l'onglet est reposé dans l'observateur de la Carte, avant le dessin de l'image */
+  (function () { var k = 0; (function br() { var v = doc.getElementById('v-carte'); if (!v || typeof MutationObserver !== 'function') { if (++k < 40) setTimeout(br, 250); return; }
+    new MutationObserver(function () { try { var nav = doc.getElementById('cp-nav'); if (nav && !nav.querySelector('[data-ci-onglet]')) monter(); } catch (e) {} }).observe(v, { childList: true, subtree: true }); })(); })();
   (function boot(n) { if (brancher()) { setTimeout(monter, 0); return; } if (n > 0) setTimeout(function () { boot(n - 1); }, 300); })(60);
 })();
 /* C251 — Carte : gestes rapides et toujours le choix le plus rentable (demande de Steven, 22/10).
@@ -667,6 +675,8 @@
     enregistrer('c251-annuler'); rafraichir();
     bandeau('<b>« ' + esc(p.nom) + ' » est de nouveau à la carte</b><div class="c251-kk">' + avantApres(i0, m0) + '</div>');
   }
+  function aDecorer() { var act = doc.querySelector('#c-menu .cp-actions'); if (act && !act.querySelector('[data-c251-hist]')) return true;
+    var list = doc.getElementById('cp-menu-list'), b = list && list.querySelector('button.cp-dish[data-cp-dish]'); return !!(b && !(b.parentNode && b.parentNode.classList && b.parentNode.classList.contains('c251-row'))); }
   function decorer() {
     var list = doc.getElementById('cp-menu-list'); if (!list) return;
     var d = D(); if (!d) return;
@@ -1026,7 +1036,8 @@
     style(); var ok = brancherSave(); suivre();
     if (!ok && n > 0) return setTimeout(function () { boot(n - 1); }, 300);
     setInterval(function () { try { brancherSave(); suivre(); } catch (e) {} }, 1500);
-    if (typeof MutationObserver === 'function') new MutationObserver(function () { if (!prevu) { prevu = true; setTimeout(passe, 40); } }).observe(doc.body, { childList: true, subtree: true });
+    /* C381 (A30) : les boutons et les croix de « Ma carte » sont posés avant le dessin de l'image (rien ne descend) ; le reste reste groupé */
+    if (typeof MutationObserver === 'function') new MutationObserver(function () { try { if (aDecorer()) decorer(); } catch (e) {} if (!prevu) { prevu = true; setTimeout(passe, 40); } }).observe(doc.body, { childList: true, subtree: true });
     passe();
   }
   /* ── C340 (décisions 22 et 23) : une seule source « livraison » ; marge par canal et prix plateforme conseillé ─────────────── */

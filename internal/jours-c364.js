@@ -46,7 +46,8 @@
   function apres(msg) {
     if (retour) retour.modifie = true;
     try { w.save(); } catch (e) {}
-    try { if (typeof w.drawPil === 'function') w.drawPil(); } catch (e) {}
+    if (feuille && retour) retour.redessiner = true; /* A76 (L5) : rien n'est redessiné sous la feuille ouverte ; l'Accueil l'est une fois, à la fermeture */
+    else { try { if (typeof w.drawPil === 'function') w.drawPil(); } catch (e) {} }
     try { if (msg && typeof w.toast === 'function') w.toast(msg); } catch (e) {}
     try { w.dispatchEvent(new CustomEvent('verdict:jours-ouverts', { detail: { jours: 7 - (D().fermes || []).length } })); } catch (e) {}
     dessiner();
@@ -155,10 +156,27 @@
     if (!feuille) return; var fe = feuille; feuille = null; vue = null; doc.removeEventListener('keydown', clavier, true);
     if (fe.parentNode) fe.parentNode.removeChild(fe); try { if (avantFocus && avantFocus.focus && avantFocus.isConnected) avantFocus.focus({ preventScroll: true }); } catch (e) {} avantFocus = null;
     /* Un réglage redessine l'Accueil (nouveau document) : le détail se rouvre et le calendrier revient à l'écran, là où on l'avait touché. */
-    var rt = retour; retour = null; if (!rt || !rt.modifie || !rt.ouvert) return;
-    try { var f = doc.querySelector('iframe.p41-ecran'), d = f && f.contentDocument; if (d && typeof d.__vx59ouvrir === 'function') d.__vx59ouvrir(true);
-      if (d && d.body) { var hc = Math.ceil(d.body.getBoundingClientRect().height); if (hc > 40 && f.style.height !== hc + 'px') f.style.height = hc + 'px'; } /* même hauteur que le message p41 « h » (052), posée tout de suite */
-      var el = d && (d.querySelector('.rx-cal') || d.getElementById('calendrier')); if (el && el.getClientRects().length) { var a = f.getBoundingClientRect(), b = el.getBoundingClientRect(); w.scrollTo(0, Math.max(0, (w.scrollY || 0) + a.top + b.top - 140)); } } catch (e) {}
+    var rt = retour; retour = null; if (!rt) return;
+    if (rt.redessiner) { var ancien = doc.querySelector('iframe.p41-ecran'); try { if (typeof w.drawPil === 'function') w.drawPil(); } catch (e) {} /* A76 (L5) : un seul dessin, à la fermeture */
+      if (rt.ouvert) attendreCadre(ancien); return; }
+    if (!rt.modifie || !rt.ouvert) return; var f0 = doc.querySelector('iframe.p41-ecran'), d0 = null; try { d0 = f0 && f0.contentDocument; } catch (e) {} if (d0) remettre(f0, d0);
+  }
+  /* A76 : le double tampon de 052 garde l'ancien cadre jusqu'au nouveau ; on attend le nouveau (observateurs, pas de minuterie), arrêt au premier toucher. */
+  function suivre(cible, essai) { var mo = new MutationObserver(function () { if (essai()) fin(); }), fin = function () { mo.disconnect(); doc.removeEventListener('pointerdown', fin, true); }; mo.observe(cible, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] }); doc.addEventListener('pointerdown', fin, true); return fin; }
+  function attendreCadre(ancien) {
+    var vu = null;
+    var essai = function () { var f1 = doc.querySelector('iframe.p41-ecran'), d1 = null; try { d1 = f1 && f1.contentDocument; } catch (e) {}
+      if (!f1 || f1 === ancien || !f1.isConnected || f1.style.visibility === 'hidden' || !d1 || !d1.body) return false;
+      if (typeof d1.__vx59ouvrir !== 'function') { if (vu !== d1) { vu = d1; suivre(d1.body, function () { if (typeof d1.__vx59ouvrir !== 'function') return false; remettre(f1, d1); return true; }); } return false; }
+      remettre(f1, d1); return true; };
+    if (!essai()) suivre(doc.body, essai);
+  }
+  function remettre(f, d) {
+    try { if (typeof d.__vx59ouvrir === 'function') d.__vx59ouvrir(true); } catch (e) {}
+    var place = function () { try { var el = d.querySelector('.rx-cal'), b = el && el.getBoundingClientRect(); if (!b || !(b.height > 0)) return false;
+      if (d.body) { var hc = Math.ceil(d.body.getBoundingClientRect().height); if (hc > 40 && f.style.height !== hc + 'px') f.style.height = hc + 'px'; } /* même hauteur que le message p41 « h » (052), posée tout de suite */
+      var a = f.getBoundingClientRect(); b = el.getBoundingClientRect(); w.scrollTo(0, Math.max(0, (w.scrollY || 0) + a.top + b.top - 140)); return true; } catch (e) { return true; } };
+    if (!place() && d.body) suivre(d.body, place); /* « Vos journées » (.rx-cal, a46) arrive après le cadre */
   }
   function clavier(ev) { if (ev.key === 'Escape' || ev.key === 'Esc') { ev.preventDefault(); ev.stopPropagation(); fermer(); } }
   function clic(ev) {

@@ -152,8 +152,33 @@
        le progrès réel du visiteur. Le premier écran et ses clics gardent le
        fil principal pour eux seuls. */
     if(state.context&&!bool(state.context.demo))queueWorkerRegistration(source==='fallback'?1200:700);
+    queueInventoryAtRest();
     return true;
   }
+  /* C397 (audit A06) : la première ouverture de l'Inventaire était à froid pour un vrai client (préchargement seulement en démo, à l'étape 12
+     du parcours) : 0,7 à 1,1 s sans rien, puis un écran noir et l'en-tête qui disparaissait. Le cadre Inventaire est préparé, caché, une fois
+     l'Accueil affiché et la page au repos (1,2 s sans toucher : fini avant la fenêtre de repos de C333), en démo comme hors démo ; au plus tard quand le doigt se pose sur l'onglet. */
+  var inventoryRestTimer=0,lastShellInput=0;
+  ['pointerdown','keydown','wheel','touchstart'].forEach(function(t){document.addEventListener(t,function(){lastShellInput=Date.now();},{capture:true,passive:true});});
+  function preloadInventoryNow(){
+    if(EQUIPE||!startupUnlocked||state.frames.inventory)return false;
+    if(state.context&&bool(state.context.demo))return preloadDemoInventory();
+    return ensureFrame('inventory',{preload:true});
+  }
+  /* C397 b (c333 rouge, 27/10) : attendre un moment libre (requestIdleCallback, jusqu'à 2,4 s) faisait glisser le chargement vers 5 s, pendant
+     que Pilotage finit son démarrage : tâches de 200 à 300 ms en pleine fenêtre de repos. Le cadre part à heure fixe (1,2 s après l'Accueil,
+     sans toucher depuis 0,8 s) ; passé 2,8 s sans y parvenir, il ne part plus qu'au toucher de l'onglet, jamais pendant le repos. */
+  var inventoryRestDeadline=0;
+  function queueInventoryAtRest(){
+    if(EQUIPE||state.frames.inventory||inventoryRestTimer)return;
+    if(!inventoryRestDeadline)inventoryRestDeadline=Date.now()+2800;
+    inventoryRestTimer=setTimeout(function(){inventoryRestTimer=0;
+      if(state.frames.inventory||Date.now()>inventoryRestDeadline)return;
+      if(Date.now()-lastShellInput<800||document.visibilityState==='hidden'){queueInventoryAtRest();return;}
+      try{performance.mark('verdict-inventory-rest-preload');}catch(e){}preloadInventoryNow();
+    },inventoryRestDeadline-Date.now()>2000?1200:400);
+  }
+  document.addEventListener('pointerdown',function(e){var t=e.target&&e.target.closest&&e.target.closest('#tab-inventory');if(t&&!t.disabled)preloadInventoryNow();},true);
 
   function passSafeBottom(frame){
     if(window.VerdictViewportLayout)window.VerdictViewportLayout.send(frame);

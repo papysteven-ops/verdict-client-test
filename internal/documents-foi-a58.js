@@ -620,7 +620,9 @@
     if (!el) { el = doc.createElement('div'); el.className = 'card'; el.id = 'df58-liv'; carte.parentNode.insertBefore(el, carte.nextSibling); }
     var a = doc.activeElement, dedans = a && el.contains && el.contains(a);
     if (el.getAttribute('data-df58-sig') !== sig && !dedans) { el.innerHTML = livHTML(D); el.setAttribute('data-df58-sig', sig); }
-    var src = el.querySelector('.df58-liv-src'), txt = livSources(D).join(' '); if (src && src.textContent !== txt) src.textContent = txt;
+    var src = el.querySelector('.df58-liv-src'), phr = livSources(D), txt = phr.join(' ');
+    /* C389 (audit A67) : une phrase par <span>, pour que chacune se traduise ; la signature reste française (une phrase traduite n'est pas réécrite) */
+    if (src && src.getAttribute('data-df58-sig') !== txt) { src.innerHTML = phr.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join(' '); src.setAttribute('data-df58-sig', txt); }
   }
   doc.addEventListener('change', function (ev) {
     var el = ev.target && ev.target.closest ? ev.target.closest('#df58-liv') : null, D = w.DB; if (!el || !D || D._demo) return;
@@ -982,7 +984,23 @@
     if (own > 0 && !vide(I.dirb) && Math.abs(num(I.dirb) * m - own) <= Math.max(50, own * 0.01)) pose('i-dirb', own, own / m, '');
   }
   try { protegerJournees(); } catch (e) {}
-  function boucle() { try { var ro = doc.getElementById('rc-open'); if (ro && !ro.getAttribute('data-df58-recent')) ficheRecente(); } catch (e) {}/* C325 : la fiche est préremplie par n'importe quel chemin d'entrée */ try { livMonter(); } catch (e) {}/* C341 */ try { etiquette(); } catch (e) {} try { aideType(); } catch (e) {} try { aideEquipe(); } catch (e) {} try { envelopper(); } catch (e) {} try { protegerJournees(); if (w.DB) nettoyerApresCaisse(w.DB); } catch (e) {} try { css(); tour(); } catch (e) {} }
-  var it = setInterval(boucle, 1000); if (it && it.unref) it.unref();
+  /* C387 (audit A17/A18) : au repos, derrière le verrou ou sur un autre écran, la boucle ne refait rien de lourd. */
+  var dernier = { k: null, com: null };
+  function utile() { try { if (doc.hidden || (w.VIEW !== undefined && w.VIEW !== 'in')) return false; if (doc.body && doc.body.classList && doc.body.classList.contains('verdict-entry-locked')) return false; } catch (e) { return false; } return true; }
+  function boucle() { try { var ro = doc.getElementById('rc-open'); if (ro && !ro.getAttribute('data-df58-recent')) ficheRecente(); } catch (e) {}/* C325 : la fiche est préremplie par n'importe quel chemin d'entrée */ try { etiquette(); } catch (e) {} try { aideType(); } catch (e) {} try { envelopper(); } catch (e) {}
+    if (utile()) { var com = doc.getElementById('i-com'), liv = doc.getElementById('df58-liv'), k = [typeof w.VERDICT_DB_REV !== 'undefined' ? w.VERDICT_DB_REV : '', w.STORE && w.STORE.actif, w.LOCALE, w.DB && w.DB._demo ? 1 : 0].join('|');
+      if (!(k === dernier.k && com === dernier.com && liv && liv.isConnected && typeof w.VERDICT_DB_REV !== 'undefined')) { dernier = { k: k, com: com };
+        try { livMonter(); } catch (e) {}/* C341 */ try { aideEquipe(); } catch (e) {} } } try { protegerJournees(); if (w.DB) nettoyerApresCaisse(w.DB); } catch (e) {} try { css(); tour(); } catch (e) {} }
+  /* C387 (chef, A17/A18) : plus de minuterie d'une seconde. La boucle passe après un enregistrement, un changement d'écran,
+     d'établissement ou de langue, un signal d'import ou du verrou, un choix ou un clic, ou un nouveau dessin d'écran. Rien au repos. */
+  var plan = 0;
+  function planifier(ms) { if (plan) return; try { plan = setTimeout(function () { plan = 0; boucle(); }, ms == null ? 60 : ms); } catch (e) { plan = 0; } }
+  function accroche(nom) { try { var f = w[nom]; if (typeof f !== 'function' || f.__df58p) return; var g = function () { var r = f.apply(this, arguments); planifier(); return r; };
+    for (var k in f) if (Object.prototype.hasOwnProperty.call(f, k)) g[k] = f[k]; g.__df58p = true; w[nom] = g; } catch (e) {} }/* les marques des autres enveloppes (__sg13, _a15…) sont recopiées : personne ne s'enveloppe deux fois */
+  function accrocher() { ['save', 'go', 'switchEtab', 'setLocale'].forEach(accroche); }
+  ['verdict:caisse-importee', 'verdict:fec-applied', 'verdict:jours-ouverts', 'verdict:locale-changed', 'verdict:verrou-ouvert', 'verdict:porte-ouverte', 'verdict:entry-selected', 'verdict:intro-complete'].forEach(function (n) { try { w.addEventListener(n, function () { planifier(); }); } catch (e) {} });
+  try { doc.addEventListener('visibilitychange', function () { if (!doc.hidden) planifier(); }); doc.addEventListener('change', function () { planifier(); }, true); doc.addEventListener('click', function () { planifier(150); }, true); } catch (e) {}
+  var obs = null; function observer() { try { if (!obs && w.MutationObserver) obs = new w.MutationObserver(function () { planifier(120); }); if (!obs) return; ['v-in', 'v-pil', 'refP'].forEach(function (id) { var n = doc.getElementById(id); if (n && !n.__df58o) { n.__df58o = true; obs.observe(n, { childList: true }); } }); } catch (e) {} }
+  [0, 300, 1000, 2500, 5000].forEach(function (ms) { try { setTimeout(function () { accrocher(); observer(); boucle(); }, ms); } catch (e) {} });
   w.VerdictDocumentsFoi = { joursCalendrier: joursCalendrier, embFiches: embFiches, livCout: livCout, dejaDansComptes: dejaDansComptes, tauxLivraison: tauxLivraison, livDocs: livDocs, ecartLivraison: ecartLivraison, pctLu: pctLu, tvaEstimee: tvaEstimee, panierCalcule: panierCalcule, ecartPanierCalcule: ecartPanierCalcule, ouvertureCaisse: ouvertureCaisse, comparaisonFEC: comparaisonFEC, valeurs: valeurs, valeursFEC: valeursFEC, ecarts: ecarts, differences: differences, prendreTout: prendreTout, garderTout: garderTout, noterChangements: noterChangements, caisse: caisse, majVerrou: majVerrou, incertitudeSansDocument: incertitudeSansDocument, differe: differe, tour: boucle };
 })();

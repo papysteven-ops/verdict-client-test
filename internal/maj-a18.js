@@ -266,6 +266,9 @@
     return Promise.all([versionCourante(), versionPubliee()]).then(function (v) {
       /* Le service worker donne le nom complet (« verdict-v2-client-a10-… »), le fichier publié sa fin : on compare l'empreinte. */
       var same = !!(v[0] && v[1] && court(v[0]) === court(v[1]));
+      /* C402 (A71 de l'audit du 27/10) : sans service worker qui réponde, la version installée est inconnue ; on n'annonce alors
+         aucune nouvelle version (« Version ? · nouvelle version … disponible ») : on montre la version publiée, sans comparaison. */
+      if (!v[0]) return { courante: null, publiee: v[1], aJour: null, texte: v[1] ? 'Version ' + court(v[1]) : 'Version : vérification impossible hors ligne' };
       return { courante: v[0], publiee: v[1], aJour: same, texte: 'Version ' + court(v[0]) + (v[1] ? (same ? ' · à jour' : ' · nouvelle version ' + court(v[1]) + ' disponible') : ' · hors ligne') };
     });
   }
