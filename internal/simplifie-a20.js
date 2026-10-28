@@ -147,7 +147,7 @@
     'html.vd-workspace-light .dec-scene-chip{background:#ecfdf3!important;border-color:#bbf7d0!important;color:#166534!important}';
   function marquerCTA() {
     var c = doc.getElementById('decBestCard'); if (!c) return;
-    var b = [].filter.call(c.querySelectorAll('button'), function (x) { return /Utiliser comme point de d/.test(x.textContent); })[0];
+    var b = [].filter.call(c.querySelectorAll('button'), function (x) { return !(x.closest && x.closest('.c360-gc')) && /Utiliser comme point de d|^\s*Voir le résultat\s*$/.test(x.textContent); /* C456 : nouveau nom du bouton (décision 51) ; jamais celui de c360 (.c360-gc, déjà mis en valeur) */ })[0];
     if (!b || b.classList.contains('vd-cta')) return;
     b.classList.add('vd-cta');
     var h = doc.createElement('div'); h.className = 'vd-cta-hint'; h.textContent = 'Touchez ici : Verdict applique ces leviers et vous montre le résultat, étape par étape.';

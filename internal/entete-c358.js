@@ -23,7 +23,7 @@
       etabs: 'Mes établissements', comparer: 'Comparer mes établissements', renommer: 'Renommer', gerer: 'Gérer mes établissements', ajouter: 'Ajouter un établissement',
       actif: 'affiché', demoTitre: 'Démonstration', modele: 'Changer de modèle', comprendre: 'Comprendre la démonstration',
       audit: 'Lire mon audit', vera: 'Demander à Vera', carte: 'Indice Carte', fermer: 'Fermer', menuEtab: 'Changer d’établissement, comparer, gérer', horsLigne: 'Hors ligne' },
-    en: { afaire: 'To do', demo: 'Demo', test: 'Test', estime: 'Estimate', indice: 'Peace-of-mind index', simule: 'simulated', sur: 'out of 100',
+    en: { afaire: 'To do', demo: 'Demo', test: 'Test', estime: 'Estimate', indice: 'Serenity index', simule: 'simulated', sur: 'out of 100',
       etabs: 'My businesses', comparer: 'Compare my businesses', renommer: 'Rename', gerer: 'Manage my businesses', ajouter: 'Add a business',
       actif: 'shown', demoTitre: 'Demo', modele: 'Change model', comprendre: 'About the demo',
       audit: 'Read my audit', vera: 'Ask Vera', carte: 'Menu Index', fermer: 'Close', menuEtab: 'Switch business, compare, manage', horsLigne: 'Offline' },
@@ -98,6 +98,8 @@
         sub.parentNode.insertBefore(b, sub.nextSibling); }
       texte(b, t('audit'));
     }
+    /* D56 / décision 63 (point 13) : « Lire mon audit » est une ligne de la liste de Plus (L1, plus-premium-a21 C487) ; Structure allumé sur
+       l'Audit : règle de 029 (L3, C476 et C476 b). Plus rien ici pour Plus. */
     function tout() { barre(); lienAudit(); }
     if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', tout); else tout();
     w.addEventListener('load', tout);

@@ -66,10 +66,10 @@
     if(!img||!state||!state.layer||!img.isConnected)return false;
     var host=img.parentElement;if(!host)return false;
     var box=localBox(img,host);
-    if(box.width<1||box.height<1){state.layer.classList.remove('ready');return false;}
+    if(box.width<1||box.height<1){if(state.layer.classList.contains('ready'))state.layer.classList.remove('ready');return false;}
     state.layer.style.left=box.left+'px';state.layer.style.top=box.top+'px';
     state.layer.style.width=box.width+'px';state.layer.style.height=box.height+'px';
-    state.layer.classList.add('ready');return true;
+    if(!state.layer.classList.contains('ready'))state.layer.classList.add('ready');return true;/* C464 : n'écrire que si l'état change */
   }
   function normalMood(mood){return /^(calm|focused|concerned|smile)$/.test(String(mood||''))?String(mood):'calm';}
   function makeLayer(img,state){
@@ -103,7 +103,7 @@
     });
     return mood;
   }
-  function flash(layer){layer.classList.remove('blink');void layer.offsetWidth;layer.classList.add('blink');}
+  function flash(layer){if(layer.classList.contains('blink')){layer.classList.remove('blink');void layer.offsetWidth;}layer.classList.add('blink');}/* C464 */
   function finishBlink(img,state,twice){
     state.timer=0;state.blinking=false;if(state.layer)state.layer.classList.remove('blink');
     if(!twice){schedule(img,state);return;}
@@ -123,8 +123,8 @@
   function schedule(img,state,wait){
     if(!state||!img.isConnected){if(state)clearState(state);states.delete(img);return;}
     if(state.timer)global.clearTimeout(state.timer);
-    if(document.hidden||state.intersecting===false){state.timer=0;img.setAttribute('data-vera-life','paused');return;}
-    img.setAttribute('data-vera-life','ready');
+    if(document.hidden||state.intersecting===false){state.timer=0;if(img.getAttribute('data-vera-life')!=='paused')img.setAttribute('data-vera-life','paused');return;}
+    if(img.getAttribute('data-vera-life')!=='ready')img.setAttribute('data-vera-life','ready');/* C464 */
     state.timer=global.setTimeout(function(){state.timer=0;perform(img,state);},typeof wait==='number'?wait:nextDelay(state.first));
   }
   function register(img){

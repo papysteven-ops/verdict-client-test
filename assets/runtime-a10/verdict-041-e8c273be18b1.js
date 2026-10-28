@@ -385,7 +385,17 @@
 
   /* C205 (V42) : un écart affiché se lit sur les montants affichés (1 786 € − 1 676 € = 110 €, jamais 109 €). */
   function ecartAffiche(a,b){return Math.round(Number(a)||0)-Math.round(Number(b)||0);}
+  /* A09 (C462 b, L2) : le même mois était calculé jusqu’à 4 fois au lancement (≈ 20–40 ms chacun). Il est gardé tant que rien ne change :
+     même moteur (objet mémorisé par 029, ou le moteur principal recalculé à l’identique ; une simulation, autre objet, recalcule toujours),
+     mêmes révisions, jour, langue, dossier, journées, fermetures. */
+  var MOIS_GARDE={R:null,p:false,sig:"",db:null,m:{}};
+  function moteurPrincipal(R){try{return !!R&&R===global.moteur();}catch(_){return false;}}
+  function moisSig(){var D=global.DB||{},h=D.histJour||[],l=h.length?h[h.length-1]:null,c=D.operatingClosures||[];return [global.VERDICT_DB_REV,global.VERDICT_VIEW_REVISION,todayKey(),global.LOCALE,h.length,l?l.date+":"+l.caJ:"",c.length].join("|");}
   function buildMonth(R,key){
+    var g=MOIS_GARDE;if(R&&g.db===global.DB&&g.sig===moisSig()&&Object.prototype.hasOwnProperty.call(g.m,key)&&(g.R===R||g.p&&moteurPrincipal(R)))return g.m[key];
+    var out=calculerMois(R,key),sig=moisSig(),p=moteurPrincipal(R);if(g.db!==global.DB||g.sig!==sig||!(g.R===R||g.p&&p)){g.m={};}g.R=R;g.p=p;g.db=global.DB;g.sig=sig;g.m[key]=out;return out;
+  }
+  function calculerMois(R,key){
     var current=key===currentMonth(),records=monthRecords(key),plan=planFor(R,key,current),demandes=current?minimumsDemandes(R):{}/* C308 (décision 1) */,annualPlan=seasonPlanFor(R,key.slice(0,4),current),now=todayKey(),baseDates=plan&&!current?historicalDates(plan,key):openDates(key);if(current&&plan&&validDateKey(plan.trackingStart)&&plan.trackingStart.slice(0,7)===key)baseDates=baseDates.filter(function(date){return date>=plan.trackingStart||records[date]&&records[date].ca!=null;});var dates=withRecordedOpenings(baseDates,records,key),calendarFingerprint=planFingerprint(dates),referenceChanged=!!(current&&plan&&(plan.rulesVersion!==RULES||annualPlan&&plan.annualPlanRevision!==annualPlan.revision)),days=[],actual=0,known=0,expected=0,missing=[],ignoredCount=0;
     for(var day=1;day<=daysCount(key);day++){
       var date=key+"-"+pad(day),record=records[date],ignored=isIgnored(date),preTracking=!!(plan&&validDateKey(plan.trackingStart)&&plan.trackingStart.slice(0,7)===key&&date<plan.trackingStart&&!record),closed=dates.indexOf(date)<0&&!record&&!preTracking/* C299 (V15-068) : un jour d’avant le début du suivi n’est jamais « établissement fermé » */,target=hasNumber(demandes[date])?Number(demandes[date]):plan&&hasNumber(plan.targets[date])?Number(plan.targets[date]):null,past=date<now,isToday=date===now,status="future";
@@ -722,7 +732,7 @@
   }
 
   function render(){
-    var host=document.getElementById("d-carnet"),R;try{R=global.moteur();}catch(_){return;}if(!host||!R||!R.ready)return;
+    carnetSale=false;var host=document.getElementById("d-carnet"),R;try{R=global.moteur();}catch(_){return;}if(!host||!R||!R.ready)return;
     var month=buildMonth(R,selectedMonth||currentMonth());if(selectedAuto||!selectedDay||selectedDay.slice(0,7)!==month.key){selectedDay=(month.days.filter(function(day){return day.ca!=null;}).slice(-1)[0]||month.days[0]||{}).date||"";selectedAuto=true;}
     host.innerHTML='<section class="vp-shell"><header class="vp-head"><div><div class="vp-kicker">Diagnostic → Performances</div><h2>Vos résultats, du jour à l’année</h2><p>Verdict affiche d’abord l’écart réel en euros. Chaque pourcentage précise ensuite ce qu’il compare. Une donnée absente ne devient jamais 0 €.</p></div><div class="vp-tabs" role="tablist"><button class="'+(activeTab==="days"?"on":"")+'" onclick="performanceTab(\'days\')">Jours</button><button class="'+(activeTab==="months"?"on":"")+'" onclick="performanceTab(\'months\')">Mois</button><button class="'+(activeTab==="years"?"on":"")+'" onclick="performanceTab(\'years\')">Années</button></div></header>'+(activeTab==="days"?daysView(R,month):activeTab==="months"?monthsView(R):yearsView(R))+'</section>';
   }
@@ -881,7 +891,10 @@
     var monthCard=document.querySelector(".v25-month");if(monthCard)monthCard.outerHTML=homeMonthImpact(month);
   }
 
-  var previousDrawData=global.drawData;global.drawData=function(){if(typeof previousDrawData==="function")previousDrawData.apply(this,arguments);render();};
+  /* A09 (audit, L2) : l’onglet Performances (#d-carnet) n’est dessiné que s’il est affiché ; sinon à son ouverture (dsub). Structure, 1er passage : ≈ −56 ms. */
+  var carnetSale=false;function carnetAffiche(){var h=document.getElementById("d-carnet");return !!(h&&h.classList.contains("on"));}
+  var previousDrawData=global.drawData;global.drawData=function(){if(typeof previousDrawData==="function")previousDrawData.apply(this,arguments);if(carnetAffiche())render();else carnetSale=true;};
+  var previousDsub=global.dsub;if(typeof previousDsub==="function")global.dsub=function(n){var r=previousDsub.apply(this,arguments);if(n==="carnet"&&carnetSale&&carnetAffiche())render();return r;};
   var previousDrawPil=global.drawPil;global.drawPil=function(){if(typeof previousDrawPil==="function")previousDrawPil.apply(this,arguments);enhanceHome();};
 
   var style=document.createElement("style");style.id="verdict-performances-integrated-style";style.textContent='\

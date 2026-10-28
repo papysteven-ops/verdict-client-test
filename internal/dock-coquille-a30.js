@@ -228,7 +228,9 @@
     try {
       /* C333 : plusieurs changements de la barre dans la même image → une seule vérification (elle relit la mise en page) */
       var vImg = 0, verifierImage = function () { if (vImg) return; var f = function () { vImg = 0; verifier(); }; vImg = w.requestAnimationFrame ? w.requestAnimationFrame(f) : setTimeout(f, 16); };
-      obsNav = new MutationObserver(verifierImage); obsNav.observe(cnav, { attributes: true, attributeFilter: ['class', 'style', 'hidden', 'aria-current', 'data-cp-back'], childList: true, subtree: true, characterData: true });
+      /* D56 b : l'état allumé est recopié tout de suite (lecture de classes, sans mise en page) : la barre de la coque n'a plus une image de
+         retard sur celle du cadre (« Plus » restait allumé une image en venant de Plus vers l'Audit) ; la position reste revue à l'image suivante. */
+      obsNav = new MutationObserver(function () { try { if (habille) synchroniserEtat(); } catch (e) {} verifierImage(); }); obsNav.observe(cnav, { attributes: true, attributeFilter: ['class', 'style', 'hidden', 'aria-current', 'data-cp-back'], childList: true, subtree: true, characterData: true });
       obsHtml = new MutationObserver(verifierImage); obsHtml.observe(cdoc.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
     } catch (e) {}
     d.defaultView.addEventListener('resize', function () { geom = ''; verifier(); }, { passive: true });

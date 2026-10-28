@@ -57,6 +57,8 @@ function mr32EnsureDock(){
 function mr32Strip(root){
   [root].concat(Array.prototype.slice.call(root.querySelectorAll('*'))).forEach(function(el){
     el.removeAttribute('id');el.removeAttribute('onclick');el.removeAttribute('onkeydown');
+    /* C442 (L4, audit A38) : la copie perd les couleurs « vdl » de la barre d'origine (déclarations !important, data-vdl), que le correcteur ne sait pas effacer sur une copie (deux onglets verts) ; ses autres styles en ligne restent. */
+    if(el.hasAttribute('data-vdl')){var st=el.style,imp=[];for(var k=0;k<st.length;k++)if(st.getPropertyPriority(st[k])==='important')imp.push(st[k]);imp.forEach(function(p){st.removeProperty(p);});if(!st.length)el.removeAttribute('style');el.removeAttribute('data-vdl');}
   });
 }
 function mr32Build(source){
@@ -64,7 +66,7 @@ function mr32Build(source){
     mr32Restore();MR32.source=source;MR32.sourceAria=source.getAttribute('aria-hidden');
     var anchor=document.createElement('i');anchor.className='v32-rail-anchor';anchor.setAttribute('aria-hidden','true');source.parentNode.insertBefore(anchor,source);MR32.anchor=anchor;
   }
-  var dock=mr32EnsureDock(),clone=source.cloneNode(true);mr32Strip(clone);clone.classList.remove('v32-rail-source-docked');clone.setAttribute('data-v32-module-rail','');
+  var dock=mr32EnsureDock(),clone=source.cloneNode(true);mr32Strip(clone);clone.classList.remove('v32-rail-source-docked');clone.setAttribute('data-v32-module-rail','');/* C442 : refaite pendant le collage, la copie ne reprend pas le masquage de la barre d'origine. */if(MR32.sourceAria==null)clone.removeAttribute('aria-hidden');else clone.setAttribute('aria-hidden',MR32.sourceAria);MR32.sourceText=source.textContent;
   var copies=clone.querySelectorAll('button');
   for(var i=0;i<copies.length;i++)(function(index){
     copies[index].setAttribute('data-v32-source-index',String(index));
@@ -82,10 +84,11 @@ function mr32Build(source){
 function mr32SyncButtons(){
   if(!MR32.source||!MR32.clone)return;
   var a=MR32.source.querySelectorAll('button'),b=MR32.clone.querySelectorAll('button');
-  if(a.length!==b.length){mr32Build(MR32.source);return false;}
+  /* C442 (L4, audit A38) : contenu de la barre d'origine changé (onglets, libellés ; comparé à l'instantané pris à la construction, pas à la copie que d'autres scripts réécrivent) : la copie est refaite ; sinon seul l'état est recopié (classe, aria, hidden). */
+  if(a.length!==b.length||MR32.source.textContent!==MR32.sourceText){mr32Build(MR32.source);return false;}
   for(var i=0;i<a.length;i++){
     if(b[i].className!==a[i].className)b[i].className=a[i].className;b[i].disabled=a[i].disabled;
-    ['aria-current','aria-selected','aria-expanded','aria-pressed','title'].forEach(function(n){var v=a[i].getAttribute(n);if(v==null)b[i].removeAttribute(n);else b[i].setAttribute(n,v);});
+    ['aria-current','aria-selected','aria-expanded','aria-pressed','title','hidden'].forEach(function(n){var v=a[i].getAttribute(n);if(v==null)b[i].removeAttribute(n);else b[i].setAttribute(n,v);});
   }
   return true;
 }

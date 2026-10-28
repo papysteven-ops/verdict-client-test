@@ -120,7 +120,7 @@
       if (D.fuite) {
         /* C318 (V16C-N1) : un seul arrondi, à partir de l'écart exact (Burger 1,99 → « 2,0 points », comme le chapitre 13) */
         var ecA = Math.round((D.fuite.pts != null ? Number(D.fuite.pts) : D.fuite.reel - D.fuite.theo) * 10) / 10, fpt = ecA.toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-        fuites += '<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière (' + esc(D.fuite.perimetre || 'nourriture + boissons') + ')</b><small>' /* C420 (L7) : trois phrases entières, chacune dans son <span> (une phrase = un nœud traduisible, Langues) */ + '<span>Achats ' + esc(D.fuite.periode || '') + ' : ' + pct(D.fuite.reel) + ' du CA ; ' + (D.fuite.brouillons ? 'fiches-types proposées par Vera, à confirmer' : 'fiches') + ' : ' + pct(D.fuite.theo) + '.</span> <span>' + fpt + ' point' + (Math.abs(ecA) >= 2 ? 's' : '') + ' de pertes, portions ou offerts non saisis' + (D.fuite.compte ? (function () { /* C311 (V16-026) : ce que le plan compte vraiment, et seulement si le levier existe */
+        fuites += nbFr('<li class="rc-fuite" style="--i:0"><span class="rc-n">!</span><div><b>Écart matière (' + esc(D.fuite.perimetre || 'nourriture + boissons') + ')</b><small>' /* C420 (L7) : trois phrases entières, chacune dans son <span> (une phrase = un nœud traduisible, Langues) */ + '<span>Achats ' + esc(D.fuite.periode || '') + ' : ' + pct(D.fuite.reel) + ' du CA ; ' + (D.fuite.brouillons ? 'fiches-types proposées par Vera, à confirmer' : 'fiches') + ' : ' + pct(D.fuite.theo) + '.</span> <span>' + fpt + ' point' + (Math.abs(ecA) >= 2 ? 's' : '') + ' de pertes, portions ou offerts non saisis' + (D.fuite.compte ? (function () { /* C311 (V16-026) : ce que le plan compte vraiment, et seulement si le levier existe */
           /* C311 (décision 13) : poste par poste — nourriture et boissons, chacune bornée par son propre écart */
           var p1 = function (x) { return (Math.round(x * 10) / 10).toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }, pl = function (x) { return p1(x) + ' point' + (Math.abs(Math.round(x * 10) / 10) >= 2 ? 's' : ''); };
           var lf = D.leviers.filter(function (x) { return x && x.id === 'fc'; })[0], lb = D.leviers.filter(function (x) { return x && x.id === 'boi'; })[0];
@@ -130,7 +130,7 @@
           var parts = []; if (lf) parts.push(pl(vf) + ' dans « Coût de la nourriture »'); if (lb) parts.push(pl(vb) + ' dans « Coût des boissons »');
           var tN = N ? Math.max(0, N.pts) / 3 : D.fuite.pts / 3, tB = B ? Math.max(0, B.pts) / 3 : 0, reduit = (lf && vf < tN - 0.55) || (lb && vb < tB - 0.55);
           return postes + '.</span> <span>Verdict en compte ' + parts.join(' et ') + ' ci-dessous : un tiers de l’écart de chaque poste, par pas de 0,5 point' + (reduit ? ', réduit pour rester au niveau des meilleurs établissements de votre format' : '') + '.</span>';
-        })() : '.</span> <span>Sous 4 points, non compté dans le gain.</span>') + '</small></div><strong>≈\u00a0<em data-rc-count="' + Math.round(D.fuite.eur) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>';
+        })() : '.</span> <span>Sous 4 points, non compté dans le gain.</span>') + '</small></div><strong>≈\u00a0<em data-rc-count="' + Math.round(D.fuite.eur) + '" data-rc-eur>0 €</em><small>/ an</small></strong></li>');
         n0 = 1;
       }
       fuites += D.leviers.map(function (x, i) {
@@ -187,10 +187,14 @@
   /* C342/C345 (décision 27) : une image déjà à l'écran au moment du rendu garde ses montants (écrits dès le départ, C301) : jamais
      42 692 € puis 0 puis 42 692 € ; les compteurs qui jouent à l'arrivée d'une image sont déclarés (data-vd-compteur) */
   var RENDU_RC = 0;
+  /* C472 (point 9) : typographie française, espace insécable avant « : » et « ; » (les autres langues gardent leurs phrases traduites) */
+  /* C490 (défaut 16, point 19) : « ci-dessous » ne se coupe plus à son trait d'union, « 1,3 point » ne se sépare plus */
+  function nbFr(s) { return lg() === 'fr' ? String(s).replace(/ ([:;])/g, '\u00a0$1').replace(/ci-dessous/g, 'ci\u2011dessous').replace(/(\d) (points?)(?![\wÀ-ÿ])/g, '$1\u00a0$2') : s; }
   function jouer(card) {
     if (card.classList.contains('rc-on')) return;
     card.classList.add('rc-on');
     if (performance.now() - RENDU_RC < 600) return;
+    try { var rb = card.getBoundingClientRect(), vh = w.innerHeight || doc.documentElement.clientHeight; if (rb.top < vh && rb.bottom > 0) return; } catch (e) {} /* C472 (point 10) : atteinte d'un saut, déjà à l'écran : montants définitifs */
     [].forEach.call(card.querySelectorAll('[data-rc-count]'), function (el, i) { setTimeout(function () { compter(el); }, REDUIT ? 0 : 180 + i * 120); });
   }
   /* C98 — Grand écran (Steven : « pas un copier-coller du mobile, meilleure expérience sur grand ») : barre de chapitres
@@ -254,7 +258,7 @@
     corps = corps.replace(/(<span class="rc-k">)(\d)( · )/g, function (m, a, n, b) { return a + (rang[n] || n) + b; });
     corps.replace(/data-rc="(\d)"/g, function (m, n) { puces += '<button type="button" data-rc-nav="' + n + '"><i>' + (rang[n] || n) + '</i>' + noms[n] + '</button>'; return m; });
     var MOTS = ['', 'une image', 'deux images', 'trois images', 'quatre images', 'cinq images', 'six images'], motN = MOTS[nImg] || (nImg + ' images');
-    box.innerHTML = '<header class="rc-head"><span>Audit Verdict · ' + esc(D.nom) + '</span><h1>Votre audit en ' + nImg + ' image' + (nImg > 1 ? 's' : '') + '</h1><p><span class="rc-m">Faites défiler : chaque image se joue quand elle arrive.</span><span class="rc-l">' + motN.charAt(0).toUpperCase() + motN.slice(1) + ', une idée chacune, toutes calculées avec vos chiffres.</span></p></header>' +
+    box.innerHTML = '<header class="rc-head"><span>Audit Verdict · ' + esc(D.nom) + '</span><h1>Votre audit en ' + nImg + (lg() === 'fr' ? '\u00a0' : ' ') + 'image' + (nImg > 1 ? 's' : '') + '</h1><p><span class="rc-m">Faites défiler : chaque image se joue quand elle arrive.</span><span class="rc-l">' + motN.charAt(0).toUpperCase() + motN.slice(1) + ', une idée chacune, toutes calculées avec vos chiffres.</span></p></header>' +
       '<div class="rc-navwrap"><div class="rc-nav" role="navigation" aria-label="Chapitres de l’audit">' + puces + '</div></div>' + corps;
     /* C301 (V15-080) : chaque montant est écrit dès le départ (l'animation repart de 0 à l'écran seulement) */
     [].forEach.call(box.querySelectorAll('[data-rc-count]'), function (x) { var v = Number(x.getAttribute('data-rc-count')); x.setAttribute('data-vd-compteur', '1'); if (isFinite(v)) x.textContent = x.hasAttribute('data-rc-eur') ? eur(v) : String(Math.round(v)); });
@@ -346,6 +350,22 @@
     '#vdRecit .rc-cta2{display:flex;gap:10px}#vdRecit .rc-cta2 button{flex:1;min-height:50px;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font:800 15px/1 -apple-system,system-ui;cursor:pointer}' +
     '#vdRecit .rc-navwrap,#vdRecit .rc-l,#vdRecit .rc-stack i>span{display:none}' +
     /* C98 — Tablette et grand écran : mises en page horizontales propres à l'écran large. */
+    /* C472 (décision 56, contrôle visuel de l'Audit) — téléphone d'abord ; le grand écran garde ses règles */
+    '@media (max-width:767px){html #v-audit{padding-top:8px!important}}' +
+    /* C490 (décision 63, point 1) : sur téléphone, plus aucune marge du dossier ivoire avant le surtitre (≈ 18 px sous les onglets, comme Structure) */
+    '@media (max-width:767px){html #v-audit #auditBody{padding-top:0}html #v-audit #vdRecit{margin-top:0}}' +
+    /* C490 (défaut 19) : le panneau finit arrondi, plus de coin carré au-dessus de la barre ; (défaut 10) sous-titre sans mot orphelin */
+    'html #v-audit #auditBody{border-radius:24px;margin-bottom:16px}#vdRecit .rc-head p{text-wrap:pretty}' +
+    '#vdRecit .rc-head h1{text-wrap:balance}html.vd-workspace-light #vdRecit .rc-head>span{color:#15803d}' +
+    '#vdRecit .rc-mark b{background:rgba(12,10,6,.74);border-radius:6px;padding:2px 6px;margin-bottom:5px;color:rgba(255,255,255,.92)}' +
+    '#vdRecit .rc-leaks li div b{overflow-wrap:break-word;-webkit-hyphens:manual;hyphens:manual;line-height:1.25}' +
+    '@media (max-width:699px){' +
+      '#vdRecit .rc-leaks li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;column-gap:12px;row-gap:4px;align-items:center}#vdRecit .rc-leaks li>div{display:contents}' +
+      '#vdRecit .rc-leaks li>.rc-n{grid-column:1;grid-row:1}#vdRecit .rc-leaks li>div>b{grid-column:2;grid-row:1}#vdRecit .rc-leaks li>strong{grid-column:3;grid-row:1}#vdRecit .rc-leaks li>div>small{grid-column:2/4;grid-row:2}' +
+      '#vdRecit .rc-leaks li.rc-fuite{align-items:start}#vdRecit .rc-leaks li.rc-fuite>.rc-n{align-self:center}#vdRecit .rc-leaks li.rc-fuite>div>b{grid-column:2/4}#vdRecit .rc-leaks li.rc-fuite>strong{grid-column:2/4;grid-row:3;text-align:left}#vdRecit .rc-leaks li.rc-fuite>strong small{display:inline;margin-left:5px}' +
+      '#vdRecit .rc-card{min-height:0;justify-content:flex-start;scroll-margin-top:12px}' +
+    '}' +
+    '@media (max-width:767px){html #c360Som .c360-som-l{grid-template-columns:24px minmax(0,1fr) 12px;column-gap:10px;row-gap:1px;align-items:center}html #c360Som .c360-som-t{display:contents}html #c360Som .c360-som-n{grid-row:1/4;grid-column:1}html #c360Som .c360-som-t b{grid-row:1;grid-column:2;min-width:0}html #c360Som .c360-som-v{grid-row:2;grid-column:2;justify-self:start;text-align:left;font-size:13px;max-width:none;overflow:visible;text-overflow:clip;white-space:normal}html #c360Som .c360-som-v:empty{display:none}html #c360Som .c360-som-t small{grid-row:3;grid-column:2;white-space:normal;overflow:visible;text-overflow:clip}html #c360Som .c360-chev{grid-row:1/4;grid-column:3}}html #c360Som .c360-som-l{column-gap:6px}html #c360Som .c360-som-v{font-size:13px}html.vd-workspace-light #c360Som .c360-som-l{border-top-color:rgba(16,18,20,.12)}' +
     '@media (min-width:700px){' +
       '#vdRecit{max-width:880px;margin-left:auto;margin-right:auto}#vdRecit .rc-m{display:none}#vdRecit .rc-l{display:inline}#vdRecit .rc-suite{display:none}' +
       '#vdRecit .rc-head{padding:10px 4px 16px}#vdRecit .rc-head h1{font-size:44px}#vdRecit .rc-head p{font-size:16px}' +

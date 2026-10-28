@@ -109,6 +109,9 @@
   }
   function ready(){try{var result=root.moteur();return !!(result&&result.ready);}catch(e){return false;}}
   function landing(){return ready()?'pil':'in';}
+  /* A25 (C441, L2) : titre et sous-titre posés déjà passés par le vocabulaire client (049), et seulement s’ils diffèrent de l’affiché :
+     plus de renommage après le dessin (Structure descendait de 21 px quand « Score » devenait « Indice de sérénité » sur 2 lignes). */
+  function poserTexte(el,s){if(!el)return;var v=String(s==null?'':s);try{var V=root.VerdictClientVocabulary;if(V&&typeof V.rewrite==='function')v=V.rewrite(v);}catch(e){}if(el.textContent!==v)el.textContent=v;}
   function applyChrome(){
     var text=ui(),html=root.document.documentElement;html.setAttribute('data-v45-profile',profile);/* V10 (21/10) */if(embedded&&!html.hasAttribute('data-v45-coque'))html.setAttribute('data-v45-coque','');
     var nav=root.document.querySelector('nav[aria-label="Navigation principale"]')||root.document.querySelector('nav');
@@ -119,9 +122,9 @@
     labelButton(root.document.querySelector('nav button[data-v="carte"]'),text.menu);
     labelButton(root.document.querySelector('nav button[data-v="plus"]'),text.more);
     var structureTitle=root.document.querySelector('#v-data h1'),structureSub=root.document.querySelector('#v-data .sub');
-    if(structureTitle)structureTitle.textContent=text.structureTitle;if(structureSub)structureSub.textContent=text.structureSub;
+    poserTexte(structureTitle,text.structureTitle);poserTexte(structureSub,text.structureSub);
     var menuTitle=root.document.querySelector('#v-carte h1'),menuSub=root.document.querySelector('#v-carte .sub');
-    if(menuTitle)menuTitle.textContent=text.menuTitle;if(menuSub)menuSub.textContent=text.menuSub;if(root.headerState&&root.VerdictCartePages){root.headerState(root.moteur());root.VerdictCartePages.refreshDock();}
+    poserTexte(menuTitle,text.menuTitle);poserTexte(menuSub,text.menuSub);if(root.headerState&&root.VerdictCartePages){root.headerState(root.moteur());root.VerdictCartePages.refreshDock();}
   }
   function invalidateProfileViews(){
     /* Seul Plus dépend réellement du profil actif. Pilotage, Structure et
@@ -207,7 +210,7 @@
     }
     host.className='menugrid v45-plus-pilotage';
     if(originalDrawMenu){originalDrawMenu();injectFluxCard(host);return;}
-    if(title)title.textContent=text.more+' · '+homeCopy().k;if(sub)sub.textContent=text.structureSub;
+    poserTexte(title,text.more+' · '+homeCopy().k);poserTexte(sub,text.structureSub);
     var source={fec:plusItem('import'),etabs:plusItem('etabs'),account:plusItem('account'),language:plusItem('language'),audit:plusItem('export'),vera:plusItem('vera')};
     source.fec=source.fec||{icon:'⇩',title:text.fecTitle,text:text.structureSub};source.fec.title=text.fecTitle;
     source.etabs=source.etabs||{icon:'🏢',title:'Établissements',text:'Ajouter, renommer ou changer'};
@@ -1889,6 +1892,7 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     });
   }
   function vmAttach(force,selectionOnly){
+    var vfMemoAvant=vfMemo;vfMemo={};/* A10 : plan de trésorerie calculé une fois pendant ce passage */
     try{
       if(root.VIEW!=='pil')return;var vmId=root.VERDICT_DEMO_SESSION?'demo:'+((root.DB&&root.DB.modele)||''):'reel:'+((root.STORE&&root.STORE.actif)||'');if(vmId!==vmIdent){vmIdent=vmId;vmSel=null;vmSig=null;vmCache={sig:null,ecart:null};vmLastB=null;} /* C298 (D-A29) : un autre établissement repart d’un état neuf */var fr=root.document.querySelector('#v-pil .p41-cadre > iframe')||root.document.querySelector('iframe.p41-ecran');if(!fr)return;var doc=fr.contentDocument;if(!doc)return;
       var chA=doc.getElementById('vx40-argent');vmBindChap(doc);if(!force&&chA&&chA.hidden)return;/* C333 (décision 19) : chapitre Argent caché, rien à calculer */
@@ -1902,7 +1906,7 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
       var dataSig=sig.split('|').slice(0,8).join('|');if(vmCache.sig!==dataSig){vmCache={sig:dataSig,ecart:vmEcart()};}
       var team=null;try{team=root.VerdictTeam&&root.VerdictTeam.model();}catch(e){}vmRenderData={model:R,team:team};
       var html=vmMarkup(vmC());sig=vmDataSig();
-      try{if(!selectionOnly&&vmLastB&&vmLastB.ok){var _snap={argent:vmLastB.pour100Reste,mois:vmSel};try{var _E=vfEntrees();if(_E){var _P=vfPlanning(_E);if(_P.ok)_snap.pointBas=_P.pointBas;}}catch(e){}voSnapshot(_snap);}}catch(e){}
+      try{if(!selectionOnly&&vmLastB&&vmLastB.ok){var _snap={argent:vmLastB.pour100Reste,mois:vmSel};try{var _E=vfEntreesM();if(_E){var _P=vfPlanningM(_E);if(_P.ok)_snap.pointBas=_P.pointBas;}}catch(e){}voSnapshot(_snap);}}catch(e){}
       var anchor=act.previousElementSibling&&act.previousElementSibling.tagName==='H2'?act.previousElementSibling:act;
       if(exist&&selectionOnly){var wrap=doc.createElement('div');wrap.innerHTML=html;var fresh=wrap.querySelector('#modArgent');if(fresh){exist.innerHTML=fresh.innerHTML;['data-etat','data-vm-mois'].forEach(function(k){exist.setAttribute(k,fresh.getAttribute(k));});}}
       else{drop();anchor.insertAdjacentHTML('beforebegin',html);}
@@ -1910,7 +1914,7 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
         if(typeof vbAttach==='function')vbAttach(doc,vmSel,vmLastB);
         if(!selectionOnly&&typeof vfAttach==='function')vfAttach(doc);}
       vmSig=sig;
-    }catch(e){try{console.error('VerdictArgent : panneau Argent non posé ('+vmIdent+')',e);}catch(x){}}finally{vmRenderData=null;} /* C298 (D-A29) : l’erreur est visible */
+    }catch(e){try{console.error('VerdictArgent : panneau Argent non posé ('+vmIdent+')',e);}catch(x){}}finally{vmRenderData=null;vfMemo=vfMemoAvant;} /* C298 (D-A29) : l’erreur est visible */
   }
   root.VerdictArgent={version:'P5',resultatMois:vmResultatMois/* C308 (décision 4) */,regle:vmRegle,breakdown:vmBreakdown,changements:vmChangements,entrees:vmEntrees,moisDispo:vmMoisDispo,ecart:vmEcart,attach:vmAttach,select:function(i){i=Number(i);if(!Number.isInteger(i)||i<-12||i>11)return;vmSel=i;vmAttach(true,true);}};
   root.setInterval(vmAttach,950);
@@ -2014,6 +2018,10 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
   }
   function vfReserveColor(state){return {vert:'#22c55e',jaune:'#eab308',orange:'#f97316',rouge:'#ef4444',info:'#9aa6b2'}[state]||'#9aa6b2';}
   function vfPlanning(inp){return root.VerdictFinance.cashPlanning(inp);}
+  /* A10 (L2) : pendant un passage de vmAttach, le plan de trésorerie se calcule une fois (il l’était jusqu’à 3 fois, avec un moteur oublié entre-temps). */
+  var vfMemo=null;
+  function vfEntreesM(){if(!vfMemo)return vfEntrees();if(!('E' in vfMemo))vfMemo.E=vfEntrees();return vfMemo.E;}
+  function vfPlanningM(E){if(!vfMemo||!E||vfMemo.E!==E)return vfPlanning(E);if(!vfMemo.P)vfMemo.P=vfPlanning(E);return vfMemo.P;}
   /* Prévision jour par jour (pur) : même jour de semaine autour de la même date N-1 (±10 jours) × évolution, sinon 8 derniers mêmes jours ; un jour sans aucune activité connue = 0 (fermé). */
   function vfPrevision(hist,debut,nJours,growth,calendar){
  var F=root.VerdictFinance,byDate={},rows=[];(hist||[]).forEach(function(r){var d=String(r&&r.date||'').slice(0,10);if(F.isoDate(d)&&typeof r.caJ==='number'&&Number.isFinite(r.caJ)&&r.caJ>=0){byDate[d]=r.caJ;rows.push({d:d,ca:r.caJ});}});rows.sort(function(a,b){return a.d.localeCompare(b.d);});
@@ -2086,8 +2094,8 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
   }
   function vfMarkup(C){
     var head='<article class="mod" id="modCash13" data-vf-version="P7"><div class="mod-h"><p class="kicker">'+vmE(C.kicker)+'</p></div>';
-    var E=vfEntrees();if(!E)return head.replace('<article','<article data-etat="info"')+'<p class="sous">'+vmE(C.sansSolde)+'</p></article>';
-    var R=vfPlanning(E);if(!R.ok)return head+'<p class="sous">'+vmE(R.raison==='solde'?C.sansSolde:C.invalid)+'</p></article>';
+    var E=vfEntreesM();if(!E)return head.replace('<article','<article data-etat="info"')+'<p class="sous">'+vmE(C.sansSolde)+'</p></article>';
+    var R=vfPlanningM(E);if(!R.ok)return head+'<p class="sous">'+vmE(R.raison==='solde'?C.sansSolde:C.invalid)+'</p></article>';
     var crit=R.semaineCritique||R.semaines[0],col=vfReserveColor(R.etat);
     var h=head.replace('<article','<article data-etat="'+R.etat+'"');
     h+='<p class="verdict-grand" style="color:'+col+'">'+vmE(R.complete?vmF(R.pointBas<0?C.neg:C.bas,{v:vmEur(R.pointBas),a:vfJourTxt(crit.debut),b:vfJourTxt(crit.fin),n:crit.i+1}):C.partial)+'</p>';
@@ -2263,7 +2271,7 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     return {l:L,s:C.srcArgent,data:{mois:i,pour100Reste:B.pour100Reste}};
   }
   function vvTreso(C){
-    var E=vfEntrees();if(!E)return {l:[C.trSansSolde],s:C.srcTreso};var R=vfPlanning(E),FC=vfC(),cr=R.semaineCritique;
+    var E=vfEntreesM();if(!E)return {l:[C.trSansSolde],s:C.srcTreso};var R=vfPlanningM(E),FC=vfC(),cr=R.semaineCritique;
     var L=[vmF(R.pointBas<0?C.trNeg:C.trBas,{v:vmEur(R.pointBas),a:vfJourTxt(cr.debut),b:vfJourTxt(cr.fin).replace(/\.$/,'')})];
     if(R.causes.length)L.push(vmF(C.trCauses,{l:R.causes.map(function(x){return (FC['k_'+x.k]||x.k)+' '+vmEur(Math.abs(x.v));}).join(', ')}));
     var i=vvDernierMois();if(i!=null){var B=vmBreakdown(vmEntrees(i,vmEcart())),V=vbBridge(vbEntrees(i,B));if(V.ok)L.push(vmF(C.trPont,{m:vmMois(i),s:V.variation<0?C.trBaisse:C.trHausse,v:vmEur(Math.abs(V.variation)),n:V.nonMesurees.length}));}
@@ -2540,6 +2548,8 @@ VT_COPY["pt"].slotHelp="Cada linha agrupa serviços do mesmo dia da semana e tur
     host.insertBefore(card,host.firstChild);
   }
   if(originalDrawData)root.drawData=function(){var result=originalDrawData.apply(this,arguments);applyChrome();renderAccounting();renderPointMortR36();return result;};
+  /* A09 (L2) : l’onglet Performances peut n’être dessiné qu’à son ouverture (041) ; son bloc comptable est alors remis, seulement s’il manque. */
+  if(typeof root.dsub==='function'){var originalDsub=root.dsub;root.dsub=function(n){var result=originalDsub.apply(this,arguments);if(n==='carnet'){var h=root.document.getElementById('d-carnet');if(h&&!h.querySelector('#v45-accounting-68'))renderAccounting();}return result;};}
 
 
   /* C279 : le mois où commence le suivi n'a pour minimum que la part restante ; on la nomme et on donne le mois entier (même libellé que l'Accueil, C256). */

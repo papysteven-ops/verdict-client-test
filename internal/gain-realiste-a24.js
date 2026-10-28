@@ -21,6 +21,7 @@ try{var LS=w.localStorage,OUB=[];for(var li=0;li<LS.length;li++){var lk=LS.key(l
 var CTRL={sal:1,fc:1,com:1,emb:1,fix:.5,panier:.5,carte:.5,cmd:1/3,jour:1/3};
 var CTRL_LIB={1:'élevé',0.5:'partiel'};
 var ORDER=['sal','fix','com','emb','fc','boi','carte','panier','cmd'];
+var VOLUME_HORS_PLAN=['panier','cmd','jour'];/* C457 (décision 53) : jamais proposés dans le plan réaliste ; restent des curseurs de Simuler */
 var CARTE_CAP=8,CARTE_ELAST=.03,JOUR_DEMANDE=.6,JOUR_EQUIPE=.8,PANIER_PCT=.02;
 
 function def(id){for(var i=0;i<w.DEC_DEFS.length;i++)if(w.DEC_DEFS[i].id===id)return w.DEC_DEFS[i];return null;}
@@ -206,10 +207,11 @@ function plan(){
   var pa=num(d.panierTTC);
   var bornePanier=0;
   if(pa>0){var vp=Math.floor(pa*PANIER_PCT*10)/10;bornePanier=vp;}
-  if(pa>0&&vp>0&&!(cp&&cp.dContribAn>0)){
-    add('panier',vp,'Panier '+fr2(pa)+' € TTC. Verdict compte au plus +'+Math.round(PANIER_PCT*100)+' % de votre propre panier, auprès des clients déjà là. '+reglePanier(),txt('p11BasketAction',type)||'Entrées, desserts et boissons mis en avant, sans toucher aux prix affichés.');}
+  /* C457 (L7, décision 53) : le panier moyen n'est plus proposé dans le plan réaliste (comme les commandes depuis C218) : on ne fait pas
+     venir de clients et on ne pousse pas la vente (C189). Sa borne reste celle du curseur, que le patron garde dans Simuler. */
   /* C218 (W70) : le nombre de commandes n'est jamais proposé (doctrine C189 : on ne dit pas « vendez plus » quand la
      clientèle n'est pas là ; la fréquentation ne se décide pas). Le curseur reste dans Simuler, comme une hypothèse. */
+  L=L.filter(function(x){return VOLUME_HORS_PLAN.indexOf(x.id)<0;});/* C457 : aucun levier de volume ni de panier dans le plan */
   L.sort(function(a,b){return ORDER.indexOf(a.id)-ORDER.indexOf(b.id);});
   /* l'équipe n'est proposée qu'après une décision d'organisation mesurée (règle existante de Simuler) */
   var pr=payrollOk(),retenus=L.filter(function(x){return x.id!=='sal'||pr;}),attente=L.filter(function(x){return x.id==='sal'&&!pr;});
@@ -224,7 +226,7 @@ function plan(){
       if(w.moteur(overAll(t)).v.rn<=haut+1e-9){st2=t;ret2.push(x);continue;}
       plafonne=true;var dd=def(x.id),pas=dd?dd.step:1,sg=x.v<0?-1:1,best=0;
       for(var kk=Math.floor(Math.abs(x.v)/pas+1e-9)-1;kk>=1;kk--){var val=Math.round(sg*kk*pas*100)/100;t[x.id]=val;if(w.moteur(overAll(t)).v.rn<=haut+1e-9){best=val;break;}}
-      if(best){st2[x.id]=best;var y={};for(var z in x)y[z]=x[z];y.v=best;if(x.id==='carte'){var tc2=texteCarte(best);y.why=tc2.why;y.how=tc2.how;}y.why=y.why+' Réduit pour ne pas dépasser '+pc(haut,0)+' de rentabilité, le niveau des meilleurs établissements de votre format.';ret2.push(y);}
+      if(best){st2[x.id]=best;var y={};for(var z in x)y[z]=x[z];y.v=best;if(x.id==='carte'){var tc2=texteCarte(best);y.why=tc2.why;y.how=tc2.how;}y.reduit='Réduit pour ne pas dépasser '+pc(haut,0)+' de rentabilité, le niveau des meilleurs établissements de votre format.';/* C479 : phrase à part (Langues) */ret2.push(y);}
       break;}
     if(plafonne){state=st2;retenus=ret2;}
   }
@@ -576,7 +578,7 @@ function diff(a,b){var o={};for(var k in b)if(num(b[k])!==num(a[k]))o[k]=b[k];re
 /* ── Audit 2-en-1 : le gain fusionné structure + carte ── */
 function lignes(P){
   return P.retenus.map(function(x){var d=def(x.id);
-    return '<div class="au-ok c88-step"><span style="flex:1"><b>'+esc(d?d.icon+' '+d.t:x.id)+' · '+esc(d?d.fmt(x.v):'')+'</b><br><span style="color:var(--mut)"><b>Pourquoi</b> : '+esc(x.why)+'<br><b>Comment</b> : '+esc(x.how)+'<br>Contrôle '+esc(x.ctrl)+'</span></span><b class="c88-eur">'+signe(x.gain/12)+'<small> / mois</small><br><small>'+signe(x.gain)+' / an</small></b></div>';
+    return '<div class="au-ok c88-step"><span style="flex:1"><b>'+esc(d?d.icon+' '+d.t:x.id)+' · '+esc(d?d.fmt(x.v):'')+'</b><br><span style="color:var(--mut)"><b>Pourquoi</b> : <span>'+esc(x.why)+'</span>'+(x.reduit?' <span>'+esc(x.reduit)+'</span>':'')+'<br><b>Comment</b> : '+esc(x.how)+'<br>Contrôle '+esc(x.ctrl)+'</span></span><b class="c88-eur">'+signe(x.gain/12)+'<small> / mois</small><br><small>'+signe(x.gain)+' / an</small></b></div>';
   }).join('');
 }
 function chapitreHTML(P){
@@ -586,7 +588,7 @@ function chapitreHTML(P){
     (c.gain>0.5?'<h2 class="au-h">'+signe(c.mois)+' par mois, soit '+signe(c.gain)+' par an</h2>':'<h2 class="au-h">Pas de gain chiffré à ce stade</h2><p class="au-p">'+(inp('panier')>0?'Aucun levier ne dépasse les repères de votre format : Verdict ne compte pas de gain qu’il ne peut pas tenir.':'Vos tickets ne sont pas encore connus (aucun ticket lu dans votre caisse) : le panier et les commandes se chiffrent dès que votre caisse est importée.')+'</p>')+
     /* C301 (V15-032, suite) : la décision annoncée au chapitre 4 (l'équipe) n'est pas dans ce montant tant qu'elle n'est pas mesurée */
     (P.attente.length&&(function(){try{var a=w.auActions()[0];return a&&ACTIONS[a.id]&&ACTIONS[a.id].indexOf('sal')>=0;}catch(e){return false;}})()?'<p class="au-p"><b>La décision du chapitre précédent, l’équipe, n’est pas encore dans ce montant</b> : elle y entrera après une décision d’organisation mesurée (jusqu’à '+signe(P.attente[0].gain)+' par an). Ce montant vient des autres leviers.</p>':'')+
-    '<p class="au-p">Un seul calcul, rejoué dans le moteur avec vos chiffres. Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':' (repères généraux de la restauration traditionnelle)')+' (un tiers de l’écart au repère, comme vos priorités). Les étapes s’enchaînent : chaque montant est ce que le levier ajoute après les précédents, aucun euro n’est compté deux fois.</p>'+
+    '<p class="au-p">Un seul calcul, rejoué dans le moteur avec vos chiffres. Chaque levier est borné par les repères de votre format'+(P.format.type?' ('+esc(P.format.type)+')':' (repères généraux de la restauration traditionnelle)')+' : un tiers de l’écart au repère, comme vos priorités. Les étapes s’enchaînent : chaque montant est ce que le levier ajoute après les précédents, aucun euro n’est compté deux fois.</p>'+
     '<div class="au-card"><span class="au-k">Pas à pas</span>'+
       '<div class="au-ok"><span style="flex:1"><b>Résultat actuel</b></span><b>'+eur(P.base.res)+' · '+pc(P.base.rn)+'</b></div>'+lignes(P)+
       '<div class="au-ok"><span style="flex:1"><b>Résultat visé</b></span><b>'+eur(c.res)+' · '+pc(c.rn)+(c.ca?' d’un CA de '+eur(c.ca):'')+' · score '+c.score+'</b></div></div>'+

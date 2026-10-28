@@ -35,14 +35,32 @@
     'Remettre à zéro': ['Reset', 'Poner a cero', 'Azzera', 'Zurücksetzen', 'Op nul zetten', 'Repor a zero'],
     'Mes décisions': ['My decisions', 'Mis decisiones', 'Le mie decisioni', 'Meine Entscheidungen', 'Mijn beslissingen', 'As minhas decisões'],
     'Ce que vous avez décidé, ce qui est en cours et ce qui a été mesuré, avec le journal des gains.': ['What you decided, what is under way and what has been measured, with the gains log.', 'Lo que ha decidido, lo que está en curso y lo que se ha medido, con el registro de ganancias.', 'Ciò che ha deciso, ciò che è in corso e ciò che è stato misurato, con il registro dei guadagni.', 'Was Sie entschieden haben, was läuft und was gemessen wurde, mit dem Gewinnjournal.', 'Wat u hebt besloten, wat loopt en wat is gemeten, met het winstlogboek.', 'O que decidiu, o que está em curso e o que foi medido, com o registo de ganhos.'],
-    'Aucune décision pour l’instant. Elles s’ajoutent ici depuis Simuler et À faire.': ['No decision yet. They are added here from Simulate and To do.', 'Ninguna decisión por ahora. Se añaden aquí desde Simular y Por hacer.', 'Nessuna decisione per ora. Si aggiungono qui da Simula e Da fare.', 'Noch keine Entscheidung. Sie kommen hier aus Simulieren und Zu tun hinzu.', 'Nog geen beslissing. Ze worden hier toegevoegd vanuit Simuleren en Te doen.', 'Nenhuma decisão por agora. São acrescentadas aqui a partir de Simular e A fazer.']
+    'Aucune décision pour l’instant. Elles s’ajoutent ici depuis Simuler et À faire.': ['No decision yet. They are added here from Simulate and To do.', 'Ninguna decisión por ahora. Se añaden aquí desde Simular y Por hacer.', 'Nessuna decisione per ora. Si aggiungono qui da Simula e Da fare.', 'Noch keine Entscheidung. Sie kommen hier aus Simulieren und Zu tun hinzu.', 'Nog geen beslissing. Ze worden hier toegevoegd vanuit Simuleren en Te doen.', 'Nenhuma decisão por agora. São acrescentadas aqui a partir de Simular e A fazer.'],
+    /* Décision 51 (L5) : « Votre situation aujourd'hui » et la carte du gain réaliste, en mots de patron */
+    'Votre situation aujourd’hui': ['Your situation today', 'Su situación hoy', 'La sua situazione oggi', 'Ihre Lage heute', 'Uw situatie vandaag', 'A sua situação hoje'],
+    'Ce que vous pouvez gagner, de façon réaliste :': ['What you can realistically gain:', 'Lo que puede ganar, de forma realista:', 'Quanto può guadagnare, in modo realistico:', 'Was Sie realistisch gewinnen können:', 'Wat u realistisch kunt winnen:', 'O que pode ganhar, de forma realista:'],
+    '{m} par mois': ['{m} per month', '{m} al mes', '{m} al mese', '{m} pro Monat', '{m} per maand', '{m} por mês'],
+    '({a} par an)': ['({a} per year)', '({a} al año)', '({a} all’anno)', '({a} pro Jahr)', '({a} per jaar)', '({a} por ano)'],
+    'Voir le résultat': ['See the result', 'Ver el resultado', 'Vedere il risultato', 'Ergebnis ansehen', 'Resultaat bekijken', 'Ver o resultado'],
+    'Pour l’instant, Verdict ne trouve pas de gain réaliste à ajouter avec vos chiffres.': ['For now, Verdict finds no realistic gain to add with your figures.', 'Por ahora, Verdict no encuentra ninguna ganancia realista que añadir con sus cifras.', 'Per ora Verdict non trova un guadagno realistico da aggiungere con i suoi dati.', 'Im Moment findet Verdict mit Ihren Zahlen keinen realistischen Gewinn, der hinzukommen könnte.', 'Voorlopig vindt Verdict met uw cijfers geen realistische winst om toe te voegen.', 'Por agora, o Verdict não encontra nenhum ganho realista a acrescentar com os seus números.'],
+    'Équipe : {x} de moins par mois': ['Team: {x} less per month', 'Equipo: {x} menos al mes', 'Team: {x} in meno al mese', 'Team: {x} weniger pro Monat', 'Team: {x} minder per maand', 'Equipa: {x} a menos por mês'],
+    'Charges fixes : {x} % de moins': ['Fixed costs: {x}% less', 'Gastos fijos: {x} % menos', 'Costi fissi: {x} % in meno', 'Fixkosten: {x} % weniger', 'Vaste kosten: {x}% minder', 'Custos fixos: {x} % a menos'],
+    'Commissions des plateformes : {x} % de moins': ['Platform commissions: {x}% less', 'Comisiones de las plataformas: {x} % menos', 'Commissioni delle piattaforme: {x} % in meno', 'Plattformprovisionen: {x} % weniger', 'Platformcommissies: {x}% minder', 'Comissões das plataformas: {x} % a menos'],
+    'Emballages et autres achats : {x} % de moins': ['Packaging and other purchases: {x}% less', 'Envases y otras compras: {x} % menos', 'Imballaggi e altri acquisti: {x} % in meno', 'Verpackungen und sonstige Einkäufe: {x} % weniger', 'Verpakkingen en andere aankopen: {x}% minder', 'Embalagens e outras compras: {x} % a menos'],
+    'Nourriture : {x} point de moins': ['Food: {x} point less', 'Comida: {x} punto menos', 'Cibo: {x} punto in meno', 'Lebensmittel: {x} Punkt weniger', 'Voedsel: {x} punt minder', 'Alimentos: {x} ponto a menos'],
+    'Nourriture : {x} points de moins': ['Food: {x} points less', 'Comida: {x} puntos menos', 'Cibo: {x} punti in meno', 'Lebensmittel: {x} Punkte weniger', 'Voedsel: {x} punten minder', 'Alimentos: {x} pontos a menos'],
+    'Boissons : {x} point de moins': ['Beverages: {x} point less', 'Bebidas: {x} punto menos', 'Bevande: {x} punto in meno', 'Getränke: {x} Punkt weniger', 'Dranken: {x} punt minder', 'Bebidas: {x} ponto a menos'],
+    'Boissons : {x} points de moins': ['Beverages: {x} points less', 'Bebidas: {x} puntos menos', 'Bevande: {x} punti in meno', 'Getränke: {x} Punkte weniger', 'Dranken: {x} punten minder', 'Bebidas: {x} pontos a menos'],
+    'Panier moyen : {x} de plus': ['Average ticket: {x} more', 'Ticket medio: {x} más', 'Scontrino medio: {x} in più', 'Durchschnittsbon: {x} mehr', 'Gemiddeld bonbedrag: {x} meer', 'Ticket médio: {x} a mais'],
+    'Prix de la carte : jusqu’à {x} % de plus sur les plats sous leur objectif': ['Menu prices: up to {x}% more on dishes below their target', 'Precios de la carta: hasta un {x} % más en los platos por debajo de su objetivo', 'Prezzi del menu: fino al {x} % in più sui piatti sotto il loro obiettivo', 'Kartenpreise: bis zu {x} % mehr bei Gerichten unter ihrem Ziel', 'Prijzen van de kaart: tot {x}% meer op gerechten onder hun doel', 'Preços do cardápio: até {x} % a mais nos pratos abaixo do seu objetivo'],
+    'Commandes : {x} de plus par jour': ['Orders: {x} more per day', 'Pedidos: {x} más al día', 'Ordini: {x} in più al giorno', 'Bestellungen: {x} mehr pro Tag', 'Bestellingen: {x} meer per dag', 'Pedidos: {x} a mais por dia']
   };
   function installerTextes() {
     if (typeof w.TR !== 'object' || !w.TR || typeof w.TR_ORDER === 'undefined') return false;
     var pos = ORDER.map(function (l) { return w.TR_ORDER.indexOf(l); });
     Object.keys(D).forEach(function (k) {
       var row = w.TR[k] || [];
-      for (var i = 0; i < ORDER.length; i++) if (pos[i] >= 0 && !row[pos[i]]) row[pos[i]] = D[k][i];
+      for (var i = 0; i < ORDER.length; i++) if (pos[i] >= 0 && !row[pos[i]] && D[k][i]) row[pos[i]] = D[k][i];
       w.TR[k] = row;
     });
     try { w._trIdx = null; w._trKeys = null; w._trTplCache = null; w._trCountCache = -1; w._trTextMemo = { lang: '', count: -1, values: Object.create(null), order: [] }; } catch (e) {}
@@ -86,12 +104,16 @@
       return '<div class="c360-l"><span class="c360-k">' + k + '</span><b class="c360-a" data-c360="' + a + '"></b>' +
         '<span class="c360-fl" aria-hidden="true">→</span><b class="c360-b" data-c360="' + b + '"></b></div>';
     };
-    return '<div class="c360-grille"><div class="c360-l c360-tete"><span class="c360-k"></span><span class="c360-a">Aujourd’hui</span>' +
+    /* Décision 51 (L5) : tant qu'aucun levier n'a bougé, une seule ligne et ses trois chiffres (pas de « → » vers les mêmes valeurs). */
+    var chiffre = function (k, lib) { return '<span class="c360-auj-c"><b data-c360="' + k + '"></b><small>' + lib + '</small></span>'; };
+    return '<div class="c360-auj"><span class="c360-auj-t">Votre situation aujourd’hui</span>' + chiffre('r0j', 'Résultat sur un an') +
+      chiffre('s0j', 'Indice de sérénité') + chiffre('n0j', 'Pour 100 € vendus') + '</div>' +
+      '<div class="c360-grille"><div class="c360-l c360-tete"><span class="c360-k"></span><span class="c360-a">Aujourd’hui</span>' +
       '<span class="c360-fl" aria-hidden="true">→</span><span class="c360-b">Après</span></div>' +
       ligne('Résultat sur un an', 'r0', 'r1') + ligne('Indice de sérénité', 's0', 's1') + ligne('Pour 100 € vendus', 'n0', 'n1') + '</div>' +
       /* C382 (A47, L7) : chaque ligne montre un levier seul ; leur somme + l'effet combiné = le total du bloc. */
       '<p class="c360-combine"><span>dont effet combiné des leviers :</span> <b data-c360="c"></b> <small>chaque ligne montre un levier seul</small></p>' +
-      '<div class="c360-pied"><p class="c360-vide">Aucun changement pour l’instant : touchez un levier pour le régler.</p>' +
+      '<div class="c360-pied">' +
       '<p class="c360-gain"><b data-c360="g"></b> <span>par an avec vos changements</span></p>' +
       '<span class="c360-actions">' + (typeof w.decEnDecision === 'function' ? '<button type="button" class="c360-zero c360-decider" onclick="decEnDecision()">J’en fais une décision</button>' : '') +
       '<button type="button" class="c360-zero" onclick="decResetAll()">Remettre à zéro</button></span></div>';
@@ -119,6 +141,7 @@
     setTexte(q('r0'), euros(T.before)); setTexte(q('r1'), euros(T.after)); tonalite(q('r1'), T.before, T.after, true);
     setTexte(q('s0'), T.score0 + ' /100'); setTexte(q('s1'), T.score1 + ' /100'); tonalite(q('s1'), T.score0, T.score1, true);
     setTexte(q('n0'), pour100(T.rn0)); setTexte(q('n1'), pour100(T.rn1)); tonalite(q('n1'), T.rn0, T.rn1, true);
+    setTexte(q('r0j'), euros(T.before)); setTexte(q('s0j'), T.score0 + ' /100'); setTexte(q('n0j'), pour100(T.rn0));
     var g = Number(T.delta) || 0;
     setTexte(q('g'), (g >= 0 ? '+' : '−') + euros(Math.abs(g)));
     tonalite(q('g'), 0, g, true);
@@ -185,10 +208,62 @@
     }
     basculer(c, 'c360-detail', DETAIL); setAttr(bt, 'aria-expanded', DETAIL ? 'true' : 'false');
   }
+  /* ── Décision 51 (L5, 28/10) : « ça veut rien dire […] il n'y a aucun changement » (Steven, devant 42 692 € → 42 692 €).
+     Tant qu'aucun levier n'a bougé, la carte du point de départ dit d'abord ce que le patron peut gagner, en mots simples :
+     le montant par mois (et par an), puis un réglage par ligne, puis « Voir le résultat », qui appelle le même decApplyBest()
+     que l'ancien « Utiliser comme point de départ ». Les chiffres sont ceux que gain-realiste-a24 vient de calculer
+     (DEC_BEST_PENDING : état des leviers et gain) : rien n'est recalculé ici. Le détail reste derrière « Comment c'est
+     calculé ». Les leviers proposés sont ceux d'a24 (coûts d'abord) ; le mot technique « Point de départ calculé » n'est plus
+     affiché. Dès qu'un levier bouge, la carte reprend son rôle d'origine (amélioration) et le bloc du haut son tableau. ── */
+  function entier(v) { return nombre(v, Math.abs(v - Math.round(v)) > 1e-9 ? 1 : 0); }
+  var GAIN_ORDRE = ['sal', 'fix', 'com', 'emb', 'fc', 'boi', 'carte', 'panier', 'cmd', 'jour'];
+  var LIGNES = {
+    sal: { moins: 'Équipe : {x} de moins par mois', x: function (v) { return euros(v); } },
+    fix: { moins: 'Charges fixes : {x} % de moins', x: entier },
+    com: { moins: 'Commissions des plateformes : {x} % de moins', x: entier },
+    emb: { moins: 'Emballages et autres achats : {x} % de moins', x: entier },
+    fc: { moins: 'Nourriture : {x} point de moins', moinsN: 'Nourriture : {x} points de moins', x: entier },
+    boi: { moins: 'Boissons : {x} point de moins', moinsN: 'Boissons : {x} points de moins', x: entier },
+    panier: { plus: 'Panier moyen : {x} de plus', x: function (v) { try { return w.eur2(v); } catch (e) { return nombre(v, 2) + ' €'; } } },
+    carte: { plus: 'Prix de la carte : jusqu’à {x} % de plus sur les plats sous leur objectif', x: entier },
+    cmd: { plus: 'Commandes : {x} de plus par jour', x: entier }
+  };
+  function phrase(id, v) {
+    var L = LIGNES[id], a = Math.abs(Number(v) || 0), cle = L ? (v < 0 ? (a >= 2 && L.moinsN ? L.moinsN : L.moins) : L.plus) : null;
+    if (cle) return t(cle).replace('{x}', L.x(a));
+    var d = null; try { d = (w.DEC_DEFS || []).filter(function (x) { return x.id === id; })[0] || null; } catch (e) {}
+    return d ? d.t + ' : ' + d.fmt(v) : id;
+  }
+  function plusMoins(x) { return (x < 0 ? '−' : '+') + euros(Math.abs(x)); }
+  function majGain() {
+    var c = doc.getElementById('decBestCard'); if (!c) return;
+    /* La carte du gain tient tant que la proposition est un point de départ (aucun levier n'avait bougé quand a24 l'a calculée),
+       même si le patron touche ensuite un curseur : « Voir le résultat » repart toujours de ses chiffres enregistrés (C206). */
+    var P = w.DEC_BEST_PENDING, out = doc.getElementById('dec-best-out'), repos = !actifs();
+    var avec = !!(P && P.starting && P.state && Number(P.delta) > 0.5), mode = avec || repos, calcule = avec || !!(out && out.firstChild);
+    basculer(c, 'c360-gainmode', mode); basculer(c, 'c360-gain-attente', mode && !calcule);
+    if (!mode) return;
+    var gc = c.querySelector(':scope > .c360-gc');
+    if (!gc) { gc = doc.createElement('div'); gc.className = 'c360-gc'; c.insertBefore(gc, c.firstChild); }
+    var h = '<p class="c360-gc-t">' + esc(t('Ce que vous pouvez gagner, de façon réaliste :')) + '</p>';
+    if (avec) {
+      var ids = Object.keys(P.state).filter(function (k) { return Number(P.state[k]); }).sort(function (a, b) {
+        var i = GAIN_ORDRE.indexOf(a), j = GAIN_ORDRE.indexOf(b); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j); });
+      h += '<p class="c360-gc-m"><span class="c360-gc-mois">' + esc(t('{m} par mois')).replace('{m}', '<b>' + esc(plusMoins(P.delta / 12)) + '</b>') + '</span> ' +
+        '<span class="c360-gc-an">' + esc(t('({a} par an)')).replace('{a}', esc(plusMoins(P.delta))) + '</span></p>' +
+        '<ul class="c360-gc-l">' + ids.map(function (k) { return '<li>' + esc(phrase(k, Number(P.state[k]))) + '</li>'; }).join('') + '</ul>' +
+        '<button type="button" class="btn vd-cta c360-voir" onclick="decApplyBest()">' + esc(t('Voir le résultat')) + '</button>';
+    } else if (calcule) h += '<p class="c360-gc-r">' + esc(t('Pour l’instant, Verdict ne trouve pas de gain réaliste à ajouter avec vos chiffres.')) + '</p>';
+    else return;
+    if (gc.__d51 !== h) { gc.innerHTML = h; gc.__d51 = h; }
+  }
+  /* a24 installe son decBest (w.decBest) après le chargement : on le suit dès qu'il est en place, sans toucher son calcul. */
+  function suivreDecBest() { if (typeof w.decBest === 'function' && !w.decBest.__c360) envelopper('decBest', majGain); }
   function simuler() {
     var corps = doc.getElementById('decBody'); if (!corps) return;
     basculer(doc.getElementById('v-dec'), 'c360', true);
-    majBloc(corps); majLeviers(corps); compacterDepart();
+    suivreDecBest();
+    majBloc(corps); majLeviers(corps); compacterDepart(); majGain();
   }
 
   /* ── Enveloppes : la valeur d'origine est toujours rendue telle quelle ── */
@@ -302,6 +377,8 @@
     '#v-dec.c360 .dec-card.c360-lev.c360-ouvert [id^="dr-"]>.dec-ba,#v-dec.c360 .dec-card.c360-lev.c360-ouvert [id^="dr-"]>.dec-gain{display:none!important}' +
     '#v-dec.c360 .dec-card.c360-lev.c360-ouvert>*:not(.c360-ligne){margin-left:16px!important;margin-right:16px!important}' +
     '#v-dec.c360 .dec-card.c360-lev.c360-ouvert>*:last-child{margin-bottom:14px!important}' +
+    /* C515 (A72) : un bouton du levier ouvert (« Ouvrir Organisation & équipe ») garde ses deux retraits au lieu de dépasser à droite */
+    '#v-dec.c360 .dec-card.c360-lev.c360-ouvert>:is(button,.btn,a.btn):not(.c360-ligne){width:calc(100% - 32px)!important;max-width:calc(100% - 32px)!important;box-sizing:border-box!important}' +
     '#v-dec.c360 .c360-ligne{display:grid;grid-template-columns:minmax(0,1fr) auto 14px;grid-template-areas:"nom g chev" "val g chev";align-items:center;column-gap:10px;row-gap:1px;' +
       'width:100%;min-height:56px;padding:9px 14px 9px 16px;margin:0;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}' +
     '#v-dec.c360 .c360-ligne .c360-nom{grid-area:nom;font-weight:700;font-size:15px;color:var(--txt,#0f172a);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
@@ -319,23 +396,71 @@
     '#v-dec.c360 #decBestCard:not(.c360-detail) .c88-best>div:not(.c88-amount):not(:first-child),#v-dec.c360 #decBestCard:not(.c360-detail) .vd-cta-hint{display:none!important}' +
     '#v-dec.c360 #decBestCard .c360-comment{display:flex;align-items:center;justify-content:space-between;width:100%;margin:10px 0 0;padding:8px 2px;border:0;border-top:1px solid var(--line,rgba(127,127,127,.2));background:transparent;color:var(--mut,#64748b);font:inherit;font-size:13px;font-weight:600;cursor:pointer}' +
     '#v-dec.c360 #decBestCard .c360-comment .c360-chev{font-size:18px;transition:transform .15s ease}#v-dec.c360 #decBestCard.c360-detail .c360-comment .c360-chev{transform:rotate(90deg)}' +
-    '#v-mesdec .c360-sub{margin:0 0 10px}';
+    '#v-mesdec .c360-sub{margin:0 0 10px}' +
+    /* Décision 51 (L5) : au repos, « Votre situation aujourd'hui » sur une ligne (le bloc n'est plus collé en haut : la carte du
+       gain passe juste dessous) ; le tableau « Aujourd'hui → Après » revient dès qu'un levier bouge. */
+    '#c360Bloc .c360-auj{display:none}#c360Bloc.c360-repos .c360-grille,#c360Bloc.c360-repos .c360-pied{display:none!important}' +
+    '#c360Bloc.c360-repos{position:relative;top:auto;padding:12px 14px}' +
+    '#c360Bloc.c360-repos .c360-auj{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:10px;row-gap:6px;align-items:start}' +
+    '#c360Bloc .c360-auj-t{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut,#64748b)}' +
+    '#c360Bloc .c360-auj-c{display:flex;flex-direction:column;gap:2px;min-width:0}' +
+    '#c360Bloc .c360-auj-c b{font-family:var(--mono,ui-monospace,monospace);font-size:17px;font-weight:800;color:var(--txt,#0f172a);white-space:nowrap}' +
+    '#c360Bloc .c360-auj-c small{font-size:11.5px;line-height:1.25;color:var(--mut,#64748b)}' +
+    /* La carte du gain : le montant, un réglage par ligne, « Voir le résultat » ; le reste de la carte derrière « Comment c'est calculé ». */
+    '#v-dec.c360 #decBestCard.c360-gainmode>*:not(.c360-gc):not(.c360-comment){display:none!important}' +
+    '#v-dec.c360 #decBestCard.c360-gainmode.c360-detail>p:not(.c360-gc):not(.c360-comment),#v-dec.c360 #decBestCard.c360-gainmode.c360-detail>#dec-best-out{display:block!important}' +
+    '#v-dec.c360 #decBestCard.c360-gainmode .c88-best>div:first-child,#v-dec.c360 #decBestCard.c360-gainmode .c88-amount,' +
+    '#v-dec.c360 #decBestCard.c360-gainmode .c88-best>button,#v-dec.c360 #decBestCard.c360-gainmode .vd-cta-hint{display:none!important}' +
+    '#v-dec.c360 #decBestCard.c360-gainmode:not(.c360-gain-attente)>.c360-gc{display:block!important}' +
+    '#v-dec.c360 #decBestCard:not(.c360-gainmode)>.c360-gc,#v-dec.c360 #decBestCard.c360-gain-attente>.c360-gc{display:none!important}' +
+    '#decBestCard .c360-gc-t{margin:0 0 4px;font-size:15px;font-weight:700;color:var(--txt,#0f172a)}' +
+    '#decBestCard .c360-gc-m{margin:0 0 10px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;font-size:15px;color:var(--txt,#0f172a)}' +
+    '#decBestCard .c360-gc-m b{font-family:var(--mono,ui-monospace,monospace);font-size:28px;font-weight:800;letter-spacing:-.02em;color:#15803d}' +
+    '#decBestCard .c360-gc-an{font-family:var(--mono,ui-monospace,monospace);font-weight:700;color:#15803d}' +
+    'html:not(.vd-workspace-light) #decBestCard .c360-gc-m b,html:not(.vd-workspace-light) #decBestCard .c360-gc-an{color:#4ade80}' +
+    '#decBestCard .c360-gc-l{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:0}' +
+    '#decBestCard .c360-gc-l li{margin:0!important;padding:9px 0!important;border-top:1px solid #e3e8ee;font-size:14.5px;line-height:1.35;color:var(--txt,#0f172a)}' +
+    'html:not(.vd-workspace-light) #decBestCard .c360-gc-l li{border-top-color:rgba(255,255,255,.10)}' +
+    '#decBestCard .c360-gc-l li:first-child{border-top:0}' +
+    '#decBestCard .c360-gc-r{margin:0;font-size:14px;color:var(--mut,#64748b)}' +
+    '#v-dec.c360 #decBestCard.c360-gainmode .c360-comment{margin-top:12px}' +
+    /* Dès qu'un levier bouge : l'écart en valeur (le gain en grand), « J'en fais une décision » en vrai bouton, « Remettre à zéro » encadré. */
+    '#c360Bloc:not(.c360-repos) .c360-gain b{font-size:20px}' +
+    '#c360Bloc .c360-actions .c360-zero{border:1px solid #cbd5e1!important;background:transparent!important;color:var(--txt,#0f172a)!important;min-height:36px}' +
+    'html:not(.vd-workspace-light) #c360Bloc .c360-actions .c360-zero{border-color:rgba(255,255,255,.22)!important}' +
+    '#c360Bloc .c360-actions .c360-zero.c360-decider{background:#15803d!important;border-color:#15803d!important;color:#ffffff!important}';
   (doc.head || doc.documentElement).appendChild(css);
 
   /* ── Audit (décision 33 n° 7) : un sommaire des 6 images en tête, une ligne chacune avec son chiffre clé ; les 27
      chapitres repliés sous « Tout le détail ». Les images ne bougent pas (audit-recit-a27 : compteurs écrits au rendu,
      RENDU_RC, jouer(card) — L2 C350, L7) ; le chiffre clé est lu dans data-rc-count, la valeur finale, jamais dans le
-     texte qui compte. L'Audit reste en français (décision « Point 13 ») : pas de traduction ici. ── */
+     texte qui compte. Depuis la décision 41, le récit est traduit par la page : les chiffres clés sont lus tels qu'affichés,
+     dans la langue en cours. ── */
   function txt(e) { return e ? e.textContent.replace(/\s+/g, ' ').trim() : ''; }
   function compteur(e) {
     if (!e) return '';
     var n = Number(e.getAttribute('data-rc-count')); if (!isFinite(n)) return txt(e);
     return /€/.test(e.textContent) ? euros(n) : nombre(n, 0);
   }
+  /* Point 5 du contrôle visuel de l'Audit (L5, 28/10) : la ligne 2 lisait le dernier <b> de l'image 2 (« 6,7 € », le reste
+     avant impôt) puis le rejetait parce qu'il contient « € » : jamais de chiffre clé. Elle donne maintenant le poste le plus
+     lourd et sa part sur 100 € de CA HT, lus dans la légende de l'image (même valeur, même format, même langue que l'image),
+     sans le dernier point de la légende (« Reste avant impôt » ou « Il manque »). Rien n'est recalculé. */
+  function premierPoste(card) {
+    var li = [].slice.call(card.querySelectorAll('.rc-leg > li')).slice(0, -1), haut = null, max = -1;
+    li.forEach(function (l) {
+      var b = l.querySelector('b'); if (!b) return;
+      var v = parseFloat(txt(b).replace(/[^\d,.]/g, '').replace(',', '.'));
+      if (isFinite(v) && v > max) { max = v; haut = l; }
+    });
+    if (!haut) return '';
+    var vb = haut.querySelector('b'), nom = txt(haut).slice(0, Math.max(0, txt(haut).length - txt(vb).length)).trim();
+    return nom ? nom + ' · ' + txt(vb) : txt(vb);
+  }
   function chiffreCle(card, i) {
     var c = card.querySelectorAll('[data-rc-count]');
     if (i === 1) return c[0] ? compteur(c[0]) + '/100' : '';
-    if (i === 2) { var b = card.querySelectorAll('b'), d = b.length ? txt(b[b.length - 1]) : ''; return d && !/€/.test(d) ? '1er poste : ' + d : ''; }
+    if (i === 2) return premierPoste(card);
     if (i === 4) return c[0] ? compteur(c[0]) + ' / an' : '';
     if (i === 6) return '';
     return c[0] ? compteur(c[0]) : '';
@@ -413,5 +538,6 @@
   try { vueMesDecisions(); } catch (e) {}
   /* Simuler déjà dessiné avant le chargement de ce fichier : on le met en forme tout de suite. */
   try { if (doc.getElementById('decBody') && doc.querySelector('#decBody > .dec-card')) simuler(); } catch (e) {}
-  w.VerdictSimulerCourt = { version: 'C360', metier: metier, ordres: ORDRES, textes: D };
+  suivreDecBest();
+  w.VerdictSimulerCourt = { version: 'C360', metier: metier, ordres: ORDRES, textes: D, phrase: phrase, lignes: LIGNES };
 })(window);

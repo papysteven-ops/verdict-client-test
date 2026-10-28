@@ -592,6 +592,26 @@ root.VerdictDeclarerEtab=declarer;
   doc.addEventListener('click',function(e){var t=e.target,m=t&&t.closest&&t.closest('#mBackupReminder');if(!m)return;if(t.closest('button')&&Date.now()-Number(m.getAttribute('data-c306')||0)<800){e.preventDefault();e.stopImmediatePropagation();}},true);
   function brancher(){var f=root.verdictMaybeRemindBackup;if(typeof f!=='function'||f.__c306)return !!f;var g=function(){if(Date.now()-geste<1500){root.setTimeout(root.verdictMaybeRemindBackup,4000);return;}var r=f.apply(this,arguments);try{var m=doc.getElementById('mBackupReminder');if(m&&!m.getAttribute('data-c306'))m.setAttribute('data-c306',String(Date.now()));}catch(e){}return r;};g.__c306=true;root.verdictMaybeRemindBackup=g;return true;}
   if(!brancher()&&typeof root.setInterval==='function'){var k=0,t=root.setInterval(function(){if(brancher()||++k>20)root.clearInterval(t);},500);}})();
+/* C513 (A80, appui de C497) : en clair, la croix du rappel « Protégez votre historique » était verte et pleine, comme un bouton
+   d'action (son fond sombre, dans une feuille blanchie en CSS, la faisait prendre pour un bouton principal par le correcteur du thème
+   clair). Elle a son fond clair dès le premier dessin, comme les croix de « Mes établissements » ; le correcteur n'y touche plus. */
+(function(){try{if(!doc||doc.getElementById('a12-c513'))return;var s=doc.createElement('style');s.id='a12-c513';s.textContent='html.vd-workspace-light #mBackupReminder .sh-fermer,html.vd-workspace-light #mBackupReminder .vd366-x{background:#f3f5f7!important;background-image:none!important;color:#14202b!important;border-color:#cfd8e1!important;box-shadow:none!important}';(doc.head||doc.documentElement).appendChild(s);}catch(e){}})();
+/* C514 (A48, appui de C414) : dans la démo, la liste des modèles cochait « Brasserie de centre-ville » sous l'en-tête « Brasserie
+   Collet » (le dossier de présentation est le modèle Brasserie) et la rechoisir rechargeait un autre dossier, nom et chiffres changés.
+   Le modèle coché est celui qui est affiché : il porte son nom (le type de modèle dessous) et le rechoisir ne recharge rien. Hors
+   démonstration, en mode Test ou depuis le portefeuille avant tout modèle, rien ne change. */
+(function(){function demo(){try{return typeof root.modeleDansDemonstration==='function'&&root.modeleDansDemonstration()&&root.VERDICT_TEST_SESSION!==true&&!(root.VERDICT_DEMO_FROM_PORTFOLIO===true&&root.VERDICT_DEMO_PORTFOLIO_MODEL_ACTIVE!==true);}catch(e){return false;}}
+  function plat(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
+  function nommer(){var D=root.DB;if(!D||!D.modele||!demo())return;var nom=String(D.etab||'').trim();if(!nom)return;
+    var b=doc.querySelector('#mModeles button[onclick="pickModele(\''+D.modele+'\')"]');if(!b||b.querySelector('.c514-type'))return;
+    var t=b.querySelector('span[style*="flex:1"]');if(!t||!t.firstChild||t.firstChild.nodeType!==3)return;
+    var v=t.firstChild.nodeValue,pre=(v.match(/^[^A-Za-zÀ-ÿ0-9]*/)||[''])[0],type=v.slice(pre.length).trim();if(!type||plat(type)===plat(nom))return;
+    t.firstChild.nodeValue=pre+nom+' ';var s=doc.createElement('small');s.className='c514-type';s.style.cssText='display:block;font-weight:500;font-size:12.5px;color:var(--mut2);margin-top:2px';s.textContent=type;t.appendChild(s);}
+  function brancher(){var pk=root.pickModele,om=root.openModeles,p;if(typeof pk!=='function'||typeof om!=='function')return false;
+    if(!pk.__c514){var g=function(k){try{var D=root.DB;if(D&&D.modele===k&&demo()&&doc.getElementById('mModeles')){if(typeof root.closeModeles==='function')root.closeModeles();return;}}catch(e){}return pk.apply(this,arguments);};for(p in pk)if(Object.prototype.hasOwnProperty.call(pk,p))g[p]=pk[p];g.__c514=true;root.pickModele=g;}
+    if(!om.__c514){var h=function(){var r=om.apply(this,arguments);try{nommer();}catch(e){}return r;};for(p in om)if(Object.prototype.hasOwnProperty.call(om,p))h[p]=om[p];h.__c514=true;root.openModeles=h;}
+    return true;}
+  if(!brancher()&&typeof root.setInterval==='function'){var k=0,t=root.setInterval(function(){if(brancher()||++k>20)root.clearInterval(t);},500);}})();
 root.VerdictNomCompte=nomDuCompte;root.verdictNewEtabChooser=openChooser;root.verdictNewEtabModel=openModel;root.verdictNewEtabSame=openSame;root.verdictNewEtabFresh=openFresh;root.verdictNewEtabClose=closeSheet;
 root.verdictNewEtabCreateSame=createSame;root.verdictNewEtabCreateBlank=createBlank;root.verdictEtabDuplicate=duplicate;root.verdictDupFec=goFec;root.verdictDupEntry=goEntry;root.verdictDupRef=function(){try{if(typeof root.openRef==='function'){root.openRef();return;}}catch(e){}goFec();};
 root.VerdictEtabPortfolio={conceptKeys:CONCEPT_KEYS.slice(),duplicate:duplicate,duplicateRequestsKey:DUP_KEY,placeOf:placeOf};

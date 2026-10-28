@@ -18,7 +18,102 @@
   var E = 'cubic-bezier(.23,1,.32,1)';
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function txt(el) { return el ? String(el.textContent || '').replace(/\s+/g, ' ').trim() : ''; }
+  /* C473 (points 19 et 20) : en français, un montant ne se sépare jamais de son unité (« 2 910 € », « 75 % », « 84/100 »),
+     « : » et « ; » ne commencent jamais une ligne, et la phrase qui suit les deux-points d'un titre garde sa minuscule. */
+  function enFr() { try { return String(w.LOCALE || doc.documentElement.lang || 'fr').slice(0, 2).toLowerCase() === 'fr'; } catch (e) { return true; } }
+  function joli(s) { if (!enFr()) return s; return String(s).replace(/ : ([A-ZÀÂÉÈÊÎÔÙÛÇ])(?=[a-zà-ÿ’'])/g, function (m, c) { return ' : ' + c.toLowerCase(); }).replace(/(\d)\s+\/\s*(\d)/g, '$1/$2').replace(/(\d)[ ](€|%)/g, '$1\u00a0$2').replace(/ ([:;])/g, '\u00a0$1'); }
+  function majuscule(h) { if (!h || !enFr()) return; var tw = doc.createTreeWalker(h, 4, null), n, prec = '';
+    while ((n = tw.nextNode())) { var v = n.nodeValue, nv = v.replace(/([ \u00a0]:[ \u00a0]+)([A-ZÀÂÉÈÊÎÔÙÛÇ])(?=[a-zà-ÿ’'])/g, function (m, p, c) { return p + c.toLowerCase(); });
+      if (/[ \u00a0]:[ \u00a0]*$/.test(prec)) nv = nv.replace(/^([ \u00a0]*)([A-ZÀÂÉÈÊÎÔÙÛÇ])(?=[a-zà-ÿ’'])/, function (m, p, c) { return p + c.toLowerCase(); });
+      if (nv !== v) n.nodeValue = nv; prec = nv; } }
   function plat(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+  /* C490 (décision 63, point 16) : « {n} chapitres », la phrase de la liste, la couverture et le bouton de fin dans la langue active
+     (mêmes mots que les gabarits de Langues) ; le bouton « Fin de l'audit / Retour à l'Audit » n'est plus écrit en dur. */
+  function lgA() { try { return String(w.LOCALE || doc.documentElement.lang || 'fr').slice(0, 2).toLowerCase(); } catch (e) { return 'fr'; } }
+  var LX = {
+    fr: { c: ['chapitre', 'chapitres'], t: ['thème', 'thèmes'], p: '{n} chapitres · {b} exports', b: '{n} chapitres en {m}, tous calculés avec vos chiffres.', fin: ['Fin de l’audit', 'Retour à l’Audit'] },
+    en: { c: ['chapter', 'chapters'], t: ['theme', 'themes'], p: '{n} chapters · {b} exports', b: '{n} chapters in {m}, all calculated with your figures.', fin: ['End of the audit', 'Back to the Audit'] },
+    es: { c: ['capítulo', 'capítulos'], t: ['tema', 'temas'], p: '{n} capítulos · {b} exportaciones', b: '{n} capítulos en {m}, todos calculados con sus cifras.', fin: ['Fin de la auditoría', 'Volver a la auditoría'] },
+    it: { c: ['capitolo', 'capitoli'], t: ['tema', 'temi'], p: '{n} capitoli · {b} esportazioni', b: '{n} capitoli in {m}, tutti calcolati con i suoi dati.', fin: ['Fine dell’audit', 'Torna all’audit'] },
+    de: { c: ['Kapitel', 'Kapitel'], t: ['Thema', 'Themen'], p: '{n} Kapitel · {b} Exporte', b: '{n} Kapitel in {m}, alle mit Ihren Zahlen berechnet.', fin: ['Ende des Audits', 'Zurück zum Audit'] },
+    nl: { c: ['hoofdstuk', 'hoofdstukken'], t: ['thema', 'thema’s'], p: '{n} hoofdstukken · {b} exports', b: '{n} hoofdstukken in {m}, allemaal berekend met uw cijfers.', fin: ['Einde van de audit', 'Terug naar de audit'] },
+    pt: { c: ['capítulo', 'capítulos'], t: ['tema', 'temas'], p: '{n} capítulos · {b} exportações', b: '{n} capítulos em {m}, todos calculados com os seus números.', fin: ['Fim da auditoria', 'Voltar à auditoria'] }
+  };
+  function lx() { return LX[lgA()] || LX.fr; }
+  function lxChap(n) { return n + ' ' + lx().c[n > 1 ? 1 : 0]; }
+  function lxProfondeur(n) { return lx().p.replace('{n}', n).replace('{b}', 4); }
+  function lxPhrase(n, m) { return lx().b.replace('{n}', n).replace('{m}', m + ' ' + lx().t[m > 1 ? 1 : 0]); }
+  /* C491 (décision 63, points 9, 19, 20 ; défauts 10, 16, 17) : passe typographique de chaque chapitre, de la liste et du pied du
+     lecteur, nœud texte par nœud texte, après la traduction de Langues : milliers et unités insécables (%, €, points, jours, mois, an, h,
+     exports… dans chaque langue), une seule écriture « €/an », « · » attaché, vrai signe moins ; en français, « : ; ! ? » » jamais en
+     tête de ligne et « ci‑dessous » insécable ; ailleurs, « +€ » jamais coupé ; minuscule après « : » dans les titres (fr, en, es).
+     Idempotente : un second passage ne change rien, au repos plus rien ne bouge. */
+  var RX_UNITE = /(\d) (?=(?:%|€|(?:points?|jours?|mois|ans?|h|exports?|chapitres?|semaines?|lignes?|plats?|months?|days?|years?|weeks?|hours?|chapters?|lines?|meses|mes|días|día|años?|semanas?|horas?|capítulos?)(?![A-Za-zÀ-ÿ])))/g;
+  function typo(v, l) {
+    var s = String(v).replace(/(\d) (?=\d{3}(?!\d))/g, '$1 ').replace(RX_UNITE, '$1 ')
+      .replace(/(\d)[  ]+\/[  ]*(?=\d)/g, '$1/').replace(/(€[\d., ]*)[  ]*\/[  ]*(?=[A-Za-zÀ-ÿ])/g, '$1/⁠').replace(/(\d[  ]?h)\/(?=[a-zà-ÿ])/g, '$1/⁠')
+      .replace(/ ·/g, ' ·').replace(/× /g, '× ').replace(/(^|[\s (])-(?=[\d€])/g, '$1−');
+    if (l === 'fr') s = s.replace(/ ([:;!?»])/g, ' $1').replace(/« /g, '« ').replace(/ci-dessous/g, 'ci‑dessous');
+    else s = s.replace(/([+−])€/g, '$1⁠€');
+    if (l === 'es') s = s.replace(/ sin IVA/g, ' sin IVA');
+    return s;
+  }
+  var PROPRES = /^(Verdict|Brasserie|Bistrot|Pizzeria|Excel|Google|Uber|Deliveroo|Zenchef|TheFork|France|Paris|Europe|Urssaf|Serenity)$/;
+  function minuscules(h, l) {
+    if (l !== 'fr' && l !== 'en' && l !== 'es') return;
+    var rx = l === 'fr' ? /([  ]:[  ]+)([A-ZÀ-ÖØ-ÝÑ][a-zà-öø-ÿñ’']+)/g : /(:[  ]+)([A-ZÀ-ÖØ-ÝÑ][a-zà-öø-ÿñ’']+)/g, deb = l === 'fr' ? /[  ]:[  ]*$/ : /:[  ]*$/;
+    var bas = function (x, p, m) { return PROPRES.test(m) ? x : p + m.charAt(0).toLowerCase() + m.slice(1); };
+    var tw = doc.createTreeWalker(h, 4, null), n, prec = '';
+    while ((n = tw.nextNode())) { var v = n.nodeValue, nv = v.replace(rx, bas);
+      if (deb.test(prec)) nv = nv.replace(/^([  ]*)([A-ZÀ-ÖØ-ÝÑ][a-zà-öø-ÿñ’']+)/, bas);
+      if (nv !== v) n.nodeValue = nv; prec = nv; }
+  }
+  function typoArbre(root) {
+    if (!root || !root.isConnected) return; var l = lgA(), tw = doc.createTreeWalker(root, 4, null), n, prec = null;
+    while ((n = tw.nextNode())) {
+      var p = n.parentNode; if (!p || /^(SCRIPT|STYLE|OPTION|TEXTAREA)$/.test(p.nodeName)) continue;
+      var v = n.nodeValue, s = typo(v, l);
+      if (prec) { var pv = prec.nodeValue;
+        if (l === 'fr' && /^[:;!?»]/.test(s) && / $/.test(pv)) prec.nodeValue = pv.slice(0, -1) + ' ';
+        if (/€[\d., ]*[  ]*$/.test(pv) && /^[  ]*\/[  ]*(?=[A-Za-zÀ-ÿ])/.test(s)) s = s.replace(/^[  ]*\/[  ]*/, '/⁠'); }
+      if (s !== v) n.nodeValue = s; if (/\S/.test(s)) prec = n;
+    }
+    [].forEach.call(root.querySelectorAll('.au-h,.lx-page>.card>h3,.bb-tile b,.lx-pied b,.lx-som button'), function (h) { minuscules(h, l); });
+    [].forEach.call(root.querySelectorAll('.bb-tile b,.lx-pied b'), motEntier);
+    deuxLignes(root);
+  }
+  /* Décision 68 (point 2) : une ligne à 3 colonnes ou plus qui ne tient pas sur une ligne (chapitre 20 en espagnol) : libellé seul
+     au-dessus, valeurs ensemble dessous, à droite ; jamais un mot coupé. Le plus long mot du libellé est mesuré à sa police. */
+  var CNV = null;
+  function largeurMot(t, e) { try { CNV = CNV || doc.createElement('canvas'); var c = CNV.getContext('2d'), cs = w.getComputedStyle(e); c.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily; return c.measureText(t).width; } catch (x) { return 0; } }
+  function deuxLignes(root) {
+    [].forEach.call(root.querySelectorAll('.lx-page .au-ok'), function (row) {
+      var k = [].filter.call(row.children, function (e) { return e.offsetWidth > 0; }), lab = k[0];
+      if (k.length < 3 || !lab || !/flex:\s*1/.test(lab.getAttribute('style') || '')) return;
+      var mw = 0; String(lab.textContent).split(/\s+/).forEach(function (m) { mw = Math.max(mw, largeurMot(m, lab)); });
+      var cs = w.getComputedStyle(row), gap = parseFloat(cs.columnGap) || 0, dispo = row.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0), som = Math.ceil(mw);
+      for (var i = 1; i < k.length; i++) som += k[i].getBoundingClientRect().width + gap;
+      var deux = som > dispo + 0.5; if (row.classList.contains('lx-2l') !== deux) row.classList.toggle('lx-2l', deux);
+    });
+  }
+  /* C491 (défaut 11) : un titre trop long pour ses lignes (3 dans la liste, 2 dans le pied du lecteur) s'arrête au dernier mot entier,
+     plus jamais au milieu d'un mot (« démarr… ») */
+  function motEntier(b) {
+    if (!b.clientHeight || b.scrollHeight <= b.clientHeight + 1) return;
+    var m = String(b.textContent).replace(/…$/, '').split(' ');
+    while (m.length > 1 && b.scrollHeight > b.clientHeight + 1) { m.pop(); b.textContent = m.join(' ').replace(/[\s,;:·—–-]+$/, '') + '…'; }
+  }
+  /* Un observateur par zone (liste, lecteur) : la passe tourne dans la même image, juste après la traduction (la tâche est mise
+     en file pendant la notification des observateurs : celui de Langues a déjà traduit), jamais en différé visible. */
+  function suivreTypo(el) {
+    if (!el || el.__c491 || typeof MutationObserver !== 'function') return;
+    var prevu = false;
+    el.__c491 = new MutationObserver(function () { if (prevu) return; prevu = true; Promise.resolve().then(function () { prevu = false; try { typoArbre(el); } catch (e) {} }); });
+    el.__c491.observe(el, { childList: true, subtree: true, characterData: true });
+    /* liste repliée puis ouverte : les titres n'avaient aucune hauteur à la passe ; coupés au mot entier dès qu'ils s'affichent, avant le dessin */
+    if (typeof ResizeObserver === 'function') new ResizeObserver(function () { try { [].forEach.call(el.querySelectorAll('.bb-tile b,.lx-pied b'), motEntier); deuxLignes(el); } catch (e) {} }).observe(el);
+  }
 
   var THEMES = [
     { id: 'verdict', n: 'Le verdict', c: '#22c55e', ic: '<path d="M20 6 9 17l-5-5"/>', re: /audit premium|simulation estimative|lecture|raisonnement|probleme principal|verdict final/ },
@@ -37,11 +132,14 @@
     var bruts = [].slice.call(body.querySelectorAll('.av31-full .av31-full-body > .au-sc'));
     ['auditPreuves', 'sourcesEtat', 'sourcesVerite'].forEach(function (id) { var e = doc.getElementById(id); if (e && e.parentNode === body) bruts.push(e); });
     var L = bruts.map(function (el) {
-      var k = txt(el.querySelector('.au-tag')).split(' · ')[0], h = el.querySelector('.au-h,h2,h3'), t = txt(h);
+      var k = txt(el.querySelector('.au-tag')).split(' · ')[0], h = el.querySelector('.au-h,h2,h3'), t = joli(txt(h));
+      try { majuscule(h); } catch (e) {} /* C473 (point 20) : le titre du chapitre lui-même, nœud par nœud, une fois */
       /* C187 : un nom par chapitre (avant : « Preuves » trois fois de suite) et des mots simples dans le sommaire. */
       if (!k && el.classList.contains('card')) k = { auditPreuves: 'Chiffres clés', sourcesEtat: 'Vos sources', sourcesVerite: 'Source de référence' }[el.id] || 'Preuves';
+      /* C490 (défaut 18) : la carte « Qui fait foi » était la seule sans surtitre ; elle reçoit le sien, comme les autres chapitres */
+      if (k && el.classList.contains('card') && !el.querySelector('.au-tag')) { var tg = doc.createElement('div'); tg.className = 'au-tag'; tg.setAttribute('data-c490', ''); tg.textContent = k; el.insertBefore(tg, el.firstChild); }
       k = { 'Contrat de vérité': 'Niveau de preuve', 'Honnêteté': 'Limites de l’audit' }[k] || k;
-      var f = txt(el.querySelector('.au-eur,.au-big')).replace(/\s*·.*$/, '');
+      var f = joli(txt(el.querySelector('.au-eur,.au-big')).replace(/\s*·.*$/, ''));
       return { el: el, k: k, t: t, f: f.length > 26 ? '' : f, th: theme(k, t) };
     }).filter(function (x) { return x.t; });
     var ordre = [];
@@ -55,19 +153,20 @@
     if (ouvert >= 0 && !force) return; /* pendant la lecture, rien ne bouge */
     var L = relever(); if (!L.length) return;
     /* V28 (21/10) : la couverture du chapitre 1 dit le nombre réel de chapitres (elle écrivait « 20 » pour 27). */
-    [].forEach.call(body.querySelectorAll('[data-au-profondeur]'), function (e) { var t = L.length + ' chapitres · 4 exports'; if (e.textContent !== t) e.textContent = t; });
-    var cle = L.map(function (x) { return x.t; }).join('|');
+    [].forEach.call(body.querySelectorAll('[data-au-profondeur]'), function (e) { var t = lxProfondeur(L.length); if (e.textContent !== t) e.textContent = t; });
+    var cle = lgA() + '|' + L.map(function (x) { return x.t; }).join('|'); /* C490 : la liste est redessinée quand la langue change */
     var bib = doc.getElementById('vdBiblio');
     if (bib && bib.getAttribute('data-cle') === cle && bib.isConnected && !force) { CH = L; brancher(); return; }
     CH = L;
     if (!bib) { bib = doc.createElement('section'); bib.id = 'vdBiblio'; }
+    suivreTypo(bib);
     bib.setAttribute('data-cle', cle);
     var n = 0, html = '<header class="bb-head"><span class="bb-k">L’analyse complète</span><h2>Tout le détail, chapitre par chapitre</h2>' +
-      '<p>' + L.length + ' chapitres en ' + (function (n) { return n + (n > 1 ? ' thèmes' : ' thème'); })(THEMES.filter(function (T) { return L.some(function (x) { return x.th === T; }); }).length) + ', tous calculés avec vos chiffres.</p>' +
+      '<p>' + lxPhrase(L.length, THEMES.filter(function (T) { return L.some(function (x) { return x.th === T; }); }).length) + '</p>' +
       '<button type="button" class="bb-go" data-bb="0">Lire depuis le début<span aria-hidden="true">→</span></button></header>';
     THEMES.forEach(function (T) {
       var dans = L.filter(function (x) { return x.th === T; }); if (!dans.length) return;
-      html += '<section class="bb-theme" style="--t:' + T.c + '"><h3><span class="bb-ic">' + svg(T.ic, 'bb-svg') + '</span>' + esc(T.n) + '<small>' + dans.length + ' chapitre' + (dans.length > 1 ? 's' : '') + '</small></h3><ol class="bb-grid">' +
+      html += '<section class="bb-theme" style="--t:' + T.c + '"><h3><span class="bb-ic">' + svg(T.ic, 'bb-svg') + '</span>' + esc(T.n) + '<small>' + lxChap(dans.length) + '</small></h3><ol class="bb-grid">' +
         dans.map(function (x, j) {
           var i = n++;
           return '<li style="--j:' + j + '"><button type="button" class="bb-tile" data-bb="' + i + '"><span class="bb-n">' + (i < 9 ? '0' : '') + (i + 1) + '</span>' +
@@ -109,6 +208,7 @@
       '<div class="lx-corps"><div class="au-wrap lx-wrap"><div class="av31-full-body lx-page"></div></div></div>' +
       '<footer class="lx-pied"><button type="button" class="lx-av" data-lx="prec"><small>← Précédent</small><b></b></button><button type="button" class="lx-ap" data-lx="suiv"><small>Suivant →</small><b></b></button></footer></div></div>';
     body.appendChild(L);
+    suivreTypo(L);
     [].forEach.call(L.querySelectorAll('[data-lx]'), function (b) {
       b.addEventListener('click', function () { var a = b.getAttribute('data-lx'); if (a === 'fermer') fermer(); else if (a === 'prec') aller(ouvert - 1); else aller(ouvert + 1); });
     });
@@ -148,8 +248,8 @@
     lecteur.querySelector('.lx-prog i').style.transform = 'scaleX(' + ((i + 1) / CH.length).toFixed(4) + ')';
     var av = lecteur.querySelector('.lx-av'), ap = lecteur.querySelector('.lx-ap');
     av.disabled = i === 0; av.querySelector('b').textContent = i > 0 ? CH[i - 1].t : '';
-    ap.querySelector('small').textContent = i < CH.length - 1 ? 'Suivant →' : 'Fin de l’audit';
-    ap.querySelector('b').textContent = i < CH.length - 1 ? CH[i + 1].t : 'Retour à l’Audit';
+    ap.querySelector('small').textContent = i < CH.length - 1 ? 'Suivant →' : lx().fin[0];
+    ap.querySelector('b').textContent = i < CH.length - 1 ? CH[i + 1].t : lx().fin[1];
     /* V32 (21/10) : le sommaire défile seul jusqu'au chapitre lu (scrollIntoView faisait aussi défiler la page
        derrière le lecteur), et chaque chapitre s'ouvre en haut. */
     var som = lecteur.querySelector('.lx-som');
@@ -255,6 +355,21 @@
     /* Bibliothèque */
     '#vdBiblio{--bb-card:#ffffff;--bb-line:#e6ebf0;--bb-txt:#0f172a;--bb-sub:#64748b;--bb-hov:0 18px 40px rgba(15,23,42,.12);margin:34px 0 40px;font-family:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;color:var(--bb-txt)}' +
     'html.vd-workspace-dark #vdBiblio{--bb-card:#11161d;--bb-line:#222b36;--bb-txt:#f1f5f9;--bb-sub:#94a3b8;--bb-hov:0 20px 44px rgba(0,0,0,.5)}' +
+    /* C473 (décision 56, contrôle visuel de l'Audit) */
+    'html.vd-workspace-light #vdBiblio .bb-k{color:#15803d}' +
+    /* C473 (suite) : en clair, les couleurs de thème (vert, ambre, bleu…) des numéros, chiffres clés et surtitres sont foncées dès le premier dessin (≈ 5:1) ; le garde-contraste n'a plus à les retoucher */
+    'html.vd-workspace-light #vdBiblio .bb-n,html.vd-workspace-light #vdBiblio em,html.vd-workspace-light #vdLecteur .lx-th{color:color-mix(in srgb,var(--t) 62%,#000)}html.vd-workspace-light #vdLecteur .lx-page .au-tag{color:color-mix(in srgb,var(--t) 62%,#000)!important}html.vd-workspace-light #vdLecteur{--lx-sub:#556274}' +
+    '#vdLecteur .lx-pied .lx-ap{color:#05100a!important;-webkit-text-fill-color:#05100a}#vdLecteur .lx-pied .lx-ap small{color:rgba(5,16,10,.78)!important;-webkit-text-fill-color:rgba(5,16,10,.78)}' +
+    'html.vd-workspace-dark body #vdLecteur{--lx-paper:#11161d}html.vd-workspace-dark #vdLecteur .lx-page{color:#e5e7eb;border:1px solid #1e2733;box-shadow:none}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page .au-h,html.vd-workspace-dark #vdLecteur .lx-page>.card>h3{color:#f8fafc!important}html.vd-workspace-dark #vdLecteur .lx-page .au-p,html.vd-workspace-dark #vdLecteur .lx-page .note{color:#cbd5e1!important}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page .au-card{background:rgba(255,255,255,.04)!important;border-color:#222b36!important}html.vd-workspace-dark #vdLecteur .lx-page .au-k{color:#94a3b8!important}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page details,html.vd-workspace-dark #vdLecteur .lx-page .src-l{background:#161d26;border-color:#222b36}html.vd-workspace-dark #vdLecteur .lx-page .svt-l{border-bottom-color:#1e2733}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page{--txt:#e5e7eb;--mut:#a3adb8;--mut2:#94a3b8;--au-line:rgba(255,255,255,.1)}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#94a3b8"]{color:#94a3b8!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#f59e0b"]{color:#f59e0b!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#fbbf24"]{color:#fbbf24!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#a78bfa"]{color:#a78bfa!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#22c55e"]{color:#22c55e!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#34d399"]{color:#34d399!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#ef4444"]{color:#f87171!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#f87171"]{color:#f87171!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#60a5fa"]{color:#60a5fa!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#3b82f6"]{color:#60a5fa!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#f97316"]{color:#fb923c!important}html.vd-workspace-dark #vdLecteur .lx-page [style*="color:#168f43"]{color:#22c55e!important}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#94a3b8"]{color:#94a3b8!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#f59e0b"]{color:#f59e0b!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#fbbf24"]{color:#fbbf24!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#a78bfa"]{color:#a78bfa!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#22c55e"]{color:#22c55e!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#34d399"]{color:#34d399!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#ef4444"]{color:#f87171!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#f87171"]{color:#f87171!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#60a5fa"]{color:#60a5fa!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#3b82f6"]{color:#60a5fa!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#f97316"]{color:#fb923c!important}html.vd-workspace-dark #vdLecteur .lx-page :is(#auditPreuves,#sourcesEtat,#sourcesVerite) [style*="color:#168f43"]{color:#22c55e!important}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page :is(.au-source-card,.au-evidence-cell,.au-money-proof,.au-question,.au-truth-card,.au-refine-ready,.au-direct-ready,.au-question-brief>div,.au-model-facts>div,details,summary,#auditPreuves,#sourcesEtat,#sourcesVerite){background:#161d26!important;border-color:#222b36!important;color:#e5e7eb!important}html.vd-workspace-dark #vdLecteur .lx-page :is(.au-proof-type,.au-direct-badge){background:rgba(255,255,255,.06)!important;border-color:#2b3644!important}html.vd-workspace-dark #vdLecteur .lx-page :is(.au-direct-ready,.au-refine-ready,.au-truth-card,.au-question,.au-source-card)>:is(b,strong,legend,h4,h5){color:#f1f5f9!important}html.vd-workspace-dark #vdLecteur .lx-page :is(.au-direct-ready,.au-refine-ready,.au-truth-card,.au-question,.au-source-card,.au-evidence-cell)>:is(p,small,span:not([class])){color:#cbd5e1!important}html.vd-workspace-dark #vdLecteur .lx-page .au-source-card>i,html.vd-workspace-dark #vdLecteur .lx-page .au-question-brief>div>span{color:#93c5fd!important}html.vd-workspace-dark #vdLecteur .lx-page .au-model-facts>div>span{color:#a3adb8!important}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page :is(b,strong,summary,legend,.c88-eur):not([style*="color"]){color:#f1f5f9!important}html.vd-workspace-dark #vdLecteur .lx-page :is(p,.copy,li,td):not([style*="color"]):not(.au-p):not(.note){color:#cbd5e1!important}html.vd-workspace-dark #vdLecteur .lx-page :is(.au-truth-card,.au-evidence-cell,.au-money-proof,.au-question) span:not([class]){background:transparent!important}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page .note,html.vd-workspace-dark #vdLecteur .lx-page .au-state,html.vd-workspace-dark #vdLecteur .lx-page .chip{color:#cbd5e1!important}html.vd-workspace-dark #vdLecteur .lx-page .au-proof-type,html.vd-workspace-dark #vdLecteur .lx-page .au-direct-badge,html.vd-workspace-dark #vdLecteur .lx-page .au-phase-day{color:#86efac!important}html.vd-workspace-dark #vdLecteur .lx-page .au-state{background:#161d26;border-color:#222b36}' +
     '#vdBiblio .bb-head{padding:4px 4px 8px}#vdBiblio .bb-k{font:800 11.5px/1 -apple-system,system-ui;letter-spacing:.14em;text-transform:uppercase;color:#16a34a}' +
     '#vdBiblio .bb-head h2{margin:8px 0 6px;font:900 30px/1.08 -apple-system,system-ui;letter-spacing:-.025em;color:var(--bb-txt)}#vdBiblio .bb-head p{margin:0 0 16px;color:var(--bb-sub);font-size:15px}' +
     '#vdBiblio .bb-go{display:inline-flex;align-items:center;gap:12px;min-height:52px;padding:0 22px;border:0;border-radius:16px;background:linear-gradient(180deg,#22c55e,#16a34a);color:#05100a!important;-webkit-text-fill-color:#05100a;font:800 16px/1 -apple-system,system-ui;cursor:pointer;box-shadow:0 12px 28px rgba(22,163,74,.35);transition:transform .25s ' + E + '}' +
@@ -324,6 +439,24 @@
       '#vdLecteur .lx-som button span{flex:0 0 22px;font-variant-numeric:tabular-nums;opacity:.7}#vdLecteur .lx-som button:hover{background:var(--lx-btn);color:var(--lx-txt)}' +
       '#vdLecteur .lx-som button[aria-current]{background:var(--lx-btn);color:var(--lx-txt);font-weight:800;box-shadow:inset 3px 0 0 var(--t)}' +
       '#vdLecteur .lx-corps{padding:34px 40px 44px}#vdLecteur .lx-page{padding:52px 60px 56px!important}#vdLecteur .lx-pied{grid-template-columns:minmax(0,320px) minmax(0,420px);justify-content:space-between}}' +
+    /* C490 (décision 63, recontrôle visuel de l'Audit) */
+    '#vdLecteur span,#vdLecteur b,#vdLecteur strong{overflow-wrap:break-word}#vdLecteur .au-ok:has(>span[style*="flex:1"]){flex-wrap:wrap}#vdLecteur .au-ok>.p{flex:0 0 auto}#vdLecteur .au-ok>.p+span{flex:1 1 0%;min-width:0}#vdLecteur .au-ok>span[style*="flex:1"]:nth-last-child(n+3){flex-basis:5.5em;min-width:min-content}#vdLecteur .au-ok.lx-2l>span[style*="flex:1"]{flex:1 1 100%!important}#vdLecteur .au-ok.lx-2l>span[style*="flex:1"]+*{margin-left:auto}' + /* décision 68 (point 2) : le retour à la ligne ne joue plus que pour « libellé + valeur » */
+    '#vdLecteur .au-ok>span[style*="flex:1"]{flex:1 1 9em;min-width:min(9em,100%)}#vdLecteur .au-ok>span[style*="flex:1"]+b{flex:0 1 auto;max-width:100%;margin-left:auto;text-align:right}' +
+    '@media (max-width:400px){#auditBody #vdLecteur .au-money-item{grid-template-columns:9px minmax(0,1fr);grid-template-areas:"dot label" ". value" ". annual"}#auditBody #vdLecteur .au-money-item .annual{text-align:left}}' +
+    '@media (max-width:699px){#vdLecteur .au-ok.c88-step>span[style*="flex:1"]{flex-basis:100%}#vdLecteur .au-ok.c88-step>.c88-eur{margin-left:0;text-align:left}#vdLecteur .c88-eur br{display:none}#vdLecteur .c88-eur br+small{margin-left:10px}}' +
+    '#vdLecteur .lx-page :is(details.apr-l,.src-l){padding:6px 14px!important;border:1px solid #e8ecf1!important;border-radius:14px!important;margin:8px 0!important}html.vd-workspace-dark #vdLecteur .lx-page :is(details.apr-l,.src-l){border-color:#222b36!important}' +
+    '#vdLecteur .lx-page details.apr-l>summary{display:block;padding:10px 28px 10px 0;line-height:1.4}html.vd-workspace-dark body #vdLecteur .lx-page>:is(#auditPreuves,#sourcesEtat,#sourcesVerite){background:transparent!important;border:0!important}' +
+    '#vdLecteur .lx-page details>summary{list-style:none;position:relative;padding-right:28px}#vdLecteur .lx-page details>summary::-webkit-details-marker{display:none}' +
+    '#vdLecteur .lx-page details>summary::after{content:"";position:absolute;right:6px;top:50%;width:7px;height:7px;margin-top:-6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);opacity:.55;transition:transform .2s ease}#vdLecteur .lx-page details[open]>summary::after{transform:translateY(4px) rotate(225deg)}' +
+    '#vdLecteur .lx-page fieldset.au-question>legend{float:left;width:100%;padding:0;margin:0 0 12px}#vdLecteur .lx-page fieldset.au-question>legend+*{clear:both}' +
+    '#vdLecteur .lx-page span.au-state{display:inline-block;width:auto;min-height:0!important;padding:4px 10px!important;border-radius:999px}#vdLecteur .lx-page label.note>select{margin-left:8px}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page .au-direct-steps>span{background:#161d26!important;border-color:#2b3644!important;color:#e5e7eb!important}html.vd-workspace-dark #vdLecteur .lx-page .au-direct-steps i{background:#22c55e!important;color:#05100a!important}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page button.au-choice{background:#161d26!important;border:1px solid #2b3644!important;color:#e5e7eb!important}html.vd-workspace-dark #vdLecteur .lx-page button.au-choice.on{background:rgba(34,197,94,.14)!important;border-color:#22c55e!important;color:#86efac!important}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page .au-money-rank{background:#2b3644!important;color:#f1f5f9!important}' +
+    'html.vd-workspace-light #vdLecteur .lx-page .au-cover .au-tag{color:#4ade80!important}html.vd-workspace-light #vdLecteur .lx-page .au-ok>.p{color:#166534!important}#vdLecteur .lx-page .au-money-item[style*="--item-color:#64748b"]{--item-color:#94a3b8!important}' +
+    'html.vd-workspace-dark #vdLecteur .lx-page :is(.au-ok,summary,.au-refine-ready) small{color:#94a3b8!important}html.vd-workspace-dark #vdLecteur .lx-page .au-money-proof .check{color:#4ade80!important}' +
+    '#vdLecteur .lx-page .au-h,#vdLecteur .lx-page>.card>h3,#vdBiblio .bb-tile b,#vdBiblio .bb-head h2{text-wrap:balance}#vdLecteur .lx-page .au-p,#vdBiblio .bb-head p{text-wrap:pretty}' +
+    '@media (max-width:699px){#vdBiblio .bb-tile b{-webkit-line-clamp:3}}#vdLecteur .lx-pied b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-overflow:clip}#vdBiblio .bb-theme h3 small{white-space:nowrap}' +
     '@media (prefers-reduced-motion:reduce){#vdBiblio *,#vdLecteur *{transition:none!important;animation:none!important}#vdBiblio .bb-grid li,#vdBiblio .bb-head{opacity:1;transform:none}}';
   (doc.head || doc.documentElement).appendChild(css);
   construire(true);

@@ -12,7 +12,7 @@
   var w = window, doc = document;
   if (w.__vdFenetres366) return; w.__vdFenetres366 = true;
   var LIB = { fr: 'Fermer', en: 'Close', es: 'Cerrar', it: 'Chiudi', de: 'Schließen', nl: 'Sluiten', pt: 'Fechar' };
-  var FERMER = { mProd: 'closeProd', mSpace: 'closeSpace', vdSheet: 'vdFermer' };
+  var FERMER = { mProd: 'closeProd', mSpace: 'closeSpace', vdSheet: 'vdFermer', refSh: 'refRetourSecurise' }; /* D56 : #refSh (mode récent, « exercice clôturé ») se ferme par sa fonction */
   var ANNULER = /^(annuler|fermer|cancel|close|cerrar|cancelar|chiudi|annulla|schlie(ß|ss)en|abbrechen|sluiten|annuleren|fechar)$/i;
   function lib() { var l = String(doc.documentElement.lang || 'fr').slice(0, 2).toLowerCase(); return LIB[l] || LIB.fr; }
 
@@ -37,7 +37,11 @@
     /* Retour / Réception : nom et quantités sur toute la largeur, le champ à droite, le motif en dessous */
     '.ord-receive-row{flex-wrap:wrap!important}.ord-receive-row>div{flex:1 1 55%!important;min-width:140px!important}' +
     '.ord-receive-row>select[data-motif]{flex:1 1 100%!important;width:100%!important}' +
-    '.ord-receive-row span{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}';
+    '.ord-receive-row span{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}' +
+    /* D56 (contrôle visuel de l'Audit, point 21) : surtitre vert de #refSh lisible en clair dès la première image (5:1 sur blanc, avant 2,3:1) */
+    'html.vd-workspace-light body #refSh .ux-kicker{color:#15803d!important}' +
+    /* la croix est maintenant dans la feuille : le surtitre et le titre de #refP lui laissent sa place */
+    '#refSh #refP .ux-kicker,#refSh #refP>h3:first-of-type{padding-right:48px}';
   (doc.head || doc.documentElement).appendChild(css);
 
   /* Fenêtres concernées : celles de l'Inventaire (.modal), toute fenêtre déclarée modale ([role=dialog][aria-modal=true]) et les <dialog>.
@@ -45,17 +49,29 @@
   var SEL = '.modal,[role=dialog][aria-modal=true],dialog';
   function exclue(m) { return !!(m.closest('#vr16,#vr16-cache') || m.classList.contains('vd-failed') || m.id === 'pst83'); }
   function racine(m) { /* la feuille dans une couche (notifications, connexions) : la couche est la fenêtre */ var c = m.parentElement && m.parentElement.closest('.modal,[role=dialog][aria-modal=true]'); return c || m; }
-  function panneau(m) { if (m.tagName === 'DIALOG') return m; return m.querySelector('.sheet') || m.querySelector('[role=dialog]') || m.firstElementChild || m; }
+  /* D56 : jamais le fond assombri (.bgd) : #refSh posait sa croix hors de la feuille, en haut de l'écran, et morte */
+  function panneau(m) { if (m.tagName === 'DIALOG') return m; return m.querySelector('.sheet') || m.querySelector(':scope > .p') || m.querySelector('[role=dialog]') || [].filter.call(m.children, function (c) { return !c.classList.contains('bgd'); })[0] || m; }
   function aDejaCroix(m) {
     return [].some.call(m.querySelectorAll('button,[role=button]'), function (b) {
       return b.classList.contains('vd366-x') || /^\s*(×|✕|✖)\s*$/.test(b.textContent) || /^(fermer|close)/i.test(b.getAttribute('aria-label') || '');
     });
   }
   function croixDe(m) { return [].filter.call(m.querySelectorAll('button,[role=button]'), function (b) { return visible(b) && (/^\s*(×|✕|✖)\s*$/.test(b.textContent) || /^(fermer|close)/i.test(b.getAttribute('aria-label') || '')); })[0]; }
+  /* D56 : une seule croix. Celle de la fenêtre si elle en a une (même ajoutée plus tard, comme .sh-fermer de l'assistant du mode récent),
+     sinon la nôtre, dans la feuille. Revue quand la fenêtre s'ouvre ou que sa feuille change de contenu (aucune minuterie). */
+  function natives(m) { return [].filter.call(m.querySelectorAll('button,[role=button]'), function (b) { return !b.closest('.vd366-xbar') && (/^\s*(×|✕|✖)\s*$/.test(b.textContent) || /^(fermer|close)/i.test(b.getAttribute('aria-label') || '')); }); }
   function poser(m) {
-    if (!m || exclue(m)) return; m = racine(m); if (m.__vd366) return; var sh = panneau(m); if (!sh) return;
-    m.__vd366 = true; if (aDejaCroix(m)) return;
-    var bar = doc.createElement('div'); bar.className = 'vd366-xbar';
+    if (!m || exclue(m)) return; m = racine(m); var sh = panneau(m); if (!sh) return;
+    if (!m.__vd366) { m.__vd366 = true;
+      try { var o = new MutationObserver(function () { assurer(m); }); o.observe(m, { attributes: true, attributeFilter: ['class', 'open'] }); if (sh !== m) o.observe(sh, { childList: true }); } catch (e) {} }
+    assurer(m);
+  }
+  function assurer(m) {
+    var sh = panneau(m), bar = m.querySelector('.vd366-xbar');
+    if (natives(m).length) { if (bar) bar.remove(); return; }
+    if (bar && bar.parentNode === sh) return;
+    if (bar) bar.remove();
+    bar = doc.createElement('div'); bar.className = 'vd366-xbar';
     var x = doc.createElement('button'); x.type = 'button'; x.className = 'vd366-x'; x.textContent = '×'; x.setAttribute('aria-label', lib());
     x.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); fermer(m); });
     var zone = doc.createElement('div'); zone.className = 'vd366-zone'; zone.setAttribute('aria-hidden', 'true');

@@ -28,7 +28,8 @@
   w.addEventListener('verdict:intro-complete', function () { w.__vdAnimIntro = false; prochaineImage(vider); });
   /* Filet : si l'écran d'ouverture disparaît sans son événement, la file est vidée quand même. */
   var filet = setInterval(function () { if (!enIntro()) { clearInterval(filet); vider(); } }, 500);
-  setTimeout(function () { clearInterval(filet); vider(); }, 15000);
+  /* A17 / A19 (L6) : le filet de 15 s ne vide pas la file derrière le verrou (code faux, verrou réaffiché) ; il se réarme et attend l'ouverture */
+  (function secours() { setTimeout(function () { try { if (w.VerdictGarde && w.VerdictGarde.verrou()) { secours(); return; } } catch (e) {} clearInterval(filet); vider(); }, 15000); })();
 
   /* ── 2. Mémoire du moteur pendant un rendu ───────────────────────────────── */
   var calcul = w.moteur, memoire = null;

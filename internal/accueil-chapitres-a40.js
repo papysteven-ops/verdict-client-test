@@ -187,7 +187,8 @@
           if (t && m.parentElement !== t) deplacer(m, function () { t.appendChild(m); });
           if (!t) { t = d.createElement('details'); t.className = 'vx40-t'; t.setAttribute('data-m', id); /* C133 : déplié d'office dans Jour et Mois (Steven, 17/10) ; le client peut replier. */ if (c.ouvert && id !== 'calendrier') t.open = true; /* C222 : replié d’office */ t.innerHTML = '<summary><b></b><span></span><i aria-hidden="true">›</i></summary>'; m.before(t); deplacer(m, function () { t.appendChild(m); }); t.addEventListener('toggle', function () { signaler(d); if (t.open) d.defaultView.requestAnimationFrame(function () { aLaFin(t); }); }); }
           var tb = titre(m), rs = resume(m), sb = t.querySelector('summary>b'), sp = t.querySelector('summary>span');
-          if (sb.textContent !== tb) sb.textContent = tb; if (sp.textContent !== rs) sp.textContent = rs;
+          /* décision 58 : comparé à ce qu'a40 a écrit (le français), jamais au texte affiché (traduit) : sinon a40 et la traduction se le renvoient sans fin */
+          if (sb.__vx40t !== tb) { sb.textContent = tb; sb.__vx40t = tb; } if (sp.__vx40t !== rs) { sp.textContent = rs; sp.__vx40t = rs; }
           if (t.parentElement !== col) deplacer(t, function () { col.appendChild(t); });
         } else if (m.parentElement !== col) deplacer(m, function () { col.appendChild(m); });
       }

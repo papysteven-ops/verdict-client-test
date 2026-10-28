@@ -16,7 +16,7 @@
 <script id="vd-child" src="../../assets/runtime-a10/verdict-008-a2f03040bdcb.js"></script>
 <script id="p40-boot" src="../../assets/runtime-a10/verdict-009-6452a5b1c025.js"></script>
 <script id="vd-i18n-demande-c216">/* C216 (W57) : les dictionnaires de langue (1,5 Mo) ne se chargent plus tous au premier affichage. Au démarrage, seule la langue déjà choisie est lue ; une autre langue se charge quand on la choisit (voir vd-i18n-demande-c216b, après le moteur). */
-(function(){var M={de:"../../assets/runtime-a10/verdict-010-7a15e89b46f5.js",en:"../../assets/runtime-a10/verdict-011-c5bfedfd3d33.js",es:"../../assets/runtime-a10/verdict-012-61d7cb69baa1.js",it:"../../assets/runtime-a10/verdict-013-2f6162533c80.js",nl:"../../assets/runtime-a10/verdict-014-257baa532417.js",pt:"../../assets/runtime-a10/verdict-015-02a33493b679.js"};window.VERDICT_I18N_SRC=M;var l=null;try{l=window.localStorage.getItem("verdict_locale");}catch(e){}if(l&&Object.prototype.hasOwnProperty.call(M,l))document.write('<script data-mono="i18n/verdict-'+l+'.js" src="'+M[l]+'"><\/script>');})();</script>
+(function(){var M={de:"../../assets/runtime-a10/verdict-010-3a2be217f7f1.js",en:"../../assets/runtime-a10/verdict-011-292c499f882f.js",es:"../../assets/runtime-a10/verdict-012-7b4df2bfea96.js",it:"../../assets/runtime-a10/verdict-013-5d0be49e759e.js",nl:"../../assets/runtime-a10/verdict-014-d3bcf5aa18a6.js",pt:"../../assets/runtime-a10/verdict-015-102227114a2a.js"};window.VERDICT_I18N_SRC=M;var l=null;try{l=window.localStorage.getItem("verdict_locale");}catch(e){}if(l&&Object.prototype.hasOwnProperty.call(M,l))document.write('<script data-mono="i18n/verdict-'+l+'.js" src="'+M[l]+'"><\/script>');})();</script>
 
 
 <meta name="color-scheme" content="dark">
@@ -133,10 +133,10 @@ label.f input.bad{border-color:var(--red);background:rgba(239,68,68,.06)}
 .warn{display:none;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.3);color:#fdba74;
   border-radius:11px;padding:10px 13px;font-size:12.5px;line-height:1.5;margin-bottom:12px}
 .warn.on{display:block}
-.autoline{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.autoline{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}/* C493 */
 .autoline:last-child{border-bottom:none}
-.autoline b{font-family:var(--mono);font-weight:700}
-.autoline .k{color:var(--mut)}
+.autoline b{font-family:var(--mono);font-weight:700;white-space:nowrap;margin-left:auto;text-align:right;max-width:100%}/* C493 (A39) : un montant ne se coupe jamais */
+.autoline .k{color:var(--mut);min-width:0}
 .score-hero{display:flex;align-items:center;gap:16px;padding:6px 2px 12px}
 .ring{position:relative;width:116px;height:116px;flex:0 0 auto}
 /* V43.24 — scénario durable et révélation garantie : levier → impact → nouvelle position.
@@ -820,21 +820,19 @@ label.f.err>span{color:#ef4444}
 .au-jauge{height:8px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;margin:14px 0 8px}
 .au-jauge i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#f97316,#eab308,#22c55e)}
 .au-cta{position:sticky;bottom:calc(70px + env(safe-area-inset-bottom));z-index:60;margin:18px 0 6px}
+.lx-corps .au-cta{position:static;z-index:auto}/* C481 : dans le lecteur de l'Audit, jamais collé par-dessus le texte */
 
 
 /* ═══ TRANSITIONS DE VUE (V4.41) — le mouvement sert la compréhension ═══
    Une vue qui s'ouvre monte de quelques pixels et s'éclaircit. Rien ne bouge
    en permanence, rien ne clignote, et tout s'arrête si le téléphone demande
    des animations réduites. */
-.view.on{animation:vwIn .34s cubic-bezier(.22,.7,.3,1) both}
-/* V05 (21/10) : une vue arrive par un léger glissement, jamais depuis une opacité 0 : la page ne s'efface plus au changement d'onglet, même quand le fil principal est occupé (cadres en chargement) */
-@keyframes vwIn{from{transform:translateY(10px)}to{transform:none}}
-#pilBody>.card,#dataBody>.card{animation:cdIn .38s cubic-bezier(.22,.7,.3,1) both}
-#pilBody>.card:nth-child(2){animation-delay:.05s}
-#pilBody>.card:nth-child(3){animation-delay:.10s}
-#pilBody>.card:nth-child(4){animation-delay:.15s}
-#pilBody>.card:nth-child(5){animation-delay:.20s}
-@keyframes cdIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.view.on{animation:vwIn .2s ease-out both}
+/* V05 (21/10) : une vue n'arrive jamais depuis une opacité 0 (la page ne s'efface pas au changement d'onglet, même fil principal occupé).
+   C485 (décision 62, règle 27 bis) : fondu de 0,2 s depuis 0,6 d'opacité, sans aucun déplacement ni délai, pour les vues et les cartes. */
+@keyframes vwIn{from{opacity:.6}to{opacity:1}}
+#pilBody>.card,#dataBody>.card{animation:cdIn .2s ease-out both}
+@keyframes cdIn{from{opacity:.6}to{opacity:1}}
 @media (prefers-reduced-motion: reduce){
   .view.on,#pilBody>.card,#dataBody>.card{animation:none!important}
 }
@@ -1063,6 +1061,7 @@ html[data-v45-profile-transition] #dataBody>.card{animation:none!important;trans
 #auditBody .au-flow .bar{background:rgba(16,18,20,.06)}
 #auditBody .au-jauge{background:rgba(16,18,20,.07)}
 #auditBody .btn.sec{background:#fff;color:#101214;border-color:rgba(16,18,20,.14)}
+html:not(.vd-workspace-light) #auditBody #vdLecteur .btn.sec{background:var(--card2);color:var(--txt);border-color:var(--line)}/* C481 b : lecteur en sombre, le bouton secondaire suit le thème */
 #auditBody .btn.ghost{color:#101214;border-color:rgba(16,18,20,.14)}
 #auditBody .au-cover{position:relative;overflow:hidden;background:#101412;color:#f7faf8;
   border:0;border-radius:26px;padding:24px 22px;margin:4px 0 20px;
@@ -1164,7 +1163,7 @@ html[data-v45-profile-transition] #dataBody>.card{animation:none!important;trans
 #auditBody .au-money-item .value{grid-area:value;color:var(--item-color);font:850 16px/1.15 var(--mono);white-space:nowrap}
 #auditBody .au-money-item .annual{grid-area:annual;color:#7f8b84;font:650 8.8px/1.3 var(--mono);letter-spacing:.02em;text-align:right}
 #auditBody .au-money-item.dominant{border-color:color-mix(in srgb,var(--item-color) 50%,transparent);background:rgba(255,255,255,.07)}
-#auditBody .au-money-item.dominant::after{content:attr(data-rank);position:absolute;top:-7px;left:9px;padding:3px 6px;border-radius:999px;
+#auditBody .au-money-item.dominant .au-money-rank{position:absolute;top:-7px;left:9px;padding:3px 6px;border-radius:999px;
   background:#eef4f0;color:#121613;font:900 7.5px/1 var(--mono);letter-spacing:.08em}
 #auditBody .au-money-item.balance{background:color-mix(in srgb,var(--money-accent,#22c55e) 14%,rgba(255,255,255,.035));
   border-color:color-mix(in srgb,var(--money-accent,#22c55e) 46%,transparent)}
@@ -1788,7 +1787,7 @@ html.chr-cockpit .chips button{
 html.chr-cockpit .chips button:last-child{border-right:0}
 html.chr-cockpit .chips button.on{background:#20262c;color:#fff;box-shadow:inset 0 -2px var(--chr-accent)}
 .actbar .chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}
-.actbar .chips button{min-width:0;width:100%;padding-left:6px!important;padding-right:6px!important;font-size:12.5px;white-space:nowrap}
+.actbar .chips button{min-width:0;width:100%;padding-left:6px!important;padding-right:6px!important;font-size:12.5px;white-space:normal;line-height:1.15;text-align:center;overflow-wrap:normal}/* C508 (A62) : deux lignes au besoin, comme les onglets de Structure */
 html.chr-cockpit .btn{border-radius:9px;min-height:46px;box-shadow:none}
 html.chr-cockpit .btn:active{transform:none}
 
@@ -3030,12 +3029,12 @@ html.vd-workspace-light #v-carte.cp-active .cp-card {background:radial-gradient(
 <script src="../../assets/runtime-a10/verdict-024-4585efecb4ab.js"></script>
 <script data-verdict-models-external data-mono="./assets/modeles-chr-profonds-2026.js" src="../../assets/runtime-a10/verdict-025-3f205aa295b3.js"></script>
 <script data-mono="./dish-labor-v1.js" src="../../assets/runtime-a10/verdict-026-99d1632f83e6.js"></script>
-<script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/verdict-027-2ee1f78e3256.js"></script>
+<script data-mono="./operations-bridge-v1.js" src="../../assets/runtime-a10/verdict-027-39e3335d38ae.js"></script>
 <script data-mono="./brasserie-inventory-demo-v1.js" src="../../assets/runtime-a10/verdict-028-db3d40c9e516.js"></script>
-<script src="../../assets/runtime-a10/verdict-029-7d5a6ecee22f.js"></script>
+<script src="../../assets/runtime-a10/verdict-029-b5fbb8e2f255.js"></script>
 <script id="vd-i18n-demande-c216b">/* C216 (W57) : une langue choisie en cours de route se charge à ce moment-là, depuis le même fichier qu'avant. */
 (function(){var M=window.VERDICT_I18N_SRC||{},orig=window.verdictLoadLanguagePack;if(typeof orig!=="function")return;var wrap=function(l,done){var P=window.VERDICT_I18N_PACKS||{};if(l==="fr"||P[l]||!Object.prototype.hasOwnProperty.call(M,l))return orig(l,done);var s=document.createElement("script");s.src=M[l];s.setAttribute("data-verdict-language-pack",l);s.onload=s.onerror=function(){orig(l,done);};(document.head||document.documentElement).appendChild(s);};wrap.__c216=true;window.verdictLoadLanguagePack=wrap;})();</script>
-<script src="../../assets/runtime-a10/verdict-030-649604733cab.js"></script>
+<script src="../../assets/runtime-a10/verdict-030-e04de847c1b9.js"></script>
 <style>
 .gpulse{animation:gpk 1.6s ease 2;border-radius:12px}
 @keyframes gpk{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 14px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
@@ -3794,7 +3793,7 @@ label.f input,label.f select,.daily-guided-row .btn2{min-height:44px!important}
 }
 
 </style>
-<script data-mono="../../module-rail-v43-32.js" src="../../assets/runtime-a10/verdict-037-848887e9ddd8.js"></script>
+<script data-mono="../../module-rail-v43-32.js" src="../../assets/runtime-a10/verdict-037-1ff0f423bcb2.js"></script>
 <script data-module="verdict" data-mono="../../unified-module-bridge-v1.js">
 (function(){
   'use strict';
@@ -4207,11 +4206,19 @@ label.f input,label.f select,.daily-guided-row .btn2{min-height:44px!important}
     if(event.data.type==='verdict-unified-module-visible'&&module==='verdict'){window.__vdPilCache=false;if(window.__vdPilARafraichir){window.__vdPilARafraichir=false;try{if(typeof refreshAll==='function')refreshAll();else if(typeof drawPil==='function')drawPil();}catch(e){}}}
     if(event.data.type==='verdict-unified-module-visible'&&module==='verdict')flushPendingDemoResume();
     if(event.data.type==='verdict-unified-apply-operations'&&module==='verdict'){
-      var snapshot=event.data.snapshot,signature=operationsSignature(snapshot);if(!signature||signature===lastAppliedOperationsSignature)return;
+      var snapshot=event.data.snapshot,signature=operationsSignature(snapshot);
+      /* C539 (décision 69) : en démo préchargée, les opérations déjà là sont le point de départ ; un instantané identique de l'Inventaire ne change rien et ne redessine pas */
+      try{if(!lastAppliedOperationsSignature&&typeof DB==='object'&&DB&&DB.inventoryOperations&&DB.inventoryLink&&DB.inventoryLink.source==='demo-preloaded')lastAppliedOperationsSignature=operationsSignature(DB.inventoryOperations);}catch(e){}
+      if(!signature||signature===lastAppliedOperationsSignature)return;
       /* C424 (chef, audit A08) : à l'ouverture, l'Inventaire renvoie ses opérations (≈ 4 s) ; souvent rien ne change, l'Accueil était pourtant
          redessiné (refreshAll 127 à 138 ms, un saut). On compare les données avant et après : pas de changement, pas de redessin. */
+      /* C542 (décision 69 bis) : sur l'Accueil, les opérations reçues sont toujours appliquées, mais l'écran n'est redessiné que si ce qu'il affiche
+         change : action suivante (033), incidents et articles lus par « Rupture à décider » (052), commandes par statut ; ou si le reste du dossier change. */
+      var _cle542=function(){try{var o=typeof invOperationsCurrent==='function'?invOperationsCurrent():null;if(!o)return 'aucune';var s=o.summary||{},na=s.nextAction||null;return JSON.stringify([na&&[na.kind,na.level,na.title,na.detail,na.sourceId],s.orders||null,s.openIncidents,s.criticalStock,(o.incidents||[]).map(function(x){return x?[x.id,x.productName,x.requiredAt,x.deliveryAt,x.cutoffAt,!!x.scheduleVerified,x.actorName,x.replenishmentStatus,x.open,x.status]:null;}),((o.stock&&o.stock.items)||[]).map(function(x){return x?[x.name||x.label,x.status,x.onHand,x.minimum,x.neededBy||x.needBy||x.dueDate||x.needed]:null;})]);}catch(e){return '';}};
+      var _hors542=function(){try{var rp=function(k,v){if(k==='inventoryOperations'||k==='inventoryLink'||k==='inventoryBridge'||k==='_safety'||k==='veraUpdatedAt')return undefined;if(k==='cpCostWatch'&&v&&typeof v==='object'&&!Array.isArray(v)){var c={};Object.keys(v).forEach(function(x){if(x!=='at')c[x]=v[x];});return c;}return v;};return JSON.stringify(STORE,rp)+'|'+((typeof DB==='object'&&DB&&!(STORE&&STORE.etabs&&STORE.etabs[STORE.actif]===DB))?JSON.stringify(DB,rp):'');}catch(e){return '';}};
+      var _avCle542=_cle542(),_avHors542=_hors542();
       var _sig424=function(){try{return (typeof verdictSaveSignature==='function'?verdictSaveSignature():'')+'|'+(typeof verdictSignatureDossierHorsStore==='function'?verdictSignatureDossierHorsStore():'');}catch(e){return '?'+Date.now();}},_av424=_sig424();
-      try{if(typeof invOperationsAccept==='function'&&invOperationsAccept(snapshot,{server:false})){lastAppliedOperationsSignature=signature;if(_av424&&_av424.charAt(0)!=='?'&&_sig424()===_av424)return;if(window.__vdPilCache)window.__vdPilARafraichir=true;else if(typeof refreshAll==='function')refreshAll();else if(typeof drawPil==='function')drawPil();}}catch(e){}
+      try{if(typeof invOperationsAccept==='function'&&invOperationsAccept(snapshot,{server:false})){lastAppliedOperationsSignature=signature;if(_av424&&_av424.charAt(0)!=='?'&&_sig424()===_av424)return;if(typeof VIEW!=='undefined'&&VIEW==='pil'&&_avCle542&&_avCle542===_cle542()&&_avHors542&&_avHors542===_hors542())return;/* C542 : données appliquées, rien d'affiché ne change */if(window.__vdPilCache)window.__vdPilARafraichir=true;else if(typeof refreshAll==='function')refreshAll();else if(typeof drawPil==='function')drawPil();}}catch(e){}
     }
   });
   if(module==='verdict')window.addEventListener('verdict:intro-complete',flushPendingDemoResume);
@@ -4243,8 +4250,8 @@ label.f input,label.f select,.daily-guided-row .btn2{min-height:44px!important}
 
 </script>
 <script data-mono="./premium-viewport-v1.js" src="../../assets/runtime-a10/verdict-039-813a40955b00.js"></script>
-<script data-mono="../../daily-home-v25.js" src="../../assets/runtime-a10/verdict-040-bcfd10242f5d.js"></script>
-<script data-mono="./performance-integrated-v1.js" src="../../assets/runtime-a10/verdict-041-5983d810c4da.js"></script>
+<script data-mono="../../daily-home-v25.js" src="../../assets/runtime-a10/verdict-040-963f9dd79de2.js"></script>
+<script data-mono="./performance-integrated-v1.js" src="../../assets/runtime-a10/verdict-041-e8c273be18b1.js"></script>
 <script data-mono="../../daily-validation-v1.js" src="../../assets/runtime-a10/verdict-042-9489224c5241.js"></script>
 <script data-mono="../../interaction-polish-v26.js" src="../../assets/runtime-a10/verdict-043-7d9e3a9c6fe2.js"></script>
 <style  data-mono="./verdict-v44.css">
@@ -4403,8 +4410,8 @@ html[data-v45-profile="carte"] nav button[data-v="dec"], html[data-v45-profile="
 
 </style>
 <script data-mono="../../minimum-curve-r38.js" src="../../assets/runtime-a10/verdict-047-741555c57be1.js"></script>
-<script data-mono="../../module-profiles-v45.js" src="../../assets/runtime-a10/verdict-048-1d64066b07ce.js"></script>
-<script id="VERDICT_CLIENT_VOCABULARY" src="../../assets/runtime-a10/verdict-049-f99e2f5dbc1f.js"></script>
+<script data-mono="../../module-profiles-v45.js" src="../../assets/runtime-a10/verdict-048-5bcaa2bcad33.js"></script>
+<script id="VERDICT_CLIENT_VOCABULARY" src="../../assets/runtime-a10/verdict-049-7e222e03ca32.js"></script>
 <script data-mono="./data-safety-guard-v1.js" src="../../assets/runtime-a10/verdict-050-6f83c6c53ca4.js"></script>
 <style id="p40-css" data-mono="../../premium-r40.css">
 /* =====================================================================
@@ -4689,14 +4696,14 @@ html.p40-app .p41-detail{-webkit-tap-highlight-color:transparent;touch-action:ma
 
 </style>
 <script id="svc-js" data-mono="../../services-r56.js" src="../../assets/runtime-a10/verdict-051-cb7dd9b0158b.js"></script>
-<script id="p41-js" data-mono="../../premium-r41-ecrans.js" src="../../assets/runtime-a10/verdict-052-26df8c3e36dd.js"></script>
+<script id="p41-js" data-mono="../../premium-r41-ecrans.js" src="../../assets/runtime-a10/verdict-052-ee62d4d37ae3.js"></script>
 <script id="p40-js" data-mono="../../premium-r40.js" src="../../assets/runtime-a10/verdict-053-bcc3c3fa8f1f.js"></script>
 <script data-mono="../../carte-atelier-v1.js" src="../../assets/runtime-a10/verdict-054-2510938db652.js"></script>
-<script data-mono="../../carte-pages-v1.js" src="../../assets/runtime-a10/verdict-055-25e217cf9fc8.js"></script><style  data-mono="../../control-ecarts-v1.css">
+<script data-mono="../../carte-pages-v1.js" src="../../assets/runtime-a10/verdict-055-27f046342dff.js"></script><style  data-mono="../../control-ecarts-v1.css">
 .vc{margin:22px 0;color:var(--text,#edf0f3);font-size:16px;line-height:1.5}.vc h3{font-size:24px;margin:5px 0 12px}.vc p{color:var(--muted,#adb5bf)}.vc-eyebrow{font-size:13px;font-weight:800;letter-spacing:.08em}.vc-panel{border:1px solid #394048;border-radius:24px;background:linear-gradient(135deg,#1c252a,#101418 72%);padding:20px;margin:16px 0;overflow:hidden}.vc-panel summary{cursor:pointer;font-weight:750;font-size:18px;min-height:44px;align-content:center}.vc form{margin-top:16px}.vc label{display:block;margin:12px 0}.vc label>span{display:block;font-size:14px;margin-bottom:6px;color:#c3cbd2}.vc input:not([type=checkbox]){display:block;width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #485360;border-radius:12px;background:#090d10;color:#fff;font-size:16px;min-height:46px}.vc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.vc-grid strong{display:block;font-size:24px;margin-top:6px}.vc fieldset{border:1px solid #42494f;border-radius:16px;min-width:0;margin:14px 0}.vc button{border:1px solid #55745f;border-radius:14px;background:linear-gradient(135deg,#233c31,#17251f);color:#edf8f0;padding:13px 17px;font-size:16px;font-weight:700;min-height:46px;cursor:pointer;white-space:normal}.vc button:hover{border-color:#36ca77;box-shadow:0 0 18px #22c55e20}.vc button:focus-visible,.vc input:focus-visible{outline:3px solid #99b9ed;outline-offset:3px}.vc-confirm{display:flex!important;gap:12px;align-items:flex-start;font-size:14px}.vc-confirm input{margin-top:5px;min-width:20px;height:20px}.vc-result{border-left:4px solid #eab308;background:#eab30809;border-radius:16px;padding:16px;margin:16px 0}.vc-result>strong{display:block;font-size:30px;margin-top:12px}.vc-badge{display:inline-block;font-size:14px;border:1px solid #67737f;border-radius:18px;padding:5px 10px;color:#cad2da}.vc-badge[data-tone=green]{color:#3ade84;border-color:#268a51;background:#22c55e15}.vc-badge[data-tone=yellow]{color:#f6d858;border-color:#ab8526;background:#eab30815}.vc-priorities button{display:block;width:100%;text-align:left;margin:12px 0;border-left:4px solid #ef4444}.vc-priorities strong,.vc-priorities span{display:block}.vc [data-vc-error]{color:#ff9c91}.vc details[open]{animation:vc-reveal .22s ease-out}@keyframes vc-reveal{from{opacity:.6;transform:translateY(5px)}to{opacity:1;transform:none}}@media(max-width:380px){.vc-grid{grid-template-columns:1fr}.vc-panel{padding:16px}.vc h3{font-size:22px}}@media(prefers-reduced-motion:reduce){.vc details[open]{animation:none}}
 html.p40-app #v-pil.on.p41-on > #vc-main{display:block!important;order:2;scroll-margin-top:150px}#vc-entry{margin:8px 0 14px}#vc-entry button{width:100%}.vc-panel form{scroll-margin-top:150px}
 
-</style><script data-mono="../../control-ecarts-v1.js" src="../../assets/runtime-a10/verdict-056-aa2becbc59a9.js"></script><script data-mono="assets/vera/vera-life-5.2.0.js" src="../../assets/runtime-a10/verdict-057-8fdcc2ee508b.js"></script>
+</style><script data-mono="../../control-ecarts-v1.js" src="../../assets/runtime-a10/verdict-056-aa2becbc59a9.js"></script><script data-mono="assets/vera/vera-life-5.2.0.js" src="../../assets/runtime-a10/verdict-057-bf4c981fb256.js"></script>
 <script data-mono="../../connected-audit-v1.js" src="../../assets/runtime-a10/verdict-058-dfa65c9317d0.js"></script><!-- VERDICT_SUPPLIER_COMPARE_R246 -->
 <style>.vcmp[hidden]{display:none!important}.vcmp{position:fixed;inset:0;z-index:2147481000;background:#090d12;color:#f2f5f9;overflow:auto;padding:clamp(14px,3vw,32px);font:16px/1.5 system-ui,sans-serif;box-sizing:border-box}.vcmp *{box-sizing:border-box}.vcmp .vc-wrap{max-width:1150px;margin:auto;padding-bottom:calc(28px + env(safe-area-inset-bottom))}.vcmp header{display:flex;gap:16px;justify-content:space-between;align-items:center;position:sticky;top:-32px;background:#090d12;z-index:2;padding:14px 0}.vcmp h2{font-size:clamp(24px,4vw,34px);margin:0}.vcmp h3{margin:0 0 12px}.vcmp p{margin:10px 0}.vcmp .vc-muted{color:#aebdcc;font-size:14px}.vcmp .vc-box{border:1px solid #33414e;border-radius:18px;background:#131b24;padding:18px;margin:18px 0}.vcmp .vc-result{border-left:4px solid #53d8aa}.vcmp .vc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.vcmp label{display:flex;flex-direction:column;gap:6px;font-size:14px}.vcmp input:not([type=checkbox]),.vcmp select,.vcmp textarea{width:100%;min-height:44px;border:1px solid #506172;background:#090f16;color:#f2f5f9;border-radius:9px;padding:10px;font:16px system-ui}.vcmp textarea{min-height:100px}.vcmp button,.vcmp-entry{min-height:44px;border-radius:10px;padding:10px 16px;border:1px solid #536575;background:#202e3b;color:#f2f5f9;font:600 15px system-ui;cursor:pointer}.vcmp button:disabled{opacity:.45;cursor:default}.vcmp .vc-primary{background:#62ddb0;color:#07271e;border-color:#62ddb0}.vcmp .vc-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.vcmp .vc-scroll{overflow:auto}.vcmp table{border-collapse:collapse;width:100%;font-size:14px}.vcmp th,.vcmp td{text-align:left;padding:12px 8px;border-bottom:1px solid #33414e;vertical-align:top}.vcmp td select{min-width:190px}.vcmp input[type=checkbox]{width:20px;height:20px;accent-color:#62ddb0}.vcmp .vc-check{display:flex;flex-direction:row;align-items:flex-start;gap:10px;margin-top:12px}.vcmp .vc-warn{color:#ffd08a}.vcmp [role=alert]{white-space:pre-wrap;border-left:3px solid #ffb768;padding-left:12px}.vcmp summary{cursor:pointer;padding:8px 0;font-weight:650}.vcmp .vc-big{font-size:30px;font-weight:750}.vcmp-entry{margin:10px 0;width:auto}.vcmp :focus-visible{outline:3px solid #85baff;outline-offset:3px}@media(max-width:600px){.vcmp header{top:-14px}.vcmp .vc-grid{grid-template-columns:1fr}.vcmp .vc-box{padding:14px}.vcmp .vc-actions button{flex:1 1 145px}}
 </style>

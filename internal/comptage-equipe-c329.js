@@ -51,7 +51,8 @@
   }
   async function verifier(force) {
     var shell = window.VerdictUnifiedShell, ctx = shell && shell.getContext && shell.getContext(), centre = shell && shell.notifications;
-    if (running || document.hidden || !centre || typeof centre.ingestMany !== 'function' || !ctx || ctx.demo) return;
+    /* C443 (L4, audit A57) : jamais dans le Perso (ni l'atelier) : tout y reste sur l'appareil, aucun envoi vers …/api/workspace. */
+    if (window.VERDICT_PERSO === true || running || document.hidden || !centre || typeof centre.ingestMany !== 'function' || !ctx || ctx.demo) return;
     if (Date.now() - last < (force ? 10000 : PAS)) return;
     running = true; last = Date.now();
     try {
@@ -67,6 +68,8 @@
     } catch (e) {} finally { running = false; }
   }
   window.VerdictComptageEquipe = { envois: envois, alerte: alerte, verifier: verifier };
+  /* C443 (L4, audit A57) : Perso : ni minuteur ni écoute (retour sur l'appli, chargement). */
+  if (window.VERDICT_PERSO === true) return;
   setInterval(function () { verifier(false); }, 15000);
   window.addEventListener('focus', function () { verifier(true); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) verifier(true); });

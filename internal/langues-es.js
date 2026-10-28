@@ -97,7 +97,7 @@
     'Verdict ne propose pas d’aller au-delà de {a} de résultat : c’est ce que font les meilleurs établissements de votre type.': ['', 'Verdict se detiene en un {a} de rentabilidad, el nivel de los mejores establecimientos de su formato.', '', '', '', ''],
     'Chaque levier est borné par les repères de votre format ({b}) ; un client de plus consomme de la matière et des commissions ; tout est recalculé ensemble, sans rien compter deux fois.': ['', 'Cada palanca está limitada por las referencias de su formato ({b}); un cliente más consume materia prima y comisiones; el motor lo recalcula todo junto, sin doble cómputo.', '', '', '', ''],
     'Chaque levier est borné par les repères de votre format ; un client de plus consomme de la matière et des commissions ; tout est recalculé ensemble, sans rien compter deux fois.': ['', 'Cada palanca está limitada por las referencias de su formato; un cliente más consume materia prima y comisiones; el motor lo recalcula todo junto, sin doble cómputo.', '', '', '', ''],
-    'Coût humain : jusqu’à {v} / an possibles, proposés seulement après une décision d’organisation mesurée (onglet Équipe).': ['', 'Coste de personal: hasta {v} / año posibles, propuestos solo tras una decisión de organización medida (pestaña Equipo).', '', '', '', ''],
+    'Coût humain : jusqu’à {v} / an possibles, proposés seulement après une décision d’organisation mesurée (onglet Équipe).': ['', 'Coste de personal: hasta {v} / año posibles, propuestos solo tras una decisión de organización medida (pantalla Equipo).', '', '', '', ''],
     'Vos curseurs atteignent déjà la proposition réaliste de Verdict pour votre format ({b}). Au-delà, ce n’est plus réaliste.': ['', 'Sus cursores ya alcanzan la propuesta realista de Verdict para su formato ({b}). Más allá, ya no es realista.', '', '', '', ''],
     'Vos curseurs atteignent déjà la proposition réaliste de Verdict. Au-delà, ce n’est plus réaliste.': ['', 'Sus cursores ya alcanzan la propuesta realista de Verdict. Más allá, ya no es realista.', '', '', '', ''],
     'Vous avez poussé un curseur au-delà du réaliste : ce total n’est plus la proposition de Verdict, qui est de {v} par an.': ['', 'Ha llevado un cursor más allá de lo realista: este total ya no es la propuesta de Verdict, que es de {v} al año.', '', '', '', ''],
@@ -218,7 +218,7 @@
     'Comment valider une étape du plan 90 jours ?': ['', '¿Cómo validar una etapa del plan de 90 días?', '', '', '', ''],
     'Commencez par figer le point de départ. Le bouton d’une action lance ensuite un seul suivi dans Trajectoire avec l’indicateur, la source, la période et la date de contrôle. Un clic ne peut jamais rendre l’étape verte : il faut une nouvelle mesure comparable. Verdict conclut seulement amélioration observée, stable ou dégradation observée, sans inventer de causalité.': ['', 'Empiece por fijar el punto de partida. El botón de una acción lanza después un único seguimiento en Trayectoria con el indicador, la fuente, el periodo y la fecha de control. Un clic nunca puede poner la etapa en verde: hace falta una nueva medida comparable. Verdict solo concluye mejora observada, estable o deterioro observado, sin inventar causalidad.', '', '', '', ''],
     'Audit → « Le plan 90 jours », puis Audit → « Mes actions » pour mesurer à l’échéance.': ['', 'Más → Auditoría → Plan de 90 días, luego Más → Trayectoria para medir al vencimiento.', '', '', '', ''],
-    'Demander : Indice de sérénité, TVA, chiffre minimum, audit…': ['', 'Preguntar: Índice de serenidad, IVA, punto de equilibrio, auditoría…', '', '', '', ''],
+    'Demander : Indice de sérénité, TVA, chiffre minimum, audit…': ['', 'Preguntar: Índice de serenidad, IVA, cifra mínima, auditoría…', '', '', '', ''],
     'Nouvelle version de Verdict': ['', 'Nueva versión de Verdict', '', '', '', ''],
     'Vos saisies sont enregistrées avant la mise à jour.': ['', 'Sus datos se guardan antes de la actualización.', '', '', '', ''],
     'Mettre à jour': ['', 'Actualizar', '', '', '', ''],
@@ -396,22 +396,22 @@
     'Coût total de l’équipe divisé par le CA HT saisi.': ['', 'Coste total del equipo dividido por la facturación sin IVA introducida.', '', '', '', ''],
     'Contribution HT par plat après commission et matière. Commission sur base HT uniquement.': ['', 'Contribución sin IVA por plato tras comisión y materia. Comisión solo sobre base sin IVA.', '', '', '', ''],
     'Montant hors taxes correspondant au TTC saisi.': ['', 'Importe sin IVA correspondiente al importe con IVA introducido.', '', '', '', ''],
-    'Un seul passage : fichier comptable + export de caisse': ['', 'Un solo paso: archivo contable + exportación de caja', '', '', '', ''],
-    'Vos deux notes d’un coup. Le fichier comptable (FEC) donne la': ['', 'Sus dos notas de una vez. El archivo contable (FEC) da la', '', '', '', ''],
-    'Étape 1 : déposez votre fichier comptable dans la carte juste au-dessus. Vous pouvez aussi commencer par l’export de caisse ci-dessous : l’analyse de votre carte n’attend pas le fichier comptable.': ['', 'Paso 1: deposite su archivo contable en la tarjeta de arriba. También puede empezar por la exportación de caja de abajo: el análisis de su carta no espera al archivo contable.', '', '', '', ''],
+    'Un seul passage : fichier comptable + export de caisse': ['', 'Un solo paso: documento contable + exportación de caja', '', '', '', ''],
+    'Vos deux notes d’un coup. Le fichier comptable (FEC) donne la': ['', 'Sus dos notas de una vez. El documento contable (FEC) da la', '', '', '', ''],
+    'Étape 1 : déposez votre fichier comptable dans la carte juste au-dessus. Vous pouvez aussi commencer par l’export de caisse ci-dessous : l’analyse de votre carte n’attend pas le fichier comptable.': ['', 'Paso 1: deposite su documento contable en la tarjeta de arriba. También puede empezar por la exportación de caja de abajo: el análisis de su carta no espera al documento contable.', '', '', '', ''],
     'Saisissez ici uniquement le travail propre à ce plat. Le travail des préparations communes est déjà réparti depuis leurs fiches de lot. Ce montant sert à connaître le vrai coût du plat : il n’est jamais retiré une seconde fois de votre résultat, où les salaires sont déjà comptés.': ['', 'Introduzca aquí solo el trabajo propio de este plato. El trabajo de las preparaciones comunes ya se reparte desde sus fichas de lote. Este importe sirve para conocer el coste real del plato: nunca se resta una segunda vez de su resultado, donde los salarios ya están contados.', '', '', '', ''],
-    'Étape 1 : déposez votre fichier comptable dans la carte juste au-dessus. Vous pouvez aussi commencer par l’export de caisse ci-dessous : la note Carte n’attend pas la Structure.': ['', 'Paso 1: deposite su archivo contable en la tarjeta de arriba. También puede empezar por la exportación de caja de abajo: la nota Carta no espera a la Estructura.', '', '', '', ''],
-    'J’autorise l’analyse locale de cet export pour préremplir la carte de cet établissement. Le fichier n’est ni envoyé ni conservé.': ['', 'Autorizo el análisis local de esta exportación para rellenar la carta de este establecimiento. El archivo no se envía ni se conserva.', '', '', '', ''],
+    'Étape 1 : déposez votre fichier comptable dans la carte juste au-dessus. Vous pouvez aussi commencer par l’export de caisse ci-dessous : la note Carte n’attend pas la Structure.': ['', 'Paso 1: deposite su documento contable en la tarjeta de arriba. También puede empezar por la exportación de caja de abajo: la nota Carta no espera a la Estructura.', '', '', '', ''],
+    'J’autorise l’analyse locale de cet export pour préremplir la carte de cet établissement. Le fichier n’est ni envoyé ni conservé.': ['', 'Autorizo el análisis local de esta exportación para rellenar la carta de este establecimiento. El documento no se envía ni se conserva.', '', '', '', ''],
     'Export de caisse appliqué': ['', 'Exportación de caja aplicada', '', '', '', ''],
     'Compléter mes recettes': ['', 'Completar mis recetas', '', '', '', ''],
     'Un autre mois': ['', 'Otro mes', '', '', '', ''],
     'Cochez d’abord l’autorisation d’analyse locale': ['', 'Marque primero la autorización de análisis local', '', '', '', ''],
-    'fichier déjà importé': ['', 'archivo ya importado', '', '', '', ''],
+    'fichier déjà importé': ['', 'documento ya importado', '', '', '', ''],
     'Ces articles vendus n’ont pas de fiche. Vera propose une catégorie, le prix lu dans la caisse et une recette de départ copiée d’un plat proche — vous vérifiez, elle n’invente aucune quantité.': ['', 'Estos artículos vendidos no tienen ficha. Vera propone una categoría, el precio leído en la caja y una receta inicial copiada de un plato parecido: usted verifica, ella no inventa ninguna cantidad.', '', '', '', ''],
     'Aucun plat proche : la fiche sera créée vide, recette à saisir.': ['', 'Ningún plato parecido: la ficha se creará vacía, receta por introducir.', '', '', '', ''],
     'Créer ces plats et appliquer les ventes': ['', 'Crear estos platos y aplicar las ventas', '', '', '', ''],
     'Appliquer les ventes': ['', 'Aplicar las ventas', '', '', '', ''],
-    'Ce fichier a déjà été importé : aucune vente doublée': ['', 'Este archivo ya se importó: ninguna venta duplicada', '', '', '', ''],
+    'Ce fichier a déjà été importé : aucune vente doublée': ['', 'Este documento ya se importó: ninguna venta duplicada', '', '', '', ''],
     'Ventes de la caisse appliquées': ['', 'Ventas de la caja aplicadas', '', '', '', ''],
     'OPTION 1 · RECOMMANDÉE': ['', 'OPCIÓN 1 · RECOMENDADA', '', '', '', ''],
     'Déposez votre document comptable': ['', 'Deposite su documento contable', '', '', '', ''],
@@ -496,17 +496,17 @@
     'Votre compte': ['', 'Su cuenta', '', '', '', ''],
     'encore {n} jours d’essai': ['', 'quedan {n} días de prueba', '', '', '', ''],
     'encore 1 jour d’essai': ['', 'queda 1 día de prueba', '', '', '', ''],
-    'Choisir ma formule': ['', 'Elegir mi fórmula', '', '', '', ''],
+    'Choisir ma formule': ['', 'Elegir mi cálculo', '', '', '', ''],
     'Passer à Pro': ['', 'Pasar a Pro', '', '', '', ''],
     'Gérer mon abonnement': ['', 'Gestionar mi suscripción', '', '', '', ''],
-    'Créer votre compte démarre l’essai de 14 jours, sans carte ; la formule se choisit ensuite depuis votre compte, et vos données restent les vôtres.': ['', 'Crear su cuenta inicia la prueba de 14 días, sin tarjeta; después elige la fórmula desde su cuenta, y sus datos siguen siendo suyos.', '', '', '', ''],
+    'Créer votre compte démarre l’essai de 14 jours, sans carte ; la formule se choisit ensuite depuis votre compte, et vos données restent les vôtres.': ['', 'Crear su cuenta inicia la prueba de 14 días, sin tarjeta; después elige la cálculo desde su cuenta, y sus datos siguen siendo suyos.', '', '', '', ''],
     'Créer mon compte · 14 jours d’essai': ['', 'Crear mi cuenta · 14 días de prueba', '', '', '', ''],
     'J’ai déjà un compte': ['', 'Ya tengo una cuenta', '', '', '', ''],
     'Le serveur de comptes ne répond pas sur cet appareil pour l’instant : la page Compte s’ouvrira, la connexion se fera dès qu’il sera joignable.': ['', 'El servidor de cuentas no responde en este dispositivo por ahora: la página Cuenta se abrirá y la conexión se hará en cuanto esté disponible.', '', '', '', ''],
     '1 établissement inclus.': ['', '1 establecimiento incluido.', '', '', '', ''],
     'Tout établissement réel supplémentaire coûte 39 € HT/mois (390 € HT/an) en Pilotage ou 69 € HT/mois (690 € HT/an) en Pro, après confirmation.': ['', 'Cada establecimiento real adicional cuesta 39 € sin IVA/mes (390 € sin IVA/año) en Pilotage o 69 € sin IVA/mes (690 € sin IVA/año) en Pro, tras confirmación.', '', '', '', ''],
     'Pendant l’essai, cet établissement est compris. Ensuite, il s’ajoute à votre abonnement : +{a} € HT par mois, ou +{b} € HT par an en Pro ; +{c} € HT par mois, ou +{d} € HT par an en Pilotage.': ['', 'Durante la prueba, este establecimiento está incluido. Después, se añade a su suscripción: +{a} € sin IVA al mes, o +{b} € sin IVA al año en Pro; +{c} € sin IVA al mes, o +{d} € sin IVA al año en Pilotage.', '', '', '', ''],
-    'Cet établissement s’ajoute à votre abonnement {p} : +{a} € HT par mois, ou +{b} € HT par an en formule annuelle.': ['', 'Este establecimiento se añade a su suscripción {p}: +{a} € sin IVA al mes, o +{b} € sin IVA al año con la fórmula anual.', '', '', '', ''],
+    'Cet établissement s’ajoute à votre abonnement {p} : +{a} € HT par mois, ou +{b} € HT par an en formule annuelle.': ['', 'Este establecimiento se añade a su suscripción {p}: +{a} € sin IVA al mes, o +{b} € sin IVA al año con la cálculo anual.', '', '', '', ''],
     'Quel type d’établissement ?': ['', '¿Qué tipo de establecimiento?', '', '', '', ''],
     'Votre type d’établissement': ['', 'Su tipo de establecimiento', '', '', '', ''],
     'Choisit vos repères de comparaison (panier, équipe, matière) et les conseils qui en découlent. Votre Indice, lui, ne dépend pas du type.': ['', 'Elige sus referencias de comparación (ticket medio, equipo, materia) y los consejos que se derivan. Su Índice, en cambio, no depende del tipo.', '', '', '', ''],
@@ -531,9 +531,9 @@
     'Simuler · avec Verdict Pro': ['', 'Simular · con Verdict Pro', '', '', '', ''],
     'Coût par service · avec Verdict Pro': ['', 'Coste por servicio · con Verdict Pro', '', '', '', ''],
     'Achats · avec Verdict Pro': ['', 'Compras · con Verdict Pro', '', '', '', ''],
-    'Simuler une décision et voir son effet sur votre année fait partie de Verdict Pro (129 € HT/mois). Votre formule Pilotage garde le jour, le mois, l’année, la structure, la carte et l’équipe.': ['', 'Simular una decisión y ver su efecto en su año forma parte de Verdict Pro (129 € sin IVA/mes). Su fórmula Pilotage conserva el día, el mes, el año, la estructura, la carta y el equipo.', '', '', '', ''],
-    'Savoir quels services paient l’équipe, heure par heure, fait partie de Verdict Pro (129 € HT/mois). Votre formule Pilotage garde l’équipe à l’année et au mois.': ['', 'Saber qué servicios pagan al equipo, hora a hora, forma parte de Verdict Pro (129 € sin IVA/mes). Su fórmula Pilotage conserva el equipo por año y por mes.', '', '', '', ''],
-    'Vos achats par poste, vos factures et le suivi des prix font partie de Verdict Pro (129 € HT/mois). Votre formule Pilotage garde la carte et le coût de chaque plat.': ['', 'Sus compras por partida, sus facturas y el seguimiento de precios forman parte de Verdict Pro (129 € sin IVA/mes). Su fórmula Pilotage conserva la carta y el coste de cada plato.', '', '', '', ''],
+    'Simuler une décision et voir son effet sur votre année fait partie de Verdict Pro (129 € HT/mois). Votre formule Pilotage garde le jour, le mois, l’année, la structure, la carte et l’équipe.': ['', 'Simular una decisión y ver su efecto en su año forma parte de Verdict Pro (129 € sin IVA/mes). Su cálculo Pilotage conserva el día, el mes, el año, la estructura, la carta y el equipo.', '', '', '', ''],
+    'Savoir quels services paient l’équipe, heure par heure, fait partie de Verdict Pro (129 € HT/mois). Votre formule Pilotage garde l’équipe à l’année et au mois.': ['', 'Saber qué servicios pagan al equipo, hora a hora, forma parte de Verdict Pro (129 € sin IVA/mes). Su cálculo Pilotage conserva el equipo por año y por mes.', '', '', '', ''],
+    'Vos achats par poste, vos factures et le suivi des prix font partie de Verdict Pro (129 € HT/mois). Votre formule Pilotage garde la carte et le coût de chaque plat.': ['', 'Sus compras por partida, sus facturas y el seguimiento de precios forman parte de Verdict Pro (129 € sin IVA/mes). Su cálculo Pilotage conserva la carta y el coste de cada plato.', '', '', '', ''],
     'Verdict a reconnu : {a}. Ces lignes sont cochées : un seul « Valider les lignes cochées » les enregistre et met leur prix réel dans vos fiches. Décochez une ligne pour l’écarter.': ['', 'Verdict ha reconocido: {a}. Estas líneas están marcadas: un solo clic en validar las guarda y pone su precio real en sus fichas. Desmarque una línea para descartarla.', '', '', '', ''],
     'Fiches matière et coûts de travail complets.': ['', 'Fichas de materia y costes de trabajo completos.', '', '', '', ''],
     '{a} fiches matière incomplètes.': ['', '{a} fichas de materia incompletas.', '', '', '', ''],
@@ -596,7 +596,7 @@
     'Pour vos {n} établissements': ['', 'Para sus {n} establecimientos', '', '', '', ''],
     'Pour vos {n} établissements · votre tarif fondateur': ['', 'Para sus {n} establecimientos · su tarifa de fundador', '', '', '', ''],
     'votre tarif fondateur': ['', 'su tarifa de fundador', '', '', '', ''],
-    'Votre formule': ['', 'Su fórmula', '', '', '', ''],
+    'Votre formule': ['', 'Su cálculo', '', '', '', ''],
     'La 1re année': ['', 'El primer año', '', '', '', ''],
     'Ensuite': ['', 'Después', '', '', '', ''],
     'Les modèles fictifs de démonstration sont gratuits et ne créent jamais un établissement facturé.': ['', 'Los modelos ficticios de demostración son gratuitos y nunca crean un establecimiento facturado.', '', '', '', ''],
@@ -665,7 +665,7 @@
     'IMPORTANT · {n}/100': ['', 'IMPORTANTE · {n}/100', '', '', '', ''],
     'Année de l’historique': ['', 'Año del historial', '', '', '', ''],
     '{n} mois datés · dernier en cours': ['', '{n} meses fechados · el último en curso', '', '', '', ''],
-    'Chaque mois face à son point mort': ['', 'Cada mes frente a su punto de equilibrio', '', '', '', ''],
+    'Chaque mois face à son point mort': ['', 'Cada mes frente a su cifra mínima', '', '', '', ''],
     'Données fictives · CA HT, minimum comptable HT et résultat avant impôt. Charges fixes et salaires de la structure de démonstration, amortissements inclus ; consommation issue des inventaires. Le mois en cours reste partiel.': ['', 'Datos ficticios · facturación sin IVA, mínimo contable sin IVA y resultado antes de impuestos. Gastos fijos y salarios de la estructura de demostración, amortizaciones incluidas; consumo procedente de los inventarios. El mes en curso sigue siendo parcial.', '', '', '', ''],
     'Données fictives · CA HT, seuil du mois HT (charges du mois ÷ taux de marge du mois) et résultat avant impôt. Charges fixes et salaires de la structure de démonstration, amortissements inclus ; consommation issue des inventaires. Le mois en cours reste partiel. Ce seuil n’est pas le minimum du mois de l’Accueil, qui répartit le minimum annuel selon la saison, TTC.': ['', 'Datos ficticios · facturación sin IVA, umbral del mes sin IVA (gastos del mes ÷ tasa de margen del mes) y resultado antes de impuestos. Gastos fijos y salarios de la estructura de demostración, amortizaciones incluidas; consumo procedente de los inventarios. El mes en curso sigue siendo parcial. Este umbral no es el mínimo del mes de Inicio, que reparte el mínimo anual según la temporada, con IVA.', '', '', '', ''],
     'CA HT : {a} · seuil du mois (HT) : {b}': ['', 'Facturación sin IVA: {a} · umbral del mes (sin IVA): {b}', '', '', '', ''],
@@ -739,11 +739,11 @@
     'Mode avancé · coller un export brut': ['', 'Modo avanzado · pegar una exportación en bruto', '', '', '', ''],
     'Réservé aux exports CSV. Ne saisissez pas un chiffre isolé.': ['', 'Reservado a exportaciones CSV. No introduzca una cifra aislada.', '', '', '', ''],
     'Télécharger le document modèle': ['', 'Descargar el documento modelo', '', '', '', ''],
-    'Télécharger le fichier modèle': ['', 'Descargar el archivo modelo', '', '', '', ''],
+    'Télécharger le fichier modèle': ['', 'Descargar el documento modelo', '', '', '', ''],
     'Les journées identiques sont ignorées. Un conflit reste visible avant validation.': ['', 'Las jornadas idénticas se ignoran. Un conflicto queda visible antes de validar.', '', '', '', ''],
     'Aucune donnée prête à importer.': ['', 'Ningún dato listo para importar.', '', '', '', ''],
     'Aucun import ne se fait sans prévisualisation valide puis confirmation.': ['', 'Ninguna importación se hace sin una vista previa válida y luego confirmación.', '', '', '', ''],
-    'Mois du fichier': ['', 'Mes del archivo', '', '', '', ''],
+    'Mois du fichier': ['', 'Mes del documento', '', '', '', ''],
     'Coût de l’équipe structurée': ['', 'Coste del equipo estructurado', '', '', '', ''],
     '👥 Coût de l’équipe structurée': ['', '👥 Coste del equipo estructurado', '', '', '', ''],
     'Dirigeants actifs (temps pleins)': ['', 'Responsables activos (jornadas completas)', '', '', '', ''],
@@ -1195,7 +1195,7 @@
     'Minimum du mois entier TTC': ['', 'Mínimo del mes completo con IVA', '', '', '', ''],
     'Avance à ce jour': ['', 'Adelanto hasta hoy', '', '', '', ''],
     'Retard à ce jour': ['', 'Retraso hasta hoy', '', '', '', ''],
-    'même estimation que l’onglet Année': ['', 'misma estimación que la pestaña Año', '', '', '', ''],
+    'même estimation que l’onglet Année': ['', 'misma estimación que la pantalla Año', '', '', '', ''],
     'Moyenne par jour ouvert': ['', 'Media por día abierto', '', '', '', ''],
     'Projeté': ['', 'Proyectado', '', '', '', ''],
     '{n} jours saisis, projection {a} : estimation de fin de mois, elle s’affine à chaque journée saisie.': ['', '{n} días introducidos, proyección {a}: estimación de fin de mes, se afina con cada jornada introducida.', '', '', '', ''],
@@ -2183,8 +2183,8 @@
     'même compte · aucune recopie · essai en cours : encore {j} jours de Pro complet · ensuite, à vous de choisir : Pilotage {a} € HT/mois ({b} € HT/an) ou Pro {c} € HT/mois ({d} € HT/an) pour un établissement, +{e} € HT/mois en Pilotage ou +{f} € HT/mois en Pro par établissement en plus': ['', 'misma cuenta · sin volver a teclear · prueba en curso: quedan {j} días de Pro completo · después, usted elige: Pilotage {a} € sin IVA/mes ({b} € sin IVA/año) o Pro {c} € sin IVA/mes ({d} € sin IVA/año) para un establecimiento, +{e} € sin IVA/mes en Pilotage o +{f} € sin IVA/mes en Pro por establecimiento adicional', '', '', '', ''],
     'même compte · aucune recopie · essai en cours : encore {j} jour de Pro complet · ensuite, à vous de choisir : Pilotage {a} € HT/mois ({b} € HT/an) ou Pro {c} € HT/mois ({d} € HT/an) pour un établissement, +{e} € HT/mois en Pilotage ou +{f} € HT/mois en Pro par établissement en plus': ['', 'misma cuenta · sin volver a teclear · prueba en curso: queda {j} día de Pro completo · después, usted elige: Pilotage {a} € sin IVA/mes ({b} € sin IVA/año) o Pro {c} € sin IVA/mes ({d} € sin IVA/año) para un establecimiento, +{e} € sin IVA/mes en Pilotage o +{f} € sin IVA/mes en Pro por establecimiento adicional', '', '', '', ''],
     'même compte · aucune recopie · essai en cours de Pro complet · ensuite, à vous de choisir : Pilotage {a} € HT/mois ({b} € HT/an) ou Pro {c} € HT/mois ({d} € HT/an) pour un établissement, +{e} € HT/mois en Pilotage ou +{f} € HT/mois en Pro par établissement en plus': ['', 'misma cuenta · sin volver a teclear · prueba de Pro completo en curso · después, usted elige: Pilotage {a} € sin IVA/mes ({b} € sin IVA/año) o Pro {c} € sin IVA/mes ({d} € sin IVA/año) para un establecimiento, +{e} € sin IVA/mes en Pilotage o +{f} € sin IVA/mes en Pro por establecimiento adicional', '', '', '', ''],
-    'même compte · aucune recopie · votre formule : Pilotage': ['', 'misma cuenta · sin volver a teclear · su fórmula: Pilotage', '', '', '', ''],
-    'même compte · aucune recopie · votre formule : Pro': ['', 'misma cuenta · sin volver a teclear · su fórmula: Pro', '', '', '', ''],
+    'même compte · aucune recopie · votre formule : Pilotage': ['', 'misma cuenta · sin volver a teclear · su cálculo: Pilotage', '', '', '', ''],
+    'même compte · aucune recopie · votre formule : Pro': ['', 'misma cuenta · sin volver a teclear · su cálculo: Pro', '', '', '', ''],
     'même compte · aucune recopie · confirmez l’adresse de votre compte pour ouvrir vos {k} jours de Pro complet': ['', 'misma cuenta · sin volver a teclear · confirme la dirección de su cuenta para abrir sus {k} días de Pro completo', '', '', '', ''],
     'même compte · aucune recopie · votre essai est terminé, l’Inventaire reste gratuit · Pilotage {a} € HT/mois ({b} € HT/an) ou Pro {c} € HT/mois ({d} € HT/an) pour un établissement, +{e} € HT/mois en Pilotage ou +{f} € HT/mois en Pro par établissement en plus': ['', 'misma cuenta · sin volver a teclear · su prueba ha terminado, el Inventario sigue gratis · Pilotage {a} € sin IVA/mes ({b} € sin IVA/año) o Pro {c} € sin IVA/mes ({d} € sin IVA/año) para un establecimiento, +{e} € sin IVA/mes en Pilotage o +{f} € sin IVA/mes en Pro por establecimiento adicional', '', '', '', ''],
     'même compte · aucune recopie · {k} jours de Pro complet offerts avec votre compte, sans carte bancaire · ensuite, à vous de choisir : Pilotage {a} € HT/mois ({b} € HT/an) ou Pro {c} € HT/mois ({d} € HT/an) pour un établissement, +{e} € HT/mois en Pilotage ou +{f} € HT/mois en Pro par établissement en plus': ['', 'misma cuenta · sin volver a teclear · {k} días de Pro completo gratis con su cuenta, sin tarjeta bancaria · después, usted elige: Pilotage {a} € sin IVA/mes ({b} € sin IVA/año) o Pro {c} € sin IVA/mes ({d} € sin IVA/año) para un establecimiento, +{e} € sin IVA/mes en Pilotage o +{f} € sin IVA/mes en Pro por establecimiento adicional', '', '', '', ''],
@@ -3106,8 +3106,8 @@
     'Aucune hausse de prix, comme dans Décisions et Simuler.': ['', 'Ninguna subida de precios, como en Decisiones y Simular.', '', '', '', ''],
     'Ce gain ({r} par mois) vient de {q} : Simuler et l’Audit ne le comptent pas.': ['', 'Esta ganancia ({r} al mes) viene de {q}: Simular y la Auditoría no la cuentan.', '', '', '', ''],
     'Établissement non créé': ['', 'Establecimiento no creado', '', '', '', ''],
-    'Votre session n’est plus ouverte dans cet onglet : reconnectez-vous depuis la page Compte, puis recommencez. Rien n’a été créé.': ['', 'Su sesión ya no está abierta en esta pestaña: vuelva a conectarse desde la página Cuenta y empiece de nuevo. No se ha creado nada.', '', '', '', ''],
-    'Le serveur n’a pas reconnu la session de cet onglet (jeton de sécurité refusé deux fois). Rechargez la page, puis recommencez. Rien n’a été créé.': ['', 'El servidor no ha reconocido la sesión de esta pestaña (token de seguridad rechazado dos veces). Recargue la página y empiece de nuevo. No se ha creado nada.', '', '', '', ''],
+    'Votre session n’est plus ouverte dans cet onglet : reconnectez-vous depuis la page Compte, puis recommencez. Rien n’a été créé.': ['', 'Su sesión ya no está abierta en esta pantalla: vuelva a conectarse desde la página Cuenta y empiece de nuevo. No se ha creado nada.', '', '', '', ''],
+    'Le serveur n’a pas reconnu la session de cet onglet (jeton de sécurité refusé deux fois). Rechargez la page, puis recommencez. Rien n’a été créé.': ['', 'El servidor no ha reconocido la sesión de esta pantalla (token de seguridad rechazado dos veces). Recargue la página y empiece de nuevo. No se ha creado nada.', '', '', '', ''],
     'Votre compte demande la vérification en deux étapes : confirmez-la dans la page Compte, puis revenez créer l’établissement. Rien n’a été créé.': ['', 'Su cuenta exige la verificación en dos pasos: confírmela en la página Cuenta y vuelva para crear el establecimiento. No se ha creado nada.', '', '', '', ''],
     'Seul le propriétaire du compte peut ajouter un établissement. Rien n’a été créé.': ['', 'Solo el propietario de la cuenta puede añadir un establecimiento. No se ha creado nada.', '', '', '', ''],
     'Donnez un nom à l’établissement, puis recommencez. Rien n’a été créé.': ['', 'Dé un nombre al establecimiento y empiece de nuevo. No se ha creado nada.', '', '', '', ''],
@@ -3156,8 +3156,8 @@
     'Cette brasserie fictive sert à comprendre le fonctionnement avant de saisir vos propres chiffres.': ['', 'Esta brasserie ficticia sirve para entender el funcionamiento antes de introducir sus propias cifras.', '', '', '', ''],
     'Données fictives': ['', 'Datos ficticios', '', '', '', ''],
     'Aucun montant affiché ici ne décrit votre établissement.': ['', 'Ningún importe mostrado aquí describe su establecimiento.', '', '', '', ''],
-    'Score illustratif': ['', 'Puntuación ilustrativa', '', '', '', ''],
-    'Il montre la lecture de Verdict, mais ne devient jamais un score final.': ['', 'Muestra la lectura de Verdict, pero nunca se convierte en una puntuación final.', '', '', '', ''],
+    'Score illustratif': ['', 'Índice de serenidad ilustrativa', '', '', '', ''],
+    'Il montre la lecture de Verdict, mais ne devient jamais un score final.': ['', 'Muestra la lectura de Verdict, pero nunca se convierte en un índice de serenidad final.', '', '', '', ''],
     'Quand vous êtes prêt': ['', 'Cuando esté listo', '', '', '', ''],
     '« À mon tour » ouvre le parcours adapté : établissement ouvert, période en cours, création ou reprise.': ['', '«Me toca» abre el recorrido adecuado: establecimiento abierto, período en curso, creación o traspaso.', '', '', '', ''],
     'Voir une décision complète': ['', 'Ver una decisión completa', '', '', '', ''],
@@ -3334,7 +3334,6 @@
     'Coût de la nourriture d’après vos fiches {a} du CA, hors boissons (repère {b}) ; écart nourriture entre vos achats (exercice {y}, {c} du CA) et vos fiches ({d}) : {p} points de pertes, portions ou offerts invisibles. Un tiers de chaque écart, par pas de 0,5 point.': ['', 'Coste de la comida según sus fichas {a} de la facturación, sin bebidas (referencia {b}); diferencia de comida entre sus compras (ejercicio {y}, {c} de la facturación) y sus fichas ({d}): {p} puntos de pérdidas, porciones o invitaciones invisibles. Un tercio de cada diferencia, en pasos de 0,5 puntos.', '', '', '', ''],
     'Coût de la nourriture d’après vos fiches {a} du CA, hors boissons (repère {b}). Un tiers de chaque écart, par pas de 0,5 point.': ['', 'Coste de la comida según sus fichas {a} de la facturación, sin bebidas (referencia {b}). Un tercio de cada diferencia, en pasos de 0,5 puntos.', '', '', '', ''],
     'Coût de la nourriture à {a} du CA, hors boissons ; repère médian {b}. Un tiers de l’écart, par pas de 0,5 point.': ['', 'Coste de la comida al {a} de la facturación, sin bebidas; referencia mediana {b}. Un tercio de la diferencia, en pasos de 0,5 puntos.', '', '', '', ''],
-    '{w} Réduit pour ne pas dépasser {x} de rentabilité, le niveau des meilleurs établissements de votre format.': ['', '{w} Reducido para no superar el {x} de rentabilidad, el nivel de los mejores establecimientos de su formato.', '', '', '', ''],
     'Minimum dépassé de {m}': ['', 'Mínimo superado en {m}', '', '', '', ''],
     '{m} sous le minimum du jour': ['', '{m} por debajo del mínimo del día', '', '', '', ''],
     '{m} au-dessus du minimum du jour': ['', '{m} por encima del mínimo del día', '', '', '', ''],
@@ -3897,7 +3896,7 @@
     '{x} · compté par {p}': ['', '{x} · contado por {p}', '', '', '', ''],
     '{d} · tout compté': ['', '{d} · todo contado', '', '', '', ''],
     'Protégez votre historique': ['', 'Proteja su historial', '', '', '', ''],
-    'Une copie automatique existe dans ce navigateur. Téléchargez aussi un fichier pour pouvoir récupérer Verdict si cet appareil est perdu ou remplacé.': ['', 'Existe una copia automática en este navegador. Descargue también un archivo para poder recuperar Verdict si este dispositivo se pierde o se sustituye.', '', '', '', ''],
+    'Une copie automatique existe dans ce navigateur. Téléchargez aussi un fichier pour pouvoir récupérer Verdict si cet appareil est perdu ou remplacé.': ['', 'Existe una copia automática en este navegador. Descargue también un documento para poder recuperar Verdict si este dispositivo se pierde o se sustituye.', '', '', '', ''],
     'Télécharger ma sauvegarde': ['', 'Descargar mi copia de seguridad', '', '', '', ''],
     '{a} encaissés sur un objectif de {b}. Cela représente {p} sous cet objectif. Ce pourcentage compare cette journée à son objectif, pas à la veille. {r}.': ['', '{a} cobrados frente a un mínimo de {b}. Eso supone {p} por debajo de este mínimo. Este porcentaje compara este día con su mínimo, no con el día anterior. {r}.', '', '', '', ''],
     '{a} encaissés sur un objectif de {b}. Cela représente {p} au-dessus de cet objectif. Ce pourcentage compare cette journée à son objectif, pas à la veille. {r}.': ['', '{a} cobrados frente a un mínimo de {b}. Eso supone {p} por encima de este mínimo. Este porcentaje compara este día con su mínimo, no con el día anterior. {r}.', '', '', '', ''],
@@ -4171,8 +4170,8 @@
     'Supprimer le compte : votre compte et toutes vos données sont effacés définitivement {num} jours après la demande. D’ici là, vous pouvez l’annuler en vous reconnectant.': ['', 'Eliminar la cuenta: su cuenta y todos sus datos se borran definitivamente {num} días después de la solicitud. Hasta entonces, puede cancelarlo volviendo a iniciar sesión.', '', '', '', ''],
     'Connexion à terminer pour {a} : entrez le code de votre application d’authentification.': ['', 'Inicio de sesión por terminar para {a}: introduzca el código de su aplicación de autenticación.', '', '', '', ''],
     'Un nouveau lien de confirmation part à {a}.': ['', 'Se envía un nuevo enlace de confirmación a {a}.', '', '', '', ''],
-    '{num} établissements dans votre compte. Les onglets sont calculés par rôle côté serveur.': ['', '{num} establecimientos en su cuenta. Las pestañas se calculan por rol en el servidor.', '', '', '', ''],
-    '1 établissement dans votre compte. Les onglets sont calculés par rôle côté serveur.': ['', '1 establecimiento en su cuenta. Las pestañas se calculan por rol en el servidor.', '', '', '', ''],
+    '{num} établissements dans votre compte. Les onglets sont calculés par rôle côté serveur.': ['', '{num} establecimientos en su cuenta. Las pantallas se calculan por rol en el servidor.', '', '', '', ''],
+    '1 établissement dans votre compte. Les onglets sont calculés par rôle côté serveur.': ['', '1 establecimiento en su cuenta. Las pantallas se calculan por rol en el servidor.', '', '', '', ''],
     '{a} · {b} · arrivée sur {c}': ['', '{a} · {b} · llegada a {c}', '', '', '', ''],
     'Nouvelle adresse confirmée : {a}. C’est désormais celle de votre compte pour vous connecter.': ['', 'Nueva dirección confirmada: {a}. Ahora es la de su cuenta para iniciar sesión.', '', '', '', ''],
     'Vous êtes connecté avec {a}. Ce lien choisit un nouveau mot de passe pour {b} : saisissez-le ci-dessous. Toutes les sessions de ce compte seront ensuite fermées et vous vous reconnecterez. Pour garder votre session, fermez simplement cette page.': ['', 'Ha iniciado sesión con {a}. Este enlace elige una nueva contraseña para {b}: introdúzcala a continuación. Después se cerrarán todas las sesiones de esta cuenta y volverá a iniciar sesión. Para conservar su sesión, simplemente cierre esta página.', '', '', '', ''],
@@ -4371,10 +4370,10 @@
     'commission deliveroo {a} → {b}': ['', 'comisión Deliveroo {a} → {b}', '', '', '', ''],
     'commission autre plateforme {a} → {b}': ['', 'comisión otra plataforma {a} → {b}', '', '', '', ''],
     'commandes par jour {a} / jour → {b} / jour': ['', 'pedidos al día {a} / día → {b} / día', '', '', '', ''],
-    'Exporter toutes mes données : un fichier JSON avec votre compte et les données des établissements auxquels vous avez accès, selon vos droits. Aucun mot de passe ni secret n’y figure. Le serveur demande votre mot de passe pour le préparer.': ['', 'Exportar todos mis datos: un archivo JSON con su cuenta y los datos de los establecimientos a los que tiene acceso, según sus permisos. No incluye ninguna contraseña ni secreto. El servidor le pide su contraseña para prepararlo.', '', '', '', ''],
+    'Exporter toutes mes données : un fichier JSON avec votre compte et les données des établissements auxquels vous avez accès, selon vos droits. Aucun mot de passe ni secret n’y figure. Le serveur demande votre mot de passe pour le préparer.': ['', 'Exportar todos mis datos: un documento JSON con su cuenta y los datos de los establecimientos a los que tiene acceso, según sus permisos. No incluye ninguna contraseña ni secreto. El servidor le pide su contraseña para prepararlo.', '', '', '', ''],
     'Exporter toutes mes données': ['', 'Exportar todos mis datos', '', '', '', ''],
     'Saisissez votre mot de passe actuel pour préparer l’export.': ['', 'Introduzca su contraseña actual para preparar la exportación.', '', '', '', ''],
-    'Export prêt : votre navigateur enregistre le fichier « {a} ».': ['', 'Exportación lista: su navegador guarda el archivo «{a}».', '', '', '', ''],
+    'Export prêt : votre navigateur enregistre le fichier « {a} ».': ['', 'Exportación lista: su navegador guarda el documento «{a}».', '', '', '', ''],
     'Se déconnecter ?': ['', '¿Cerrar sesión?', '', '', '', ''],
     'La déconnexion se fait sur la page Compte, rubrique « Sécurité et connexion ». Vos données restent sur votre compte.': ['', 'El cierre de sesión se hace en la página Cuenta, sección «Seguridad y acceso». Sus datos permanecen en su cuenta.', '', '', '', ''],
     'Supprimer votre compte ?': ['', '¿Eliminar su cuenta?', '', '', '', ''],
@@ -4416,7 +4415,7 @@
     'Votre liste est prête dans l’écran Commande.': ['', 'Su lista está lista en la pantalla Pedido.', '', '', '', ''],
     'Équipe & services : l’équipe de démonstration suit le métier (dark kitchen sans salle, food truck à une ou deux personnes, boulangerie avec fournil et boutique), autant de temps pleins que le modèle, aucun salaire sous le SMIC, la somme des postes égale la masse du calcul ; sans salarié, « Pas de salarié : vous travaillez seul » et le même chiffre que Structure.': ['', 'Equipo y servicios: el equipo de demostración sigue el oficio (dark kitchen sin sala, food truck con una o dos personas, panadería con obrador y tienda), tantos tiempos completos como el modelo, ningún salario por debajo del salario mínimo, y la suma de los puestos es igual a la masa del cálculo; sin asalariados, «Sin asalariados: trabaja solo» y la misma cifra que Estructura.', '', '', '', ''],
     'Structure, Audit et Carte s’ouvrent tout de suite : Verdict les prépare pendant que vous lisez l’Accueil, une seule fois après chaque changement de vos chiffres': ['', 'Estructura, Auditoría y Carta se abren enseguida: Verdict las prepara mientras lee el Inicio, una sola vez tras cada cambio de sus cifras', '', '', '', ''],
-    'Page Compte : « Exporter toutes mes données » prépare un fichier avec votre compte et les établissements auxquels vous avez accès, sans aucun mot de passe ni secret ; votre mot de passe est vérifié par le serveur et n’est gardé nulle part': ['', 'Página Cuenta: «Exportar todos mis datos» prepara un archivo con su cuenta y los establecimientos a los que tiene acceso, sin ninguna contraseña ni secreto; el servidor comprueba su contraseña y no se guarda en ningún sitio', '', '', '', ''],
+    'Page Compte : « Exporter toutes mes données » prépare un fichier avec votre compte et les établissements auxquels vous avez accès, sans aucun mot de passe ni secret ; votre mot de passe est vérifié par le serveur et n’est gardé nulle part': ['', 'Página Cuenta: «Exportar todos mis datos» prepara un documento con su cuenta y los establecimientos a los que tiene acceso, sin ninguna contraseña ni secreto; el servidor comprueba su contraseña y no se guarda en ningún sitio', '', '', '', ''],
     'Inventaire, avec un compte Verdict : « Se déconnecter » et « Supprimer mon compte » ouvrent la page Compte ; la suppression y est demandée avec votre mot de passe, faite 7 jours après la demande et annulable d’ici là': ['', 'Inventario, con una cuenta Verdict: «Cerrar sesión» y «Eliminar mi cuenta» abren la página Cuenta; allí la eliminación se solicita con su contraseña, se hace 7 días después de la solicitud y puede anularse hasta entonces', '', '', '', ''],
     'Un seul écran « Paramètres », en tête de Plus : compte, abonnement, sécurité de cet appareil, apparence (Automatique, Clair ou Sombre), langue, notifications, établissements, équipe, connexions, données, aide et documents. L’en-tête ne garde que le logo, l’établissement et la cloche': ['', 'Una sola pantalla «Ajustes», al principio de Más: cuenta, suscripción, seguridad de este dispositivo, apariencia (Automática, Clara u Oscura), idioma, notificaciones, establecimientos, equipo, conexiones, datos, ayuda y documentos. La cabecera solo conserva el logotipo, el establecimiento y la campana', '', '', '', ''],
     'Une seule barre du bas, nette et centrée, même repliée au défilement ; et le contenu s’affiche tout de suite pendant un défilement rapide, sans zone noire (plus de flou sous les bandeaux du haut)': ['', 'Una sola barra inferior, nítida y centrada, incluso plegada al desplazarse; y el contenido aparece enseguida durante un desplazamiento rápido, sin zona negra (ya no hay desenfoque bajo las barras superiores)', '', '', '', ''],
@@ -4481,9 +4480,9 @@
     'Connecter la caisse': ['', 'Conectar la caja', '', '', '', ''],
     'Comptable et plateformes de livraison': ['', 'Contable y plataformas de entrega', '', '', '', ''],
     'Bientôt': ['', 'Próximamente', '', '', '', ''],
-    'Sauvegarder dans un fichier': ['', 'Guardar en un archivo', '', '', '', ''],
+    'Sauvegarder dans un fichier': ['', 'Guardar en un documento', '', '', '', ''],
     'Tout votre dossier, sur cet appareil': ['', 'Todo su expediente, en este dispositivo', '', '', '', ''],
-    'Restaurer depuis un fichier': ['', 'Restaurar desde un archivo', '', '', '', ''],
+    'Restaurer depuis un fichier': ['', 'Restaurar desde un documento', '', '', '', ''],
     'Une sauvegarde Verdict (.json)': ['', 'Una copia de seguridad Verdict (.json)', '', '', '', ''],
     'Avant le dernier import ou la dernière remise à zéro': ['', 'Antes de la última importación o del último reinicio', '', '', '', ''],
     'Une copie complète de votre compte': ['', 'Una copia completa de su cuenta', '', '', '', ''],
@@ -4511,13 +4510,13 @@
     'Livraison juste partout : la commission se calcule sur le prix TTC payé par le client, avec votre part livrée et le taux de vos plateformes (votre montant ou votre document comptable font foi) ; l’emballage se compte par commande livrée ; Structure sépare la salle et la livraison ; le Test de résistance ajoute « commission +5 points » ; la trésorerie compte la TVA de la commission, avancée puis récupérée ; vos promotions financées et remboursements de livraison comptent aussi, sauf s’ils sont déjà dans vos comptes': ['', 'Entrega correcta en todas partes: la comisión se calcula sobre el precio con IVA pagado por el cliente, con su parte a domicilio y la tasa de sus plataformas (su importe o su documento contable hacen fe); el envase se cuenta por pedido entregado; Estructura separa la sala y la entrega; la Prueba de resistencia añade «comisión +5 puntos»; la tesorería cuenta el IVA de la comisión, adelantado y luego recuperado; sus promociones financiadas y reembolsos de entrega también cuentan, salvo si ya están en sus cuentas', '', '', '', ''],
     'Inventaire, pour bien commencer : tant qu’il n’y a aucun produit, un seul grand bouton « + Ajouter mon premier produit » ; le partage, les transferts et le comptage arrivent avec vos produits. Plus d’écran « … est prêt » après « Faisons connaissance ». Le parcours de la démo parle en mots simples. Dans un produit, « Référence et alternatives fournisseur » est replié': ['', 'Inventario, para empezar bien: mientras no haya ningún producto, un solo botón grande «+ Añadir mi primer producto»; el uso compartido, los traspasos y el recuento llegan con sus productos. Ya no hay pantalla «… está listo» tras «Conozcámonos». El recorrido de la demo habla con palabras sencillas. En un producto, «Referencia y alternativas de proveedor» está plegado', '', '', '', ''],
     'Dans votre langue : l’Accueil ne garde plus de phrases en français dans les détails du jour, du mois et de l’année (journées saisies, minimum du reste du mois, comparaison avec l’an dernier, état de la journée) ; les montants et pourcentages de Performances s’écrivent au format de votre langue. Avec une grosse avance, une journée ne s’affiche plus en pourcentage démesuré : « Minimum atteint (441 €) · +1 327 € d’avance en plus », ou « Pas de minimum pour cette journée : le minimum du mois est couvert » ; le mois en cours se lit face à la base des journées, le suivi suit votre caisse continue même avec une journée saisie à la main, et la tuile s’appelle « Fin de mois estimée face au minimum »': ['', 'En su idioma: el Inicio ya no conserva frases en francés en los detalles del día, del mes y del año (jornadas introducidas, mínimo del resto del mes, comparación con el año pasado, estado de la jornada); los importes y porcentajes de Rendimiento se escriben en el formato de su idioma. Con un gran adelanto, una jornada ya no muestra un porcentaje desmesurado: «Mínimo alcanzado (441 €) · +1 327 € de adelanto adicional», o «Sin mínimo para esta jornada: el mínimo del mes está cubierto»; el mes en curso se lee frente a la base de las jornadas, el seguimiento sigue su caja continua incluso con una jornada introducida a mano, y la ficha se llama «Fin de mes estimado frente al mínimo»', '', '', '', ''],
-    'Vos journées de caisse ne sont plus jamais comptées deux fois (clôtures et ventes par article ensemble, même fichier déposé deux fois) : les journées déjà connues sont ignorées et comptées ; « Garder toute ma saisie » ne garde que les chiffres de la question, votre document reste pris pour le reste ; « J’ai ouvert récemment » reprend votre caisse quel que soit le chemin ; les mois du chiffre d’affaires sont écrits en lettres': ['', 'Sus jornadas de caja ya nunca se cuentan dos veces (cierres y ventas por artículo juntos, el mismo archivo depositado dos veces): las jornadas ya conocidas se ignoran y se cuentan; «Conservar todos mis datos» solo conserva las cifras de la pregunta, y su documento sigue usándose para el resto; «He abierto hace poco» recoge su caja sea cual sea el camino; los meses de la facturación se escriben con letras', '', '', '', ''],
+    'Vos journées de caisse ne sont plus jamais comptées deux fois (clôtures et ventes par article ensemble, même fichier déposé deux fois) : les journées déjà connues sont ignorées et comptées ; « Garder toute ma saisie » ne garde que les chiffres de la question, votre document reste pris pour le reste ; « J’ai ouvert récemment » reprend votre caisse quel que soit le chemin ; les mois du chiffre d’affaires sont écrits en lettres': ['', 'Sus jornadas de caja ya nunca se cuentan dos veces (cierres y ventas por artículo juntos, el mismo documento depositado dos veces): las jornadas ya conocidas se ignoran y se cuentan; «Conservar todos mis datos» solo conserva las cifras de la pregunta, y su documento sigue usándose para el resto; «He abierto hace poco» recoge su caja sea cual sea el camino; los meses de la facturación se escriben con letras', '', '', '', ''],
     'Liste des modèles : la carte d’un modèle montre toujours les notes Pilotage et Carte de sa démonstration, même quand votre établissement a été créé à partir de ce modèle (Food truck). Carte idéale : sans hausse de prix, l’hypothèse « hausse limitée à 8 % » n’est plus écrite. Une décision prise dans Simuler apparaît dans « À faire et alertes » avec ce qu’il faudra mesurer le mois suivant. Vera baisse d’abord les portions des deux produits les plus chers ; le prix ne monte que si cela ne suffit pas, jamais au-dessus de votre carte, et elle dit pourquoi. « Voir l’autre plat » quand il n’en reste qu’un. Abonnement : une décision mesurée sur son indicateur n’est plus suivie de « aucun résultat ». La fenêtre ⚙ « Mes établissements » est claire en thème clair. Un plat ajouté depuis Vera reste « provisoire : il manque … » tant que sa recette est incomplète. « Vos plats à la carte » au lieu de « vos à la carte ». Alertes : les cases au bon nombre (« 1 alerte grave »), « Le mois de septembre n’est pas encore clôturé », et plus de mot « moteur » à l’écran (« calcul Verdict », « les mêmes seuils que l’Indice »). « Ajouter un établissement » dit ce que votre abonnement prévoit : « Inclus dans votre abonnement » quand il est compris, sinon le supplément exact': ['', 'Lista de modelos: la tarjeta de un modelo muestra siempre las notas Pilotage y Carta de su demostración, incluso cuando su establecimiento se creó a partir de ese modelo (Food truck). Carta ideal: sin subida de precios, ya no se escribe la hipótesis «subida limitada al 8 %». Una decisión tomada en Simular aparece en «Tareas y alertas» con lo que habrá que medir el mes siguiente. Vera baja primero las porciones de los dos productos más caros; el precio solo sube si eso no basta, nunca por encima de su carta, y explica por qué. «Ver el otro plato» cuando solo queda uno. Suscripción: una decisión medida en su indicador ya no va seguida de «ningún resultado». La ventana ⚙ «Mis establecimientos» es clara en tema claro. Un plato añadido desde Vera sigue «provisional: falta …» mientras su receta esté incompleta. «Sus platos de la carta» en lugar de una palabra que faltaba. Alertas: las casillas con el número correcto («1 alerta grave»), «El mes de septiembre aún no está cerrado», y ya no aparece la palabra «motor» en pantalla («cálculo Verdict», «los mismos umbrales que el Índice»). «Añadir un establecimiento» dice lo que prevé su suscripción: «Incluido en su suscripción» cuando lo está, si no el suplemento exacto', '', '', '', ''],
     'Quand l’iPhone ou l’ordinateur passe en sombre (ou en clair), tout Verdict suit aussitôt, sans recharger : en-tête, cartes et barres, dans la coque comme dans Pilotage ou l’Inventaire ouverts seuls. En démonstration, un rechargement garde le modèle choisi et la journée saisie, et l’intro de l’Indice ne se rejoue plus. Le comptage d’un employé arrive nommé et daté dans la cloche (« Comptage reçu d’Inès · Sucre semoule : 3 kg ») et l’historique dit qui a compté ; l’Inventaire de démonstration dit quel jeu fictif il montre, en casse normale': ['', 'Cuando el iPhone o el ordenador pasa a oscuro (o a claro), todo Verdict lo sigue al instante, sin recargar: cabecera, tarjetas y barras, tanto en la carcasa como en Pilotage o el Inventario abiertos solos. En la demostración, una recarga conserva el modelo elegido y la jornada introducida, y la introducción del Índice ya no se repite. El recuento de un empleado llega con nombre y fecha en la campana («Recuento recibido de Inès · Azúcar blanco: 3 kg») y el historial dice quién contó; el Inventario de demostración dice qué juego ficticio muestra, en mayúsculas y minúsculas normales', '', '', '', ''],
     'J’ai ouvert récemment : quand votre caisse montre des ventes avant la date d’ouverture indiquée, l’ouverture est prise à la première journée de caisse, et Verdict vous l’écrit ; la période n’est plus signalée comme inhabituelle à tort': ['', 'He abierto hace poco: cuando su caja muestra ventas antes de la fecha de apertura indicada, la apertura se toma en la primera jornada de caja, y Verdict se lo escribe; el periodo ya no se señala como inusual por error', '', '', '', ''],
     'Accueil › Mois : « il faut … € par jour ouvert restant » donne la vraie moyenne pour finir le mois au minimum, le même chiffre que Structure › Performances ; le minimum du jour suivant ne s’y glisse plus': ['', 'Inicio › Mes: «hace falta … € por día abierto restante» da la media real para terminar el mes en el mínimo, la misma cifra que Estructura › Rendimiento; el mínimo del día siguiente ya no se cuela en ella', '', '', '', ''],
     'En thème clair, les messages de confirmation (« c’est enregistré ») s’affichent en texte clair : ils n’apparaissent plus comme une bulle noire vide': ['', 'En tema claro, los mensajes de confirmación («está guardado») se muestran en texto claro: ya no aparecen como una burbuja negra vacía', '', '', '', ''],
-    'L’onglet allumé suit toujours l’écran affiché, même ouvert depuis Plus (À faire et alertes). En démonstration, la pastille dit « Brasserie Collet · Présentation » dès l’entrée par « Découvrir Verdict ». L’écran « Verdict met plus de temps que prévu » ne reste jamais par-dessus une appli démarrée': ['', 'La pestaña resaltada sigue siempre a la pantalla mostrada, incluso abierta desde Más (Tareas y alertas). En la demostración, la etiqueta dice «Brasserie Collet · Presentación» desde la entrada por «Descubrir Verdict». La pantalla «Verdict tarda más de lo previsto» nunca se queda encima de una aplicación ya iniciada', '', '', '', ''],
+    'L’onglet allumé suit toujours l’écran affiché, même ouvert depuis Plus (À faire et alertes). En démonstration, la pastille dit « Brasserie Collet · Présentation » dès l’entrée par « Découvrir Verdict ». L’écran « Verdict met plus de temps que prévu » ne reste jamais par-dessus une appli démarrée': ['', 'La pantalla resaltada sigue siempre a la pantalla mostrada, incluso abierta desde Más (Tareas y alertas). En la demostración, la etiqueta dice «Brasserie Collet · Presentación» desde la entrada por «Descubrir Verdict». La pantalla «Verdict tarda más de lo previsto» nunca se queda encima de una aplicación ya iniciada', '', '', '', ''],
     'Simuler : la règle du levier matière est écrite là où il est borné (un tiers de l’écart de chaque poste, par pas de 0,5 point), le coût des boissons compte dans les bornes des curseurs, « +1 commande » ne dit plus que l’équipe suit (elle reste la même), et la barre « leviers modifiés » ne recouvre plus jamais l’encadré d’un levier ni le total. Audit : un seul arrondi pour l’écart matière, le même partout (2,0 points pour 1,99). Modèles : apostrophe typographique dans « d’un hôtel 5 étoiles »': ['', 'Simular: la regla de la palanca de materia prima se escribe donde está limitada (un tercio de la diferencia de cada partida, en pasos de 0,5 puntos), el coste de las bebidas cuenta en los límites de los cursores, «+1 pedido» ya no dice que el equipo acompaña (sigue siendo el mismo), y la barra «palancas modificadas» ya nunca tapa el recuadro de una palanca ni el total. Auditoría: un solo redondeo para la diferencia de materia prima, el mismo en todas partes (2,0 puntos para 1,99). Modelos: apóstrofo tipográfico en «d’un hôtel 5 étoiles»', '', '', '', ''],
     'Repères & secteur : contribution, coûts variables, charges fixes et chiffre minimum suivent le repère de votre type d’établissement (62 % et 38 % pour une brasserie, et non plus 55 % et 40 %) ; un repère qui n’existe pas par type s’écrit « repère général ». Performances : le pourcentage du jour ne recouvre plus le mot « minimum », quelle que soit sa longueur. La fiche des modèles lit les tickets et le panier dans leur caisse (Food truck : 50 tickets par jour) ; « FIBEN » devient « Banque de France »': ['', 'Referencias y sector: contribución, costes variables, cargas fijas y cifra mínima siguen la referencia de su tipo de establecimiento (62 % y 38 % para una brasserie, y ya no 55 % y 40 %); una referencia que no existe por tipo se escribe «referencia general». Rendimiento: el porcentaje del día ya no tapa la palabra «mínimo», sea cual sea su longitud. La ficha de los modelos lee los tickets y el ticket medio en su caja (Food truck: 50 tickets al día); «FIBEN» pasa a ser «Banque de France»', '', '', '', ''],
     'Accueil : le suivi d’un établissement commence à sa création (ou à l’ouverture que vous déclarez), jamais à la première journée de votre caisse : importer la caisse avant vos chiffres donne le même Accueil et le même minimum du jour. Le graphique des journées dit « minimum » partout. Enregistrer une journée ne vide plus l’écran : l’Accueil reste affiché jusqu’au nouveau calcul': ['', 'Inicio: el seguimiento de un establecimiento empieza en su creación (o en la apertura que usted declare), nunca en la primera jornada de su caja: importar la caja antes que sus cifras da el mismo Inicio y el mismo mínimo del día. El gráfico de las jornadas dice «mínimo» en todas partes. Guardar una jornada ya no vacía la pantalla: el Inicio sigue mostrándose hasta el nuevo cálculo', '', '', '', ''],
@@ -4534,7 +4533,7 @@
     'Plus › « À faire et alertes » : vos priorités et vos alertes à un geste, dans toutes les formules. En Pilotage, « Équipe & services » ouvre directement votre équipe, comprise dans la formule. Consommation : « Fixer une limite » propose vos produits chiffrés dès le premier jour': ['', 'Más › «Tareas y alertas»: sus prioridades y alertas a un gesto, en todos los planes. En Pilotage, «Equipo y servicios» abre directamente su equipo, incluido en el plan. Consumo: «Fijar un límite» propone sus productos con precio desde el primer día', '', '', '', ''],
     'Dans votre langue : l’Accueil, Structure, Équipe, Décisions et Plus n’ont plus de phrases à moitié françaises (« You êtes… » corrigé), les jours, les mois et les modèles de démonstration sont traduits ; changer de langue sans recharger ne laisse plus de mots de la langue d’avant dans l’Accueil': ['', 'En su idioma: el Inicio, Estructura, Equipo, Decisiones y Más ya no tienen frases a medias en francés («You êtes…» corregido), y los días, los meses y los modelos de demostración están traducidos; cambiar de idioma sin recargar ya no deja palabras del idioma anterior en el Inicio', '', '', '', ''],
     'Page Compte : liens directs vers Formule, Équipe et Sécurité et connexion, thème clair suivi ; les formules comptent vos établissements réels ; un nouvel établissement est « inclus » quand votre abonnement le couvre, sinon son montant est confirmé avant la création ; un membre d’équipe est proposé d’office en employé de comptage, arrivée sur l’Inventaire ; supprimer le compte résilie aussi l’abonnement': ['', 'Página Cuenta: enlaces directos a Plan, Equipo y Seguridad y acceso, tema claro respetado; los planes cuentan sus establecimientos reales; un nuevo establecimiento está «incluido» cuando su suscripción lo cubre, si no su importe se confirma antes de la creación; a un miembro del equipo se le propone de entrada como empleado de recuento, con llegada al Inventario; eliminar la cuenta también cancela la suscripción', '', '', '', ''],
-    'Inventaire : vos factures de boissons s’importent (le produit est créé dans l’espace Bar) et entrent dans l’Analyse ; une facture adressée à un autre de vos établissements est arrêtée ; un bar s’ouvre sur son espace Bar ; une alerte « si moins de 1 » ne s’allume plus à 1 ; « 1 produit suivi ». Changer de langue depuis Plus garde l’écran ouvert ; en thème clair, la cloche laisse voir l’appli derrière elle ; le guide « Découvrir Verdict » s’affiche en entier ; plus d’écran « VD-BOOT » quand rien n’est en panne ; l’onglet touché s’allume tout de suite ; la Commande intelligente dit pourquoi sa quantité diffère de « à commander » ; en démonstration, les boissons ont leur espace Bar et la consommation réelle par produit apparaît dès le comptage suivant': ['', 'Inventario: sus facturas de bebidas se importan (el producto se crea en el espacio Bar) y entran en el Análisis; una factura dirigida a otro de sus establecimientos se detiene; un bar se abre en su espacio Bar; una alerta «si menos de 1» ya no se enciende en 1; «1 producto seguido». Cambiar de idioma desde Más mantiene la pantalla abierta; en tema claro, la campana deja ver la aplicación detrás; la guía «Descubrir Verdict» se muestra entera; ya no hay pantalla «VD-BOOT» cuando nada falla; la pestaña tocada se ilumina enseguida; el Pedido inteligente dice por qué su cantidad difiere de «por pedir»; en la demostración, las bebidas tienen su espacio Bar y el consumo real por producto aparece desde el recuento siguiente', '', '', '', ''],
+    'Inventaire : vos factures de boissons s’importent (le produit est créé dans l’espace Bar) et entrent dans l’Analyse ; une facture adressée à un autre de vos établissements est arrêtée ; un bar s’ouvre sur son espace Bar ; une alerte « si moins de 1 » ne s’allume plus à 1 ; « 1 produit suivi ». Changer de langue depuis Plus garde l’écran ouvert ; en thème clair, la cloche laisse voir l’appli derrière elle ; le guide « Découvrir Verdict » s’affiche en entier ; plus d’écran « VD-BOOT » quand rien n’est en panne ; l’onglet touché s’allume tout de suite ; la Commande intelligente dit pourquoi sa quantité diffère de « à commander » ; en démonstration, les boissons ont leur espace Bar et la consommation réelle par produit apparaît dès le comptage suivant': ['', 'Inventario: sus facturas de bebidas se importan (el producto se crea en el espacio Bar) y entran en el Análisis; una factura dirigida a otro de sus establecimientos se detiene; un bar se abre en su espacio Bar; una alerta «si menos de 1» ya no se enciende en 1; «1 producto seguido». Cambiar de idioma desde Más mantiene la pantalla abierta; en tema claro, la campana deja ver la aplicación detrás; la guía «Descubrir Verdict» se muestra entera; ya no hay pantalla «VD-BOOT» cuando nada falla; la pantalla tocada se ilumina enseguida; el Pedido inteligente dice por qué su cantidad difiere de «por pedir»; en la demostración, las bebidas tienen su espacio Bar y el consumo real por producto aparece desde el recuento siguiente', '', '', '', ''],
     'Comparer : l’Indice de chaque établissement, le même que son en-tête, et un rang écrit « 1er sur 3 » ; une donnée inconnue reste « inconnue », jamais zéro ; chacun jugé sur le repère de son format. L’écart matière est le même partout, nourriture + boissons des deux côtés, avec sa période ; Simuler et l’Audit appliquent la même règle du panier. Alertes : chiffre minimum « sur l’année », rentabilité « avant impôt ». Audit : « rentable mais fragile » quand le Test de résistance le dit, et un document comptable importé fait foi. L’Indice Carte juge la carte elle-même. Vera répond à « Pourquoi je perds de l’argent ? » et à « C’est quoi mon chiffre minimum ? » avec vos chiffres ; « Coq au vin » n’est plus rangé en boisson ; un prix proposé ne dépasse plus le plat le plus cher de sa catégorie ; une recette incomplète est signalée ; une décision prise dans Simuler entre tout de suite au registre ; les Alertes ne réclament plus un mois d’avant votre arrivée. Un nouvel établissement réel est confirmé par votre compte, son supplément vous est demandé avant sa création. Le podium de Comparer suit l’Indice ; un panier plus élevé se calcule au centime près, le même montant dans Simuler et dans l’Audit ; les charges fixes ont le même chiffre partout ; votre Audit dit « document comptable (FEC) » quand vous l’avez importé, et « à confirmer » quand les jours d’ouverture sont inconnus ; la Carte dit une seule vérité sur les plats sous leur objectif': ['', 'Comparar: el Índice de cada establecimiento, el mismo que en su cabecera, y un puesto escrito «1.º de 3»; un dato desconocido sigue «desconocido», nunca cero; cada uno juzgado sobre la referencia de su formato. La diferencia de materia prima es la misma en todas partes, comida + bebidas en ambos lados, con su periodo; Simular y la Auditoría aplican la misma regla del ticket medio. Alertas: cifra mínima «en el año», rentabilidad «antes de impuestos». Auditoría: «rentable pero frágil» cuando la Prueba de resistencia lo dice, y un documento contable importado hace fe. El Índice Carta juzga la carta en sí. Vera responde a «¿Por qué pierdo dinero?» y a «¿Cuál es mi cifra mínima?» con sus cifras; el «Coq au vin» ya no se clasifica como bebida; un precio propuesto ya no supera el plato más caro de su categoría; una receta incompleta se señala; una decisión tomada en Simular entra enseguida en el registro; las Alertas ya no reclaman un mes anterior a su llegada. Un nuevo establecimiento real lo confirma su cuenta, y su suplemento se le pide antes de crearlo. El podio de Comparar sigue el Índice; un ticket medio más alto se calcula al céntimo, el mismo importe en Simular y en la Auditoría; las cargas fijas tienen la misma cifra en todas partes; su Auditoría dice «documento contable (FEC)» cuando lo ha importado, y «por confirmar» cuando los días de apertura son desconocidos; la Carta dice una sola verdad sobre los platos por debajo de su objetivo', '', '', '', ''],
     'Vos documents font foi dans tous les ordres d’arrivée : une caisse importée après votre saisie vous pose la question unique pour le panier et les commandes par jour (tickets ÷ vraies journées de caisse) ; une TVA tapée par-dessus le document comptable est dans la question et « Prendre tous mes documents » la remet ; le chiffre d’affaires d’un bilan recopié n’est plus remplacé par la caisse ; la fiche du bilan a sa ligne Amortissements et reprend les tickets de la caisse ; l’équipe a le même total partout (un FEC saisonnier est pris tel quel) ; le coffee shop reçoit son panier et ses commandes ; une caisse retenue reste la référence après rechargement ; une journée saisie très au-dessus de l’habitude est demandée avant d’être enregistrée ; un document comptable aux écritures datées du 28 compte bien 12 mois ; « J’ai ouvert récemment » reprend votre caisse ; chaque conflit entre caisse et saisie est montré avant l’import ; l’équipe d’un établissement saisonnier compte ses mois travaillés, et le document est pris tel quel': ['', 'Sus documentos hacen fe en cualquier orden de llegada: una caja importada después de sus datos le hace la pregunta única para el ticket medio y los pedidos al día (tickets ÷ jornadas reales de caja); un IVA tecleado encima del documento contable está en la pregunta y «Tomar todos mis documentos» lo restablece; la facturación de un balance copiado ya no se sustituye por la caja; la ficha del balance tiene su línea Amortizaciones y retoma los tickets de la caja; el equipo tiene el mismo total en todas partes (un FEC de temporada se toma tal cual); el coffee shop recibe su ticket medio y sus pedidos; una caja conservada sigue siendo la referencia tras recargar; una jornada introducida muy por encima de lo habitual se pregunta antes de guardarse; un documento contable con asientos fechados el 28 cuenta bien 12 meses; «He abierto hace poco» recoge su caja; cada conflicto entre caja y datos se muestra antes de la importación; el equipo de un establecimiento de temporada cuenta sus meses trabajados, y el documento se toma tal cual', '', '', '', ''],
     'Indice de sérénité : les notes et les plafonds suivent le repère de votre type d’établissement, comme Repères et Simuler. Jours ouverts et tickets lus dans votre caisse (313 jours, plus 312 calculés). +1 € de panier : sans matière en plus, TVA et commissions déduites, écrit à l’écran. Productivité hors Indice tant que vos heures d’ouverture ne sont pas saisies. Saisonnalité sur vos vrais mois ; Chiffre minimum : chaque écart dit à quel minimum il se compare ; plus de note sur 100 en année partielle ni de « 7,0 temps pleins » d’exemple. Performances : la courbe juge le minimum du jour et suit votre dernière journée ; les jours d’avant le suivi ne sont plus « fermés ». Chiffre minimum : « À rattraper » ou « Marge » selon la fin de mois projetée. Ensuite : l’équipe d’un saisonnier compte ses seuls mois travaillés ; « Sécurité et connexion » depuis votre compte ; un jour déjà ouvert n’est plus compté comme vente nouvelle ; changer de langue ne rejoue plus l’ouverture ; la carte de démonstration nomme son modèle ; quand l’Indice est plafonné, Structure dit pourquoi': ['', 'Índice de serenidad: las notas y los topes siguen la referencia de su tipo de establecimiento, como Referencias y Simular. Días abiertos y tickets leídos en su caja (313 días, ya no 312 calculados). +1 € de ticket medio: sin materia prima de más, IVA y comisiones deducidos, escrito en pantalla. Productividad fuera del Índice mientras no se introduzcan sus horas de apertura. Estacionalidad sobre sus meses reales; Cifra mínima: cada diferencia dice con qué mínimo se compara; ya no hay nota sobre 100 en año parcial ni «7,0 tiempos completos» de ejemplo. Rendimiento: la curva juzga el mínimo del día y sigue su última jornada; los días anteriores al seguimiento ya no están «cerrados». Cifra mínima: «Por recuperar» o «Margen» según el fin de mes proyectado. Además: el equipo de un negocio de temporada solo cuenta sus meses trabajados; «Seguridad y acceso» desde su cuenta; un día ya abierto ya no se cuenta como venta nueva; cambiar de idioma ya no repite la apertura; la carta de demostración nombra su modelo; cuando el Índice está limitado, Estructura dice por qué', '', '', '', ''],
@@ -4544,7 +4543,7 @@
     'Plusieurs établissements : chacun a son propre Inventaire (produits, zones, comptages, commandes) ; changer d’établissement change l’Inventaire affiché, « Partager » donne le lien de l’établissement affiché, et chaque employé ne voit que le sien': ['', 'Varios establecimientos: cada uno tiene su propio Inventario (productos, zonas, recuentos, pedidos); cambiar de establecimiento cambia el Inventario mostrado, «Compartir» da el enlace del establecimiento mostrado, y cada empleado solo ve el suyo', '', '', '', ''],
     'Page Compte, « Sécurité et connexion » : changez votre mot de passe (l’ancien est demandé, vos autres appareils sont déconnectés, un e-mail le confirme), changez d’adresse avec un lien de confirmation (l’ancienne reste active jusque-là), déconnectez-vous de partout, ou demandez la suppression du compte, effective après 7 jours et annulable ; le lien « Mot de passe oublié » vaut 1 heure et ne sert qu’une fois': ['', 'Página Cuenta, «Seguridad y acceso»: cambie su contraseña (se pide la antigua, sus otros dispositivos se desconectan, un correo lo confirma), cambie de dirección con un enlace de confirmación (la antigua sigue activa hasta entonces), cierre sesión en todas partes, o solicite la eliminación de la cuenta, efectiva a los 7 días y cancelable; el enlace «Contraseña olvidada» vale 1 hora y solo sirve una vez', '', '', '', ''],
     'Accueil, « Ventes et heures par service » : la colonne devient « Écart au conseillé » — « 7 € en dessous » en vert quand l’équipe coûte moins que le conseillé, « +35 € de trop » quand elle coûte plus, plus jamais un « −7 € » en vert': ['', 'Inicio, «Ventas y horas por servicio»: la columna pasa a ser «Diferencia con lo aconsejado» — «7 € por debajo» en verde cuando el equipo cuesta menos que lo aconsejado, «+35 € de más» cuando cuesta más, nunca más un «−7 €» en verde', '', '', '', ''],
-    'La barre des onglets de Structure suit le thème : foncée en thème clair, blanche en thème sombre, l’onglet ouvert toujours bordé de vert': ['', 'La barra de pestañas de Estructura sigue el tema: oscura en tema claro, blanca en tema oscuro, con la pestaña abierta siempre bordeada de verde', '', '', '', ''],
+    'La barre des onglets de Structure suit le thème : foncée en thème clair, blanche en thème sombre, l’onglet ouvert toujours bordé de vert': ['', 'La barra de pantallas de Estructura sigue el tema: oscura en tema claro, blanca en tema oscuro, con la pantalla abierta siempre bordeada de verde', '', '', '', ''],
     'Accueil : après un changement de thème et un rechargement, l’Accueil ne reste plus sur son ancienne présentation ; au repos, rien ne bouge à l’écran': ['', 'Inicio: tras un cambio de tema y una recarga, el Inicio ya no se queda en su presentación anterior; en reposo, nada se mueve en pantalla', '', '', '', ''],
     'Démonstration : la pastille de l’établissement affiché propose « Revenir à mon établissement ». Carte : « Vera propose » reconnaît un plat de votre carte à son produit principal et à sa garniture, même sous un autre nom (une bavette-frites face à votre steak frites), et n’affiche aucune marge quand c’est le produit principal qui manque — elle dit lequel': ['', 'Demostración: la etiqueta del establecimiento mostrado propone «Volver a mi establecimiento». Carta: «Vera propone» reconoce un plato de su carta por su producto principal y su guarnición, incluso con otro nombre (una entraña con patatas frente a su filete con patatas), y no muestra ningún margen cuando lo que falta es el producto principal — dice cuál', '', '', '', ''],
     'Démonstration : une seule façon de dire la sortie, « Revenir à mon établissement », partout et dans votre langue ; replié, le bandeau n’est plus qu’une petite pastille': ['', 'Demostración: una sola forma de decir la salida, «Volver a mi establecimiento», en todas partes y en su idioma; plegada, la barra ya solo es una pequeña etiqueta', '', '', '', ''],
@@ -4554,10 +4553,10 @@
     'Dans votre langue : la pastille d’essai de l’en-tête (« Trial 14 d », « Test 14 Tg. », « D-14 »…) ; Inventaire gratuit : le nom choisi dans « Faisons connaissance » apparaît tout de suite dans la barre et reste après rechargement': ['', 'En su idioma: la etiqueta de prueba de la cabecera («Trial 14 d», «Test 14 Tg.», «D-14»…); Inventario gratuito: el nombre elegido en «Conozcámonos» aparece enseguida en la barra y se mantiene tras recargar', '', '', '', ''],
     'Retour d’une démonstration : l’Accueil passe à vos vrais chiffres en même temps que l’en-tête, sans montrer d’abord les chiffres fictifs': ['', 'Al volver de una demostración: el Inicio pasa a sus cifras reales al mismo tiempo que la cabecera, sin mostrar antes las cifras ficticias', '', '', '', ''],
     'Carte : « Vera propose » tient chaque famille (que des salades dans « Salades »), ne présente plus une simple variante d’un plat de la carte comme une nouveauté, et dit « coût incomplet » avec une marge provisoire tant qu’un ingrédient manque': ['', 'Carta: «Vera propone» respeta cada familia (solo ensaladas en «Ensaladas»), ya no presenta una simple variante de un plato de la carta como una novedad, y dice «coste incompleto» con un margen provisional mientras falte un ingrediente', '', '', '', ''],
-    'La barre des onglets de Structure est la même partout : blanche, avec l’onglet ouvert en vert pâle bordé de vert, en thème clair comme en thème sombre, sur téléphone comme sur ordinateur': ['', 'La barra de pestañas de Estructura es la misma en todas partes: blanca, con la pestaña abierta en verde pálido bordeada de verde, en tema claro como en tema oscuro, en el teléfono como en el ordenador', '', '', '', ''],
+    'La barre des onglets de Structure est la même partout : blanche, avec l’onglet ouvert en vert pâle bordé de vert, en thème clair comme en thème sombre, sur téléphone comme sur ordinateur': ['', 'La barra de pantallas de Estructura es la misma en todas partes: blanca, con la pantalla abierta en verde pálido bordeada de verde, en tema claro como en tema oscuro, en el teléfono como en el ordenador', '', '', '', ''],
     'Vos documents font foi : les commandes par jour lues dans votre caisse entrent dans la même question que votre document comptable. Et si votre saisie retire la note, Verdict le dit clairement au lieu de parler d’une note non finale': ['', 'Sus documentos hacen fe: los pedidos al día leídos en su caja entran en la misma pregunta que su documento contable. Y si sus datos retiran la nota, Verdict lo dice claramente en lugar de hablar de una nota no definitiva', '', '', '', ''],
     'Structure › Chiffre minimum : le mois où commence votre suivi dit « Minimum du reste du mois » et donne le mois entier à côté, comme l’Accueil': ['', 'Estructura › Cifra mínima: el mes en que empieza su seguimiento dice «Mínimo del resto del mes» y da el mes entero al lado, como el Inicio', '', '', '', ''],
-    'Accueil › Mois : « il faut … € par jour ouvert restant » donne la vraie moyenne pour finir le mois au minimum, le même chiffre que Structure › Performances ; le minimum du jour suivant ne s’y glisse plus. Après la saisie de votre journée, la carte du jour dit l’avance du matin et l’avance de maintenant, la même que l’onglet Mois': ['', 'Inicio › Mes: «hace falta … € por día abierto restante» da la media real para terminar el mes en el mínimo, la misma cifra que Estructura › Rendimiento; el mínimo del día siguiente ya no se cuela en ella. Tras introducir su jornada, la tarjeta del día indica el adelanto de la mañana y el adelanto actual, el mismo que la pestaña Mes', '', '', '', ''],
+    'Accueil › Mois : « il faut … € par jour ouvert restant » donne la vraie moyenne pour finir le mois au minimum, le même chiffre que Structure › Performances ; le minimum du jour suivant ne s’y glisse plus. Après la saisie de votre journée, la carte du jour dit l’avance du matin et l’avance de maintenant, la même que l’onglet Mois': ['', 'Inicio › Mes: «hace falta … € por día abierto restante» da la media real para terminar el mes en el mínimo, la misma cifra que Estructura › Rendimiento; el mínimo del día siguiente ya no se cuela en ella. Tras introducir su jornada, la tarjeta del día indica el adelanto de la mañana y el adelanto actual, el mismo que la pantalla Mes', '', '', '', ''],
     'Dans votre langue : les prochains passages de la fiche fournisseur (« Open day », « Öffnungstag »…) et le titre du panneau de notification (« Mitteilungen », « Notifiche »…)': ['', 'En su idioma: los próximos pasos de la ficha de proveedor («Open day», «Öffnungstag»…) y el título del panel de notificaciones («Mitteilungen», «Notifiche»…)', '', '', '', ''],
     'Notifications et Inventaire : l’heure limite d’une commande et l’heure de chaque notification s’écrivent dans votre langue (« Fri 23/10 · 11:50 », « 22. Okt., 17:37 ») ; « Ajouter un produit » part sans l’unité du produit précédent': ['', 'Notificaciones e Inventario: la hora límite de un pedido y la hora de cada notificación se escriben en su idioma («Fri 23/10 · 11:50», «22. Okt., 17:37»); «Añadir un producto» empieza sin la unidad del producto anterior', '', '', '', ''],
     'Carte : « Vera propose » prend les bons produits — un œuf n’est plus confondu avec du bœuf, un produit absent est dit « à compléter » au lieu d’être remplacé par un voisin ; les pizzas restent dans « Pizzas », les pâtes dans « Pâtes », les fruits et légumes suivent la vraie saison ; un ancien plat se corrige d’abord par la portion, au même prix': ['', 'Carta: «Vera propone» toma los productos correctos — un huevo ya no se confunde con ternera, un producto ausente se indica «por completar» en lugar de sustituirse por uno parecido; las pizzas se quedan en «Pizzas», la pasta en «Pasta», las frutas y verduras siguen la temporada real; un plato antiguo se corrige primero por la porción, al mismo precio', '', '', '', ''],
@@ -4567,15 +4566,15 @@
     'Inventaire et notifications dans votre langue : « Sans fournisseur », la valeur partielle, les prochains passages, le bas de Plus (accès, seuil d’alerte) et le panneau de notification (source, « Tout marquer comme lu », « Ouvrir Inventaire », « Marquer comme lue ») sont traduits': ['', 'Inventario y notificaciones en su idioma: «Sin proveedor», el valor parcial, los próximos pasos, la parte inferior de Más (acceso, umbral de alerta) y el panel de notificaciones (origen, «Marcar todo como leído», «Abrir Inventario», «Marcar como leída») están traducidos', '', '', '', ''],
     'Inventaire : tout l’écran change de langue, même en quittant le français ; les produits proposés depuis la Carte viennent seulement de vos propres plats ; l’heure limite d’une commande est écrite en clair ; un nouveau produit ne reprend plus le dernier fournisseur saisi': ['', 'Inventario: toda la pantalla cambia de idioma, incluso al salir del francés; los productos propuestos desde la Carta solo vienen de sus propios platos; la hora límite de un pedido se escribe con claridad; un producto nuevo ya no retoma el último proveedor introducido', '', '', '', ''],
     'Audit : le nombre de chapitres annoncé est celui de votre analyse complète (27 en 5 thèmes), le même partout — couverture, résumé, exports, aperçu et offre ; plus de « 20 chapitres » écrit à l’avance': ['', 'Auditoría: el número de capítulos anunciado es el de su análisis completo (27 en 5 temas), el mismo en todas partes — portada, resumen, exportaciones, vista previa y oferta; ya no hay «20 capítulos» escritos de antemano', '', '', '', ''],
-    'Thème sombre : la barre des onglets de Structure (Indice de sérénité, Chiffre minimum…) prend l’aspect du thème clair, fond blanc et onglet ouvert vert pâle bordé de vert : elle se distingue bien des cartes quand vous faites défiler': ['', 'Tema oscuro: la barra de pestañas de Estructura (Índice de serenidad, Cifra mínima…) toma el aspecto del tema claro, fondo blanco y pestaña abierta en verde pálido bordeada de verde: se distingue bien de las tarjetas al desplazarse', '', '', '', ''],
+    'Thème sombre : la barre des onglets de Structure (Indice de sérénité, Chiffre minimum…) prend l’aspect du thème clair, fond blanc et onglet ouvert vert pâle bordé de vert : elle se distingue bien des cartes quand vous faites défiler': ['', 'Tema oscuro: la barra de pantallas de Estructura (Índice de serenidad, Cifra mínima…) toma el aspecto del tema claro, fondo blanco y pantalla abierta en verde pálido bordeada de verde: se distingue bien de las tarjetas al desplazarse', '', '', '', ''],
     'Carte : « Vera propose » reste dans vos prix — une nouveauté n’est jamais plus chère que le plat le plus cher de sa catégorie et reste proche du plat équivalent (l’entrecôte de saison au prix de votre entrecôte, pas 37 €) ; si la marge ne tient pas, Vera ajuste la portion et le dit': ['', 'Carta: «Vera propone» se mantiene en sus precios — una novedad nunca es más cara que el plato más caro de su categoría y se mantiene cerca del plato equivalente (el entrecot de temporada al precio de su entrecot, no a 37 €); si el margen no se sostiene, Vera ajusta la porción y lo dice', '', '', '', ''],
-    'Inventaire dans votre langue : l’onglet Inventaire de la barre, les créneaux et la fiche des fournisseurs, l’historique des quantités et la ligne d’offre sont traduits ; en anglais, les montants estimés gardent le même format que le total, et le temps restant s’écrit « 20h 10m remaining »': ['', 'Inventario en su idioma: la pestaña Inventario de la barra, las franjas y la ficha de proveedores, el historial de cantidades y la línea de oferta están traducidos; en inglés, los importes estimados mantienen el mismo formato que el total, y el tiempo restante se escribe «20h 10m remaining»', '', '', '', ''],
+    'Inventaire dans votre langue : l’onglet Inventaire de la barre, les créneaux et la fiche des fournisseurs, l’historique des quantités et la ligne d’offre sont traduits ; en anglais, les montants estimés gardent le même format que le total, et le temps restant s’écrit « 20h 10m remaining »': ['', 'Inventario en su idioma: la pantalla Inventario de la barra, las franjas y la ficha de proveedores, el historial de cantidades y la línea de oferta están traducidos; en inglés, los importes estimados mantienen el mismo formato que el total, y el tiempo restante se escribe «20h 10m remaining»', '', '', '', ''],
     'Inventaire : la langue se choisit aussi dans Plus, et un changement de langue s’applique à tout l’écran, sans mélange. Sans Carte à vous, l’Inventaire ne propose plus de produits tirés de la carte d’exemple': ['', 'Inventario: el idioma también se elige en Más, y un cambio de idioma se aplica a toda la pantalla, sin mezcla. Sin una Carta propia, el Inventario ya no propone productos sacados de la carta de ejemplo', '', '', '', ''],
     'Vos documents font foi : quand votre saisie ne dit pas la même chose que votre document comptable, la note reste celle du document tant que vous n’avez pas répondu à la question': ['', 'Sus documentos hacen fe: cuando sus datos no dicen lo mismo que su documento contable, la nota sigue siendo la del documento mientras no haya respondido a la pregunta', '', '', '', ''],
     'Année : la fourchette de fin d’année n’est affichée que si elle a vraiment tenu au moins 8 fois sur 10 sur vos années passées, et jamais plus étroite que l’erreur mesurée ; l’avance de l’exercice de référence est dite TTC ; « Pourquoi ce montant » parle du minimum du reste du mois': ['', 'Año: la horquilla de fin de año solo se muestra si de verdad se cumplió al menos 8 veces de cada 10 en sus años pasados, y nunca más estrecha que el error medido; el adelanto del ejercicio de referencia se indica con IVA; «Por qué este importe» habla del mínimo del resto del mes', '', '', '', ''],
     'Thème clair : le « Passeport établissement » (vos 6 choix, dans « J’ai ouvert récemment », « J’ai un exercice clôturé » et Mes chiffres) est clair et lisible': ['', 'Tema claro: el «Pasaporte del establecimiento» (sus 6 opciones, en «He abierto hace poco», «Tengo un ejercicio cerrado» y Mis cifras) es claro y legible', '', '', '', ''],
     'Inventaire dans votre langue : les jours des livraisons fournisseurs, l’exemple de contrôle des écarts et les commandes ne mélangent plus le français et votre langue': ['', 'Inventario en su idioma: los días de entrega de los proveedores, el ejemplo de control de diferencias y los pedidos ya no mezclan el francés con su idioma', '', '', '', ''],
-    'Un en-tête sur deux lignes : votre Indice, votre établissement (toucher ▾ pour comparer, changer, gérer ou ajouter) et la cloche, puis Pilotage · Carte · Inventaire. En démonstration, la pastille « Démo » ouvre son menu. La barre du bas devient Accueil · À faire · Structure · Simuler · Plus ; l’Audit s’ouvre depuis Structure et Plus. L’Indice Carte est écrit sur l’onglet Carte': ['', 'Una cabecera en dos líneas: su Índice, su establecimiento (toque ▾ para comparar, cambiar, gestionar o añadir) y la campana, luego Pilotage · Carta · Inventario. En la demostración, la etiqueta «Demo» abre su menú. La barra inferior pasa a ser Inicio · Tareas · Estructura · Simular · Más; la Auditoría se abre desde Estructura y Más. El Índice Carta se escribe en la pestaña Carta', '', '', '', ''],
+    'Un en-tête sur deux lignes : votre Indice, votre établissement (toucher ▾ pour comparer, changer, gérer ou ajouter) et la cloche, puis Pilotage · Carte · Inventaire. En démonstration, la pastille « Démo » ouvre son menu. La barre du bas devient Accueil · À faire · Structure · Simuler · Plus ; l’Audit s’ouvre depuis Structure et Plus. L’Indice Carte est écrit sur l’onglet Carte': ['', 'Una cabecera en dos líneas: su Índice, su establecimiento (toque ▾ para comparar, cambiar, gestionar o añadir) y la campana, luego Pilotage · Carta · Inventario. En la demostración, la etiqueta «Demo» abre su menú. La barra inferior pasa a ser Inicio · Tareas · Estructura · Simular · Más; la Auditoría se abre desde Estructura y Más. El Índice Carta se escribe en la pantalla Carta', '', '', '', ''],
     'La fenêtre « Accès du personnel » se lit aussi en thème clair, et l’Inventaire reçoit de nouvelles traductions dans les 6 autres langues': ['', 'La ventana «Acceso del personal» también se lee en tema claro, y el Inventario recibe nuevas traducciones en los otros 6 idiomas', '', '', '', ''],
     'Thème clair : dans « Un seul passage », la case « J’autorise l’analyse locale de cet export » n’est plus un carré noir sur iPhone ; elle est blanche et se coche en vert, comme celle du document comptable': ['', 'Tema claro: en «Una sola pasada», la casilla «Autorizo el análisis local de esta exportación» ya no es un cuadrado negro en iPhone; es blanca y se marca en verde, como la del documento contable', '', '', '', ''],
     'Carte : « Vera propose » ne met plus en avant un plat sous l’objectif, garde un prix réaliste (+15 % au plus), lit vos ventes dans la caisse et se ferme quand vous changez d’écran ; « Ajouter un plat » reconnaît les desserts courants (tiramisu, tarte aux pommes…), devine la catégorie et se ferme sans question ; fenêtres claires en thème clair ; montants au format de votre langue': ['', 'Carta: «Vera propone» ya no destaca un plato por debajo del objetivo, mantiene un precio realista (+15 % como mucho), lee sus ventas en la caja y se cierra cuando cambia de pantalla; «Añadir un plato» reconoce los postres habituales (tiramisú, tarta de manzana…), adivina la categoría y se cierra sin preguntas; ventanas claras en tema claro; importes en el formato de su idioma', '', '', '', ''],
@@ -4596,7 +4595,7 @@
     'Équipe › Tester une décision : la boîte est claire et lisible en mode clair (elle restait sombre avec vos propres chiffres)': ['', 'Equipo › Probar una decisión: el recuadro es claro y legible en modo claro (seguía oscuro con sus propias cifras)', '', '', '', ''],
     'Quand votre iPhone ou votre Mac passe en sombre ou en clair, Verdict suit aussitôt, sans recharger, même installé sur l’écran d’accueil': ['', 'Cuando su iPhone o su Mac pasa a oscuro o a claro, Verdict lo sigue al instante, sin recargar, incluso instalado en la pantalla de inicio', '', '', '', ''],
     'Thème clair : les fenêtres « Comparer mes établissements » et « Ajouter un établissement » sont claires et lisibles, même quand Verdict est ouvert seul ; le thème sombre ne change pas': ['', 'Tema claro: las ventanas «Comparar mis establecimientos» y «Añadir un establecimiento» son claras y legibles, incluso cuando Verdict se abre solo; el tema oscuro no cambia', '', '', '', ''],
-    'Accueil : juste après « Enregistrer ma journée », l’onglet Mois compte aussitôt votre journée ; une journée sans tickets dit « non renseignés » ; en année partielle, la projection montre l’écart entre votre mois le plus faible et le plus fort': ['', 'Inicio: justo después de «Guardar mi jornada», la pestaña Mes cuenta su jornada al instante; una jornada sin tickets dice «no indicados»; en año parcial, la proyección muestra la diferencia entre su mes más flojo y el más fuerte', '', '', '', ''],
+    'Accueil : juste après « Enregistrer ma journée », l’onglet Mois compte aussitôt votre journée ; une journée sans tickets dit « non renseignés » ; en année partielle, la projection montre l’écart entre votre mois le plus faible et le plus fort': ['', 'Inicio: justo después de «Guardar mi jornada», la pantalla Mes cuenta su jornada al instante; una jornada sin tickets dice «no indicados»; en año parcial, la proyección muestra la diferencia entre su mes más flojo y el más fuerte', '', '', '', ''],
     'J’ai ouvert récemment : « Importer mes chiffres » ouvre bien la page d’import et Structure ne montre plus d’Indice. Abonnement : en Pro fondateur, le total de vos établissements donne votre tarif fondateur (138 € puis 168 € HT/mois pour 2). À faire s’ouvre sans l’ancien écran sombre, et « Protégez votre historique » se lit en thème clair': ['', 'He abierto hace poco: «Importar mis cifras» abre bien la página de importación y Estructura ya no muestra Índice. Suscripción: en Pro fundador, el total de sus establecimientos da su tarifa fundador (138 € y luego 168 € sin IVA/mes por 2). Tareas se abre sin la antigua pantalla oscura, y «Proteja su historial» se lee en tema claro', '', '', '', ''],
     'Inventaire en équipe : l’employé qui ouvre votre lien arrive directement sur Compter, écrit son nom dans « Inventaire réalisé par » sans bandeau « Modifications non enregistrées », et son nom est gardé jusqu’à l’envoi. Votre prénom n’est plus jamais remplacé par le sien, et un comptage enregistré ne contient plus aucun prix. Après une mise à jour, une page gardée par votre navigateur ne reste plus jamais bloquée : elle se recharge seule sur la nouvelle version': ['', 'Inventario en equipo: el empleado que abre su enlace llega directamente a Contar, escribe su nombre en «Inventario realizado por» sin aviso de «Cambios no guardados», y su nombre se conserva hasta el envío. Su nombre ya nunca se sustituye por el suyo, y un recuento guardado ya no contiene ningún precio. Tras una actualización, una página conservada por su navegador ya nunca se queda bloqueada: se recarga sola en la nueva versión', '', '', '', ''],
     'Abonnement : les prix en deux blocs clairs. Votre abonnement (1 établissement inclus) : Pilotage 69 €, Pro 129 € HT/mois ; puis chaque établissement en plus : +39 € ou +69 €': ['', 'Suscripción: los precios en dos bloques claros. Su suscripción (1 establecimiento incluido): Pilotage 69 €, Pro 129 € sin IVA/mes; luego cada establecimiento adicional: +39 € o +69 €', '', '', '', ''],
@@ -4609,7 +4608,7 @@
     'Votre choix de départ est gardé : après la création de votre compte, Verdict revient sur l’import de votre document comptable (FEC), sans assistant de saisie ; dans « Un seul passage », un coût saisi « 4,20 » reste écrit « 4,20 »': ['', 'Su elección de partida se conserva: tras crear su cuenta, Verdict vuelve a la importación de su documento contable (FEC), sin asistente de introducción; en «Una sola pasada», un coste introducido «4,20» sigue escrito «4,20»', '', '', '', ''],
     'Page Compte : en Pro fondateur, le montant réellement dû la première année puis le prix fondateur (par exemple 138 € HT par mois pour 2 établissements, puis 168 €) ; « Choisir une formule » n’apparaît plus quand votre formule est payée ; un lien de nouveau mot de passe ouvert en étant connecté montre son formulaire et explique ce qui va se passer': ['', 'Página Cuenta: en Pro fundador, el importe realmente debido el primer año y luego el precio fundador (por ejemplo 138 € sin IVA al mes por 2 establecimientos, luego 168 €); «Elegir un plan» ya no aparece cuando su plan está pagado; un enlace de nueva contraseña abierto con la sesión iniciada muestra su formulario y explica lo que va a pasar', '', '', '', ''],
     'Votre formule est respectée : avec un compte Pilotage, l’appli est en Pilotage, et l’écran Abonnement affiche votre formule, votre essai ou votre prochaine échéance. Les écrans réservés à Pro sont lisibles en thème clair, et le coût par service mène à votre équipe. La lecture rapide reprend vos achats sans inventer de répartition, le rappel de sauvegarde n’interrompt plus un import, et le contrôle du type d’établissement s’affiche dès qu’on le change': ['', 'Su plan se respeta: con una cuenta Pilotage, la aplicación está en Pilotage, y la pantalla Suscripción muestra su plan, su prueba o su próximo vencimiento. Las pantallas reservadas a Pro son legibles en tema claro, y el coste por servicio lleva a su equipo. La lectura rápida retoma sus compras sin inventar reparto, el recordatorio de copia de seguridad ya no interrumpe una importación, y el control del tipo de establecimiento se muestra en cuanto se cambia', '', '', '', ''],
-    'Minimums encore plus justes : vos jours de fermeture comptent même sans caisse (6 jours par semaine = dimanche fermé), une activité saisonnière porte ses charges sur ses mois ouverts sans réclamer de journées pendant la fermeture, l’avance du mois est la même partout, et l’onglet Argent lit le chiffre d’affaires et les achats du mois dans votre document comptable': ['', 'Mínimos aún más justos: sus días de cierre cuentan incluso sin caja (6 días por semana = domingo cerrado), una actividad de temporada reparte sus cargas en sus meses abiertos sin reclamar jornadas durante el cierre, el adelanto del mes es el mismo en todas partes, y la pestaña Dinero lee la facturación y las compras del mes en su documento contable', '', '', '', ''],
+    'Minimums encore plus justes : vos jours de fermeture comptent même sans caisse (6 jours par semaine = dimanche fermé), une activité saisonnière porte ses charges sur ses mois ouverts sans réclamer de journées pendant la fermeture, l’avance du mois est la même partout, et l’onglet Argent lit le chiffre d’affaires et les achats du mois dans votre document comptable': ['', 'Mínimos aún más justos: sus días de cierre cuentan incluso sin caja (6 días por semana = domingo cerrado), una actividad de temporada reparte sus cargas en sus meses abiertos sin reclamar jornadas durante el cierre, el adelanto del mes es el mismo en todas partes, y la pantalla Dinero lee la facturación y las compras del mes en su documento contable', '', '', '', ''],
     'Inventaire gratuit sans pression : une fois l’Inventaire choisi, plus de pastille d’essai ; Pilotage et Carte restent visibles mais floutés, avec une seule proposition « Essayer 14 jours », et tout se débloque à l’essai. Une seule question avant votre document comptable. Un abonnement terminé se dit « Abonnement terminé · vos données sont conservées », plus « Essai terminé »': ['', 'Inventario gratuito sin presión: una vez elegido el Inventario, ya no hay etiqueta de prueba; Pilotage y Carta siguen visibles pero difuminados, con una sola propuesta «Probar 14 días», y todo se desbloquea con la prueba. Una sola pregunta antes de su documento contable. Una suscripción terminada se indica «Suscripción terminada · sus datos se conservan», ya no «Prueba terminada»', '', '', '', ''],
     'Un Accueil plus simple : votre minimum du jour et la saisie restent en haut, la décision prioritaire arrive juste dessous avec ce qu’il faut faire, et le reste se range sous « Voir le détail »': ['', 'Un Inicio más sencillo: su mínimo del día y la introducción se quedan arriba, la decisión prioritaria llega justo debajo con lo que hay que hacer, y el resto se guarda en «Ver el detalle»', '', '', '', ''],
     'Accueil › Mois : l’équipe de ce mois-ci n’est plus dite deux fois. « Ventes et heures par service » la donne (jauge, € de trop) ; « Comparer les mois » commence par le mois prochain': ['', 'Inicio › Mes: el equipo de este mes ya no se dice dos veces. «Ventas y horas por servicio» lo da (indicador, € de más); «Comparar los meses» empieza por el mes próximo', '', '', '', ''],
@@ -4625,7 +4624,7 @@
     'Minimums justes du jour à l’année : un seul minimum par mois, réparti selon la saison lue dans votre caisse ou votre FEC ; une caisse importée après le FEC compte dès sa première journée ; les mois d’avant le début du suivi ne sont plus comptés en échec et une journée non saisie n’est plus « renseignée à 0 € » ; vos années passées, l’Argent des derniers mois et l’exercice décalé apparaissent ; la fourchette de l’année n’est affichée que si elle est vérifiée sur vos années passées': ['', 'Mínimos justos del día al año: un solo mínimo por mes, repartido según la temporada leída en su caja o su FEC; una caja importada después del FEC cuenta desde su primera jornada; los meses anteriores al inicio del seguimiento ya no cuentan como fracaso y una jornada no introducida ya no está «indicada a 0 €»; aparecen sus años pasados, el Dinero de los últimos meses y el ejercicio desfasado; la horquilla del año solo se muestra si se ha comprobado con sus años pasados', '', '', '', ''],
     'Offre et essai plus clairs : la pastille d’essai a sa place dans l’en-tête et ne cache plus aucun bouton, l’offre s’ouvre dès le clic et dit la même chose partout (Carte, Audit et Vera dès Pilotage ; prix au mois et à l’an ; offre fondateurs), un seul essai de 14 jours porté par votre compte et toujours un chemin vers l’abonnement ; Consommation est réservée à Pro': ['', 'Oferta y prueba más claras: la etiqueta de prueba tiene su sitio en la cabecera y ya no tapa ningún botón, la oferta se abre al primer clic y dice lo mismo en todas partes (Carta, Auditoría y Vera desde Pilotage; precio al mes y al año; oferta fundadores), una sola prueba de 14 días vinculada a su cuenta y siempre un camino hacia la suscripción; Consumo está reservado a Pro', '', '', '', ''],
     'Écrans plus clairs : la fenêtre Langue est lisible et a un bouton Fermer, l’animation d’ouverture a un bouton Passer et n’allume la zone qu’à l’arrivée du score, l’en-tête et la barre d’établissement tiennent sur téléphone ; des libellés justes pour l’Accès du personnel, le Budget, les Établissements, la décision prioritaire et les journées de caisse': ['', 'Pantallas más claras: la ventana Idioma es legible y tiene un botón Cerrar, la animación de apertura tiene un botón Saltar y solo ilumina la zona al llegar la nota, la cabecera y la barra de establecimiento caben en el teléfono; etiquetas correctas para el Acceso del personal, el Presupuesto, los Establecimientos, la decisión prioritaria y las jornadas de caja', '', '', '', ''],
-    'Inventaire en thème clair : fond clair et textes lisibles sur ordinateur comme au téléphone, les onglets Compter · Commande · Analyse · Plus en haut, et le thème suit celui de votre appareil sans recharger. Compter indique l’espace affiché (« 44 / 44 · Cuisine · 51 / 51 avec Bar »), et les noms s’écrivent juste : « Échine », « 35 % », litres en « L »': ['', 'Inventario en tema claro: fondo claro y textos legibles en el ordenador como en el teléfono, las pestañas Contar · Pedido · Análisis · Más arriba, y el tema sigue el de su dispositivo sin recargar. Contar indica el espacio mostrado («44 / 44 · Cocina · 51 / 51 con Bar»), y los nombres se escriben bien: «Échine», «35 %», litros en «L»', '', '', '', ''],
+    'Inventaire en thème clair : fond clair et textes lisibles sur ordinateur comme au téléphone, les onglets Compter · Commande · Analyse · Plus en haut, et le thème suit celui de votre appareil sans recharger. Compter indique l’espace affiché (« 44 / 44 · Cuisine · 51 / 51 avec Bar »), et les noms s’écrivent juste : « Échine », « 35 % », litres en « L »': ['', 'Inventario en tema claro: fondo claro y textos legibles en el ordenador como en el teléfono, las pantallas Contar · Pedido · Análisis · Más arriba, y el tema sigue el de su dispositivo sin recargar. Contar indica el espacio mostrado («44 / 44 · Cocina · 51 / 51 con Bar»), y los nombres se escriben bien: «Échine», «35 %», litros en «L»', '', '', '', ''],
     'Carte : des chiffres qui se tiennent. L’écart à vos objectifs et la part de fiches complètes sont les mêmes partout ; le gain des nouveaux prix est celui de Simuler, dans Ma carte, Décisions, l’Accueil et l’Idéale, avec la raison quand votre plan ne l’ajoute pas ; le montant des Ventes est nommé « reste après produits » et l’Idéale compte tous vos plats': ['', 'Carta: cifras coherentes. La diferencia con sus objetivos y la parte de fichas completas son las mismas en todas partes; la ganancia de los nuevos precios es la de Simular, en Mi carta, Decisiones, el Inicio y la Ideal, con el motivo cuando su plan no la añade; el importe de Ventas se llama «resto tras productos» y la Ideal cuenta todos sus platos', '', '', '', ''],
     'Audit plus juste : le bon nombre de chapitres, la même comparaison dans la phrase et le tableau de « La reprise », des montants qui disent HT, par an et quelle période, et l’état de vos sources sans ligne vide': ['', 'Auditoría más justa: el número correcto de capítulos, la misma comparación en la frase y en la tabla de «La recuperación», importes que dicen sin IVA, al año y de qué periodo, y el estado de sus fuentes sin línea vacía', '', '', '', ''],
     'Simuler plus juste : « Utiliser comme point de départ » part toujours de vos chiffres enregistrés, comme la carte l’annonce ; un curseur n’est plus dit « au-delà du réaliste » quand il reste dans sa borne ; le registre et le journal des gains donnent le même état, avec les valeurs et leurs unités ; la démonstration repart de zéro à chaque ouverture et le panneau du total ne cache plus la lecture guidée ; « Indice de sérénité » et « Rentabilité » partout': ['', 'Simular más justo: «Usar como punto de partida» parte siempre de sus cifras guardadas, como anuncia la tarjeta; un cursor ya no se dice «más allá de lo realista» cuando se queda en su límite; el registro y el diario de ganancias dan el mismo estado, con los valores y sus unidades; la demostración vuelve a empezar de cero en cada apertura y el panel del total ya no tapa la lectura guiada; «Índice de serenidad» y «Rentabilidad» en todas partes', '', '', '', ''],
@@ -4712,7 +4711,7 @@
     'ne tient pas': ['', 'no se sostiene', '', '', '', ''],
     '(il faudrait {a}, +{n} %, au-delà des +30 % acceptés en livraison : réduisez d’abord le coût, portion ou emballage)': ['', '(haría falta {a}, +{n} %, más allá del +30 % aceptado en entrega: reduzca primero el coste, porción o envase)', '', '', '', ''],
     'Accueil › Année, en mots simples : la projection est une « estimation à prendre avec prudence », et vos deux seuils comptables sont rangés dans « Pour votre comptable » : ventes pour ne jamais manquer d’argent, ventes pour ne pas perdre d’argent': ['', 'Inicio › Año, con palabras sencillas: la proyección es una «estimación que hay que tomar con prudencia», y sus dos umbrales contables están en «Para su contable»: ventas para no quedarse nunca sin dinero, ventas para no perder dinero', '', '', '', ''],
-    'Accueil › Mois : « il faut … € par jour ouvert restant » donne la vraie moyenne pour finir le mois au minimum, le même chiffre que Structure › Performances ; le minimum du jour suivant ne s’y glisse plus. Après la saisie de votre journée, la carte du jour dit l’avance du matin et l’avance de maintenant, la même que l’onglet Mois. Dans l’Audit, l’image « levier par levier » dit quand l’écart matière n’est pas compté dans le gain': ['', 'Inicio › Mes: «hace falta … € por día abierto restante» da la media real para terminar el mes en el mínimo, la misma cifra que Estructura › Rendimiento; el mínimo del día siguiente ya no se cuela en ella. Tras introducir su jornada, la tarjeta del día indica el adelanto de la mañana y el adelanto actual, el mismo que la pestaña Mes. En la Auditoría, la imagen «palanca por palanca» dice cuándo la diferencia de materia prima no se cuenta en la ganancia', '', '', '', ''],
+    'Accueil › Mois : « il faut … € par jour ouvert restant » donne la vraie moyenne pour finir le mois au minimum, le même chiffre que Structure › Performances ; le minimum du jour suivant ne s’y glisse plus. Après la saisie de votre journée, la carte du jour dit l’avance du matin et l’avance de maintenant, la même que l’onglet Mois. Dans l’Audit, l’image « levier par levier » dit quand l’écart matière n’est pas compté dans le gain': ['', 'Inicio › Mes: «hace falta … € por día abierto restante» da la media real para terminar el mes en el mínimo, la misma cifra que Estructura › Rendimiento; el mínimo del día siguiente ya no se cuela en ella. Tras introducir su jornada, la tarjeta del día indica el adelanto de la mañana y el adelanto actual, el mismo que la pantalla Mes. En la Auditoría, la imagen «palanca por palanca» dice cuándo la diferencia de materia prima no se cuenta en la ganancia', '', '', '', ''],
     'Lecture provisoire : vos chiffres tapés passent avant vos documents (Mes chiffres montre l’écart).': ['', 'Lectura provisional: sus cifras escritas pasan antes que sus documentos (Mis cifras muestra la diferencia).', '', '', '', ''],
     'Lecture provisoire : chiffres inhabituels sans document ; importez votre document comptable pour finir.': ['', 'Lectura provisional: cifras inusuales sin documento; importe su documento contable para terminar.', '', '', '', ''],
     'Accueil › Année, en mots simples : la projection est une « estimation à prendre avec prudence », et vos deux seuils comptables sont rangés dans « Pour votre comptable » : ventes pour ne jamais manquer d’argent, ventes pour ne pas perdre d’argent. Structure parle aussi plus simplement : « Votre minimum », « Un coup dur (−10 % de ventes) », « Baisse de ventes possible avant de perdre », « Pour 1 € de charges fixes, il vous reste 1,11 € »': ['', 'Inicio › Año, con palabras sencillas: la proyección es una «estimación que hay que tomar con prudencia», y sus dos umbrales contables están en «Para su contable»: ventas para no quedarse nunca sin dinero, ventas para no perder dinero. Estructura también habla de forma más sencilla: «Su mínimo», «Un golpe duro (−10 % de ventas)», «Bajada de ventas posible antes de perder», «Por cada 1 € de cargas fijas, le quedan 1,11 €»', '', '', '', ''],
@@ -4795,7 +4794,7 @@
     'Paramètres et la fenêtre des formules se ferment comme toute fenêtre : une croix en haut à droite, un toucher à côté, un glissement vers le bas ou Échap ; l’appli reste visible derrière': ['', 'Ajustes y la ventana de los planes se cierran como cualquier ventana: una cruz arriba a la derecha, un toque al lado, un deslizamiento hacia abajo o Esc; la aplicación sigue visible detrás', '', '', '', ''],
     'Structure › Repères & secteur : le radar « La structure en un regard » revient, avec votre surface et la zone cible de votre type d’établissement, lisible en thème clair comme sombre': ['', 'Estructura › Referencias y sector: vuelve el radar «La estructura de un vistazo», con su superficie y la zona objetivo de su tipo de establecimiento, legible en tema claro y oscuro', '', '', '', ''],
     'Un Accueil plus simple : votre minimum du jour et la saisie restent en haut, la décision prioritaire arrive juste dessous avec ce qu’il faut faire, et le reste se range sous « Voir le détail ». En livraison et en food truck, une ligne dit ce qu’il vous reste sur une commande. La façon de saisir votre journée se règle une fois, dans les Paramètres': ['', 'Un Inicio más sencillo: su mínimo del día y la introducción se quedan arriba, la decisión prioritaria llega justo debajo con lo que hay que hacer, y el resto se guarda en «Ver el detalle». En entrega y en food truck, una línea dice lo que le queda en un pedido. La forma de introducir su jornada se ajusta una vez, en Ajustes', '', '', '', ''],
-    'Accueil › Mois : « il faut … € par jour ouvert restant » donne la vraie moyenne pour finir le mois au minimum, le même chiffre que Structure › Performances ; le minimum du jour suivant ne s’y glisse plus. Après la saisie de votre journée, la carte du jour dit l’avance du matin et l’avance de maintenant, la même que l’onglet Mois. Dans l’Audit, l’image « levier par levier » dit quand l’écart matière n’est pas compté dans le gain. Dans Carte › Décisions, la phrase dit combien de plats voient leur prix monter (le plus cher de chaque catégorie ne monte jamais)': ['', 'Inicio › Mes: «hace falta … € por día abierto restante» da la media real para terminar el mes en el mínimo, la misma cifra que Estructura › Rendimiento; el mínimo del día siguiente ya no se cuela en ella. Tras introducir su jornada, la tarjeta del día indica el adelanto de la mañana y el adelanto actual, el mismo que la pestaña Mes. En la Auditoría, la imagen «palanca por palanca» dice cuándo la diferencia de materia prima no se cuenta en la ganancia. En Carta › Decisiones, la frase dice cuántos platos suben de precio (el más caro de cada categoría nunca sube)', '', '', '', ''],
+    'Accueil › Mois : « il faut … € par jour ouvert restant » donne la vraie moyenne pour finir le mois au minimum, le même chiffre que Structure › Performances ; le minimum du jour suivant ne s’y glisse plus. Après la saisie de votre journée, la carte du jour dit l’avance du matin et l’avance de maintenant, la même que l’onglet Mois. Dans l’Audit, l’image « levier par levier » dit quand l’écart matière n’est pas compté dans le gain. Dans Carte › Décisions, la phrase dit combien de plats voient leur prix monter (le plus cher de chaque catégorie ne monte jamais)': ['', 'Inicio › Mes: «hace falta … € por día abierto restante» da la media real para terminar el mes en el mínimo, la misma cifra que Estructura › Rendimiento; el mínimo del día siguiente ya no se cuela en ella. Tras introducir su jornada, la tarjeta del día indica el adelanto de la mañana y el adelanto actual, el mismo que la pantalla Mes. En la Auditoría, la imagen «palanca por palanca» dice cuándo la diferencia de materia prima no se cuenta en la ganancia. En Carta › Decisiones, la frase dice cuántos platos suben de precio (el más caro de cada categoría nunca sube)', '', '', '', ''],
     '+{b} HT par mois à partir du {d}': ['', '+{b} sin IVA al mes a partir del {d}', '', '', '', ''],
     'Pour les jours restants de ce mois : {c} HT, ajoutés à votre prochaine facture du {f}': ['', 'Por los días restantes de este mes: {c} sin IVA, añadidos a su próxima factura del {f}', '', '', '', ''],
     '+{b} HT par an à partir du {d}': ['', '+{b} sin IVA al año a partir del {d}', '', '', '', ''],
@@ -5388,7 +5387,7 @@
     'Le verdict': ['', 'El veredicto', '', '', '', ''],
     'Où part l’argent': ['', 'Adónde va el dinero', '', '', '', ''],
     'Le seuil': ['', 'El umbral', '', '', '', ''],
-    'Vos fuites': ['', 'Sus fugas', '', '', '', ''],
+    'Vos fuites': ['', 'Sus diferencias económicas', '', '', '', ''],
     'Comment remonter': ['', 'Cómo remontar', '', '', '', ''],
     'Votre prochain pas': ['', 'Su próximo paso', '', '', '', ''],
     'Votre structure perd de l’argent': ['', 'Su estructura pierde dinero', '', '', '', ''],
@@ -5747,7 +5746,7 @@
     '💶 Pendant l’essai, cet établissement est compris : rien n’est facturé avant la fin de l’essai, le {f}. Ensuite, il s’ajoute à votre abonnement : +{a} € HT par mois, ou +{b} € HT par an en Pro ; +{c} € HT par mois, ou +{d} € HT par an en Pilotage.': ['', '💶 Durante la prueba, este establecimiento está incluido: no se factura nada antes del final de la prueba, el {f}. Después, se añade a su suscripción: +{a} € sin IVA al mes, o +{b} € sin IVA al año en Pro; +{c} € sin IVA al mes, o +{d} € sin IVA al año en Pilotage.', '', '', '', ''],
     'Pendant l’essai, cet établissement est compris : rien n’est facturé avant la fin de l’essai. Ensuite, il s’ajoute à votre abonnement : +{a} € HT par mois, ou +{b} € HT par an en Pro ; +{c} € HT par mois, ou +{d} € HT par an en Pilotage.': ['', 'Durante la prueba, este establecimiento está incluido: no se factura nada antes del final de la prueba. Después, se añade a su suscripción: +{a} € sin IVA al mes, o +{b} € sin IVA al año en Pro; +{c} € sin IVA al mes, o +{d} € sin IVA al año en Pilotage.', '', '', '', ''],
     '💶 Pendant l’essai, cet établissement est compris : rien n’est facturé avant la fin de l’essai. Ensuite, il s’ajoute à votre abonnement : +{a} € HT par mois, ou +{b} € HT par an en Pro ; +{c} € HT par mois, ou +{d} € HT par an en Pilotage.': ['', '💶 Durante la prueba, este establecimiento está incluido: no se factura nada antes del final de la prueba. Después, se añade a su suscripción: +{a} € sin IVA al mes, o +{b} € sin IVA al año en Pro; +{c} € sin IVA al mes, o +{d} € sin IVA al año en Pilotage.', '', '', '', ''],
-    '💶 Cet établissement s’ajoute à votre abonnement {p} : +{a} € HT par mois, ou +{b} € HT par an en formule annuelle.': ['', '💶 Este establecimiento se añade a su suscripción {p}: +{a} € sin IVA al mes, o +{b} € sin IVA al año con la fórmula anual.', '', '', '', ''],
+    '💶 Cet établissement s’ajoute à votre abonnement {p} : +{a} € HT par mois, ou +{b} € HT par an en formule annuelle.': ['', '💶 Este establecimiento se añade a su suscripción {p}: +{a} € sin IVA al mes, o +{b} € sin IVA al año con la cálculo anual.', '', '', '', ''],
     'Jour aujourd’hui fermé : 60 % d’une journée ouverte de la même période, comme dans Simuler': ['', 'Día cerrado hoy: el 60 % de un día abierto del mismo periodo, como en Simular', '', '', '', ''],
     'Ventes TTC par jour concerné': ['', 'Ventas con IVA por día afectado', '', '', '', ''],
     '{a} h par jour concerné · {b} h / semaine': ['', '{a} h por día afectado · {b} h / semana', '', '', '', ''],
@@ -5824,7 +5823,7 @@
     'Six images, une idée chacune, toutes calculées avec vos chiffres.': ['', 'Seis imágenes, una idea cada una, todas calculadas con sus cifras.', '', '', '', ''],
     'Chapitres de l’audit': ['', 'Capítulos de la auditoría', '', '', '', ''],
     'Seuil': ['', 'Umbral', '', '', '', ''],
-    'Fuites': ['', 'Fugas', '', '', '', ''],
+    'Fuites': ['', 'Diferencias económicas', '', '', '', ''],
     'Remonter': ['', 'Remontar', '', '', '', ''],
     'Prochain pas': ['', 'Próximo paso', '', '', '', ''],
     '1 · Le verdict': ['', '1 · El veredicto', '', '', '', ''],
@@ -5845,12 +5844,12 @@
     '4 · Le seuil': ['', '4 · El umbral', '', '', '', ''],
     '5 · Le seuil': ['', '5 · El umbral', '', '', '', ''],
     '6 · Le seuil': ['', '6 · El umbral', '', '', '', ''],
-    '1 · Vos fuites': ['', '1 · Sus fugas', '', '', '', ''],
-    '2 · Vos fuites': ['', '2 · Sus fugas', '', '', '', ''],
-    '3 · Vos fuites': ['', '3 · Sus fugas', '', '', '', ''],
-    '4 · Vos fuites': ['', '4 · Sus fugas', '', '', '', ''],
-    '5 · Vos fuites': ['', '5 · Sus fugas', '', '', '', ''],
-    '6 · Vos fuites': ['', '6 · Sus fugas', '', '', '', ''],
+    '1 · Vos fuites': ['', '1 · Sus diferencias económicas', '', '', '', ''],
+    '2 · Vos fuites': ['', '2 · Sus diferencias económicas', '', '', '', ''],
+    '3 · Vos fuites': ['', '3 · Sus diferencias económicas', '', '', '', ''],
+    '4 · Vos fuites': ['', '4 · Sus diferencias económicas', '', '', '', ''],
+    '5 · Vos fuites': ['', '5 · Sus diferencias económicas', '', '', '', ''],
+    '6 · Vos fuites': ['', '6 · Sus diferencias económicas', '', '', '', ''],
     '1 · Comment remonter': ['', '1 · Cómo remontar', '', '', '', ''],
     '2 · Comment remonter': ['', '2 · Cómo remontar', '', '', '', ''],
     '3 · Comment remonter': ['', '3 · Cómo remontar', '', '', '', ''],
@@ -5883,7 +5882,7 @@
     'Réalisé {e} HT': ['', 'Realizado {e} sin IVA', '', '', '', ''],
     'de marge de sécurité sur un an': ['', 'de margen de seguridad a un año', '', '', '', ''],
     'à aller chercher sur un an': ['', 'por conseguir a un año', '', '', '', ''],
-    'Vos fuites ↓': ['', 'Sus fugas ↓', '', '', '', ''],
+    'Vos fuites ↓': ['', 'Sus diferencias económicas ↓', '', '', '', ''],
     'Écart matière (nourriture + boissons)': ['', 'Diferencia de materia prima (comida + bebidas)', '', '', '', ''],
     'Écart matière (nourriture)': ['', 'Diferencia de materia prima (comida)', '', '', '', ''],
     '{e} / an': ['', '{e} / año', '', '', '', ''],
@@ -6025,7 +6024,7 @@
     'Vacances : aucun chiffre attendu': ['', 'Vacaciones: ninguna cifra esperada', '', '', '', ''],
     'en moyenne, en attendant votre jour de fermeture': ['', 'de media, a la espera de su día de cierre', '', '', '', ''],
     'Vos deux notes d’un coup.': ['', 'Sus dos notas de una vez.', '', '', '', ''],
-    'Le fichier comptable (FEC) donne la Structure ; l’export « ventes par article » de votre caisse donne la Carte.': ['', 'El archivo contable (FEC) da la Estructura; la exportación «ventas por artículo» de su caja da la Carta.', '', '', '', ''],
+    'Le fichier comptable (FEC) donne la Structure ; l’export « ventes par article » de votre caisse donne la Carte.': ['', 'El documento contable (FEC) da la Estructura; la exportación «ventas por artículo» de su caja da la Carta.', '', '', '', ''],
     'Tout est lu ici, dans ce navigateur : rien n’est envoyé.': ['', 'Todo se lee aquí, en este navegador: no se envía nada.', '', '', '', ''],
     'Promotions financées : {p} % de vos ventes livrées HT, soit {m} par an.': ['', 'Promociones financiadas: {p} % de sus ventas entregadas sin IVA, es decir, {m} al año.', '', '', '', ''],
     'Promotions financées : {m} par an, soit {p} % de vos ventes livrées HT.': ['', 'Promociones financiadas: {m} al año, es decir, {p} % de sus ventas entregadas sin IVA.', '', '', '', ''],
@@ -6198,7 +6197,514 @@
     'La marge de la carte atteint votre objectif.': ['', 'El margen de la carta alcanza su objetivo.', '', '', '', ''],
     'Ce qui la tire vers le bas : il reste {m} une fois les produits payés, pour un objectif de {o}.': ['', 'Lo que la hace bajar: queda el {m} una vez pagados los productos, para un objetivo del {o}.', '', '', '', ''],
     'Chaque vente vient d’un plat au-dessus de son objectif.': ['', 'Cada venta viene de un plato por encima de su objetivo.', '', '', '', ''],
-    'L’onglet Carte n’affiche plus de chiffre seul : la note de la carte est écrite en clair en haut de la Carte': ['', 'La pestaña Carta ya no muestra una cifra sola: la nota de la carta aparece escrita con claridad arriba de la Carta', '', '', '', '']
+    'L’onglet Carte n’affiche plus de chiffre seul : la note de la carte est écrite en clair en haut de la Carte': ['', 'La pantalla Carta ya no muestra una cifra sola: la nota de la carta aparece escrita con claridad arriba de la Carta', '', '', '', ''],
+    'Sur une commande de {a}, il vous reste {b}. {p} en prend {c} en moyenne ({d} sur une commande livrée).': ['', 'En un pedido de {a}, le quedan {b}. {p} se lleva {c} de media ({d} en un pedido entregado).', '', '', '', ''],
+    'Sur une commande de {a}, il vous reste {b}. Les plateformes en prennent {c} en moyenne ({d} sur une commande livrée).': ['', 'En un pedido de {a}, le quedan {b}. Las plataformas se llevan {c} de media ({d} en un pedido entregado).', '', '', '', ''],
+    'Sur une commande de {a}, il vous reste {b}. {p} en prend {c} en moyenne.': ['', 'En un pedido de {a}, le quedan {b}. {p} se lleva {c} de media.', '', '', '', ''],
+    'Sur une commande de {a}, il vous reste {b}. Les plateformes en prennent {c} en moyenne.': ['', 'En un pedido de {a}, le quedan {b}. Las plataformas se llevan {c} de media.', '', '', '', ''],
+    'Chapitres détaillés rédigés en français ; les chiffres sont les mêmes.': ['', 'Capítulos detallados redactados en francés; las cifras son las mismas.', '', '', '', ''],
+    'L’analyse complète': ['', 'El análisis completo', '', '', '', ''],
+    'Tout le détail, chapitre par chapitre': ['', 'Todo el detalle, capítulo a capítulo', '', '', '', ''],
+    '{n} chapitres en {m} thèmes, tous calculés avec vos chiffres.': ['', '{n} capítulos en {m} temas, todos calculados con sus cifras.', '', '', '', ''],
+    '{n} chapitres en 1 thème, tous calculés avec vos chiffres.': ['', '{n} capítulos en 1 tema, todos calculados con sus cifras.', '', '', '', ''],
+    'Lire depuis le début': ['', 'Leer desde el principio', '', '', '', ''],
+    'SIMULATION ESTIMATIVE · Audit Premium Verdict® · {a}/{b}/{c}': ['', 'SIMULACIÓN ESTIMATIVA · Audit Premium Verdict® · {a}/{b}/{c}', '', '', '', ''],
+    '/{a} · simulation': ['', '/{a} · simulación', '', '', '', ''],
+    'Cette simulation décrit une structure rentable, mais fragile : deux chocs sur quatre la font passer en perte (Test de résistance).': ['', 'Esta simulación describe una estructura rentable, pero frágil: dos impactos de cuatro la llevan a pérdidas (Prueba de resistencia).', '', '', '', ''],
+    'Un scénario illustratif construit à partir d’estimations sectorielles. Il ne décrit pas un dossier client réel.': ['', 'Un escenario ilustrativo construido a partir de estimaciones sectoriales. No describe un expediente de cliente real.', '', '', '', ''],
+    '{a} chapitres · {b} exports': ['', '{a} capítulos · {b} exportaciones', '', '', '', ''],
+    'Dossier': ['', 'Expediente', '', '', '', ''],
+    'Exercice clôturé': ['', 'Ejercicio cerrado', '', '', '', ''],
+    'Statut': ['', 'Estado', '', '', '', ''],
+    'Audit calculé': ['', 'Auditoría calculada', '', '', '', ''],
+    'AUDIT DISPONIBLE': ['', 'AUDITORÍA DISPONIBLE', '', '', '', ''],
+    'Les questions terrain apparaissent plus loin, après les preuves. Elles sont facultatives et servent uniquement à départager les causes possibles.': ['', 'Las preguntas de terreno aparecen más adelante, después de las pruebas. Son opcionales y solo sirven para discernir entre las causas posibles.', '', '', '', ''],
+    'Pourquoi': ['', 'Por qué', '', '', '', ''],
+    'Action': ['', 'Acción', '', '', '', ''],
+    'Calcul moteur': ['', 'Cálculo del motor', '', '', '', ''],
+    '{a} € à vérifier': ['', '{a} € por verificar', '', '', '', ''],
+    'L’écart existe entre deux lectures ; il n’est encore ni une perte prouvée ni une économie récupérable.': ['', 'La diferencia existe entre dos lecturas; todavía no es ni una pérdida probada ni un ahorro recuperable.', '', '', '', ''],
+    'Votre résistance à un coup dur': ['', 'Su resistencia ante un golpe duro', '', '', '', ''],
+    'Le raisonnement': ['', 'El razonamiento', '', '', '', ''],
+    'Pourquoi Verdict dit cela': ['', 'Por qué Verdict dice esto', '', '', '', ''],
+    'Il vous faut atteindre': ['', 'Necesita alcanzar', '', '', '', ''],
+    'Les commissions plateformes pèsent': ['', 'Las comisiones de plataformas suponen', '', '', '', ''],
+    '{a} € sur {b} € vendus HT': ['', '{a} € de cada {b} € vendidos sin IVA', '', '', '', ''],
+    'Verdict final': ['', 'Veredicto final', '', '', '', ''],
+    'Une seule décision démarre maintenant :': ['', 'Una sola decisión empieza ahora:', '', '', '', ''],
+    'Écart à expliquer :': ['', 'Diferencia por explicar:', '', '', '', ''],
+    '. L’écart existe entre deux lectures ; il n’est encore ni une perte prouvée ni une économie récupérable.': ['', '. La diferencia existe entre dos lecturas; todavía no es ni una pérdida probada ni un ahorro recuperable.', '', '', '', ''],
+    'Voir mes actions, une par une': ['', 'Ver mis acciones, una por una', '', '', '', ''],
+    'Quatre exports : Audit Premium complet, dossier comptable, dossier banque / associé et rapport exécutif d’une page.': ['', 'Cuatro exportaciones: Audit Premium completo, expediente contable, expediente banco / socio e informe ejecutivo de una página.', '', '', '', ''],
+    'Le gain réaliste · structure + carte': ['', 'La ganancia realista · estructura + carta', '', '', '', ''],
+    '{a} € par mois, soit {b} € par an': ['', '{a} € al mes, es decir, {b} € al año', '', '', '', ''],
+    'Un seul calcul, rejoué dans le moteur avec vos chiffres. Chaque levier est borné par les repères de votre format (Brasserie) (un tiers de l’écart au repère, comme vos priorités). Les étapes s’enchaînent : chaque montant est ce que le levier ajoute après les précédents, aucun euro n’est compté deux fois.': ['', 'Un solo cálculo, recalculado en el motor con sus cifras. Cada palanca está limitada por las referencias de su formato (Brasserie) (un tercio de la diferencia con la referencia, como sus prioridades). Los pasos se encadenan: cada importe es lo que la palanca añade después de las anteriores; ningún euro se cuenta dos veces.', '', '', '', ''],
+    'Pas à pas': ['', 'Paso a paso', '', '', '', ''],
+    'Coût de l’équipe · {a} €/mois': ['', 'Coste del equipo · {a} €/mes', '', '', '', ''],
+    ': Coût de l’équipe à {a} % du CA ; repère médian Brasserie : {b} %. Verdict retient un tiers de l’écart.': ['', ': Coste del equipo al {a} % de la facturación; referencia mediana Brasserie: {b} %. Verdict toma un tercio de la diferencia.', '', '', '', ''],
+    'Comment': ['', 'Cómo', '', '', '', ''],
+    ': Vérifiez d’abord : saisissez les heures réalisées du mois dans Salaires, puis comparez ventes et heures service par service. Un ratio élevé ne prouve pas un sureffectif : n’ajustez rien avant.': ['', ': Compruebe primero: introduzca las horas realizadas del mes en Salarios y compare ventas y horas servicio por servicio. Un ratio alto no prueba un exceso de personal: no ajuste nada antes.', '', '', '', ''],
+    'Contrôle élevé': ['', 'Control alto', '', '', '', ''],
+    ': Charges fixes à {a} % du CA ; repère {b} %. Un tiers de l’écart, arrondi au pas du curseur : {c} € par an.': ['', ': Gastos fijos al {a} % de la facturación; referencia {b} %. Un tercio de la diferencia, redondeado al paso del cursor: {c} € al año.', '', '', '', ''],
+    ': Assurances, énergie, abonnements et maintenance, ligne par ligne. Le loyer n’est pas compté.': ['', ': Seguros, energía, suscripciones y mantenimiento, línea por línea. El alquiler no se cuenta.', '', '', '', ''],
+    'Contrôle partiel': ['', 'Control parcial', '', '', '', ''],
+    ': Commissions plateformes : {a} € par an.': ['', ': Comisiones de plataformas: {a} € al año.', '', '', '', ''],
+    ': Faire passer une partie des commandes en clic-et-retrait et revoir les prix affichés en livraison.': ['', ': Pasar parte de los pedidos a recogida en local y revisar los precios de la entrega a domicilio.', '', '', '', ''],
+    ': Repeser les portions clés, mettre à jour les fiches techniques, renégocier le premier fournisseur.': ['', ': Volver a pesar las porciones clave, actualizar las fichas técnicas, renegociar con el primer proveedor.', '', '', '', ''],
+    'Résultat visé': ['', 'Resultado objetivo', '', '', '', ''],
+    '{a} € · {b} % d’un CA de {c} € · Indice de sérénité {d}': ['', '{a} € · {b} % de una facturación de {c} € · Índice de serenidad {d}', '', '', '', ''],
+    'Verdict ne propose pas d’aller au-delà de {a} % de résultat : c’est le niveau des meilleurs établissements de votre format (Brasserie). Au-delà, ce ne serait plus réaliste.': ['', 'Verdict no propone ir más allá de un {a} % de resultado: es el nivel de los mejores establecimientos de su formato (Brasserie). Más allá, ya no sería realista.', '', '', '', ''],
+    'Ce qui n’est pas compté': ['', 'Lo que no se cuenta', '', '', '', ''],
+    'Les jours et horaires d’ouverture : leur faisabilité se décide dans Équipe. · La saison, la concurrence et le temps de mise en œuvre.': ['', 'Los días y horarios de apertura: su viabilidad se decide en Equipo. · La temporada, la competencia y el tiempo de puesta en marcha.', '', '', '', ''],
+    'Ouvrir ce scénario dans Simuler': ['', 'Abrir este escenario en Simular', '', '', '', ''],
+    'La chaîne complète, en euros annuels et en part du chiffre d’affaires. Les montants viennent de la même lecture que votre Indice de sérénité.': ['', 'La cadena completa, en euros anuales y en proporción de la facturación. Los importes proceden de la misma lectura que su Índice de serenidad.', '', '', '', ''],
+    'Lecture avant impôt sur les postes saisis. Une ligne n’est jamais estimée depuis une moyenne sectorielle : elle vient de vos données. Le périmètre comptable est détaillé au chapitre suivant.': ['', 'Lectura antes de impuestos sobre las partidas introducidas. Una línea nunca se estima a partir de una media sectorial: procede de sus datos. El perímetro contable se detalla en el capítulo siguiente.', '', '', '', ''],
+    'L’argent · exercice annuel · HT · Démonstration · données fictives': ['', 'El dinero · ejercicio anual · sin IVA · Demostración · datos ficticios', '', '', '', ''],
+    'Verdict · le billet des {a} €': ['', 'Verdict · el billete de {a} €', '', '', '', ''],
+    'Modèle : Brasserie': ['', 'Modelo: Brasserie', '', '', '', ''],
+    'Sur {a} € HT de chiffre d’affaires, que reste-t-il vraiment ?': ['', 'De {a} € de facturación sin IVA, ¿qué queda realmente?', '', '', '', ''],
+    'Vos charges absorbent {a} €. Il reste {b} € avant impôt sur les postes saisis.': ['', 'Sus gastos absorben {a} €. Quedan {b} € antes de impuestos sobre las partidas introducidas.', '', '', '', ''],
+    '{a} € de chiffre d’affaires HT': ['', '{a} € de facturación sin IVA', '', '', '', ''],
+    'Matière · nourriture + boissons': ['', 'Materia · comida + bebidas', '', '', '', ''],
+    '{a} € / an · HT': ['', '{a} € / año · sin IVA', '', '', '', ''],
+    'Équipe · coût chargé': ['', 'Equipo · coste con cargas', '', '', '', ''],
+    'Structure hors équipe': ['', 'Estructura sin equipo', '', '', '', ''],
+    'Équipe · coût chargé absorbe {a} € ; il reste {b} € avant impôt.': ['', 'Equipo · coste con cargas absorbe {a} €; quedan {b} € antes de impuestos.', '', '', '', ''],
+    'Le poste le plus lourd n’est pas automatiquement la priorité : Verdict croise impact, urgence et fiabilité avant de décider.': ['', 'La partida más pesada no es automáticamente la prioridad: Verdict cruza impacto, urgencia y fiabilidad antes de decidir.', '', '', '', ''],
+    'Lecture réconciliée à {a} €': ['', 'Lectura conciliada en {a} €', '', '', '', ''],
+    '{a} % des données requises sont renseignées. Les montants restent ceux que vous avez saisis.': ['', 'El {a} % de los datos requeridos está completado. Los importes siguen siendo los que usted introdujo.', '', '', '', ''],
+    'Périmètre comptable du calcul': ['', 'Perímetro contable del cálculo', '', '', '', ''],
+    'Verdict affiche un solde de pilotage construit uniquement avec les postes saisis. Ce n’est pas automatiquement votre résultat courant avant impôt comptable : vérifiez notamment amortissements, impôts et taxes de production, intérêts et autres charges financières avec votre comptable.': ['', 'Verdict muestra un saldo de gestión construido únicamente con las partidas introducidas. No es automáticamente su resultado corriente antes de impuestos contable: compruebe en particular amortizaciones, impuestos y tasas sobre la producción, intereses y otros gastos financieros con su contable.', '', '', '', ''],
+    'Lignes arrondies et équilibrées au dixième d’euro. Les montants annuels restent non arrondis dans le moteur.': ['', 'Líneas redondeadas y equilibradas a la décima de euro. Los importes anuales siguen sin redondear en el motor.', '', '', '', ''],
+    'Définition officielle : INSEE · résultat courant avant impôt ↗': ['', 'Definición oficial: INSEE · resultado corriente antes de impuestos ↗', '', '', '', ''],
+    'Voir l’action prioritaire': ['', 'Ver la acción prioritaria', '', '', '', ''],
+    'Chiffre minimum & sécurité': ['', 'Cifra mínima & seguridad', '', '', '', ''],
+    '{a} € HT': ['', '{a} € sin IVA', '', '', '', ''],
+    'soit {a} % de votre chiffre d’affaires actuel.': ['', 'es decir, el {a} % de su facturación actual.', '', '', '', ''],
+    '{a} % du CA au-dessus du chiffre minimum.': ['', 'El {a} % de la facturación por encima de la cifra mínima.', '', '', '', ''],
+    'Rythme sur votre activité réelle': ['', 'Ritmo según su actividad real', '', '', '', ''],
+    'Par mois actif (HT) · {a} mois': ['', 'Por mes activo (sin IVA) · {a} meses', '', '', '', ''],
+    'Par jour ouvert (HT) · {a} jours': ['', 'Por día abierto (sin IVA) · {a} días', '', '', '', ''],
+    'Commandes par jour au minimum': ['', 'Pedidos al día como mínimo', '', '', '', ''],
+    'Calcul annuel : charges fixes ÷ taux de contribution. Les moyennes mensuelles utilisent uniquement vos mois actifs ; aucun mois calendaire d’atteinte n’est inventé.': ['', 'Cálculo anual: gastos fijos ÷ tasa de contribución. Las medias mensuales solo usan sus meses activos; no se inventa ningún mes del calendario en que se alcance.', '', '', '', ''],
+    'Repère :': ['', 'Referencia:', '', '', '', ''],
+    'le gain réaliste de Verdict, borné et rejoué levier par levier, est de': ['', 'la ganancia realista de Verdict, limitada y recalculada palanca por palanca, es de', '', '', '', ''],
+    '{a} € par an': ['', '{a} € al año', '', '', '', ''],
+    '. Les montants ci-dessous sont une mécanique pure, sans réaction des clients ni plafond : ils ne s’y ajoutent pas.': ['', '. Los importes siguientes son pura mecánica, sin reacción de los clientes ni tope: no se suman a ella.', '', '', '', ''],
+    'Panier actuel :': ['', 'Ticket medio actual:', '', '', '', ''],
+    'TTC. Verdict rejoue exactement la même structure et le même volume avec un panier moyen plus haut.': ['', 'con IVA. Verdict recalcula exactamente la misma estructura y el mismo volumen con un ticket medio más alto.', '', '', '', ''],
+    '{a} € /an': ['', '{a} € /año', '', '', '', ''],
+    '{a} €/mois · résultat/CA simulé {b} %': ['', '{a} €/mes · resultado/facturación simulado {b} %', '', '', '', ''],
+    'La structure est fragile : deux chocs sur quatre font passer en perte': ['', 'La estructura es frágil: dos impactos de cuatro la llevan a pérdidas', '', '', '', ''],
+    'Lecture de pilotage à rapprocher des comptes officiels.': ['', 'Lectura de gestión que debe cotejarse con las cuentas oficiales.', '', '', '', ''],
+    'de résultat avant impôt, soit {a} % du chiffre d’affaires, si les ventes baissent de {b} % en volume (achats et commissions suivent, charges fixes et amortissements restent). Même calcul que Structure › Test de résistance. La saison, le mix, les prix et les décisions futures n’y sont pas.': ['', 'de resultado antes de impuestos, es decir, el {a} % de la facturación, si las ventas bajan un {b} % en volumen (compras y comisiones acompañan, gastos fijos y amortizaciones se mantienen). Mismo cálculo que Estructura › Prueba de resistencia. La temporada, el mix, los precios y las decisiones futuras no están incluidos.', '', '', '', ''],
+    'CA HT par jour ouvert · {a} jours': ['', 'Facturación sin IVA por día abierto · {a} días', '', '', '', ''],
+    'Contribution / h repère (base {a} h/jour)': ['', 'Contribución / h de referencia (base {a} h/día)', '', '', '', ''],
+    'CA par temps pleins saisi': ['', 'Facturación por jornada completa introducida', '', '', '', ''],
+    'Le nombre de temps pleins vient uniquement de votre saisie : s’il manque, Verdict ne l’estime pas. L’indice horaire n’entre dans l’Indice qu’avec vos heures d’ouverture réelles (Mon équipe › Heures d’ouverture par semaine) ; sans elles, la base de {a} h par jour ouvert reste indicative.': ['', 'El número de jornadas completas procede únicamente de su dato: si falta, Verdict no lo estima. El índice horario solo entra en el Índice con sus horas de apertura reales (Mi equipo › Horas de apertura por semana); sin ellas, la base de {a} h por día abierto sigue siendo indicativa.', '', '', '', ''],
+    'Votre modèle · Brasserie': ['', 'Su modelo · Brasserie', '', '', '', ''],
+    'Une analyse construite pour ce métier, sans faux classement': ['', 'Un análisis construido para este oficio, sin falsa clasificación', '', '', '', ''],
+    'Verdict adapte les contrôles et les preuves à ce modèle. Les comptes et l’indice de sérénité, eux, gardent exactement le même moteur.': ['', 'Verdict adapta los controles y las pruebas a este modelo. Las cuentas y el índice de serenidad, en cambio, conservan exactamente el mismo motor.', '', '', '', ''],
+    'ANGLE': ['', 'ÁNGULO', '', '', '', ''],
+    'QUESTION DIRECTRICE': ['', 'PREGUNTA GUÍA', '', '', '', ''],
+    'Réponses immédiates du dirigeant': ['', 'Respuestas inmediatas para el responsable', '', '', '', ''],
+    'les salaires': ['', 'los salarios', '', '', '', ''],
+    'Que reste-t-il ?': ['', '¿Qué queda?', '', '', '', ''],
+    'Solde avant impôt des postes saisis': ['', 'Saldo antes de impuestos de las partidas introducidas', '', '', '', ''],
+    'Quel CA minimum ?': ['', '¿Qué facturación mínima?', '', '', '', ''],
+    'Chiffre minimum de la structure actuelle': ['', 'Cifra mínima de la estructura actual', '', '', '', ''],
+    'Facteur le plus limitant du moteur': ['', 'Factor más limitante del motor', '', '', '', ''],
+    'votre résistance à un coup dur': ['', 'su resistencia ante un golpe duro', '', '', '', ''],
+    'Si le CA baisse de {a} % ?': ['', '¿Y si la facturación baja un {a} %?', '', '', '', ''],
+    'Résultat mécanique, mêmes fixes': ['', 'Resultado mecánico, mismos gastos fijos', '', '', '', ''],
+    'Contrôles prioritaires propres à ce modèle': ['', 'Controles prioritarios propios de este modelo', '', '', '', ''],
+    'Identifier le canal qui apporte du résultat, pas seulement du volume.': ['', 'Identificar el canal que aporta resultado, no solo volumen.', '', '', '', ''],
+    'Séparer une structure rentable d’une trésorerie sous tension.': ['', 'Separar una estructura rentable de una tesorería bajo tensión.', '', '', '', ''],
+    'Choisir le premier service à protéger, corriger ou tester.': ['', 'Elegir el primer servicio que proteger, corregir o probar.', '', '', '', ''],
+    'Distinguer un problème de demande d’un plafond de capacité ou de rotation.': ['', 'Distinguir un problema de demanda de un techo de capacidad o de rotación.', '', '', '', ''],
+    'Aucune comparaison locale n’est affichée sans concurrents documentés. Aucun repère sectoriel ne remplace vos données N{a}, vos tickets, vos heures ou vos stocks.': ['', 'No se muestra ninguna comparación local sin competidores documentados. Ninguna referencia sectorial sustituye sus datos N{a}, sus tickets, sus horas o sus existencias.', '', '', '', ''],
+    'Diagnostic Carte': ['', 'Diagnóstico Carta', '', '', '', ''],
+    'Cette lecture alimente l’Indice Carte. Cet indice reste indépendant de l’indice de sérénité Verdict® global et ne le modifie jamais.': ['', 'Esta lectura alimenta el Índice Carta. Este índice sigue siendo independiente del índice de serenidad Verdict® global y nunca lo modifica.', '', '', '', ''],
+    'Couverture exploitable': ['', 'Cobertura utilizable', '', '', '', ''],
+    '{a} / {b} plats · {c} %': ['', '{a} / {b} platos · {c} %', '', '', '', ''],
+    'Matière théorique pondérée (nourriture + boissons)': ['', 'Materia teórica ponderada (comida + bebidas)', '', '', '', ''],
+    'Marge matière pondérée': ['', 'Margen sobre materia ponderado', '', '', '', ''],
+    'Nourriture + boissons : achats (sur l’année) / fiches techniques': ['', 'Comida + bebidas: compras (en el año) / fichas técnicas', '', '', '', ''],
+    'Écart nourriture + boissons réel / théorique': ['', 'Diferencia comida + bebidas real / teórica', '', '', '', ''],
+    '{a} points': ['', '{a} puntos', '', '', '', ''],
+    'Menu du jour (entrée + plat)': ['', 'Menú del día (entrante + plato)', '', '', '', ''],
+    '{a} ventes/mois · marge {b} %': ['', '{a} ventas/mes · margen {b} %', '', '', '', ''],
+    '{a} €/mois': ['', '{a} €/mes', '', '', '', ''],
+    'Entrecôte grillée, frites': ['', 'Entrecot a la parrilla, patatas fritas', '', '', '', ''],
+    'La plus faible contribution de chaque catégorie, à revoir': ['', 'La contribución más baja de cada categoría, por revisar', '', '', '', ''],
+    'Six huîtres · Entrées': ['', 'Seis ostras · Entrantes', '', '', '', ''],
+    'Profiteroles · Desserts': ['', 'Profiteroles · Postres', '', '', '', ''],
+    'Soft {a} cl · Boissons': ['', 'Refresco {a} cl · Bebidas', '', '', '', ''],
+    'Une faible contribution ne suffit pas, seule, à supprimer un plat : l’effet d’appel et le mix client ne sont pas mesurés.': ['', 'Una contribución baja no basta, por sí sola, para eliminar un plato: el efecto reclamo y el mix de clientes no se miden.', '', '', '', ''],
+    'Contexte externe vérifié · hors Indice de sérénité': ['', 'Contexto externo verificado · fuera del Índice de serenidad', '', '', '', ''],
+    'Ce que le marché et les obligations changent — sans remplacer vos chiffres': ['', 'Lo que el mercado y las obligaciones cambian — sin sustituir sus cifras', '', '', '', ''],
+    'Ces sources datées servent à préparer une décision ou un contrôle. Elles ne deviennent jamais une moyenne locale ni une économie promise.': ['', 'Estas fuentes fechadas sirven para preparar una decisión o un control. Nunca se convierten en una media local ni en un ahorro prometido.', '', '', '', ''],
+    'REPÈRE EXTERNE · NE MODIFIE PAS L’indice de sérénité': ['', 'REFERENCIA EXTERNA · NO MODIFICA EL ÍNDICE DE SERENIDAD', '', '', '', ''],
+    'Facturation électronique · calendrier officiel': ['', 'Facturación electrónica · calendario oficial', '', '', '', ''],
+    'Ouvrir la source officielle ↗': ['', 'Abrir la fuente oficial ↗', '', '', '', ''],
+    'Hygiène et allergènes · obligations': ['', 'Higiene y alérgenos · obligaciones', '', '', '', ''],
+    'Plan de maîtrise sanitaire, hygiène et information écrite sur les allergènes sont des contrôles de conformité distincts de l’indice de sérénité financier.': ['', 'El plan de control sanitario, la higiene y la información escrita sobre alérgenos son controles de conformidad distintos del índice de serenidad financiero.', '', '', '', ''],
+    'Recrutement · France Travail BMO {a}': ['', 'Contratación · France Travail BMO {a}', '', '', '', ''],
+    'Le contexte national varie fortement par métier : {a} % des projets de cuisiniers et {b} % des projets de chefs cuisiniers sont jugés difficiles. Ce contexte n’établit pas votre capacité locale à recruter.': ['', 'El contexto nacional varía mucho según el oficio: el {a} % de los proyectos de contratación de cocineros y el {b} % de los de jefes de cocina se consideran difíciles. Este contexto no establece su capacidad local para contratar.', '', '', '', ''],
+    'Gaspillage alimentaire · ADEME': ['', 'Desperdicio alimentario · ADEME', '', '', '', ''],
+    'L’ADEME publie des repères pour la restauration commerciale. Verdict les utilise comme contexte documentaire, jamais pour estimer vos pertes réelles.': ['', 'La ADEME publica referencias para la restauración comercial. Verdict las utiliza como contexto documental, nunca para estimar sus pérdidas reales.', '', '', '', ''],
+    'Observatoire FIDUCIAL {a} · résultats {b}': ['', 'Observatorio FIDUCIAL {a} · resultados {b}', '', '', '', ''],
+    'Échantillon de {a} points de vente issus d’un réseau de {b} clients. Les données décrivent restauration rapide et traditionnelle ; elles ne classent ni un coffee shop, ni un traiteur, ni une dark kitchen.': ['', 'Muestra de {a} puntos de venta procedentes de una red de {b} clientes. Los datos describen la restauración rápida y la tradicional; no clasifican ni un coffee shop, ni un catering, ni una dark kitchen.', '', '', '', ''],
+    'Questions stratégiques · facultatives · propres à votre modèle': ['', 'Preguntas estratégicas · opcionales · propias de su modelo', '', '', '', ''],
+    'Seulement ce que les chiffres ne peuvent pas trancher': ['', 'Solo lo que las cifras no pueden zanjar', '', '', '', ''],
+    'Votre audit est déjà disponible. Verdict a sélectionné': ['', 'Su auditoría ya está disponible. Verdict ha seleccionado', '', '', '', ''],
+    '{a} questions utiles': ['', '{a} preguntas útiles', '', '', '', ''],
+    'pour votre modèle « Brasserie » ; aucune question générique n’est ajoutée pour remplir un formulaire.': ['', 'para su modelo «Brasserie»; no se añade ninguna pregunta genérica para rellenar un formulario.', '', '', '', ''],
+    'Le calcul reste indépendant': ['', 'El cálculo sigue siendo independiente', '', '', '', ''],
+    'Vos réponses qualifient les causes et les preuves. Elles ne changent ni l’indice de sérénité, ni les comptes, ni le chiffre minimum.': ['', 'Sus respuestas califican las causas y las pruebas. No cambian ni el índice de serenidad, ni las cuentas, ni la cifra mínima.', '', '', '', ''],
+    'Affiner les causes': ['', 'Afinar las causas', '', '', '', ''],
+    'Facultatif · une question à la fois · {a} / {b}': ['', 'Opcional · una pregunta a la vez · {a} / {b}', '', '', '', ''],
+    'Pourquoi maintenant': ['', 'Por qué ahora', '', '', '', ''],
+    'Les commissions saisies représentent {a} % du CA. Une commission seule ne donne pas le coût complet du canal.': ['', 'Las comisiones introducidas representan el {a} % de la facturación. Una comisión por sí sola no da el coste completo del canal.', '', '', '', ''],
+    'Ce que la réponse tranche': ['', 'Lo que la respuesta zanja', '', '', '', ''],
+    'Preuve attendue': ['', 'Prueba esperada', '', '', '', ''],
+    'CA HT, remises, commission, emballage, remboursement et coût matière par canal.': ['', 'Facturación sin IVA, descuentos, comisión, embalaje, reembolsos y coste de materia por canal.', '', '', '', ''],
+    'La contribution nette est-elle calculée séparément pour chaque canal ?': ['', '¿Se calcula la contribución neta por separado para cada canal?', '', '', '', ''],
+    'Oui, avec une mesure': ['', 'Sí, con una medición', '', '', '', ''],
+    'Vos autres charges fixes sont élevées': ['', 'Sus otros gastos fijos son elevados', '', '', '', ''],
+    'Reprendre chaque ligne : assurances, énergie, abonnements, maintenance.': ['', 'Revisar cada línea: seguros, energía, suscripciones, mantenimiento.', '', '', '', ''],
+    'Une question, et le diagnostic s’affine': ['', 'Una pregunta, y el diagnóstico se afina', '', '', '', ''],
+    'Votre loyer a-t-il été renégocié depuis trois ans ?': ['', '¿Se ha renegociado su alquiler en los últimos tres años?', '', '', '', ''],
+    'Vos achats nourriture': ['', 'Sus compras de comida', '', '', '', ''],
+    'Votre marge avant impôt': ['', 'Su margen antes de impuestos', '', '', '', ''],
+    'Chaque action vise une base économique distincte. Une étape ne devient verte qu’après une mesure datée et comparable, enregistrée avec « Mesurer l’action ».': ['', 'Cada acción apunta a una base económica distinta. Una etapa solo se vuelve verde tras una medición fechada y comparable, registrada con «Medir la acción».', '', '', '', ''],
+    '{a} étape mesurée sur {b}': ['', '{a} etapa medida de {b}', '', '', '', ''],
+    'Départ {a}/{b}/{c} · revue complète {d}/{e}/{f}. Un clic lance le suivi ; il ne valide jamais le résultat.': ['', 'Inicio {a}/{b}/{c} · revisión completa {d}/{e}/{f}. Un clic inicia el seguimiento; nunca valida el resultado.', '', '', '', ''],
+    'Mesure : Indice de sérénité, résultat, chiffre minimum et qualité des données au départ.': ['', 'Medida: Índice de serenidad, resultado, cifra mínima y calidad de los datos al inicio.', '', '', '', ''],
+    'Direction': ['', 'Dirección', '', '', '', ''],
+    'Salle': ['', 'Sala', '', '', '', ''],
+    'Comptabilité': ['', 'Contabilidad', '', '', '', ''],
+    'Tenir la structure actuelle et contrôler qu’aucun indicateur ne se dégrade.': ['', 'Mantener la estructura actual y controlar que ningún indicador se deteriore.', '', '', '', ''],
+    'Mesure : Indice de sérénité, résultat avant impôt et chiffre minimum.': ['', 'Medida: Índice de serenidad, resultado antes de impuestos y cifra mínima.', '', '', '', ''],
+    'Enregistrer le contrôle chiffré': ['', 'Guardar el control cuantificado', '', '', '', ''],
+    'Comparer la même période, documenter les écarts et conserver ce qui fonctionne.': ['', 'Comparar el mismo periodo, documentar las diferencias y conservar lo que funciona.', '', '', '', ''],
+    'Rejouer l’audit, comparer Indice de sérénité, marge et résultat, puis garder ou remplacer l’action.': ['', 'Repetir la auditoría, comparar Índice de serenidad, margen y resultado, y después mantener o sustituir la acción.', '', '', '', ''],
+    'La reprise': ['', 'La recuperación', '', '', '', ''],
+    'Entre les audits du {a}/{b}/{c} et du {d}/{e}/{f}, aucun mouvement net n’est observé sur l’indice de sérénité et la marge.': ['', 'Entre las auditorías del {a}/{b}/{c} y del {d}/{e}/{f}, no se observa ningún movimiento neto en el índice de serenidad ni en el margen.', '', '', '', ''],
+    'Audit du {a}/{b}/{c} → aujourd’hui': ['', 'Auditoría del {a}/{b}/{c} → hoy', '', '', '', ''],
+    'Résultat / CA': ['', 'Resultado / Facturación', '', '', '', ''],
+    'Ce que ces écarts doivent à vos décisions et ce qu’ils doivent à la saison, Verdict ne peut pas le départager. Il montre le mouvement.': ['', 'Qué parte de estas diferencias se debe a sus decisiones y qué parte a la temporada, Verdict no puede determinarlo. Muestra el movimiento.', '', '', '', ''],
+    'Enregistrer cet audit': ['', 'Guardar esta auditoría', '', '', '', ''],
+    '{a} audits conservés.': ['', '{a} auditorías conservadas.', '', '', '', ''],
+    'Contrat de vérité · calculé, déclaré, à prouver': ['', 'Contrato de verdad · calculado, declarado, por demostrar', '', '', '', ''],
+    'Ce que l’audit sait — et ce qu’il refuse d’inventer': ['', 'Lo que la auditoría sabe — y lo que se niega a inventar', '', '', '', ''],
+    'Chaque conclusion porte son niveau de preuve. Une réponse terrain reste une déclaration jusqu’à ce qu’une pièce ou une mesure comparable la confirme.': ['', 'Cada conclusión lleva su nivel de prueba. Una respuesta sobre el terreno sigue siendo una declaración hasta que un documento o una medición comparable la confirme.', '', '', '', ''],
+    'CALCULÉ': ['', 'CALCULADO', '', '', '', ''],
+    'Moteur Verdict': ['', 'Motor Verdict', '', '', '', ''],
+    '✓ CA HT analysé : {a} €': ['', '✓ Facturación sin IVA analizada: {a} €', '', '', '', ''],
+    '✓ Chiffre minimum annuel : {a} €': ['', '✓ Cifra mínima anual: {a} €', '', '', '', ''],
+    '✓ Résultat après choc de CA {a} % : {b} €': ['', '✓ Resultado tras un choque de facturación del {a} %: {b} €', '', '', '', ''],
+    'DÉCLARÉ': ['', 'DECLARADO', '', '', '', ''],
+    'Entrées du dossier': ['', 'Datos del expediente', '', '', '', ''],
+    '• Modèle : Brasserie': ['', '• Modelo: Brasserie', '', '', '', ''],
+    '• Période économique : {a}': ['', '• Periodo económico: {a}', '', '', '', ''],
+    '• Mois actifs : {a} · jours ouverts : {b}': ['', '• Meses activos: {a} · días abiertos: {b}', '', '', '', ''],
+    '• Origine : modèle fictif estimatif': ['', '• Origen: modelo ficticio estimativo', '', '', '', ''],
+    'À PROUVER': ['', 'POR DEMOSTRAR', '', '', '', ''],
+    'Causes opérationnelles': ['', 'Causas operativas', '', '', '', ''],
+    '— CA HT, remises, commission, emballage, remboursement et coût matière par canal.': ['', '— Facturación sin IVA, descuentos, comisión, embalaje, reembolsos y coste de materia prima por canal.', '', '', '', ''],
+    '— Échéancier d’emprunts, crédits-bails, investissements signés et dettes exigibles.': ['', '— Calendario de préstamos, arrendamientos financieros, inversiones firmadas y deudas exigibles.', '', '', '', ''],
+    '— CA, couverts, matière et heures réellement travaillées pour au moins trois services comparables.': ['', '— Facturación, cubiertos, materia prima y horas realmente trabajadas en al menos tres servicios comparables.', '', '', '', ''],
+    'Évolution propre à votre établissement': ['', 'Evolución propia de su establecimiento', '', '', '', ''],
+    '{a} € de résultat': ['', '{a} € de resultado', '', '', '', ''],
+    'Exercice {a} → exercice {b} · CA {c} € · Indice de sérénité {d} points.': ['', 'Ejercicio {a} → ejercicio {b} · Facturación {c} € · Índice de serenidad {d} puntos.', '', '', '', ''],
+    'Les repères externes et les réponses facultatives ne modifient jamais l’indice de sérénité. La complétude de {a} % mesure la présence des champs, pas leur exactitude.': ['', 'Las referencias externas y las respuestas opcionales nunca modifican el índice de serenidad. La completitud del {a} % mide la presencia de los campos, no su exactitud.', '', '', '', ''],
+    'Chiffre minimum à réaliser : {a} % de votre chiffre d’affaires': ['', 'Cifra mínima que alcanzar: {a} % de su facturación', '', '', '', ''],
+    'Ce qui reste après les coûts variables : {a} %': ['', 'Lo que queda tras los costes variables: {a} %', '', '', '', ''],
+    'Achats nourriture : {a} % · cuisine + salaires : {b} %': ['', 'Compras de comida: {a} % · cocina + salarios: {b} %', '', '', '', ''],
+    'Banque de France, secteur {a} ({b}) : taux d’excédent brut global / CA HT médian {c} % — indicateur différent du résultat Verdict': ['', 'Banque de France, sector {a} ({b}): tasa de excedente bruto global / facturación sin IVA mediana {c} % — indicador distinto del resultado Verdict', '', '', '', ''],
+    'Complétude économique : {a} % · dossier étayé': ['', 'Completitud económica: {a} % · expediente documentado', '', '', '', ''],
+    'Le pourcentage mesure uniquement les champs économiques présents. Il ne mesure ni exactitude, ni qualité des pièces, ni probabilité de réussite.': ['', 'El porcentaje solo mide los campos económicos presentes. No mide ni la exactitud, ni la calidad de los documentos, ni la probabilidad de éxito.', '', '', '', ''],
+    'Identité documentaire du dossier': ['', 'Identidad documental del expediente', '', '', '', ''],
+    'Source principale': ['', 'Fuente principal', '', '', '', ''],
+    'Estimation dirigeant': ['', 'Estimación del responsable', '', '', '', ''],
+    'Contexte terrain': ['', 'Contexto sobre el terreno', '', '', '', ''],
+    '{a} / {b} réponses': ['', '{a} / {b} respuestas', '', '', '', ''],
+    'Preuves opérationnelles': ['', 'Pruebas operativas', '', '', '', ''],
+    '{a} / {b} disponibles': ['', '{a} / {b} disponibles', '', '', '', ''],
+    'journées du mois, carte, inventaire mesuré, CA par service, rapprochements de caisse · données fictives': ['', 'jornadas del mes, carta, inventario medido, facturación por servicio, conciliaciones de caja · datos ficticios', '', '', '', ''],
+    '— Lecture de pilotage à rapprocher des comptes officiels.': ['', '— Lectura de gestión que debe cotejarse con las cuentas oficiales.', '', '', '', ''],
+    'Déclarer la période et la source': ['', 'Declarar el periodo y la fuente', '', '', '', ''],
+    'Période couverte': ['', 'Periodo cubierto', '', '', '', ''],
+    'Période en cours': ['', 'Periodo en curso', '', '', '', ''],
+    'Projet / prévisionnel': ['', 'Proyecto / previsional', '', '', '', ''],
+    'Source principale des chiffres': ['', 'Fuente principal de las cifras', '', '', '', ''],
+    'Comptes annuels': ['', 'Cuentas anuales', '', '', '', ''],
+    'Export comptable': ['', 'Exportación contable', '', '', '', ''],
+    'Saisie de gestion': ['', 'Introducción de gestión', '', '', '', ''],
+    'Préparer les pièces banque / associé · {a} / {b}': ['', 'Preparar los documentos para banco / socio · {a} / {b}', '', '', '', ''],
+    'Verdict enregistre uniquement votre déclaration de disponibilité. Il ne reçoit ni ne vérifie ces documents.': ['', 'Verdict solo registra su declaración de disponibilidad. No recibe ni verifica estos documentos.', '', '', '', ''],
+    'Bilan comptable': ['', 'Balance', '', '', '', ''],
+    'Compte de résultat officiel': ['', 'Cuenta de resultados oficial', '', '', '', ''],
+    'Compte de résultat prévisionnel': ['', 'Cuenta de resultados previsional', '', '', '', ''],
+    'Plan de trésorerie': ['', 'Plan de tesorería', '', '', '', ''],
+    'Besoin en fonds de roulement': ['', 'Necesidad de fondo de maniobra', '', '', '', ''],
+    'Emprunts, échéancier et capacité de remboursement': ['', 'Préstamos, calendario de pagos y capacidad de reembolso', '', '', '', ''],
+    'Questions stratégiques · Brasserie': ['', 'Preguntas estratégicas · Brasserie', '', '', '', ''],
+    'Non commencé · {a} / {b}': ['', 'No iniciado · {a} / {b}', '', '', '', ''],
+    '{a} questions maximum, choisies pour votre modèle et vos chiffres. Elles qualifient les causes sans modifier le calcul.': ['', '{a} preguntas como máximo, elegidas para su modelo y sus cifras. Califican las causas sin modificar el cálculo.', '', '', '', ''],
+    'Répondre si je veux préciser les causes': ['', 'Responder si quiero precisar las causas', '', '', '', ''],
+    'La causalité d’un écart par service — les heures et le CA sont mesurés, mais météo, événement, mix client et décisions simultanées peuvent aussi l’expliquer.': ['', 'La causalidad de una diferencia por servicio — las horas y la facturación se miden, pero el tiempo, un evento, el perfil de clientes y decisiones simultáneas también pueden explicarla.', '', '', '', ''],
+    'La qualité vécue en salle et la satisfaction client — aucun chiffre économique ne remplace l’observation terrain et les retours clients.': ['', 'La calidad vivida en sala y la satisfacción del cliente — ninguna cifra económica sustituye la observación sobre el terreno y las opiniones de los clientes.', '', '', '', ''],
+    'L’hygiène et la conformité — ce n’est pas le domaine de cet audit économique.': ['', 'La higiene y la conformidad — no es el ámbito de esta auditoría económica.', '', '', '', ''],
+    'La concurrence locale, la météo et les événements — Verdict ne les utilise pas pour inventer une explication.': ['', 'La competencia local, el tiempo y los eventos — Verdict no los utiliza para inventar una explicación.', '', '', '', ''],
+    'L’impôt, le droit, la paie et la décision bancaire — l’audit s’arrête au pilotage avant impôt et doit être rapproché des professionnels concernés.': ['', 'Los impuestos, el derecho, las nóminas y la decisión bancaria — la auditoría se detiene en el pilotaje antes de impuestos y debe cotejarse con los profesionales correspondientes.', '', '', '', ''],
+    'Preuve des chiffres clés': ['', 'Prueba de las cifras clave', '', '', '', ''],
+    'Pour chaque chiffre : d’où il vient, comment il est calculé, s’il a été corrigé. Les seuils et pondérations internes du moteur ne sont pas exposés.': ['', 'Para cada cifra: de dónde viene, cómo se calcula, si se ha corregido. Los umbrales y ponderaciones internos del motor no se muestran.', '', '', '', ''],
+    'CA HT annuel': ['', 'Facturación anual sin IVA', '', '', '', ''],
+    ': données fictives calibrées (démonstration)': ['', ': datos ficticios calibrados (demostración)', '', '', '', ''],
+    'Calcul': ['', 'Cálculo', '', '', '', ''],
+    ': panier HT {a} € × {b} commandes/jour × {c} jours/semaine × {d} × {e} mois': ['', ': ticket medio sin IVA {a} € × {b} pedidos/día × {c} días/semana × {d} × {e} meses', '', '', '', ''],
+    ': « Mes chiffres »': ['', ': «Mis cifras»', '', '', '', ''],
+    ': matière {a} € + boissons {b} € + commissions {c} €': ['', ': materia prima {a} € + bebidas {b} € + comisiones {c} €', '', '', '', ''],
+    'Coût de l’équipe chargée (an)': ['', 'Coste del equipo con cargas sociales (año)', '', '', '', ''],
+    ': (dirigeant {a} € × ({b} + {c} %) + salariés {d} € × ({e} + {f} %)) × {g} mois': ['', ': (responsable {a} € × ({b} + {c} %) + empleados {d} € × ({e} + {f} %)) × {g} meses', '', '', '', ''],
+    ': {a} € par mois × {b}': ['', ': {a} € al mes × {b}', '', '', '', ''],
+    ': CA HT {a} € − coûts variables {b} € − coût de l’équipe {c} € − charges fixes {d} €': ['', ': facturación sin IVA {a} € − costes variables {b} € − coste del equipo {c} € − gastos fijos {d} €', '', '', '', ''],
+    ': (coût de l’équipe + charges fixes) {a} € ÷ taux de marge sur coûts variables {b} %': ['', ': (coste del equipo + gastos fijos) {a} € ÷ tasa de margen sobre costes variables {b} %', '', '', '', ''],
+    'CA du mois en cours': ['', 'Facturación del mes en curso', '', '', '', ''],
+    ': somme des journées saisies ({a} jours)': ['', ': suma de las jornadas introducidas ({a} días)', '', '', '', ''],
+    'Suivi': ['', 'Seguimiento', '', '', '', ''],
+    ': aucune correction': ['', ': ninguna corrección', '', '', '', ''],
+    'Prévision de fin de mois': ['', 'Previsión de fin de mes', '', '', '', ''],
+    ': CA du mois en cours': ['', ': facturación del mes en curso', '', '', '', ''],
+    ': Méthode : cumul encaissé + moyenne du même jour de semaine pour chaque jour ouvert restant (repli : moyenne générale).': ['', ': Método: acumulado cobrado + media del mismo día de la semana para cada día abierto restante (alternativa: media general).', '', '', '', ''],
+    ': version {a} du {b}/{c}/{d}, fiabilité élevée': ['', ': versión {a} del {b}/{c}/{d}, fiabilidad alta', '', '', '', ''],
+    'Décisions mesurées': ['', 'Decisiones medidas', '', '', '', ''],
+    ': {a} mesurées sur {b} ; estimé et observé gardés séparément': ['', ': {a} medidas de {b}; estimado y observado se mantienen por separado', '', '', '', ''],
+    'État des sources de données': ['', 'Estado de las fuentes de datos', '', '', '', ''],
+    'D’où viennent vos chiffres, et quand. Rien n’est affiché « vérifié » sans connexion réelle à la source.': ['', 'De dónde vienen sus cifras, y cuándo. Nada se muestra como «verificado» sin una conexión real con la fuente.', '', '', '', ''],
+    'Démonstration : toutes les données sont fictives, aucune source réelle n’est branchée.': ['', 'Demostración: todos los datos son ficticios, no hay ninguna fuente real conectada.', '', '', '', ''],
+    'Caisse — connexion directe': ['', 'Caja — conexión directa', '', '', '', ''],
+    'Non connectée': ['', 'No conectada', '', '', '', ''],
+    'Aucune caisse n’est branchée à Verdict : vos chiffres de caisse viennent d’imports de documents ou de saisies.': ['', 'Ninguna caja está conectada a Verdict: sus cifras de caja proceden de importaciones de documentos o de introducciones manuales.', '', '', '', ''],
+    'Journées de caisse (document)': ['', 'Jornadas de caja (documento)', '', '', '', ''],
+    'Import manuel — non vérifié par la source': ['', 'Importación manual — no verificada por la fuente', '', '', '', ''],
+    'dernier import le {a}/{b}/{c} : {d} lignes, {e} ajoutées, {f} remplacée': ['', 'última importación el {a}/{b}/{c}: {d} líneas, {e} añadidas, {f} sustituidas', '', '', '', ''],
+    'Ventes par plat (document de caisse)': ['', 'Ventas por plato (documento de caja)', '', '', '', ''],
+    '{a} plats pour {b}/{c}': ['', '{a} platos para {b}/{c}', '', '', '', ''],
+    'Journées saisies à la main': ['', 'Jornadas introducidas a mano', '', '', '', ''],
+    'Rien reçu': ['', 'Nada recibido', '', '', '', ''],
+    'aucun import': ['', 'ninguna importación', '', '', '', ''],
+    'Comptabilité (FEC)': ['', 'Contabilidad (FEC)', '', '', '', ''],
+    'Factures fournisseurs (documents)': ['', 'Facturas de proveedores (documentos)', '', '', '', ''],
+    'CA par service': ['', 'Facturación por servicio', '', '', '', ''],
+    '{a} jours renseignés': ['', '{a} días cumplimentados', '', '', '', ''],
+    'Qui fait foi pour chaque chiffre': ['', 'Qué manda para cada cifra', '', '', '', ''],
+    'CA du jour → vos journées (caisse, import ou saisie) : la dernière saisie par date fait foi, les corrections sont gardées.': ['', 'Facturación del día → sus jornadas (caja, importación o introducción): manda la última introducción por fecha, las correcciones se conservan.', '', '', '', ''],
+    'CA du mois → somme des journées (TTC, puis HT par taux de TVA) : le même chiffre sert à Salaires, à la clôture et aux prévisions.': ['', 'Facturación del mes → suma de las jornadas (con IVA, después sin IVA por tipo de IVA): la misma cifra sirve para Salarios, el cierre y las previsiones.', '', '', '', ''],
+    'CA annuel de pilotage → « Mes chiffres » (déclaré de l’exercice clos, sinon reconstruit) : structure, résultat, chiffre minimum. Ce n’est pas le CA comptable.': ['', 'Facturación anual de gestión → «Mis cifras» (declarada del ejercicio cerrado, si no, reconstruida): estructura, resultado, cifra mínima. No es la facturación contable.', '', '', '', ''],
+    'CA comptable → votre FEC (comptes {a}) : il pré-remplit « Mes chiffres » après votre accord, jamais mélangé en silence.': ['', 'Facturación contable → su FEC (cuentas {a}): rellena previamente «Mis cifras» tras su aprobación, nunca se mezcla en silencio.', '', '', '', ''],
+    'Coût de l’équipe → « Mes chiffres » (bruts + taux) pour la structure ; Salaires (coût réel du mois saisi) pour le suivi mensuel.': ['', 'Coste del equipo → «Mis cifras» (brutos + tipos) para la estructura; Salarios (coste real del mes introducido) para el seguimiento mensual.', '', '', '', ''],
+    'Prix d’achat → factures validées : le dernier prix fait foi pour l’ingrédient, l’ancien est gardé dans l’historique.': ['', 'Precios de compra → facturas validadas: manda el último precio para el ingrediente, el anterior se conserva en el historial.', '', '', '', ''],
+    'Coût des plats → vos fiches × le prix actuel de chaque ingrédient (perte comprise).': ['', 'Coste de los platos → sus fichas × el precio actual de cada ingrediente (merma incluida).', '', '', '', ''],
+    'Stock et consommation → vos comptages d’Inventaire, datés.': ['', 'Existencias y consumo → sus recuentos de Inventario, fechados.', '', '', '', ''],
+    'Décisions → un seul registre, partagé par toutes les vues.': ['', 'Decisiones → un único registro, compartido por todas las vistas.', '', '', '', ''],
+    'SIMULATION ESTIMATIVE': ['', 'SIMULACIÓN ESTIMATIVA', '', '', '', ''],
+    'Une seule décision démarre maintenant : Vous achetez plus de nourriture et de boissons que vos ventes n’en utilisent.': ['', 'Una sola decisión empieza ahora: compra más comida y bebida de la que usan sus ventas.', '', '', '', ''],
+    'Votre argent': ['', 'Su dinero', '', '', '', ''],
+    'Le gain réaliste': ['', 'La ganancia realista', '', '', '', ''],
+    'L’argent': ['', 'El dinero', '', '', '', ''],
+    'Votre métier': ['', 'Su oficio', '', '', '', ''],
+    'Votre modèle': ['', 'Su modelo', '', '', '', ''],
+    'Contexte externe vérifié': ['', 'Contexto externo verificado', '', '', '', ''],
+    'Passer à l’action': ['', 'Pasar a la acción', '', '', '', ''],
+    'Questions stratégiques': ['', 'Preguntas estratégicas', '', '', '', ''],
+    'Preuves et fiabilité': ['', 'Pruebas y fiabilidad', '', '', '', ''],
+    'Niveau de preuve': ['', 'Nivel de prueba', '', '', '', ''],
+    'Limites de l’audit': ['', 'Límites de la auditoría', '', '', '', ''],
+    'Chiffres clés': ['', 'Cifras clave', '', '', '', ''],
+    'Vos sources': ['', 'Sus fuentes', '', '', '', ''],
+    'Source de référence': ['', 'Fuente de referencia', '', '', '', ''],
+    'Suivant →': ['', 'Siguiente →', '', '', '', ''],
+    '← Précédent': ['', '← Anterior', '', '', '', ''],
+    'Fermer la lecture': ['', 'Cerrar la lectura', '', '', '', ''],
+    'Lecture de l’audit': ['', 'Lectura de la auditoría', '', '', '', ''],
+    'Depuis votre audit du {a}/{b}/{c}': ['', 'Desde su auditoría del {a}/{b}/{c}', '', '', '', ''],
+    'Mesure : {s}, résultat, point mort et qualité des données au départ.': ['', 'Medición: {s}, resultado, cifra mínima y calidad de los datos al inicio.', '', '', '', ''],
+    'Mesure : {s}, résultat avant impôt et point mort.': ['', 'Medición: {s}, resultado antes de impuestos y cifra mínima.', '', '', '', ''],
+    'Vos réponses qualifient les causes et les preuves. Elles ne changent ni le {s}, ni les comptes, ni le chiffre minimum.': ['', 'Sus respuestas califican las causas y las pruebas. No cambian ni el {s}, ni las cuentas, ni la cifra mínima.', '', '', '', ''],
+    'Rejouer l’audit, comparer {s}, marge et résultat, puis garder ou remplacer l’action.': ['', 'Repetir la auditoría, comparar {s}, margen y resultado, y luego mantener o sustituir la acción.', '', '', '', ''],
+    'Entre les audits du {a}/{b}/{c} et du {d}/{e}/{f}, aucun mouvement net n’est observé sur le {s} et la marge.': ['', 'Entre las auditorías del {a}/{b}/{c} y del {d}/{e}/{f}, no se observa ningún movimiento neto en el {s} ni en el margen.', '', '', '', ''],
+    'Les repères externes et les réponses facultatives ne modifient jamais le {s}. La complétude de {a} % mesure la présence des champs, pas leur exactitude.': ['', 'Las referencias externas y las respuestas opcionales nunca modifican el {s}. Una completitud del {a} % mide la presencia de los campos, no su exactitud.', '', '', '', ''],
+    'Plan de maîtrise sanitaire, hygiène et information écrite sur les allergènes sont des contrôles de conformité distincts du {s} financier.': ['', 'El plan de control sanitario, la higiene y la información escrita sobre alérgenos son controles de conformidad distintos del {s} financiero.', '', '', '', ''],
+    'Cette lecture alimente l’Indice Carte. Cet indice reste indépendant du {s} global et ne le modifie jamais.': ['', 'Esta lectura alimenta el Índice de Carta. Este índice sigue siendo independiente del {s} global y nunca lo modifica.', '', '', '', ''],
+    'La chaîne complète, en euros annuels et en part du chiffre d’affaires. Les montants viennent de la même lecture que votre {s}.': ['', 'La cadena completa, en euros anuales y en porcentaje de la facturación. Los importes proceden de la misma lectura que su {s}.', '', '', '', ''],
+    'Le nombre d’ETP vient uniquement de votre saisie : s’il manque, Verdict ne l’estime pas. L’indice horaire n’entre dans l’Indice qu’avec vos heures d’ouverture réelles (Mon équipe › Heures d’ouverture par semaine) ; sans elles, la base de {a} h par jour ouvert reste indicative.': ['', 'El número de ETC procede únicamente de sus datos: si falta, Verdict no lo estima. El índice horario solo entra en el Índice con sus horas de apertura reales (Mi equipo › Horas de apertura por semana); sin ellas, la base de {a} h por día abierto es solo indicativa.', '', '', '', ''],
+    'Coût humain à {a} % du CA ; repère médian {m} : {b} %. Verdict retient un tiers de l’écart.': ['', 'Coste de personal al {a} % de la facturación; referencia mediana {m}: {b} %. Verdict retiene un tercio de la diferencia.', '', '', '', ''],
+    'L’audit est la photo d’aujourd’hui.': ['', 'La auditoría es la foto de hoy.', '', '', '', ''],
+    'Votre évolution — actions datées, mouvements mesurés ensuite et cycles — se lit dans le suivi de vos actions.': ['', 'Su evolución — acciones fechadas, movimientos medidos después y ciclos — se lee en el seguimiento de sus acciones.', '', '', '', ''],
+    'Votre établissement est rentable et tient debout.': ['', 'Su establecimiento es rentable y se sostiene.', '', '', '', ''],
+    'La décision du chapitre précédent, {x}, n’est pas encore dans ce montant': ['', 'La decisión del capítulo anterior, {x}, aún no está en este importe', '', '', '', ''],
+    'Un seul calcul, rejoué dans le moteur avec vos chiffres. Chaque levier est borné par les repères de votre format ({f}) (un tiers de l’écart au repère, comme vos priorités). Les étapes s’enchaînent : chaque montant est ce que le levier ajoute après les précédents, aucun euro n’est compté deux fois.': ['', 'Un solo cálculo, repetido en el motor con sus cifras. Cada palanca está limitada por las referencias de su formato ({f}) (un tercio de la diferencia con la referencia, como sus prioridades). Los pasos se encadenan: cada importe es lo que la palanca añade después de las anteriores; ningún euro se cuenta dos veces.', '', '', '', ''],
+    'repères généraux de la restauration traditionnelle': ['', 'referencias generales de la restauración tradicional', '', '', '', ''],
+    'Le coût humain (jusqu’à {a} / an) : proposé seulement après une décision d’organisation mesurée. · Les jours et horaires d’ouverture : leur faisabilité se décide dans Équipe. · La carte : complétez les fiches et les ventes ({b} % du CA au moins) pour ajouter le gain plat par plat. · La saison, la concurrence et le temps de mise en œuvre.': ['', 'El coste de personal (hasta {a} / año): propuesto solo tras una decisión de organización medida. · Los días y horarios de apertura: su viabilidad se decide en Equipo. · La carta: complete las fichas y las ventas (al menos el {b} % de la facturación) para añadir la ganancia plato a plato. · La temporada, la competencia y el tiempo de puesta en marcha.', '', '', '', ''],
+    '{a} % des données requises sont renseignées. À confirmer : {x}.': ['', '{a} % de los datos requeridos están completados. Por confirmar: {x}.', '', '', '', ''],
+    'panier moyen, commandes par jour, jours d’ouverture': ['', 'ticket medio, pedidos al día, días de apertura', '', '', '', ''],
+    'Panier actuel : inconnu (aucun ticket lu dans votre caisse). Ce qu’un panier plus haut changerait se calcule dès que vos tickets sont connus.': ['', 'Ticket actual: desconocido (ningún tique leído en su caja). Lo que cambiaría un ticket más alto se calcula en cuanto se conocen sus tiques.', '', '', '', ''],
+    'Le calcul se fait dès que vos tickets sont connus (import de la caisse).': ['', 'El cálculo se hace en cuanto se conocen sus tiques (importación de la caja).', '', '', '', ''],
+    'Le document comptable importé fait foi : les montants sont réalisés, pas estimés.': ['', 'El documento contable importado manda: los importes son reales, no estimados.', '', '', '', ''],
+    'Votre modèle · {m}': ['', 'Su modelo · {m}', '', '', '', ''],
+    'Modèle non renseigné': ['', 'Modelo no indicado', '', '', '', ''],
+    'Votre structure financière est analysée, mais aucun volume de plat exploitable n’est renseigné. Verdict ne peut pas désigner vos produits moteurs ou fragiles.': ['', 'Su estructura financiera está analizada, pero no hay ningún volumen de platos utilizable. Verdict no puede señalar sus productos motores o frágiles.', '', '', '', ''],
+    'Ajoutez vos plats et leurs ventes mensuelles.': ['', 'Añada sus platos y sus ventas mensuales.', '', '', '', ''],
+    'Des commissions annuelles existent, mais aucun prix plateforme n’est renseigné dans la carte.': ['', 'Hay comisiones anuales, pero no hay ningún precio de plataforma en la carta.', '', '', '', ''],
+    'pour votre modèle « {m} » ; aucune question générique n’est ajoutée pour remplir un formulaire.': ['', 'para su modelo «{m}»; no se añade ninguna pregunta genérica para rellenar un formulario.', '', '', '', ''],
+    'à confirmer : jours d’ouverture inconnus': ['', 'por confirmar: días de apertura desconocidos', '', '', '', ''],
+    'Chaque heure d’ouverture laisse peu de marge': ['', 'Cada hora de apertura deja poco margen', '', '', '', ''],
+    'Les heures ouvertes ne produisent pas assez pour couvrir leur coût.': ['', 'Las horas de apertura no producen lo suficiente para cubrir su coste.', '', '', '', ''],
+    'Le total de vos charges': ['', 'El total de sus gastos', '', '', '', ''],
+    'Chaque information ajoutée resserre l’analyse.': ['', 'Cada dato añadido afina el análisis.', '', '', '', ''],
+    'Écart entre le CA déclaré retenu comme référence ({a}) et le CA reconstitué depuis panier et couverts ({b}) : {c} soit {d} %. Cause non déterminée par Verdict.': ['', 'Diferencia entre la facturación declarada tomada como referencia ({a}) y la facturación reconstruida a partir del ticket y los cubiertos ({b}): {c}, es decir, el {d} %. Causa no determinada por Verdict.', '', '', '', ''],
+    'La contribution de chaque plat ou produit — aucune carte complète avec volumes comparables n’est renseignée.': ['', 'La contribución de cada plato o producto — no hay ninguna carta completa con volúmenes comparables.', '', '', '', ''],
+    'La rentabilité par service — au moins trois services comparables avec CA, heures et coût horaire sont nécessaires.': ['', 'La rentabilidad por servicio — se necesitan al menos tres servicios comparables con facturación, horas y coste horario.', '', '', '', ''],
+    'L’expérience réelle du client — elle doit être documentée par des observations ou retours adaptés à votre canal de vente.': ['', 'La experiencia real del cliente — debe documentarse con observaciones o comentarios adaptados a su canal de venta.', '', '', '', ''],
+    'La rentabilité complète de chaque plateforme — les commissions sont connues, pas encore les ventes, remboursements, frais et versements séparés par canal.': ['', 'La rentabilidad completa de cada plataforma — las comisiones se conocen, pero aún no las ventas, reembolsos, gastos y pagos separados por canal.', '', '', '', ''],
+    'Enregistrez cet audit : au prochain, Verdict affichera ce qui a bougé — {s}, marge, résultat — au lieu de recommencer à zéro.': ['', 'Guarde esta auditoría: en la próxima, Verdict mostrará lo que ha cambiado — {s}, margen, resultado — en lugar de empezar de cero.', '', '', '', ''],
+    'Réduit pour ne pas dépasser {x} de rentabilité, le niveau des meilleurs établissements de votre format.': ['', 'Reducido para no superar el {x} de rentabilidad, el nivel de los mejores establecimientos de su formato.', '', '', '', ''],
+    'score': ['', 'índice de serenidad', '', '', '', ''],
+    'Score': ['', 'Índice de serenidad', '', '', '', ''],
+    'Contexte externe vérifié · hors score': ['', 'Contexto externo verificado · fuera del índice de serenidad', '', '', '', ''],
+    'REPÈRE EXTERNE · NE MODIFIE PAS LE SCORE': ['', 'REFERENCIA EXTERNA · NO MODIFICA EL ÍNDICE DE SERENIDAD', '', '', '', ''],
+    'Verdict adapte les contrôles et les preuves à ce modèle. Les comptes et le score, eux, gardent exactement le même moteur.': ['', 'Verdict adapta los controles y las pruebas a este modelo. Las cuentas y el índice de serenidad mantienen exactamente el mismo motor.', '', '', '', ''],
+    '{a} · {b} % d’un CA de {c} · score {d}': ['', '{a} · {b} % de una facturación de {c} · índice de serenidad {d}', '', '', '', ''],
+    'Vous avez déjà le verdict, son explication et la première décision.': ['', 'Ya tiene el veredicto, su explicación y la primera decisión.', '', '', '', ''],
+    'Audit visuel en cinq étapes': ['', 'Auditoría visual en cinco pasos', '', '', '', ''],
+    'Écouter le résumé de l’audit': ['', 'Escuchar el resumen de la auditoría', '', '', '', ''],
+    'Étapes de l’audit': ['', 'Pasos de la auditoría', '', '', '', ''],
+    'Étape {n} sur 5': ['', 'Paso {n} de 5', '', '', '', ''],
+    'Situation actuelle': ['', 'Situación actual', '', '', '', ''],
+    'Répartition de l’argent': ['', 'Reparto del dinero', '', '', '', ''],
+    'Chiffre minimum': ['', 'Cifra mínima', '', '', '', ''],
+    'Étape précédente': ['', 'Paso anterior', '', '', '', ''],
+    'Progression de l’affinage facultatif': ['', 'Progreso del ajuste opcional', '', '', '', ''],
+    '{a} € de charges + {b} € de solde = 100 € HT': ['', '{a} € de gastos + {b} € de saldo = 100 € sin IVA', '', '', '', ''],
+    '{a} € de charges − {b} € de déficit = 100 € HT': ['', '{a} € de gastos − {b} € de déficit = 100 € sin IVA', '', '', '', ''],
+    'Total des charges mesurées': ['', 'Total de gastos medidos', '', '', '', ''],
+    'Matière · nourriture + boissons · {a} €': ['', 'Materia · comida + bebidas · {a} €', '', '', '', ''],
+    'Commissions plateformes · {a} €': ['', 'Comisiones de plataformas · {a} €', '', '', '', ''],
+    'Équipe · coût chargé · {a} €': ['', 'Equipo · coste con cargas · {a} €', '', '', '', ''],
+    'Structure hors équipe · {a} €': ['', 'Estructura sin equipo · {a} €', '', '', '', ''],
+    'Amortissements · {a} €': ['', 'Amortizaciones · {a} €', '', '', '', ''],
+    'Reste avant impôt · {a} €': ['', 'Resto antes de impuestos · {a} €', '', '', '', ''],
+    'Sommaire': ['', 'Índice', '', '', '', ''],
+    '+{a} € par mois, soit +{b} € par an': ['', '+{a} € al mes, es decir, +{b} € al año', '', '', '', ''],
+    'Charges fixes à {a} % du CA ; repère {b} %. Un tiers de l’écart, arrondi au pas du curseur : {c} € par an.': ['', 'Gastos fijos al {a} % de la facturación; referencia {b} %. Un tercio de la diferencia, redondeado al paso del cursor: {c} € al año.', '', '', '', ''],
+    'Commissions plateformes : {a} € par an.': ['', 'Comisiones de plataformas: {a} € al año.', '', '', '', ''],
+    'Verdict ne propose pas d’aller au-delà de {a} % de résultat : c’est le niveau des meilleurs établissements de votre format ({f}). Au-delà, ce ne serait plus réaliste.': ['', 'Verdict no propone ir más allá de un {a} % de resultado: es el nivel de los mejores establecimientos de su formato ({f}). Más allá, ya no sería realista.', '', '', '', ''],
+    'Solde de pilotage avant impôt': ['', 'Saldo de gestión antes de impuestos', '', '', '', ''],
+    '✓ Solde de pilotage avant impôt : {a} € · {b} %': ['', '✓ Saldo de gestión antes de impuestos: {a} € · {b} %', '', '', '', ''],
+    '+{a} € de résultat': ['', '+{a} € de resultado', '', '', '', ''],
+    '−{a} € de résultat': ['', '−{a} € de resultado', '', '', '', ''],
+    'Exercice {a} → exercice {b} · CA {c} € · score {d} points.': ['', 'Ejercicio {a} → ejercicio {b} · Facturación {c} € · Índice de serenidad {d} puntos.', '', '', '', ''],
+    'Exercice {a} → exercice {b} · CA {c} € · score {d} point.': ['', 'Ejercicio {a} → ejercicio {b} · Facturación {c} € · Índice de serenidad {d} punto.', '', '', '', ''],
+    'Exercice {a} → exercice {b} · CA {c} € · score — non calculable.': ['', 'Ejercicio {a} → ejercicio {b} · Facturación {c} € · Índice de serenidad — no calculable.', '', '', '', ''],
+    'Depuis le 1er septembre 2026, toutes les entreprises doivent pouvoir recevoir des factures électroniques. Pour les PME et microentreprises, l’obligation d’émettre commence le 1er septembre 2027.': ['', 'Desde el 1 de septiembre de 2026, todas las empresas deben poder recibir facturas electrónicas. Para las pymes y microempresas, la obligación de emitirlas empieza el 1 de septiembre de 2027.', '', '', '', ''],
+    'Journées enregistrées ce mois-ci : {n}. Carte renseignée : oui.': ['', 'Días registrados este mes: {n}. Carta cumplimentada: sí.', '', '', '', ''],
+    'Journées enregistrées ce mois-ci : {n}. Carte renseignée : non.': ['', 'Días registrados este mes: {n}. Carta cumplimentada: no.', '', '', '', ''],
+    'CA par ETP saisi': ['', 'Facturación por ETC introducido', '', '', '', ''],
+    'Formule du jour (entrée + plat)': ['', 'Menú del día (entrante + principal)', '', '', '', ''],
+    '{a} % du CA au-dessus du point mort.': ['', 'El {a} % de la facturación por encima de la cifra mínima.', '', '', '', ''],
+    '+{a} €/mois · résultat/CA simulé {b} %': ['', '+{a} €/mes · resultado/facturación simulado {b} %', '', '', '', ''],
+    'REPÈRE EXTERNE · NE MODIFIE PAS L’INDICE DE SÉRÉNITÉ': ['', 'REFERENCIA EXTERNA · NO MODIFICA EL ÍNDICE DE SERENIDAD', '', '', '', ''],
+    'oui': ['', 'sí', '', '', '', ''],
+    'non': ['', 'no', '', '', '', ''],
+    'POSTE N°1': ['', 'PARTIDA N.º 1', '', '', '', ''],
+    'Un dossier construit pour': ['', 'Un expediente construido para', '', '', '', ''],
+    ', à partir de ses données, de son modèle déclaré et de ses réponses terrain.': ['', ', a partir de sus datos, de su modelo declarado y de sus respuestas de terreno.', '', '', '', ''],
+    'Une lecture de pilotage non finale construite pour': ['', 'Una lectura de gestión no definitiva construida para', '', '', '', ''],
+    '. Sa période, sa source ou sa clôture doivent encore être confirmées.': ['', '. Su periodo, su fuente o su cierre aún deben confirmarse.', '', '', '', ''],
+    'Exercice clos {a} · document comptable (FEC) qui fait foi': ['', 'Ejercicio cerrado {a} · documento contable (FEC), que da fe', '', '', '', ''],
+    'Exercice clos · document comptable (FEC) qui fait foi': ['', 'Ejercicio cerrado · documento contable (FEC), que da fe', '', '', '', ''],
+    'Plafond mécanique du test': ['', 'Techo mecánico de la prueba', '', '', '', ''],
+    'Plafond mécanique du test :': ['', 'Techo mecánico de la prueba:', '', '', '', ''],
+    'Scénario': ['', 'Escenario', '', '', '', ''],
+    'Intervalle de scénario': ['', 'Intervalo de escenario', '', '', '', ''],
+    'Scénario non observé': ['', 'Escenario no observado', '', '', '', ''],
+    'Intervalle de scénario : zéro tant que l’effet n’est pas observé, plafond si toutes les hypothèses du test se réalisent. Ce n’est pas une promesse.': ['', 'Intervalo de escenario: cero mientras no se observe el efecto, el techo si se cumplen todas las hipótesis de la prueba. No es una promesa.', '', '', '', ''],
+    'Une seule décision démarre maintenant : {d}.': ['', 'Una sola decisión empieza ahora: {d}.', '', '', '', ''],
+    'elle y entrera après une décision d’organisation mesurée (jusqu’à +{a} € par an). Ce montant vient des autres leviers.': ['', 'entrará en él tras una decisión de organización medida (hasta +{a} € al año). Este importe procede de las demás palancas.', '', '', '', ''],
+    'L’argent · exercice annuel · HT': ['', 'El dinero · ejercicio anual · sin impuestos', '', '', '', ''],
+    '• Modèle : {m}': ['', '• Modelo: {m}', '', '', '', ''],
+    'Modèle : {m}': ['', 'Modelo: {m}', '', '', '', ''],
+    'Non renseigné': ['', 'No indicado', '', '', '', ''],
+    '— non renseigné': ['', '— no indicado', '', '', '', ''],
+    'Mois actifs : {a} · jours ouverts : {b}': ['', 'Meses activos: {a} · días abiertos: {b}', '', '', '', ''],
+    '• Origine : document comptable (FEC) de l’exercice {a}, qui fait foi': ['', '• Origen: documento contable (FEC) del ejercicio {a}, que da fe', '', '', '', ''],
+    'Origine : document comptable (FEC) de l’exercice {a}, qui fait foi': ['', 'Origen: documento contable (FEC) del ejercicio {a}, que da fe', '', '', '', ''],
+    '• Origine : document comptable (FEC), qui fait foi': ['', '• Origen: documento contable (FEC), que da fe', '', '', '', ''],
+    'Origine : document comptable (FEC), qui fait foi': ['', 'Origen: documento contable (FEC), que da fe', '', '', '', ''],
+    '• Origine : données déclarées par le client': ['', '• Origen: datos declarados por el cliente', '', '', '', ''],
+    'Origine : données déclarées par le client': ['', 'Origen: datos declarados por el cliente', '', '', '', ''],
+    'Origine : modèle fictif estimatif': ['', 'Origen: modelo ficticio estimativo', '', '', '', ''],
+    'Complétude économique : {a} % · dossier incomplet': ['', 'Completitud económica: {a} % · expediente incompleto', '', '', '', ''],
+    'Il manque :': ['', 'Falta:', '', '', '', ''],
+    'Questions stratégiques · {m}': ['', 'Preguntas estratégicas · {m}', '', '', '', ''],
+    'Panier moyen +1 € ou +2 € TTC': ['', 'Ticket medio +1 € o +2 € con IVA', '', '', '', ''],
+    'inconnues : aucun ticket lu': ['', 'desconocidos: ningún ticket leído', '', '', '', ''],
+    'à calculer : tickets inconnus': ['', 'por calcular: tickets desconocidos', '', '', '', ''],
+    'Diagnostic indisponible': ['', 'Diagnóstico no disponible', '', '', '', ''],
+    'Pour aller plus loin': ['', 'Para ir más lejos', '', '', '', ''],
+    'Par jour ouvert (HT)': ['', 'Por día abierto (sin IVA)', '', '', '', ''],
+    '{n} point expliqué': ['', '{n} punto explicado', '', '', '', ''],
+    'Regarder les services creux avant de réduire quoi que ce soit d’autre.': ['', 'Mire los servicios flojos antes de reducir cualquier otra cosa.', '', '', '', ''],
+    'Gardez une trace de cet audit': ['', 'Guarde un registro de esta auditoría', '', '', '', ''],
+    'Mesure : masse salariale / CA et contribution par heure.': ['', 'Medida: masa salarial / facturación y contribución por hora.', '', '', '', ''],
+    'Mesure : coût matière réel, inventaire et écart théorique/réel.': ['', 'Medida: coste real de materia, inventario y diferencia teórica/real.', '', '', '', ''],
+    'Mesure : nourriture, boissons, emballages et plateformes séparés, puis contribution par commande.': ['', 'Medida: comida, bebidas, envases y plataformas por separado, y luego contribución por pedido.', '', '', '', ''],
+    'Mesure : même période, même périmètre, puis écart théorique / consommation mesurée.': ['', 'Medida: mismo periodo, mismo perímetro y luego diferencia teórica / consumo medido.', '', '', '', ''],
+    'Mesure : charges fixes / CA et contrats réellement renégociés.': ['', 'Medida: gastos fijos / facturación y contratos realmente renegociados.', '', '', '', ''],
+    'Mesure : panier, commandes, contribution par commande et volume.': ['', 'Medida: ticket medio, pedidos, contribución por pedido y volumen.', '', '', '', ''],
+    'Mesure : couverture des charges fixes et marge de sécurité.': ['', 'Medida: cobertura de los gastos fijos y margen de seguridad.', '', '', '', ''],
+    'Mesure : date, période et source de chaque valeur actualisée.': ['', 'Medida: fecha, periodo y fuente de cada valor actualizado.', '', '', '', ''],
+    'Mesure : résultat avant impôt, point mort et indicateur prioritaire.': ['', 'Medida: resultado antes de impuestos, cifra mínima e indicador prioritario.', '', '', '', ''],
+    'Mesure : résultat avant impôt, chiffre minimum et indicateur prioritaire.': ['', 'Medida: resultado antes de impuestos, cifra mínima e indicador prioritario.', '', '', '', ''],
+    'La consommation réelle, les pertes et la casse — il faut deux comptages comparables, les achats et les ajustements de la période.': ['', 'El consumo real, las pérdidas y las roturas — hacen falta dos recuentos comparables, las compras y los ajustes del periodo.', '', '', '', ''],
+    'La cause exacte de l’écart matière — l’inventaire mesure une consommation globale, pas la part imputable aux pertes, portions, offerts ou prix d’achat.': ['', 'La causa exacta de la diferencia de materia — el inventario mide un consumo global, no la parte atribuible a pérdidas, porciones, invitaciones o precios de compra.', '', '', '', ''],
+    'La structure est déjà sous tension': ['', 'La estructura ya está bajo tensión', '', '', '', ''],
+    'La structure résiste aux quatre chocs testés, sous les hypothèses saisies': ['', 'La estructura resiste los cuatro impactos probados, con las hipótesis introducidas', '', '', '', ''],
+    'La structure tient : un choc sur quatre fait passer en perte': ['', 'La estructura aguanta: un impacto de cuatro la lleva a pérdidas', '', '', '', ''],
+    'La structure est exposée : trois chocs sur quatre font passer en perte': ['', 'La estructura está expuesta: tres impactos de cuatro la llevan a pérdidas', '', '', '', ''],
+    'La structure est exposée : les quatre chocs font passer en perte': ['', 'La estructura está expuesta: los cuatro impactos la llevan a pérdidas', '', '', '', ''],
+    'Emballages et autres variables · {a} €': ['', 'Envases y otros costes variables · {a} €', '', '', '', ''],
+    'Un seul calcul, rejoué dans le moteur avec vos chiffres. Chaque levier est borné par les repères de votre format ({f}) : un tiers de l’écart au repère, comme vos priorités. Les étapes s’enchaînent : chaque montant est ce que le levier ajoute après les précédents, aucun euro n’est compté deux fois.': ['', 'Un solo cálculo, repetido en el motor con sus cifras. Cada palanca está limitada por las referencias de su formato ({f}): un tercio de la diferencia con la referencia, como sus prioridades. Los pasos se encadenan: cada importe es lo que la palanca añade después de las anteriores; ningún euro se cuenta dos veces.', '', '', '', ''],
+    'Un seul calcul, rejoué dans le moteur avec vos chiffres. Chaque levier est borné par les repères de votre format (Brasserie) : un tiers de l’écart au repère, comme vos priorités. Les étapes s’enchaînent : chaque montant est ce que le levier ajoute après les précédents, aucun euro n’est compté deux fois.': ['', 'Un solo cálculo, recalculado en el motor con sus cifras. Cada palanca está limitada por las referencias de su formato (Brasserie): un tercio de la diferencia con la referencia, como sus prioridades. Los pasos se encadenan: cada importe es lo que la palanca añade después de las anteriores; ningún euro se cuenta dos veces.', '', '', '', ''],
+    'Lire mon audit': ['', 'Leer mi auditoría', '', '', '', ''],
+    'Le bilan complet de votre établissement, chapitre par chapitre': ['', 'El balance completo de su establecimiento, capítulo por capítulo', '', '', '', ''],
+    'Sur l’année, il vous reste {a} pour {b} vendus, avant impôt (au niveau du repère Verdict : {c}).': ['', 'En el año, le quedan {a} por cada {b} vendidos, antes de impuestos (al nivel de la referencia Verdict: {c}).', '', '', '', ''],
+    'Sur l’année, il vous reste {a} pour {b} vendus, avant impôt (au niveau du repère Verdict : {c}). À surveiller en premier : {x}.': ['', 'En el año, le quedan {a} por cada {b} vendidos, antes de impuestos (al nivel de la referencia Verdict: {c}). A vigilar primero: {x}.', '', '', '', ''],
+    'Sur l’année, il vous reste {a} pour {b} vendus, avant impôt (au niveau du repère Verdict : {c}). Rien d’inquiétant ; une piste à saisir : {x}.': ['', 'En el año, le quedan {a} por cada {b} vendidos, antes de impuestos (al nivel de la referencia Verdict: {c}). Nada preocupante; una pista que aprovechar: {x}.', '', '', '', ''],
+    'L’Audit reconnaît votre FEC importé dans l’état des sources': ['', 'La Auditoría reconoce su FEC importado en el estado de las fuentes', '', '', '', ''],
+    'En espagnol, l’Historique et les explications parlent de « facturación », jamais de « CA »': ['', 'En español, el Historial y las explicaciones hablan de «facturación», nunca de «CA»', '', '', '', ''],
+    'Le Food truck de démonstration travaille vraiment 11 mois, de février à décembre': ['', 'El Food truck de demostración trabaja de verdad 11 meses, de febrero a diciembre', '', '', '', ''],
+    'Vos créneaux gardent le nom que vous leur avez donné, et À faire affiche « Mes décisions » en entier': ['', 'Sus franjas conservan el nombre que les dio, y Por hacer muestra «Mis decisiones» completo', '', '', '', ''],
+    'Vera sait d’où vous venez et sur quel établissement, comprend « marge », et sa réponse s’affiche à l’écran': ['', 'Vera sabe de dónde viene y en qué establecimiento, entiende «margen», y su respuesta aparece en pantalla', '', '', '', ''],
+    'Quand votre résultat est exactement au repère, Verdict le dit, au lieu d’écrire « au-dessus »': ['', 'Cuando su resultado está justo en la referencia, Verdict lo dice, en lugar de escribir «por encima»', '', '', '', ''],
+    'La démo s’ouvre sans avis sur son bouton principal, et la liste des modèles coche la Brasserie sous son vrai nom': ['', 'La demo se abre sin aviso sobre su botón principal, y la lista de modelos marca la Brasserie con su nombre real', '', '', '', ''],
+    'Le ⚙ de l’Accueil montre vos établissements et permet d’en changer': ['', 'El ⚙ de Inicio muestra sus establecimientos y permite cambiar de uno a otro', '', '', '', ''],
+    'Le rappel de sauvegarde attend que vous ayez vraiment utilisé Verdict, et sa croix reste une simple croix en mode clair': ['', 'El recordatorio de copia de seguridad espera a que haya usado realmente Verdict, y su cruz sigue siendo una simple cruz en modo claro', '', '', '', ''],
+    'En changeant d’écran, rien ne bouge plus sous vos yeux : l’écran apparaît en douceur': ['', 'Al cambiar de pantalla, ya nada se mueve ante sus ojos: la pantalla aparece con suavidad', '', '', '', ''],
+    'Après un changement de langue, les chiffres de la Saisie s’écrivent à la façon de la nouvelle langue': ['', 'Tras un cambio de idioma, las cifras de la Introducción se escriben a la manera del nuevo idioma', '', '', '', ''],
+    'Les montants restent entiers en fin de ligne (« 14 364 € », « 9,7 % »), dans toutes les langues': ['', 'Los importes quedan enteros al final de la línea («14.364 €», «9,7 %»), en todos los idiomas', '', '', '', ''],
+    'Le lecteur de l’Audit est entièrement traduit, suit le thème sombre et se lit en entier': ['', 'El lector de la Auditoría está totalmente traducido, sigue el tema oscuro y se lee entero', '', '', '', ''],
+    'Sur l’Audit, la barre du bas allume Structure, et Plus propose « Lire mon audit »': ['', 'En la Auditoría, la barra inferior ilumina Estructura, y Más propone «Leer mi auditoría»', '', '', '', ''],
+    'Audit : un début de page net, des images sans vide, l’écart matière lisible d’un coup d’œil': ['', 'Auditoría: un inicio de página limpio, imágenes sin huecos, la diferencia de materia legible de un vistazo', '', '', '', ''],
+    'À l’ouverture, l’anneau montre directement votre vrai score': ['', 'Al abrir, el anillo muestra directamente su verdadero índice de serenidad', '', '', '', ''],
+    'La démo garde la langue que vous avez choisie, et le reste de Verdict la suit': ['', 'La demo conserva el idioma que eligió, y el resto de Verdict lo sigue', '', '', '', ''],
+    'La Carte répond plus vite au premier toucher, Structure ne clignote plus et changer d’établissement est plus fluide': ['', 'La Carta responde más rápido al primer toque, Estructura ya no parpadea y cambiar de establecimiento es más fluido', '', '', '', ''],
+    'En italien, allemand, néerlandais et espagnol, Verdict vous vouvoie partout': ['', 'En italiano, alemán, neerlandés y español, Verdict le trata de usted en todas partes', '', '', '', ''],
+    'Le gain réaliste ne compte plus sur des clients en plus : seulement vos coûts, vos heures et vos prix': ['', 'La ganancia realista ya no cuenta con clientes adicionales: solo sus costes, sus horas y sus precios', '', '', '', ''],
+    'Simuler commence par ce que vous pouvez gagner, sans tableau vide, et parle de vos réglages et de votre résultat': ['', 'Simular empieza por lo que puede ganar, sin tabla vacía, y habla de sus ajustes y de su resultado', '', '', '', '']
   };
 
   /* C428 (A52) : second paquet : ses phrases rejoignent le dictionnaire du moteur déjà installé, qui retraduit l'écran. */
@@ -6323,13 +6829,19 @@
   /* Audit : notice traduite « validé en français » en tête du récit (C99) et du lecteur. */
   /* C314 (V16-048) : en mode réel, le récit de l'Audit est mis en colonnes : la note glissée dedans tombait dans une colonne
      d'un mot de large. Elle est posée AU-DESSUS du récit (frère précédent), sur toute la largeur ; retirée en français. */
+  /* C471 (contrôle visuel de l'Audit, point 4) : le récit en 6 images est traduit (décision 41) ; l'avis « validé en français » de
+     194 px qui le précédait n'était plus vrai et poussait la ligne 6 sous la barre. Il est retiré au-dessus du récit. Seuls les
+     27 chapitres détaillés du lecteur restent rédigés en français : une ligne le dit, en tête du lecteur. */
+  var NOTE_LECTEUR = 'Chapitres détaillés rédigés en français ; les chiffres sont les mêmes.', NOTE_LECTEUR_ACTIVE = false;
   function noticeAudit() {
     try {
       var fr = !w.LOCALE || w.LOCALE === 'fr';
-      if (fr) { [].forEach.call(document.querySelectorAll('[data-lc-note]'), function (n) { n.parentNode && n.parentNode.removeChild(n); }); return; }
-      if (typeof w.auAuditLanguageNoteHTML !== 'function') return;
-      var html = w.auAuditLanguageNoteHTML(w.LOCALE); if (!html) return;
-      [['vdRecit', null], ['vdLecteur', '.lx-corps']].forEach(function (c) {
+      [].forEach.call(document.querySelectorAll('[data-lc-note]'), function (n) { if (fr || !NOTE_LECTEUR_ACTIVE || !n.closest('#vdLecteur')) n.parentNode && n.parentNode.removeChild(n); });
+      /* C474 (décision 59) : les 27 chapitres sont traduits ; la ligne « chapitres rédigés en français » n'est plus vraie : plus aucune note. */
+      if (fr || !NOTE_LECTEUR_ACTIVE) return;
+      var p = ORDER.indexOf(w.LOCALE), t = p >= 0 && D[NOTE_LECTEUR] ? D[NOTE_LECTEUR][p] : ''; if (!t) return;
+      var html = '<p style="margin:0;font-size:12.5px;line-height:1.4;opacity:.78">' + String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }) + '</p>';
+      [['vdLecteur', '.lx-corps']].forEach(function (c) {
         var root = document.getElementById(c[0]); if (!root) return;
         var dessus = !c[1], host = dessus ? root.parentNode : root.querySelector(c[1]); if (!host) return;
         var deja = dessus ? (root.previousElementSibling && root.previousElementSibling.hasAttribute('data-lc-note') ? root.previousElementSibling : null) : host.querySelector(':scope > [data-lc-note]');
@@ -6351,6 +6863,138 @@
       todo.forEach(function (t) { var a = t.nodeValue, b = w.trText(a); if (b && b !== a) t.nodeValue = b; });
       var al = zones[z].getAttribute('aria-label'), bl = al && w.trText(al); if (bl && bl !== al) zones[z].setAttribute('aria-label', bl);
     }
+    /* C471 (point 16) : un seul format d'euro, celui de la langue, dans le récit, son sommaire et les cartes du haut
+       (« 61,881 € » à côté de « €36,302 » en anglais). Le lecteur des chapitres, rédigé en français, n'est pas touché. */
+    [].forEach.call(document.querySelectorAll('#vdRecit, #auditBody .vg-overview'), function (z) { passeMemoire(z, false); });
+    /* C474 (décision 59, méthode B) : les 27 chapitres du lecteur et la bibliothèque, dessinés par audit-lecteur-a28 dans #auditBody
+       (que translateDOM saute : aucun autre traducteur n'y touche), sont traduits ici, phrase entière ou gabarit, nombres au format
+       de la langue. */
+    [].forEach.call(document.querySelectorAll('#vdBiblio, #vdLecteur'), function (z) { passeMemoire(z, true); });
+    attributsMemoire(document.getElementById('v-audit'));
+  }
+  /* C474 : chaque nœud garde son vrai texte français (MEM_A) ; au retour au français il le retrouve, s'il n'a pas été redessiné
+     entre-temps. Rien n'est réécrit si le texte est déjà le bon : au repos, rien ne bouge. */
+  var MEM_A = new WeakMap(), MEM_AT = new WeakMap();
+  /* Décision 63 (contrôle visuel de l'Audit, défauts 3, 4 et 8) : phrase entière ou gabarit, jamais une moitié.
+     - Le moteur de Pilotage traduit parfois le seul début d'une phrase (« Fixed costs à 21.4% du CA… », « Since le 1 September… ») :
+       un résultat qui garde des mots français n'est pas retenu, la phrase est cherchée autrement.
+     - Les nombres déjà écrits à la mode de la langue (« 9% », « €2,731 ») sont remis à la française pour trouver le gabarit.
+     - La règle de vocabulaire de verdict-049 réécrit aussi le français hors du français (« le score » → « le serenity index ») :
+       on essaie la phrase d'avant cette réécriture (décision 61 : quand ces règles seront retirées, cet essai ne servira plus). */
+  var MOTS_FR = /(?:^|[\s(«“'’])(du|au|aux|une|est|sont|vous|votre|vos|avec|sans|dans|leur|leurs|cette|chaque|déjà|très|être|été|où|toutes|doivent|selon)(?=[\s,.;:!?)»”]|$)/i;
+  function partiel(x) {
+    var y = String(x || ''); try { var nom = w.DB && w.DB.etab; if (nom && typeof nom === 'string') y = y.split(nom).join(' '); } catch (e) {}
+    var m = MOTS_FR.exec(y); return !!m && !(w.LOCALE === 'de' && m[1].toLowerCase() === 'du');
+  }
+  var REV049 = {
+    en: [[/serenity indices/gi, 'scores'], [/serenity index/gi, 'score']],
+    nl: [[/rustindices/gi, 'scores'], [/rustindex/gi, 'score'], [/berekeningen/gi, 'formules'], [/berekening/gi, 'formule']],
+    it: [[/calcoli/gi, 'formule'], [/calcolo/gi, 'formula']],
+    pt: [[/ecrã/gi, 'aba']]
+  };
+  function avant049(s) {
+    var R = REV049[w.LOCALE]; if (!R) return s;
+    R.forEach(function (r) { s = s.replace(r[0], function (m) { return m === m.toUpperCase() ? r[1].toUpperCase() : (m.charAt(0) !== m.charAt(0).toLowerCase() ? r[1].charAt(0).toUpperCase() + r[1].slice(1) : r[1]); }); });
+    return s;
+  }
+  function formeFr(s) { return s.replace(/([+\u2212-]?)€[ \u00a0\u202f]?(\d[\d.,\u00a0\u202f]*\d|\d)/g, '$1$2 €').replace(/(\d)%/g, '$1 %'); }
+  function phraseEntiere(s) {
+    var x = w.trText(s); if (x !== s && !partiel(x)) return x;
+    var b = avant049(s), L = [formeFr(s), b, formeFr(b)], vus = {}; vus[s] = 1;
+    for (var i = 0; i < L.length; i++) { var t = L[i]; if (vus[t]) continue; vus[t] = 1; var y = w.trText(t); if (y !== t && !partiel(y)) return y; }
+    return x !== s && partiel(x) ? s : x;
+  }
+  /* Défaut 8 : hors du français, aucune espace avant « : » (« Why : » → « Why: ») ; le signe peut être seul en tête de son nœud,
+     après un libellé en gras (« <b>Why</b> : … »). */
+  function deuxPoints(s, t) {
+    if (!s || s.indexOf(':') < 0) return s;
+    s = s.replace(/([^\s\u00a0\u202f])[ \u00a0\u202f]+:(?=[\s\u00a0\u202f]|$)/g, '$1:');
+    if (/^[ \u00a0\u202f]+:/.test(s)) { var p = t && t.previousSibling; if (p && /\S$/.test(p.textContent || '')) s = s.replace(/^[ \u00a0\u202f]+:/, ':'); }
+    return s;
+  }
+  /* Défaut 4 : des phrases arrivent déjà traduites par le dictionnaire de leur bloc, avec le sigle français « CA » (chapitres 21, 26
+     et 27 en espagnol). Corrigées ici, nœud entier ; proposition au propriétaire du bloc : REPRISE/LANGUES/d63/pour-030.json. */
+  var CORR = { es: [
+    [/^CA del día → /, 'Facturación del día → '], [/^CA del mes → /, 'Facturación del mes → '],
+    [/^CA anual de pilotaje → ([\s\S]*)No es el CA contable\.$/, 'Facturación anual de pilotaje → $1No es la facturación contable.'],
+    [/^CA contable → /, 'Facturación contable → '], [/^CA anual sin IVA$/, 'Facturación anual sin IVA'], [/^CA por servicio$/, 'Facturación por servicio'],
+    [/^([:\s\u00a0]*)CA del mes en curso$/, function (m, p) { return p + (p.indexOf(':') >= 0 ? 'f' : 'F') + 'acturación del mes en curso'; }],
+    [/^([:\s\u00a0]*:[\s\u00a0]*)CA (?=[\d+\u2212-])/, '$1facturación '],
+    [/^([:\s\u00a0]*)CA declarado del ejercicio cerrado$/, function (m, p) { return p + (p.indexOf(':') >= 0 ? 'f' : 'F') + 'acturación declarada del ejercicio cerrado'; }]
+  ] };
+  /* Point 20 : après « : », minuscule (anglais, espagnol, italien, néerlandais, portugais ; l’allemand garde ses majuscules) : le titre de
+     la décision prend la phrase du diagnostic, écrite seule avec une majuscule (« Only one decision starts now: the team costs… »). */
+  var DECISION = /^(Only one decision starts now: |Una sola decisión empieza ahora: |Una sola decisione parte ora: |Eén enkele beslissing start nu: |Uma única decisão começa agora: )(?!Verdict|Vera)([A-ZÁÉÍÓÚÀÈÌÒÙÂÊÔÃÕÇÑ])(?=[a-záéíóúàèìòùâêôãõçñ])/;
+  function minuscule(s, t) {
+    s = s.replace(DECISION, function (m, a, c) { return a + c.toLowerCase(); });
+    /* le diagnostic peut être seul dans son <span>, après « … maintenant : » (chapitre 4) */
+    if (t && w.LOCALE !== 'de') { var p = t.previousSibling || (t.parentNode && t.parentNode.previousSibling), v = p ? (p.nodeType === 3 ? p.nodeValue : p.textContent) : '';
+      if (/(?:starts now|empieza ahora|parte ora|start nu|começa agora|démarre maintenant)[ \u00a0]*:[ \u00a0]*$/.test(v || '')) s = s.replace(/^([ \u00a0]*)(?!Verdict|Vera)([A-ZÁÉÍÓÚÀÈÌÒÙÂÊÔÃÕÇÑ])(?=[a-záéíóúàèìòùâêôãõçñ])/, function (m, a, c) { return a + c.toLowerCase(); }); }
+    return s;
+  }
+  function corriger(s) { var C = CORR[w.LOCALE]; if (!C) return s; for (var i = 0; i < C.length; i++) s = s.replace(C[i][0], C[i][1]); return s; }
+  function passeMemoire(root, traduire) {
+    if (!root || !w.NodeFilter) return;
+    var fr = !w.LOCALE || w.LOCALE === 'fr', it = document.createTreeWalker(root, w.NodeFilter.SHOW_TEXT, null, false), n, L = [];
+    while ((n = it.nextNode())) { var p = n.parentNode; if (p && !/^(SCRIPT|STYLE)$/.test(p.tagName) && !(p.closest && p.closest('[data-lc-note]'))) L.push(n); }
+    L.forEach(function (t) {
+      var v = t.nodeValue, o = MEM_A.get(t), src = o && o.last === v ? o.fr : v;
+      if (fr) { if (o) { MEM_A.delete(t); if (o.last === v && !(w.__lgcTrop && w.__lgcTrop(t))) t.nodeValue = o.fr; } return; }
+      var r = src;
+      if (traduire && typeof w.trText === 'function' && /[A-Za-zÀ-ÿ]{2}/.test(src)) {
+        var x = phraseEntiere(src);
+        /* C474 : une phrase posée après un libellé en gras commence par « : », « — » ou « · » ; on traduit le reste, le signe reste devant */
+        if (x === src) { var pm = /^([\s\u00a0]*[:;·—–.-][\s\u00a0]*)([\s\S]+)$/.exec(src); if (pm) { var y = phraseEntiere(pm[2]); if (y && y !== pm[2]) x = pm[1] + y; } }
+        if (x && x !== src) r = datesLangue(montantsLangue(x));
+        r = corriger(r);
+      }
+      if (r.indexOf('€') >= 0) r = eurosLangue(montantsLangue(r));
+      r = nombresLangue(r);
+      if (r !== src || !/[A-Za-zÀ-ÿ]{2}/.test(src) || !partiel(src)) r = deuxPoints(minuscule(r, t), t); /* jamais dans une phrase restée en français */
+      if (r !== v && !(w.__lgcTrop && w.__lgcTrop(t))) { MEM_A.set(t, { fr: src, last: r }); t.nodeValue = r; }
+    });
+    if (traduire) attributsMemoire(root);
+  }
+  /* Décision 63 : aria-label et title de toute la zone Audit (récit en cinq étapes, barres des 100 €, sommaire du lecteur). */
+  function attributsMemoire(root) {
+    if (!root || typeof w.trText !== 'function') return;
+    var fr = !w.LOCALE || w.LOCALE === 'fr';
+    [root].concat([].slice.call(root.querySelectorAll('[aria-label],[title]'))).forEach(function (e) {
+      ['aria-label', 'title'].forEach(function (a) {
+        var v = e.getAttribute(a); if (!v) return; var m = MEM_AT.get(e) || {}, o = m[a], src = o && o.last === v ? o.fr : v;
+        if (fr) { if (o) { if (o.last === v) e.setAttribute(a, o.fr); delete m[a]; MEM_AT.set(e, m); } return; }
+        var x = phraseEntiere(src); if (x && x !== src) x = nombresLangue(eurosLangue(montantsLangue(x))); if (x && x !== src && x !== v) { m[a] = { fr: src, last: x }; MEM_AT.set(e, m); e.setAttribute(a, x); }
+      });
+    });
+  }
+  /* C471 : montant déjà mis à la mode d'une langue mais avec l'euro à la française (« 61,881 € », « 30.0 € ») → place de l'euro de la langue */
+  function eurosLangue(s) {
+    if (typeof s !== 'string' || s.indexOf('€') < 0) return s;
+    if (w.LOCALE === 'en') return s.replace(/(^|[^\d.,€])([+\u2212-]?)(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+\.\d{1,2}|\d+)[ \u00a0\u202f]?€/g, function (x, av, sg, n) { return av + sg + '€' + n; });
+    if (w.LOCALE === 'nl') return s.replace(/(^|[^\d.,€])([+\u2212-]?)(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+,\d{1,2}|\d+)[ \u00a0\u202f]?€/g, function (x, av, sg, n) { return av + sg + '€ ' + n; });
+    return s;
+  }
+  /* Décision 64 (chef) : l'Audit est dessiné en français, puis traduit sur la page (méthode B) ; ses nombres prennent ici le format de
+     la langue, par Intl.NumberFormat : décimales, milliers, espace du « % », signe moins U+2212. Seuls les nombres qui portent une marque
+     française (virgule décimale, milliers à l'espace) sont réécrits : une année, un entier nu ou un nombre déjà au format de la langue
+     ne bougent pas, et la passe rejouée rend le même texte (rien au repos). Aucune valeur ne change. */
+  var SEPS = {};
+  function sepsLangue(l) {
+    if (SEPS[l]) return SEPS[l]; var o = { pct: '' };
+    try { var q = new Intl.NumberFormat(TAGM[l], { style: 'percent' }).format(0.5); o.pct = q.replace(/[\d%]/g, ''); } catch (e) {}
+    SEPS[l] = o; return o;
+  }
+  function nombresLangue(s) {
+    if (typeof s !== 'string' || !w.LOCALE || w.LOCALE === 'fr' || !TAGM[w.LOCALE] || !/\d/.test(s)) return s;
+    var tag = TAGM[w.LOCALE], S = sepsLangue(w.LOCALE);
+    s = s.replace(/(^|[\s(\u00a0\u202f«“:\/])-(?=\d|€[\u00a0\u202f ]?\d)/g, '$1\u2212');
+    s = s.replace(/(^|[^\d.,])(\d{1,3}(?:[ \u00a0\u202f]\d{3})+|\d+)(?:,(\d{1,2}))?(?![\d,])/g, function (m, av, ent, dec) {
+      if (!dec && !/[ \u00a0\u202f]/.test(ent)) return m;
+      var n = Number(ent.replace(/\D/g, '')) + (dec ? Number(dec) / Math.pow(10, dec.length) : 0);
+      try { return av + new Intl.NumberFormat(tag, { minimumFractionDigits: dec ? dec.length : 0, maximumFractionDigits: dec ? dec.length : 0 }).format(n); } catch (e) { return m; }
+    });
+    s = s.replace(/(\d)[ \u00a0\u202f]?%/g, function (m, d) { return d + S.pct + '%'; });
+    return s;
   }
   function brancherAudit() {
     var prev = w.drawAudit;
@@ -6360,7 +7004,9 @@
     noticeAudit();
     /* C360 : le sommaire est réécrit par c360 quand un chiffre change ; on le retraduit (childList seul : nos changements de texte ne relancent rien) */
     var va = document.getElementById('v-audit');
-    if (va && w.MutationObserver && !va.__lgc360) { va.__lgc360 = new MutationObserver(function () { setTimeout(sommaireAuditLangue, 0); }); va.__lgc360.observe(va, { childList: true, subtree: true }); }
+    /* C474 (décision 59, condition 2) : appelée dans l'observateur même (avant l'image suivante), plus en différé : aucun français ne
+       s'affiche le temps d'une image. Nos changements ne touchent que le texte et des attributs : ils ne relancent pas l'observateur. */
+    if (va && w.MutationObserver && !va.__lgc360) { va.__lgc360 = new MutationObserver(function () { sommaireAuditLangue(); }); va.__lgc360.observe(va, { childList: true, subtree: true }); }
     sommaireAuditLangue();
   }
 
@@ -6491,7 +7137,15 @@
     var ORIG_F = new WeakMap(), ORIG_FA = new WeakMap(), CADRES = [];
     /* C428 : après l'ajout d'un paquet, les écrans en cadre déjà branchés sont retraduits avec le dictionnaire complété. */
     w.__lgcRetraduireCadres = function () { CADRES.forEach(function (f) { try { var dd = f.contentDocument; if (dd && dd.body) { traduireNoeuds(dd, dd.body); if (dd.__lgcObs) dd.__lgcObs.takeRecords(); } } catch (e) {} }); };
+    /* Décision 58, part (3) — coupe-circuit : un même nœud (texte ou élément) réécrit plus de 5 fois en 1 s est laissé tel quel
+       pendant 10 s, quelle que soit la cause. Ceinture de sécurité contre une boucle encore inconnue entre deux écrivains : Pilotage
+       rend toujours la main. Partagé par traduireNoeuds (cadres) et passeMemoire (lecteur de l'Audit). */
+    w.__lgcTrop = function (x) { var now = Date.now(), c = CASSE.get(x); if (!c) { c = { n: 0, t0: now, stop: 0 }; CASSE.set(x, c); } if (c.stop > now) return true; if (now - c.t0 > 1000) { c.n = 0; c.t0 = now; } c.n++; if (c.n > 5) { c.stop = now + 10000; try { (w.__lgcCasse = w.__lgcCasse || []).push(now); } catch (e) {} return true; } return false; };
+    var CASSE = new WeakMap();
     function memeTexte(a, b) { var f = function (x) { return String(x || '').replace(/[\s\u00a0\u202f.,€]/g, ''); }; return f(a) === f(b); }
+    /* Décision 58 (gel en → fr, part b) : deux textes qui ne diffèrent que par l'écriture des nombres (« 70.0 % » / « 70,0 % »,
+       « 440,166 € » / « 440 166 € ») sont le même texte : on ne le réécrit jamais, dans aucun sens. Sinon un autre traducteur du
+       même nœud (R97 de 052) remettait sa forme, celui-ci la sienne, sans fin, et Pilotage se figeait. */
     function traduireNoeuds(d, racine) {
       if (typeof w.trText !== 'function' || !racine) return;
       var fr = !w.LOCALE || w.LOCALE === 'fr';
@@ -6500,17 +7154,19 @@
       while ((n = wk.nextNode())) { var p = n.parentNode; if (p && !/^(SCRIPT|STYLE|TEXTAREA)$/.test(p.tagName)) L.push(n); }
       L.forEach(function (t) {
         var v = t.nodeValue, o = ORIG_F.get(t), src = o && (o.last === v || memeTexte(o.last, v)) ? o.fr : v; /* C298 : un autre passage n'a changé que les espaces ou l'écriture d'un montant */
-        if (fr) { if (src !== v) t.nodeValue = src; return; }
+        /* Décision 58 : au retour au français, seule une vraie traduction (des mots différents) est défaite ; un texte qui ne diffère
+           que par l'écriture des nombres est laissé tel quel (son propriétaire l'a déjà remis au français). La mémoire est oubliée. */
+        if (fr) { if (o) ORIG_F.delete(t); if (src !== v && !memeTexte(src, v) && !w.__lgcTrop(t)) t.nodeValue = src; return; }
         if (!src || !/[A-Za-zÀ-ÿ]{2}/.test(src)) return;
         var r = w.trText(src); if (r !== src) r = datesLangue(montantsLangue(r)); /* C298 : seulement une phrase traduite */ try { if (r !== src && typeof w.vdMoneyOrder === 'function') r = w.vdMoneyOrder(r); } catch (e) {}
-        if (r !== v) { ORIG_F.set(t, { fr: src, last: r }); t.nodeValue = r; }
+        if (r !== v && !memeTexte(r, v) && !w.__lgcTrop(t)) { ORIG_F.set(t, { fr: src, last: r }); t.nodeValue = r; } /* décision 58 : jamais pour la seule écriture des nombres ; coupe-circuit */
       });
       [racine].concat([].slice.call(racine.querySelectorAll('[title],[aria-label],[placeholder]'))).forEach(function (e) {
         if (!e.getAttribute) return;
         var memo = ORIG_FA.get(e) || {};
         ['title', 'aria-label', 'placeholder'].forEach(function (a) {
           var v = e.getAttribute(a); if (!v) return; var src = memo[a] && memo[a].last === v ? memo[a].fr : v;
-          var r = fr ? src : w.trText(src); if (r !== v) { memo[a] = { fr: src, last: r }; ORIG_FA.set(e, memo); e.setAttribute(a, r); }
+          var r = fr ? src : w.trText(src); if (r !== v && !memeTexte(r, v) && !w.__lgcTrop(e)) { memo[a] = { fr: src, last: r }; ORIG_FA.set(e, memo); e.setAttribute(a, r); }
         });
       });
     }

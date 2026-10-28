@@ -148,11 +148,17 @@
     else{var k=1,c=fg.slice(0,3);for(var s=0;s<14&&vdlCR(vdlLum(c),lb)<4.5;s++){k*=0.85;c=fg.slice(0,3).map(function(v){return Math.round(v*k);});}col='rgb('+c.join(',')+')';}
     out.push([e,'txt',col]);
   }
-  function vdlApply(out){out.forEach(function(d){var e=d[0];if(d[1]==='txt'||d[1]==='txtc'){var keep=e.__vdlProps||[];e.style.setProperty('color',d[2],'important');e.__vdlProps=keep.concat(['color']);e.__vdlVals=e.__vdlVals||{};e.__vdlVals.color=e.style.getPropertyValue('color');if(!e.__vdl){e.__vdl=d[1];e.setAttribute('data-vdl',d[1]);}}else{e.__vdlPending=null;vdlSet(e,d[1],d[2]);}});}
+  function vdlApply(out){if(out.length&&out[0][0].ownerDocument)out[0][0].ownerDocument.__vdlAny=true;out.forEach(function(d){var e=d[0];if(d[1]==='txt'||d[1]==='txtc'){var keep=e.__vdlProps||[];e.style.setProperty('color',d[2],'important');e.__vdlProps=keep.concat(['color']);e.__vdlVals=e.__vdlVals||{};e.__vdlVals.color=e.style.getPropertyValue('color');if(!e.__vdl){e.__vdl=d[1];e.setAttribute('data-vdl',d[1]);}}else{e.__vdlPending=null;vdlSet(e,d[1],d[2]);}});}
+  /* C466 (audit A10, mesures de L3 : changer d'établissement dans le Perso, 30 à 96 ms de vdl dans les 4 s, en clair comme en sombre) :
+     une passe complète seulement pour un document neuf ou quand le thème change ; chaque chargement de cadre en relançait une dans
+     tous les documents (en sombre, pour ne rien retirer). Les ajouts suivent l'observateur, un seul bloc par sous-arbre en attente. */
+  function vdlNeuf(doc,dark){var neuf=!doc.__vdlWatch;vdlWatch(doc);if(!neuf&&doc.__vdlTheme!==dark&&doc.__vdlGo)doc.__vdlGo();doc.__vdlTheme=dark;}
   function vdlQueue(doc,root,full){
     if(!doc.__vdlQ)doc.__vdlQ=[];
     if(full){doc.__vdlQ=[{full:true}];}
-    else if(!(doc.__vdlQ[0]&&doc.__vdlQ[0].full&&!doc.__vdlQ[0].els))doc.__vdlQ.push({root:root});
+    else if(!(doc.__vdlQ[0]&&doc.__vdlQ[0].full&&!doc.__vdlQ[0].els)){
+      for(var qi=0;qi<doc.__vdlQ.length;qi++){var q=doc.__vdlQ[qi];if(!q.els&&q.root&&(q.root===root||(q.root.contains&&q.root.contains(root))))return vdlSchedule(doc);}
+      doc.__vdlQ.push({root:root});}
     vdlSchedule(doc);
   }
   function vdlSchedule(doc){if(doc.__vdlPend)return;doc.__vdlPend=true;var w=doc.defaultView||window;w.requestAnimationFrame(function(){doc.__vdlPend=false;vdlWork(doc);});}
@@ -160,10 +166,11 @@
   function vdlCadreVisible(win){try{for(var x=win;x&&x.frameElement;x=x.parent){var f=x.frameElement;if(!f.getClientRects().length||x.parent.getComputedStyle(f).visibility==='hidden')return false;}}catch(e){}return true;}
   function vdlWork(doc){
     var win=doc.defaultView;if(!win||!doc.body)return;
+    /* C466 : en sombre, rien à mesurer (aucun calcul de mise en page forcé) : on retire seulement d'éventuelles corrections du clair. */
+    if(!doc.documentElement.classList.contains('vd-workspace-light')){if(doc.__vdlAny){doc.querySelectorAll('[data-vdl]').forEach(vdlClear);doc.__vdlAny=false;}doc.__vdlQ=[];return;}
     if(!vdlCadreVisible(win))return;
     var t0=win.performance.now();
-    if(!doc.documentElement.classList.contains('vd-workspace-light')){doc.querySelectorAll('[data-vdl]').forEach(vdlClear);doc.__vdlQ=[];return;}
-    [doc.documentElement,doc.body].forEach(function(e){if(!e||e.__vdl==='page')return;var L=vdlBgLum(win,e);if(L!==null&&L<0.1)vdlSet(e,'page');});
+    [doc.documentElement,doc.body].forEach(function(e){if(!e||e.__vdl==='page')return;var L=vdlBgLum(win,e);if(L!==null&&L<0.1){vdlSet(e,'page');doc.__vdlAny=true;}});
     var vh=win.innerHeight||800,Q=doc.__vdlQ||[];
     while(Q.length){
       var it=Q[0];
@@ -190,7 +197,7 @@
     try{['animationend','transitionend'].forEach(function(t){doc.addEventListener(t,function(ev){if(ev.target&&ev.target.nodeType===1&&doc.documentElement.classList.contains('vd-workspace-light')&&ev.target.closest('.modal,.sheet,[role=dialog],#refSh'))vdlQueue(doc,ev.target.closest('.modal,.sheet,[role=dialog],#refSh')||ev.target,false);},true);});}catch(e){}
     doc.__vdlGo=function(){vdlQueue(doc,null,true);};
     try{var fe=doc.defaultView&&doc.defaultView.frameElement;if(fe&&window.ResizeObserver)new window.ResizeObserver(function(){if(doc.__vdlQ&&doc.__vdlQ.length&&vdlCadreVisible(doc.defaultView))vdlSchedule(doc);}).observe(fe);}catch(e){}
-    doc.__vdlGo();
+    if(doc.documentElement.classList.contains('vd-workspace-light'))doc.__vdlGo();/* C466 : document neuf en sombre : rien à corriger */
   }
   /* C400 (A28 de l'audit du 27/10 : « des couleurs changent sous les yeux ») : en clair, la couleur finale des éléments que le
      correcteur repeignait après coup est donnée en CSS dans chaque page de Pilotage, posée au chargement du cadre (avant qu'il soit
@@ -238,7 +245,7 @@
       doc.querySelectorAll('iframe').forEach(function (inner) { applyToFrame(inner, dark); });
       peinture(doc);
       if (sousPilotage(frame)) clairFinal(doc);
-      try { vdlWatch(doc); if (doc.__vdlGo) doc.__vdlGo(); } catch (e) {}
+      try { vdlNeuf(doc, dark); } catch (e) {}
       if (!frameObservers.has(doc)) {
         var observer = new MutationObserver(function () {
           var current = appearance(preference()) === 'dark';
@@ -267,7 +274,7 @@
     button.setAttribute('aria-pressed', String(mode !== 'auto'));
     document.querySelectorAll('iframe').forEach(function (frame) { applyToFrame(frame, dark); });
     peinture(document);
-    try { vdlWatch(document); if (document.__vdlGo) document.__vdlGo(); } catch (e) {}
+    try { vdlNeuf(document, dark); } catch (e) {}
   }
   button.addEventListener('click', function () {
     var next = appearance(preference()) === 'dark' ? 'light' : 'dark';

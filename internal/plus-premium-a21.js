@@ -8,6 +8,7 @@
   var w = window, doc = document;
   if (doc.getElementById('vd-plus-css')) return;
   var ICONES = {
+    audit: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 17h4.5"/>',
     afaire: '<path d="M9 11l3 3 8-8"/><path d="M20 12v6a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h9"/>',
     conso: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
     equipe: '<path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3.5"/><path d="M22 19v-1a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -40,6 +41,9 @@
        Pro « Coût par service ». « À faire » et les Alertes, compris dans Pilotage, ont enfin un chemin visible. */
     equipe: function () { w.go(pilotage() ? 'sal' : 'planning'); },
     afaire: function () { w.go('priorities'); },
+    /* Décision 63, point 13 (contrôle visuel de l'Audit) : « Lire mon audit » est une ligne de Plus, en tête de Piloter (avant, un
+       bouton ajouté par entete-c358 restait caché par la règle de Plus). Sur l'Audit, la barre allume Structure (029, C476). */
+    audit: function () { w.go('audit'); },
     /* C305 (V15-117) : « Consommation » (internal/limites-conso-pilotage-a47.js) est rendue ici, avec les autres lignes ; elle
        était ajoutée environ 60 ms après l'affichage et faisait descendre les lignes du dessous sous le doigt. */
     conso: function () { w.go('conso'); },
@@ -57,7 +61,7 @@
   };
   function groupes() {
     var g = [
-      { t: 'Piloter', l: [['afaire', 'À faire et alertes', 'Ce qui compte aujourd’hui, et ce qui demande votre attention'], ['equipe', 'Équipe & services', pilotage() ? 'Coût de l’équipe, à l’année et au mois' : 'Coût humain, planning et rentabilité des services'], ['budget', 'Budget de ventes', 'Objectifs datés, comparés à vos ventes réelles'], ['conso', 'Consommation', 'Limites par produit, kg et euros, bar et cuisine', 'PRO']] },
+      { t: 'Piloter', l: [['audit', 'Lire mon audit', 'Le bilan complet de votre établissement, chapitre par chapitre'], ['afaire', 'À faire et alertes', 'Ce qui compte aujourd’hui, et ce qui demande votre attention'], ['equipe', 'Équipe & services', pilotage() ? 'Coût de l’équipe, à l’année et au mois' : 'Coût humain, planning et rentabilité des services'], ['budget', 'Budget de ventes', 'Objectifs datés, comparés à vos ventes réelles'], ['conso', 'Consommation', 'Limites par produit, kg et euros, bar et cuisine', 'PRO']] },
       { t: 'Données', l: [['caisse', 'Connexion de la caisse', 'Bientôt : vos ventes arriveront seules, sans saisie'], ['importer', 'Importer mes chiffres', 'Document comptable, saisie ou mise à jour']] },
       /* C210 (V35) : en démonstration, ce bouton ouvre le choix des modèles fictifs (openEtabs → openModeles) : le dire. */
       { t: 'Établissement & compte', l: [['etabs', 'Établissements', modeleDemo() ? 'Démonstration : changer de modèle d’établissement' : 'Ajouter, renommer ou changer d’établissement']] }

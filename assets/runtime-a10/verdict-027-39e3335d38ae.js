@@ -210,11 +210,13 @@
     });
   }
   function orderCounts(orders){var out={prepared:0,sent:0,confirmed:0,partial:0,received:0,cancelled:0};(orders||[]).forEach(function(x){if(out[x.status]!=null)out[x.status]++;});return out;}
+  /* C542 (décision 69 bis) : une date vue par le patron est écrite dans sa langue, jamais en ISO brut (« nécessaire 2026-10-28T12:00:00 »). */
+  function dateLisible(v,heure){var s=String(v||''),m=/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(s);if(!m)return s;var g=typeof self!=='undefined'?self:(typeof globalThis!=='undefined'?globalThis:{}),l=String(g.LOCALE||'fr'),tag={fr:'fr-FR',en:'en-GB',es:'es-ES',it:'it-IT',de:'de-DE',nl:'nl-NL',pt:'pt-PT'}[l]||'fr-FR',avecHeure=!!(heure&&m[4]),o={day:'2-digit',month:'2-digit',year:'numeric'};if(avecHeure){o.hour='2-digit';o.minute='2-digit';}try{return new Intl.DateTimeFormat(tag,o).format(avecHeure?new Date(s):new Date(+m[1],+m[2]-1,+m[3],12));}catch(e){return m[3]+'/'+m[2]+'/'+m[1]+(avecHeure?' '+m[4]+':'+m[5]:'');}}
   function chooseAction(snapshot,now){
     now=now instanceof Date?now:new Date(now||Date.now());var open=(snapshot.incidents||[]).filter(function(x){return x.open;});
-    if(open.length){var x=open[0];return {kind:'incident',level:'critical',title:'Rupture à décider',detail:x.productName+(x.requiredAt?' · nécessaire '+x.requiredAt:''),route:'inventory',sourceId:x.id,actorName:txt(x.actorName,100),reportedAt:txt(x.reportedAt,40)};}
+    if(open.length){var x=open[0];return {kind:'incident',level:'critical',title:'Rupture à décider',detail:x.productName+(x.requiredAt?' · nécessaire '+dateLisible(x.requiredAt):''),route:'inventory',sourceId:x.id,actorName:txt(x.actorName,100),reportedAt:txt(x.reportedAt,40)};}
     var prepared=(snapshot.orders||[]).filter(function(x){return x.status==='prepared';}).sort(function(a,b){return dateMs(a.cutoffAt)-dateMs(b.cutoffAt);});
-    if(prepared.length){var p=prepared[0],ms=dateMs(p.cutoffAt)-now.getTime();return {kind:'order',level:ms<=3*3600000?'critical':'warning',title:'Commande préparée à valider',detail:p.supplier+(p.cutoffAt?' · limite '+p.cutoffAt:''),route:'inventory',sourceId:p.id};}
+    if(prepared.length){var p=prepared[0],ms=dateMs(p.cutoffAt)-now.getTime();return {kind:'order',level:ms<=3*3600000?'critical':'warning',title:'Commande préparée à valider',detail:p.supplier+(p.cutoffAt?' · limite '+dateLisible(p.cutoffAt,true):''),route:'inventory',sourceId:p.id};}
     var sent=(snapshot.orders||[]).filter(function(x){return x.status==='sent';});
     if(sent.length)return {kind:'order',level:'warning',title:'Commande envoyée · confirmation attendue',detail:sent[0].supplier,route:'inventory',sourceId:sent[0].id};
     var partial=(snapshot.orders||[]).filter(function(x){return x.status==='partial';});
